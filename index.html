@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Cima Blanca — Registrar gastos v23</title>
+<title>Cima Blanca — Registrar gastos v24</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f6f7f9;color:#1a2233}
@@ -156,7 +156,7 @@ td input.m{text-align:right;width:84px}
 <div class="wrap">
  <div class="top">
   <div class="eb">🏝️ Cima Blanca · Gastos</div>
-  <h1><span style="font-size:22px;vertical-align:middle;margin-right:6px">💰</span>Registrar GASTOS</h1><!-- versión interna: v23 -->
+  <h1><span style="font-size:22px;vertical-align:middle;margin-right:6px">💰</span>Registrar GASTOS</h1><!-- versión interna: v24 -->
   <div class="syncrow"><button type="button" id="syncPill" class="pill off">☁ Sin conectar</button></div>
   <div class="mnav"><button type="button" id="mPrev" title="Mes anterior">◀</button><div class="ml" id="mLbl"></div><button type="button" id="mNext" title="Mes siguiente">▶</button><button type="button" class="hoy" id="mHoy">Este mes</button></div>
  </div>
@@ -890,11 +890,11 @@ function renderTotals(){
  const mon=DS.filter(e=>e.mes===MES);
  const evT=sum(mon.filter(e=>!REC().some(r=>matchRow(r,e))));
  const pe=EXTRA.filter(validRow).reduce((t,x)=>t+pn(x.monto),0);
- $('recTot').textContent=f2(recT);
+ $('recTot').textContent='Subtotal (1) '+f2(recT);
  $('recPend').textContent=pend>0?'+ '+f2(pend)+' por confirmar':'';
- $('evTot').textContent=f2(evT);
+ $('evTot').textContent='Subtotal (2) '+f2(evT);
  $('evPend').textContent=pe>0?'+ '+f2(pe)+' por guardar':'';
- $('regBig').textContent=f2(sum(mon));
+ $('regBig').textContent='Total (3) '+f2(sum(mon));
  if(saved===REC().length){if(!AUTOCLOSED[MES]){AUTOCLOSED[MES]=1;SEC.rec=false;}}
  else if(AUTOCLOSED[MES]){delete AUTOCLOSED[MES];SEC.rec=true;}
  applySec();
