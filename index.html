@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Cima Blanca — Registrar gastos v26</title>
+<title>Cima Blanca — Registrar gastos v27</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f6f7f9;color:#1a2233}
@@ -10,10 +10,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .top .eb{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9fb3e8;display:flex;align-items:center;gap:6px}
 .top h1{font-size:24px;margin:5px 0 12px;font-weight:800;letter-spacing:-.01em}
 .mnav{display:flex;align-items:center;gap:10px}
-.mnav button{background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:8px;width:34px;height:34px;font-size:15px;cursor:pointer}
+.mnav button{background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:8px;flex:0 0 auto;width:40px;height:40px;font-size:15px;cursor:pointer}
 .mnav button:hover{background:rgba(255,255,255,.22)}
-.mnav .ml{font-size:17px;font-weight:700;min-width:150px;text-align:center;text-transform:capitalize}
-.mnav .hoy{width:auto;padding:0 12px;font-size:12px;font-weight:600;white-space:nowrap}
+.mnav .ml{font-size:17px;font-weight:700;flex:1 1 auto;min-width:0;text-align:center;text-transform:capitalize}
+.mnav .hoy{flex:0 0 auto;width:auto;padding:0 14px;font-size:12px;font-weight:600;white-space:nowrap}
 .sect{background:#fff;border:1px solid #e3e7ee;border-radius:12px;margin-bottom:14px;overflow:hidden}
 .sect>.hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid #e3e7ee}
 .sect.rec>.hd{background:#eef3ff}
@@ -23,7 +23,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .hd .cs{font-size:11.5px;color:#6b7691;margin-top:2px}
 .hd .cnt{font-size:12px;font-weight:700;color:#3d485c;white-space:nowrap}
 .bd{padding:14px 16px}
-.ghost{border:1px solid #c7cee0;background:#fff;color:#2563eb;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.ghost{border:1px solid #c7cee0;background:#fff;color:#2563eb;border-radius:8px;min-height:38px;padding:9px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
 .ghost:hover{background:#f5f8ff}
 .rows{display:flex;flex-direction:column;gap:8px}
 .row{display:grid;grid-template-columns:1fr 122px 112px 132px;gap:8px;align-items:center;padding:9px 10px;border:1px solid #e3e7ee;border-radius:9px;background:#fafbfc}
@@ -33,14 +33,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .nm{font-size:13.5px;font-weight:600;color:#1a2233}
 .sub{font-size:11px;color:#7a869c;margin-top:1px;line-height:1.35}
 .sub b{color:#5b6679;font-weight:600}
-.row input[type=date],.erow input[type=date]{padding:7px 8px;border:1px solid #d9dfe8;border-radius:7px;font-size:12.5px;font-family:inherit;color:#1a2233;background:#fff;width:100%}
-.amt{display:flex;align-items:center;border:1px solid #d9dfe8;border-radius:7px;background:#fff;padding:0 8px}
+.row input[type=date],.erow input[type=date]{padding:7px 8px;border:1px solid #d9dfe8;border-radius:7px;font-size:12.5px;font-family:inherit;color:#1a2233;background:#fff;width:100%;min-width:0;max-width:100%;box-sizing:border-box;height:42px;-webkit-appearance:none;appearance:none}
+.row>*,.erow>*{min-width:0}
+.row input,.erow input,.row select,.erow select{max-width:100%;box-sizing:border-box}
+.amt{display:flex;align-items:center;border:1px solid #d9dfe8;border-radius:7px;background:#fff;padding:0 8px;min-width:0;height:42px;box-sizing:border-box}
 .amt span{font-size:12.5px;color:#8792a8}
-.amt input{border:none;padding:7px 4px;font-size:13px;font-family:inherit;width:100%;text-align:right;color:#1a2233;background:transparent}
+.amt input{border:none;padding:7px 4px;font-size:16px;font-family:inherit;width:100%;min-width:0;text-align:right;color:#1a2233;background:transparent}
 .amt input:focus{outline:none}
 .val{font-size:13px;color:#1a2233;text-align:left}
 .val.r{text-align:right;font-weight:700}
-.act{height:34px;border-radius:8px;border:1px solid #d9dfe8;background:#fff;color:#7a869c;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;width:100%}
+.act{height:42px;border-radius:8px;border:1px solid #d9dfe8;background:#fff;color:#7a869c;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;width:100%}
 .act.on{background:#16a34a;border-color:#16a34a;color:#fff}
 .act.edit{color:#2563eb;border-color:#c7cee0}
 .act.edit:hover{background:#f5f8ff}
@@ -48,9 +50,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .b-c{display:flex;gap:6px}
 .act.go{background:#16a34a;border-color:#16a34a;color:#fff;flex:1}
 .act.go:disabled{background:#e9ecf1;border-color:#e9ecf1;color:#a3adbf;cursor:not-allowed}
-.act.no{flex:0 0 36px;width:36px;color:#b91c1c;border-color:#efc9c9;background:#fff}
+.act.no{flex:0 0 46px;width:46px;font-size:16px;color:#b91c1c;border-color:#efc9c9;background:#fff}
 .act.no:hover{background:#fff5f5}
-.eb{display:flex;gap:6px;align-items:center}.eb .act.go{height:34px;min-width:84px}
+.eb{display:flex;gap:6px;align-items:center}.eb .act.go{height:42px;min-width:84px}
 .chips{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
 .chips h4{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#6b7691;margin-bottom:6px}
 .chipline{display:flex;flex-wrap:wrap;gap:6px}
@@ -64,7 +66,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .erow .amt input[type=text]{border:none;padding:7px 4px;font-size:13px;background:transparent;text-align:right}
 .erow .tagrow{grid-column:1/5;display:flex;gap:8px}
 .erow .tagrow select{flex:1}
-.rmv{background:none;border:none;color:#b0b8c8;cursor:pointer;font-size:14px;padding:6px}
+.rmv{background:none;border:none;color:#b0b8c8;cursor:pointer;font-size:16px;min-width:36px;min-height:36px;padding:8px}
 .rmv:hover{color:#dc2626}
 .foot{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .save{flex:1;min-width:200px;background:#1a2233;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
@@ -81,9 +83,10 @@ th{text-align:left;color:#8792a8;font-weight:600;padding:7px 8px;border-bottom:1
 td{padding:8px;border-bottom:1px solid #f0f2f6;vertical-align:middle}
 td.n{text-align:right;font-weight:600;white-space:nowrap}
 td small{display:block;color:#9aa4b8;font-size:10.5px;margin-top:1px}
-td input{padding:5px 6px;border:1px solid #d9dfe8;border-radius:6px;font-size:12px;font-family:inherit;width:100%}
-td input.m{text-align:right;width:84px}
-.tb{background:none;border:1px solid transparent;cursor:pointer;font-size:20px;line-height:1;padding:8px 10px;min-width:40px;min-height:40px;color:#8792a8;border-radius:8px;-webkit-tap-highlight-color:transparent}
+td input{padding:9px 8px;border:1px solid #d9dfe8;border-radius:6px;font-size:13px;font-family:inherit;width:100%;min-height:40px;box-sizing:border-box}
+td input.m{text-align:right;width:100px;font-size:15px}
+td select,#rfam{min-height:40px;padding:8px;border:1px solid #d9dfe8;border-radius:6px;font-size:13px;font-family:inherit;background:#fff;box-sizing:border-box;max-width:100%}
+.tb{background:none;border:1px solid transparent;cursor:pointer;font-size:21px;line-height:0;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;padding:8px 10px;min-width:40px;min-height:40px;color:#8792a8;border-radius:8px;-webkit-tap-highlight-color:transparent}
 .tb[data-a="ed"]{color:#d97706}
 .tb[data-a="ed"]:hover,.tb[data-a="ed"]:active{background:#fef3c7;border-color:#fcd34d;color:#b45309}
 .tb.del{color:#dc2626}
@@ -104,7 +107,7 @@ td input.m{text-align:right;width:84px}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 .toast button{background:none;border:none;color:#9fb3e8;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
 .syncrow{margin:8px 0 2px}
-.pill{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:4px 11px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.pill{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;border-radius:999px;min-height:34px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
 .pill.ok{background:rgba(34,197,94,.22);border-color:rgba(134,239,172,.6)}
 .pill.busy,.pill.pend{background:rgba(250,204,21,.22);border-color:rgba(253,224,71,.6)}
 .pill.err{background:rgba(239,68,68,.30);border-color:rgba(252,165,165,.7)}
@@ -116,7 +119,7 @@ td input.m{text-align:right;width:84px}
 .crow .nm-c{flex:1;min-width:0;display:block}
 .crow .nm{font-size:13.5px;font-weight:600}
 .crow .a-c{flex:0 0 auto;min-width:80px}
-.chev{background:none;border:none;color:#9aa4b8;font-size:16px;cursor:pointer;padding:2px 6px;transform:rotate(90deg);transition:transform .15s;flex:0 0 auto}
+.chev{background:none;border:none;color:#9aa4b8;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;padding:2px 6px;transform:rotate(90deg);transition:transform .15s;flex:0 0 auto}
 .chev.open{transform:rotate(-90deg)}
 .crow-ex{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;padding-top:8px;border-top:1px dashed #e3e7ee}
 .row.done{display:block}
@@ -124,7 +127,7 @@ td input.m{text-align:right;width:84px}
 .row.sug .sub{display:none}
 .row.collapsed{padding:8px 10px}
 .crow .nm{white-space:normal}
-.sch{background:none;border:none;color:#6b7691;font-size:20px;cursor:pointer;padding:0 8px 0 0;transform:rotate(90deg);transition:transform .15s;line-height:1;font-family:inherit;flex:0 0 auto}
+.sch{background:none;border:none;color:#6b7691;font-size:20px;cursor:pointer;min-width:34px;min-height:34px;padding:0 8px 0 0;transform:rotate(90deg);transition:transform .15s;line-height:1;font-family:inherit;flex:0 0 auto}
 .sect.closed .sch{transform:none}
 .sect[data-sec]>.hd{cursor:pointer}
 .hd h2{display:flex;align-items:center}
@@ -171,9 +174,10 @@ td input.m{text-align:right;width:84px}
  .tscroll td.n input{width:120px}
  .ev1 .l1{flex-wrap:wrap}.ev1 input[type=text].con{flex:1 1 100%}.ev1 .amt{flex:1}
  .ev1 .l2{flex-wrap:wrap}.ev1 input[type=date]{flex:1;width:auto}
- .row{grid-template-columns:1fr 1fr auto;grid-template-areas:"nm nm nm" "d a b"}
+ .row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"nm nm" "d a" "b b"}
  .row .nm-c{grid-area:nm}.row .d-c{grid-area:d}.row .a-c{grid-area:a}.row .b-c{grid-area:b}
- .erow{grid-template-columns:1fr 1fr auto}
+ .row .b-c{width:100%}.row .b-c .act.go{flex:1 1 auto}
+ .erow{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
  .erow .cs-c{grid-column:1/4}.erow .det{grid-column:1/4}.erow .tagrow{grid-column:1/4;flex-wrap:wrap}
  .big{font-size:19px}
  .wrap{padding:12px}
@@ -183,7 +187,7 @@ td input.m{text-align:right;width:84px}
 <div class="wrap">
  <div class="top">
   <div class="eb">🏝️ Cima Blanca · Gastos</div>
-  <h1><span style="font-size:22px;vertical-align:middle;margin-right:6px">💰</span>Registrar GASTOS</h1><!-- versión interna: v26 -->
+  <h1><span style="font-size:22px;vertical-align:middle;margin-right:6px">💰</span>Registrar GASTOS</h1><!-- versión interna: v27 -->
   <div class="syncrow"><button type="button" id="syncPill" class="pill off">☁ Sin conectar</button></div>
   <div class="mnav"><button type="button" id="mPrev" title="Mes anterior">◀</button><div class="ml" id="mLbl"></div><button type="button" id="mNext" title="Mes siguiente">▶</button><button type="button" class="hoy" id="mHoy">Este mes</button></div>
  </div>
@@ -227,7 +231,7 @@ td input.m{text-align:right;width:84px}
  </div>
 
  <div class="sect reg" data-sec="reg">
-  <div class="hd"><div><h2><button type="button" class="sch" title="Plegar / desplegar">›</button><span>📋 Registro de <span id="regMes"></span></span></h2><div class="cs">Todo lo que hay anotado este mes. Con ✎ corriges un monto o una fecha, con ✕ lo quitas. Cualquier cambio se puede deshacer.</div></div>
+  <div class="hd"><div><h2><button type="button" class="sch" title="Plegar / desplegar">›</button><span>📋 Registro de <span id="regMes"></span></span></h2><div class="cs">Todo lo que hay anotado este mes. Con el lápiz amarillo corriges un monto o una fecha; con la equis roja lo quitas. Cualquier cambio se puede deshacer.</div></div>
    <div class="rt"><div class="big" id="regBig"></div><button type="button" class="ghost" id="csvBtn">Descargar CSV</button></div></div>
   <div class="tscroll"><table><thead><tr><th>Fecha</th><th>Concepto</th><th>Detalle</th><th style="text-align:right">Monto</th><th>Estado</th><th></th></tr></thead><tbody id="regBody"></tbody></table></div>
   <div class="tot" id="regTot"></div>
@@ -491,7 +495,7 @@ function renderRec(){
   }
   if(u.fecha===undefined){u.fecha=sug?sug.fecha:(MES+'-01');u.monto=(sug&&sug.monto!==undefined)?fe(sug.monto):'';u.med='';}
   const hasSug=!!sug&&sug.monto!==undefined&&mode==='new'&&!ex.length;
-  const medHTML=r.medido?('<div class="med-c" style="grid-column:1/-1;margin-top:6px"><input type="text" inputmode="decimal" placeholder="'+esc(r.medido)+' consumidos (opcional, informativo)" id="med_'+r.key+'" value="'+esc(u.med||'')+'" style="width:100%;padding:7px 8px;border:1px solid #d9dfe8;border-radius:7px;font-size:12px;font-family:inherit"></div>'):'';
+  const medHTML=r.medido?('<div class="med-c" style="grid-column:1/-1;margin-top:6px"><input type="text" inputmode="decimal" placeholder="'+esc(r.medido)+' consumidos (opcional, informativo)" id="med_'+r.key+'" value="'+esc(u.med||'')+'" style="width:100%;box-sizing:border-box;height:40px;padding:9px 10px;border:1px solid #d9dfe8;border-radius:7px;font-size:13px;font-family:inherit"></div>'):'';
   el.innerHTML='<div class="nm-c"><div class="ic">'+iconFor(rname(r))+'</div><div class="nm">'+esc(rname(r))+'</div><div class="sub" id="sub_'+r.key+'"></div></div>'+
    '<div class="d-c"><input type="date" id="d_'+r.key+'" value="'+esc(u.fecha)+'"></div>'+
    '<div class="d-c a-c"><div class="amt"><span>'+MONEDA+'</span><input type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" id="a_'+r.key+'" value="'+esc(u.monto)+'"></div></div>'+
@@ -742,7 +746,7 @@ function renderReg(){
   if(editId===e.id){
    html+='<tr><td><input type="date" id="rf" value="'+esc(e.fecha)+'"></td><td>'+esc(e.concepto)+(String(e.concepto).startsWith('Hipoteca')?'':'<select id="rfam" style="margin-top:4px;width:100%">'+FAM_ORDEN.map(f=>'<option value="'+esc(f)+'"'+(f===e.familia?' selected':'')+'>'+esc(f.replace(/^\d\. /,''))+'</option>').join('')+'</select>')+'</td><td><input type="text" id="rd" value="'+esc(e.detalle||'')+'"></td><td class="n"><input class="m" type="text" inputmode="decimal" autocomplete="off" id="rm" value="'+esc(fe(e.monto))+'"></td><td></td><td style="white-space:nowrap"><button class="tb okb" data-a="ok" data-id="'+e.id+'" title="Guardar">✓</button><button class="tb" data-a="no" title="Cancelar">↩</button></td></tr>';
   }else{
-   html+='<tr><td>'+esc(e.fecha||'—')+'</td><td>'+esc(e.concepto)+'<small>'+esc(e.origen||'')+'</small></td><td>'+esc(e.detalle||e.etiqueta||'—')+'</td><td class="n">'+f2(e.monto)+'</td><td>'+bd+xtra+'</td><td style="white-space:nowrap"><button class="tb" data-a="ed" data-id="'+e.id+'" title="Corregir">✎</button><button class="tb del" data-a="del" data-id="'+e.id+'" title="Quitar">✕</button></td></tr>';
+   html+='<tr><td>'+esc(e.fecha||'—')+'</td><td>'+esc(e.concepto)+'<small>'+esc(e.origen||'')+'</small></td><td>'+esc(e.detalle||e.etiqueta||'—')+'</td><td class="n">'+f2(e.monto)+'</td><td>'+bd+xtra+'</td><td style="white-space:nowrap"><button class="tb" data-a="ed" data-id="'+e.id+'" title="Corregir"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 20h4L19 9a2.5 2.5 0 0 0-3.5-3.5L4.5 16.5V20z\"/><path d=\"M14.5 6.5L17.5 9.5\"/></svg></button><button class="tb del" data-a="del" data-id="'+e.id+'" title="Quitar"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.6\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></td></tr>';
   }
  });
  body.innerHTML=html;
