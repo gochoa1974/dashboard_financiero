@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Cima Blanca — Registrar gastos v24</title>
+<title>Cima Blanca — Registrar gastos v25</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f6f7f9;color:#1a2233}
@@ -142,6 +142,30 @@ td input.m{text-align:right;width:84px}
 .grp,#nvSpell{margin-top:8px;padding:8px 10px;background:#fffaf0;border:1px solid #f0d9ae;border-radius:8px;font-size:12px;color:#8a5a0a;display:flex;gap:8px;align-items:center;justify-content:space-between}
 .grp button,#nvSpell button{border:1px solid #f0d9ae;background:#fff;color:#8a5a0a;border-radius:6px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
 @media(max-width:600px){
+ .sect>.hd{flex-wrap:wrap;gap:8px;padding:12px 14px}
+ .sect>.hd>div:first-child{flex:1 1 100%;min-width:0}
+ .sect>.hd>.rt,.sect>.hd>div:last-child{flex:1 1 100%;min-width:0}
+ .hd .rt{justify-content:space-between;text-align:left}
+ .hd .rt .ghost{flex:0 0 auto}
+ .sect>.hd>div:last-child:not(.rt){display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;text-align:left!important}
+ .big{white-space:normal}
+ .tscroll{overflow-x:visible}
+ .tscroll thead{display:none}
+ .tscroll table,.tscroll tbody{display:block;width:100%}
+ .tscroll tr:not(.famrow){display:grid;grid-template-columns:1fr auto;grid-template-areas:"con mon" "det det" "fec act" "est est";gap:3px 10px;padding:10px 14px;border-bottom:1px solid #f0f2f6;align-items:center}
+ .tscroll tr:not(.famrow)>td{display:block;padding:0;border:none;min-width:0}
+ .tscroll td:nth-child(1){grid-area:fec;color:#6b7691;font-size:11.5px}
+ .tscroll td:nth-child(2){grid-area:con;font-size:13px;font-weight:600}
+ .tscroll td:nth-child(2) small{display:block;font-weight:400}
+ .tscroll td:nth-child(3){grid-area:det;color:#3d485c;font-size:12px}
+ .tscroll td:nth-child(4){grid-area:mon;font-size:14px;text-align:right}
+ .tscroll td:nth-child(5){grid-area:est;display:flex;flex-wrap:wrap;gap:4px}
+ .tscroll td:nth-child(5):empty{display:none}
+ .tscroll td:nth-child(6){grid-area:act;justify-self:end}
+ .tscroll td[colspan]{grid-area:1/1/5/3}
+ .tscroll tr.famrow,.tscroll tr.famrow>td{display:block}
+ .tscroll td input[type=date],.tscroll td input[type=text]:not(.m),.tscroll td select{width:100%}
+ .tscroll td.n input{width:120px}
  .ev1 .l1{flex-wrap:wrap}.ev1 input[type=text].con{flex:1 1 100%}.ev1 .amt{flex:1}
  .ev1 .l2{flex-wrap:wrap}.ev1 input[type=date]{flex:1;width:auto}
  .row{grid-template-columns:1fr 1fr auto;grid-template-areas:"nm nm nm" "d a b"}
@@ -156,7 +180,7 @@ td input.m{text-align:right;width:84px}
 <div class="wrap">
  <div class="top">
   <div class="eb">🏝️ Cima Blanca · Gastos</div>
-  <h1><span style="font-size:22px;vertical-align:middle;margin-right:6px">💰</span>Registrar GASTOS</h1><!-- versión interna: v24 -->
+  <h1><span style="font-size:22px;vertical-align:middle;margin-right:6px">💰</span>Registrar GASTOS</h1><!-- versión interna: v25 -->
   <div class="syncrow"><button type="button" id="syncPill" class="pill off">☁ Sin conectar</button></div>
   <div class="mnav"><button type="button" id="mPrev" title="Mes anterior">◀</button><div class="ml" id="mLbl"></div><button type="button" id="mNext" title="Mes siguiente">▶</button><button type="button" class="hoy" id="mHoy">Este mes</button></div>
  </div>
@@ -171,13 +195,13 @@ td input.m{text-align:right;width:84px}
  </div></div>
 
  <div class="sect rec" data-sec="rec">
-  <div class="hd"><div><h2><button type="button" class="sch" title="Plegar / desplegar">›</button>🔁 Recurrentes</h2><div class="cs">Los de todos los meses. Amarillo = valor sugerido, solo confírmalo. Verde = ya registrado.</div></div>
+  <div class="hd"><div><h2><button type="button" class="sch" title="Plegar / desplegar">›</button><span>🔁 Recurrentes</span></h2><div class="cs">Los de todos los meses. Amarillo = valor sugerido, solo confírmalo. Verde = ya registrado.</div></div>
    <div style="text-align:right"><div class="big" id="recTot"></div><div class="bigsub" id="recPend"></div><div class="cnt" id="recCnt" style="margin-top:2px"></div><button type="button" class="ghost" id="accAll" style="margin-top:6px;display:none">Confirmar sugeridos</button> <button type="button" class="ghost" id="addRecBtn" style="margin-top:6px">+ Nuevo recurrente</button></div></div>
   <div class="bd"><div id="newRecBox" style="display:none"></div><div class="rows" id="recRows"></div></div>
  </div>
 
  <div class="sect ev" data-sec="ev">
-  <div class="hd"><div><h2><button type="button" class="sch" title="Plegar / desplegar">›</button>⚡ Eventuales</h2><div class="cs">Los que no son mensuales: predial, mantenimiento, comisariato, imprevistos…</div></div>
+  <div class="hd"><div><h2><button type="button" class="sch" title="Plegar / desplegar">›</button><span>⚡ Eventuales</span></h2><div class="cs">Los que no son mensuales: predial, mantenimiento, comisariato, imprevistos…</div></div>
    <div class="rt"><div><div class="big" id="evTot"></div><div class="bigsub" id="evPend"></div></div><button type="button" class="ghost" id="evBtn">+ Agregar</button></div></div>
   <div class="bd" id="evBody">
    <div class="ev1">
@@ -200,7 +224,7 @@ td input.m{text-align:right;width:84px}
  </div>
 
  <div class="sect reg" data-sec="reg">
-  <div class="hd"><div><h2><button type="button" class="sch" title="Plegar / desplegar">›</button>📋 Registro de&nbsp;<span id="regMes"></span></h2><div class="cs">Todo lo que hay anotado este mes. Con ✎ corriges un monto o una fecha, con ✕ lo quitas. Cualquier cambio se puede deshacer.</div></div>
+  <div class="hd"><div><h2><button type="button" class="sch" title="Plegar / desplegar">›</button><span>📋 Registro de <span id="regMes"></span></span></h2><div class="cs">Todo lo que hay anotado este mes. Con ✎ corriges un monto o una fecha, con ✕ lo quitas. Cualquier cambio se puede deshacer.</div></div>
    <div class="rt"><div class="big" id="regBig"></div><button type="button" class="ghost" id="csvBtn">Descargar CSV</button></div></div>
   <div class="tscroll"><table><thead><tr><th>Fecha</th><th>Concepto</th><th>Detalle</th><th style="text-align:right">Monto</th><th>Estado</th><th></th></tr></thead><tbody id="regBody"></tbody></table></div>
   <div class="tot" id="regTot"></div>
