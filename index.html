@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Cima Blanca — Registrar gastos v28</title>
+<title>Cima Blanca — Registrar gastos v29</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f6f7f9;color:#1a2233}
@@ -187,7 +187,7 @@ td select,#rfam{min-height:40px;padding:8px;border:1px solid #d9dfe8;border-radi
 <div class="wrap">
  <div class="top">
   <div class="eb">🏝️ Cima Blanca · Gastos</div>
-  <h1><span style="font-size:22px;vertical-align:middle;margin-right:6px">💰</span>Registrar GASTOS</h1><!-- versión interna: v28 -->
+  <h1><span style="font-size:22px;vertical-align:middle;margin-right:6px">💰</span>Registrar GASTOS</h1><!-- versión interna: v29 -->
   <div class="syncrow"><button type="button" id="syncPill" class="pill off">☁ Sin conectar</button></div>
   <div class="mnav"><button type="button" id="mPrev" title="Mes anterior">◀</button><div class="ml" id="mLbl"></div><button type="button" id="mNext" title="Mes siguiente">▶</button><button type="button" class="hoy" id="mHoy">Este mes</button></div>
  </div>
@@ -395,6 +395,8 @@ const uid=()=>'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const bid=()=>'b'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 
 let MES=todayISO().slice(0,7);
+/* esPasado: cualquier mes anterior al mes en curso */
+const esPasado=ym=>ym<todayISO().slice(0,7);
 let UI={};      // estado de cada fila recurrente del mes actual
 let EXTRA=[];   // eventuales aún sin guardar
 let editId=null;
@@ -803,7 +805,9 @@ function hasPending(){return pendingRec(dataset()).length>0||EXTRA.some(x=>x.mon
 function goMonth(ym){
  if(ym===MES)return;
  if(hasPending()&&!confirm('Tienes cosas sin guardar. Si cambias de mes se descartan. ¿Cambiar igual?'))return;
- SEC.rec=!AUTOCLOSED[ym];MES=ym;UI={};EXTRA=[];editId=null;$('extraRows').innerHTML='';SEC.ev=false;nvClear();renderAll();
+ /* los meses ya pasados siempre entran plegados: solo se revisan, no se llenan */
+ SEC.rec=esPasado(ym)?false:!AUTOCLOSED[ym];
+ MES=ym;UI={};EXTRA=[];editId=null;$('extraRows').innerHTML='';SEC.ev=false;nvClear();renderAll();
 }
 function renderAll(){$('mLbl').textContent=mLabel(MES);renderRec();renderReg();refreshFoot();}
 
@@ -936,7 +940,8 @@ function renderTotals(){
  $('evTot').textContent='Subtotal (2) '+f2(evT);
  $('evPend').textContent=pe>0?'+ '+f2(pe)+' por guardar':'';
  $('regBig').textContent='Total (3) '+f2(sum(mon));
- if(saved===REC().length){if(!AUTOCLOSED[MES]){AUTOCLOSED[MES]=1;SEC.rec=false;}}
+ if(esPasado(MES)){/* mes pasado: no se vuelve a abrir solo */}
+ else if(saved===REC().length){if(!AUTOCLOSED[MES]){AUTOCLOSED[MES]=1;SEC.rec=false;}}
  else if(AUTOCLOSED[MES]){delete AUTOCLOSED[MES];SEC.rec=true;}
  applySec();
 }
