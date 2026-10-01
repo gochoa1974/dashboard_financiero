@@ -1,14 +1,14 @@
 <!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Cima Blanca — Registrar gastos v21</title>
+<title>Cima Blanca — Registrar gastos v23</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f6f7f9;color:#1a2233}
 .wrap{max-width:760px;margin:0 auto;padding:20px}
-.top{background:linear-gradient(135deg,#0f1b3d,#1f2a44);color:#fff;border-radius:14px;padding:18px 22px;margin-bottom:14px}
-.top .eb{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#9fb3e8}
-.top h1{font-size:23px;margin:4px 0 10px;font-weight:700}
+.top{background:linear-gradient(135deg,#0f1b3d,#1a2b52 55%,#22315c);color:#fff;border-radius:16px;padding:20px 22px;margin-bottom:14px;box-shadow:0 8px 24px -8px rgba(15,27,61,.45)}
+.top .eb{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9fb3e8;display:flex;align-items:center;gap:6px}
+.top h1{font-size:24px;margin:5px 0 12px;font-weight:800;letter-spacing:-.01em}
 .mnav{display:flex;align-items:center;gap:10px}
 .mnav button{background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:8px;width:34px;height:34px;font-size:15px;cursor:pointer}
 .mnav button:hover{background:rgba(255,255,255,.22)}
@@ -155,16 +155,16 @@ td input.m{text-align:right;width:84px}
 <body>
 <div class="wrap">
  <div class="top">
-  <div class="eb">Cima Blanca · Gastos</div>
-  <h1>Registrar gastos <span style="font-size:11px;font-weight:700;color:#8792a8;border:1px solid #d9dfe8;border-radius:6px;padding:1px 6px;vertical-align:middle">v21</span></h1>
+  <div class="eb">🏝️ Cima Blanca · Gastos</div>
+  <h1><span style="font-size:22px;vertical-align:middle;margin-right:6px">💰</span>Registrar GASTOS</h1><!-- versión interna: v23 -->
   <div class="syncrow"><button type="button" id="syncPill" class="pill off">☁ Sin conectar</button></div>
   <div class="mnav"><button type="button" id="mPrev" title="Mes anterior">◀</button><div class="ml" id="mLbl"></div><button type="button" id="mNext" title="Mes siguiente">▶</button><button type="button" class="hoy" id="mHoy">Este mes</button></div>
  </div>
 
  <div class="sect" id="cfgBox" style="display:none"><div class="bd">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><h2 style="font-size:14.5px;font-weight:700">☁ Conexión con tu Google Sheet</h2><button type="button" class="ghost" id="cfgClose" title="Plegar">Cerrar ▴</button></div>
-  <div class="cs" style="font-size:11.5px;color:#6b7691;margin:2px 0 10px">Pega la URL de tu aplicación web y tu clave. Se guardan solo en este dispositivo (en el celular o la tablet se hace una vez cada uno).</div>
-  <input type="text" id="cfgUrl" class="cfgin" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <div class="cs" style="font-size:11.5px;color:#6b7691;margin:2px 0 10px">Escribe tu clave. Se guarda solo en este dispositivo (en el celular o la tablet se hace una vez cada uno).</div>
+  <input type="text" id="cfgUrl" class="cfgin" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false" style="display:none">
   <input type="password" id="cfgKey" class="cfgin" placeholder="Tu clave" autocomplete="off">
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="ghost" id="cfgGo" style="background:#2563eb;color:#fff;border-color:#2563eb">Conectar</button><button type="button" class="ghost" id="cfgSync">Sincronizar ahora</button><button type="button" class="ghost" id="cfgOff" style="color:#b42318">Desconectar</button></div>
   <div class="hint" id="cfgMsg"></div>
@@ -335,8 +335,10 @@ const KEY='cb_gastos_ops_v4';
 let OPS=[],stOK=true;
 try{OPS=JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){stOK=false;}
 const CFGKEY='cb_gastos_cfg_v1',SYNKEY='cb_gastos_synced_v1',BASEKEY='cb_gastos_base_v1';
+const FIXED_URL='https://script.google.com/macros/s/AKfycbzfSugKWyWER2xq85gIeP_q3wHXM57ObmCwtSmphDJm1PhZklgBeD9u0td_norHAFUedQ/exec';
 let CFG={},SYNCED=null,BASE=null,syncBusy=false,syncAgain=false,syncSt={k:'off',msg:''},lastPull=0,ftimer=null;
 try{CFG=JSON.parse(localStorage.getItem(CFGKEY)||'{}')||{};}catch(e){}
+if(CFG&&CFG.clave){CFG.url=FIXED_URL;}
 try{SYNCED=JSON.parse(localStorage.getItem(SYNKEY)||'null');}catch(e){}
 try{BASE=JSON.parse(localStorage.getItem(BASEKEY)||'null');}catch(e){}
 function persistOnly(){try{localStorage.setItem(KEY,JSON.stringify(OPS));}catch(e){stOK=false;}}
@@ -859,11 +861,11 @@ function scheduleFlush(){if(!connected())return;clearTimeout(ftimer);setSync('pe
 
 let JUSTCONN=false;
 $('cfgClose').onclick=()=>{$('cfgBox').style.display='none';};
-$('syncPill').onclick=()=>{const b=$('cfgBox');b.style.display=b.style.display==='none'?'block':'none';$('cfgUrl').value=CFG.url||'';$('cfgKey').value=CFG.clave||'';};
+$('syncPill').onclick=()=>{const b=$('cfgBox');b.style.display=b.style.display==='none'?'block':'none';$('cfgKey').value=CFG.clave||'';};
 $('cfgGo').onclick=()=>{
- const u=$('cfgUrl').value.trim(),k=$('cfgKey').value.trim();
- if(!/^https?:\/\//.test(u)||!k){$('cfgMsg').textContent='Falta la URL (debe empezar con https://) o la clave.';return;}
- CFG={url:u,clave:k};JUSTCONN=true;saveCfg();SYNCED=null;setHint();sync({pull:true});
+ const k=$('cfgKey').value.trim();
+ if(!k){$('cfgMsg').textContent='Falta la clave.';return;}
+ CFG={url:FIXED_URL,clave:k};JUSTCONN=true;saveCfg();SYNCED=null;setHint();sync({pull:true});
 };
 $('cfgSync').onclick=()=>{if(!connected()){$('cfgMsg').textContent='Primero pega la URL y la clave y presiona Conectar.';return;}sync({pull:true});};
 $('cfgOff').onclick=()=>{CFG={};SYNCED=null;saveCfg();saveSync();setHint();setSync('off');$('cfgMsg').textContent='Desconectado. Lo que tienes aquí sigue guardado en este dispositivo.';};
