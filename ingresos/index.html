@@ -284,39 +284,48 @@
     return isNaN(n) ? 0 : n;
   }
 
-  function buildKeyedRecords(rowsByFile) {
-    // rowsByFile: array of { fileName, modifiedTime, rows }, ordenados del más viejo al más nuevo
+  function buildRecordsForFile(file) {
+    // Suma filas del MISMO archivo con el mismo código (reservas pagadas en varios abonos).
+    // Las noches no se suman, se toman una sola vez.
     var byCode = {};
-    rowsByFile.forEach(function (file) {
-      file.rows.forEach(function (row) {
-        var tipo = (row["Tipo"] || "").trim();
-        if (tipo && tipo !== "Reservación") return;
-        var code = cleanCode(row["Código de confirmación"]);
-        if (!code) return;
-        if (!byCode[code]) {
-          byCode[code] = {
-            codigo_confirmacion: code,
-            huesped: row["Huésped"] || "",
-            anuncio: row["Anuncio"] || "",
-            fecha_inicio: row["Fecha de inicio"] || "",
-            fecha_finalizacion: row["Fecha de finalización"] || "",
-            noches: toNumber(row["Noches"]),
-            monto: 0,
-            ingresos_brutos: 0,
-            archivo_origen: file.fileName,
-            actualizado: file.modifiedTime
-          };
-        }
-        var rec = byCode[code];
-        rec.monto += toNumber(row["Monto"]);
-        rec.ingresos_brutos += toNumber(row["Ingresos brutos"]);
-        // el archivo más reciente manda para los datos descriptivos
-        if (file.modifiedTime >= rec.actualizado) {
-          rec.huesped = row["Huésped"] || rec.huesped;
-          rec.anuncio = row["Anuncio"] || rec.anuncio;
-          rec.archivo_origen = file.fileName;
-          rec.actualizado = file.modifiedTime;
-        }
+    file.rows.forEach(function (row) {
+      var tipo = (row["Tipo"] || "").trim();
+      if (tipo && tipo !== "Reservación") return;
+      var code = cleanCode(row["Código de confirmación"]);
+      if (!code) return;
+      if (!byCode[code]) {
+        byCode[code] = {
+          codigo_confirmacion: code,
+          huesped: row["Huésped"] || "",
+          anuncio: row["Anuncio"] || "",
+          fecha_inicio: row["Fecha de inicio"] || "",
+          fecha_finalizacion: row["Fecha de finalización"] || "",
+          noches: toNumber(row["Noches"]),
+          monto: 0,
+          ingresos_brutos: 0,
+          archivo_origen: file.fileName,
+          actualizado: file.modifiedTime
+        };
+      }
+      var rec = byCode[code];
+      rec.monto += toNumber(row["Monto"]);
+      rec.ingresos_brutos += toNumber(row["Ingresos brutos"]);
+    });
+    return byCode;
+  }
+
+  function buildKeyedRecords(rowsByFile) {
+    // rowsByFile: array de { fileName, modifiedTime, rows }. El archivo más reciente
+    // REEMPLAZA por completo el registro de un código (nunca se suma entre archivos distintos):
+    // dos exportaciones del mismo CSV en fechas distintas no son dos reservas ni dos pagos.
+    var sorted = rowsByFile.slice().sort(function (a, b) {
+      return (a.modifiedTime || "").localeCompare(b.modifiedTime || "");
+    });
+    var byCode = {};
+    sorted.forEach(function (file) {
+      var fileRecords = buildRecordsForFile(file);
+      Object.keys(fileRecords).forEach(function (code) {
+        byCode[code] = fileRecords[code];
       });
     });
     return byCode;
