@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Cima Blanca — Registrar gastos v30</title>
+<title>Cima Blanca — Registrar gastos v31</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f6f7f9;color:#1a2233}
@@ -200,14 +200,17 @@ td select,#rfam{min-height:40px;padding:8px;border:1px solid #d9dfe8;border-radi
  <div style="font-size:30px;margin-bottom:6px">🔒</div>
  <h1>Cima Blanca · Gastos</h1>
  <p>Escribe tu clave para conectar con tu Google Sheet. Se guarda solo en este dispositivo.</p>
- <input type="password" id="gateKey" placeholder="Tu clave" autocomplete="off" autofocus>
+ <div style="position:relative">
+  <input type="password" id="gateKey" placeholder="Tu clave" autocomplete="off" autofocus style="padding-right:40px">
+  <button type="button" id="gateEye" aria-label="Mostrar clave" style="position:absolute;right:4px;top:4px;bottom:4px;width:34px;border:none;background:transparent;cursor:pointer;font-size:16px;color:#6b7691">👁</button>
+ </div>
  <button type="button" id="gateGo">Conectar</button>
  <div id="gateMsg"></div>
 </div></div>
 <div class="wrap locked" id="wrap-main">
  <div class="top">
   <div class="eb">🏝️ Cima Blanca · Gastos</div>
-  <h1><span style="font-size:22px;vertical-align:middle;margin-right:6px">💰</span>Registrar GASTOS</h1><!-- versión interna: v30 -->
+  <h1><span style="font-size:22px;vertical-align:middle;margin-right:6px">💰</span>Registrar GASTOS</h1><!-- versión interna: v31 -->
   <div class="syncrow"><button type="button" id="syncPill" class="pill off">☁ Sin conectar</button></div>
   <div class="mnav"><button type="button" id="mPrev" title="Mes anterior">◀</button><div class="ml" id="mLbl"></div><button type="button" id="mNext" title="Mes siguiente">▶</button><button type="button" class="hoy" id="mHoy">Este mes</button></div>
  </div>
@@ -997,6 +1000,13 @@ $('gateGo').onclick=()=>{
  gateConnect(k);
 };
 $('gateKey').addEventListener('keydown',e=>{if(e.key==='Enter')$('gateGo').click();});
+$('gateEye').onclick=()=>{
+ const inp=$('gateKey'),show=inp.type==='password';
+ inp.type=show?'text':'password';
+ $('gateEye').textContent=show?'🙈':'👁';
+ $('gateEye').setAttribute('aria-label',show?'Ocultar clave':'Mostrar clave');
+ inp.focus();
+};
 if(connected()){closeGate();sync({pull:true});}else{openGate();setSync('off');}
 </script>
 </body></html>
