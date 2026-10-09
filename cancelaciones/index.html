@@ -126,11 +126,11 @@ textarea{resize:vertical;min-height:60px}
 
         <div class="field" style="padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
           <label>Buscar la reserva real (en vez de escribir el código)</label>
-          <div class="pw">
-            <input list="cReservaList" id="cBuscarReserva" placeholder="Escribe el nombre del huésped o el código..." autocomplete="off">
+          <div class="pw" style="position:relative">
+            <input id="cBuscarReserva" placeholder="Escribe el nombre del huésped o el código..." autocomplete="off">
             <button type="button" class="btn btn-ghost btn-sm" id="cDriveBtn" style="display:none">Permitir acceso</button>
+            <div id="cReservaDropdown" style="display:none;position:absolute;left:0;right:0;top:100%;margin-top:4px;background:var(--surface,#fff);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:260px;overflow-y:auto;z-index:50"></div>
           </div>
-          <datalist id="cReservaList"></datalist>
           <div class="msg" id="cDriveMsg">Se actualiza solo al abrir esta página — no necesitas hacer nada.</div>
         </div>
 
@@ -544,6 +544,8 @@ function cargarReservasDesdeDrive() {
     .catch(e => pintarDriveMsg('error', e.message || e));
 }
 
+let RESERVA_LABELS = [];
+
 function indexarReservas() {
   RES_POR_LABEL = {};
   RESERVAS.forEach(r => {
@@ -551,8 +553,7 @@ function indexarReservas() {
     const label = r.codigo_confirmacion + ' — ' + (r.huesped || 'sin nombre') + ' (' + (r.fecha_inicio || '?') + ')' + estadoTxt;
     RES_POR_LABEL[label] = r;
   });
-  const dl = $('cReservaList');
-  dl.innerHTML = Object.keys(RES_POR_LABEL).sort((a, b) => b.localeCompare(a)).map(l => `<option value="${esc(l)}"></option>`).join('');
+  RESERVA_LABELS = Object.keys(RES_POR_LABEL).sort((a, b) => b.localeCompare(a));
 }
 
 // mapea el texto libre del "Anuncio" que viene de Airbnb/directas a uno de los 3 anuncios internos; si no reconoce ninguno, no cambia la selección actual
@@ -579,9 +580,32 @@ function aplicarReservaAlForm(r) {
   }
 }
 
-$('cBuscarReserva').addEventListener('change', () => {
-  const r = RES_POR_LABEL[$('cBuscarReserva').value];
+// ===== Lista desplegable propia del buscador de reservas (reemplaza <datalist>, que en iPhone
+// se muestra como una cinta pegada al teclado difícil de usar) =====
+function ocultarDropdown() { $('cReservaDropdown').style.display = 'none'; }
+
+function mostrarDropdown(filtro) {
+  const dd = $('cReservaDropdown');
+  const q = (filtro || '').trim().toLowerCase();
+  const coincidencias = (q ? RESERVA_LABELS.filter(l => l.toLowerCase().indexOf(q) !== -1) : RESERVA_LABELS).slice(0, 30);
+  if (!coincidencias.length) { ocultarDropdown(); return; }
+  dd.innerHTML = coincidencias.map(l => `<div class="drop-item" data-label="${esc(l)}" style="padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line)">${esc(l)}</div>`).join('');
+  dd.style.display = 'block';
+}
+
+$('cBuscarReserva').addEventListener('input', () => mostrarDropdown($('cBuscarReserva').value));
+$('cBuscarReserva').addEventListener('focus', () => mostrarDropdown($('cBuscarReserva').value));
+$('cReservaDropdown').addEventListener('click', (e) => {
+  const item = e.target.closest('.drop-item');
+  if (!item) return;
+  const label = item.getAttribute('data-label');
+  $('cBuscarReserva').value = label;
+  ocultarDropdown();
+  const r = RES_POR_LABEL[label];
   if (r) aplicarReservaAlForm(r);
+});
+document.addEventListener('click', (e) => {
+  if (e.target !== $('cBuscarReserva') && !$('cReservaDropdown').contains(e.target)) ocultarDropdown();
 });
 
 let driveIntentoSilencioso = true;
