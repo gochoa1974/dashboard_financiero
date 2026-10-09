@@ -587,10 +587,12 @@ $('cBuscarReserva').addEventListener('change', () => {
 let driveIntentoSilencioso = true;
 
 function initDriveAuth() {
+  let yaRespondio = false;
   driveTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: DRIVE_CLIENT_ID,
     scope: DRIVE_SCOPES,
     callback: resp => {
+      yaRespondio = true;
       if (resp.error) {
         if (driveIntentoSilencioso) { driveIntentoSilencioso = false; pintarDriveMsg('primeravez'); }
         else pintarDriveMsg('error', resp.error);
@@ -603,6 +605,13 @@ function initDriveAuth() {
   // Intento automático y silencioso al abrir la página: si ya diste el permiso antes (aunque haya
   // sido desde el módulo de Ingresos), esto actualiza las reservas solo, sin pedirte nada.
   driveTokenClient.requestAccessToken({ prompt: '' });
+  // La primera vez que se usa este formulario en un navegador, el intento silencioso no puede
+  // abrir ventana (el navegador la bloquea por no venir de un clic) y a veces ni siquiera llega
+  // a llamar al callback de arriba. Por eso, si en 2.5s no hay respuesta, mostramos el botón para
+  // que el único clic manual (una sola vez) lo dé la persona.
+  setTimeout(() => {
+    if (!yaRespondio && driveIntentoSilencioso) { driveIntentoSilencioso = false; pintarDriveMsg('primeravez'); }
+  }, 2500);
 }
 $('cDriveBtn').onclick = () => {
   driveIntentoSilencioso = false;
