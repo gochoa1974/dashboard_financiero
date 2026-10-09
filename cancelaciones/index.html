@@ -619,11 +619,6 @@ $('cDriveBtn').onclick = () => {
   if (!driveTokenClient) { pintarDriveMsg('error', 'Google aún no cargó, intenta de nuevo en un segundo'); return; }
   driveTokenClient.requestAccessToken({});
 };
-// Cada vez que se abre la pestaña de Cancelación, se intenta refrescar en segundo plano
-// (sin ventana emergente) para no depender de que alguien se acuerde de actualizar a mano.
-$('tabCanc').addEventListener('click', () => {
-  if (driveTokenClient) driveTokenClient.requestAccessToken({ prompt: '' });
-});
 window.addEventListener('load', () => {
   if (window.google && google.accounts && google.accounts.oauth2) initDriveAuth();
   else {
