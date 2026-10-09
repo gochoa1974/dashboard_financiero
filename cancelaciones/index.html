@@ -257,6 +257,8 @@ try {
 
 let editC = null, editB = null;
 
+const TIPO_LABEL = { 1: 'Cancelación con compensación', 2: 'No-show sin cancelar', 3: 'Cancelación sin compensación', 4: 'Devolución al huésped', 5: 'Overbooking con reubicación', 6: 'Contracargo / disputa' };
+
 function uid() { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
 function saveCfg() { try { localStorage.setItem(CFGKEY, JSON.stringify(CFG)); } catch (e) {} }
@@ -426,7 +428,6 @@ async function borrarB(id) {
   } catch (e) { alert('No se pudo borrar: ' + (e.message || e)); }
 }
 
-const TIPO_LABEL = { 1: 'Cancelación con compensación', 2: 'No-show sin cancelar', 3: 'Cancelación sin compensación', 4: 'Devolución al huésped', 5: 'Overbooking con reubicación', 6: 'Contracargo / disputa' };
 
 function render() {
   const lc = $('cLista');
