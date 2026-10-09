@@ -1,1 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Cancelaciones y bloqueos · Cima Blanca</title>
+<link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
+<link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#edf2f4;--surface:#ffffff;--ink:#0a2233;--mut:#5f7080;--line:#dde5ea;
+  --hero1:#0a2233;--hero2:#123a52;--hero-mute:#9fc0d3;
+  --accent:#b45309;--accent-ink:#ffffff;--accent-bg:rgba(180,83,9,.12);
+  --ok:#0f9d6e;--bad:#dc2626;
+  --shadow:0 1px 2px rgba(10,34,51,.05),0 8px 20px -12px rgba(10,34,51,.2)
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#071722;--surface:#0e2536;--ink:#eaf2f6;--mut:#8fa6b5;--line:#1a3649;
+    --hero1:#0f3550;--hero2:#14506b;--hero-mute:#9fc0d3;
+    --accent:#f59e0b;--accent-ink:#1a0f00;--accent-bg:rgba(245,158,11,.16);
+    --ok:#2fd49a;--bad:#f87171;
+    --shadow:0 1px 2px rgba(0,0,0,.4)
+  }
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;min-height:100vh;padding:20px 16px 40px;
+  font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased}
+.wrap{width:100%;max-width:640px;margin:0 auto}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--mut);font-size:13px;font-weight:700;
+  text-decoration:none;margin-bottom:14px}
+.hero{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--hero1),var(--hero2));color:#fff;
+  border-radius:24px;padding:22px 20px;box-shadow:0 18px 34px -16px rgba(10,34,51,.7);text-align:center;margin-bottom:18px}
+.hero h1{margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}
+.hero p{margin:6px 0 0;font-size:13px;color:var(--hero-mute);font-weight:600}
 
+/* gate */
+.gate{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px 18px;box-shadow:var(--shadow)}
+.gate h2{margin:0 0 6px;font-size:16px;font-weight:800}
+.gate p{margin:0 0 14px;font-size:13px;color:var(--mut);font-weight:600;line-height:1.5}
+.pw{display:flex;gap:8px}
+input,select,textarea{font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:12px;
+  padding:11px 12px;background:var(--bg);color:var(--ink);width:100%}
+textarea{resize:vertical;min-height:60px}
+.btn{appearance:none;border:none;border-radius:12px;padding:11px 16px;font-family:inherit;font-weight:800;
+  font-size:14px;cursor:pointer}
+.btn-acc{background:var(--accent);color:var(--accent-ink)}
+.btn-ghost{background:transparent;color:var(--mut);border:1px solid var(--line)}
+.btn-sm{padding:8px 12px;font-size:13px;border-radius:10px}
+.msg{font-size:12.5px;font-weight:700;margin-top:8px;min-height:16px}
+.msg.err{color:var(--bad)}
+.msg.ok{color:var(--ok)}
+#app{display:none}
+
+/* tabs */
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{flex:1;text-align:center;padding:11px 8px;border-radius:12px;border:1px solid var(--line);
+  background:var(--surface);font-weight:800;font-size:13.5px;color:var(--mut);cursor:pointer}
+.tab.on{background:var(--accent-bg);color:var(--accent);border-color:var(--accent)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;
+  box-shadow:var(--shadow);margin-bottom:16px}
+.card h3{margin:0 0 4px;font-size:15px;font-weight:800}
+.card .hint{margin:0 0 14px;font-size:12.5px;color:var(--mut);font-weight:600;line-height:1.5}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--mut);margin-bottom:5px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chk{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:var(--ink)}
+.chk input{width:auto}
+.actions{display:flex;gap:10px;margin-top:4px}
+
+.list-item{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;background:var(--bg)}
+.list-item .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.list-item b{font-size:14px}
+.list-item .tag{font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--accent-bg);color:var(--accent);white-space:nowrap}
+.list-item .meta{font-size:12.5px;color:var(--mut);font-weight:600;margin-top:4px;line-height:1.5}
+.list-item .btns{display:flex;gap:8px;margin-top:10px}
+.empty{font-size:13px;color:var(--mut);font-weight:600;text-align:center;padding:18px 0}
+.sync{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;font-size:12.5px;color:var(--mut);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Dashboard
+  </a>
+  <div class="hero">
+    <h1>Cancelaciones y bloqueos</h1>
+    <p>Cima Blanca · Punta Blanca</p>
+  </div>
+
+  <div id="gate" class="gate">
+    <h2>Conectar con tu hoja</h2>
+    <p>Escribe tu clave para conectar. Se guarda en este dispositivo y no te la vuelvo a pedir.</p>
+    <div class="pw">
+      <input type="password" id="gateKey" placeholder="Tu clave" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
+      <button type="button" class="btn btn-ghost btn-sm" id="gateEye">Ver</button>
+    </div>
+    <div style="margin-top:10px"><button type="button" class="btn btn-acc" id="gateGo">Conectar</button></div>
+    <div class="msg" id="gateMsg"></div>
+  </div>
+
+  <div id="app">
+    <div class="sync">
+      <span id="syncHint">Sin sincronizar</span>
+      <button type="button" class="btn btn-ghost btn-sm" id="syncBtn">Actualizar</button>
+    </div>
+
+    <div class="tabs">
+      <div class="tab on" id="tabCanc">Cancelación / No-show</div>
+      <div class="tab" id="tabBloq">Bloqueo</div>
+    </div>
+
+    <!-- FORM CANCELACION -->
+    <div id="panelCanc">
+      <div class="card">
+        <h3 id="cFormTitle">Registrar cancelación / no-show</h3>
+        <p class="hint">Un caso por reserva. Si editas uno ya guardado, se corrige la fila existente (no se duplica).</p>
+
+        <div class="field" style="padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
+          <label>Buscar la reserva real (en vez de escribir el código)</label>
+          <div class="pw">
+            <input list="cReservaList" id="cBuscarReserva" placeholder="Escribe el nombre del huésped o el código..." autocomplete="off">
+            <button type="button" class="btn btn-ghost btn-sm" id="cDriveBtn" style="display:none">Permitir acceso</button>
+          </div>
+          <datalist id="cReservaList"></datalist>
+          <div class="msg" id="cDriveMsg">Se actualiza solo al abrir esta página — no necesitas hacer nada.</div>
+        </div>
+
+        <div class="field"><label>Código de reserva</label><input id="cCodigo" placeholder="Ej. HMJWRMSPT4 o Reserva_Directa_003"></div>
+        <div class="row2">
+          <div class="field"><label>Huésped</label><input id="cHuesped" placeholder="Nombre"></div>
+          <div class="field"><label>Canal</label>
+            <select id="cCanal"><option value="Airbnb">Airbnb</option><option value="Booking">Booking</option><option value="Directa">Directa</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Anuncio</label>
+          <select id="cAnuncio">
+            <option value="LST-01_6 pax">Cima Blanca (LST-01, 6 pax)</option>
+            <option value="LST-02_8 pax">Depa de Playa (LST-02, 8 pax)</option>
+            <option value="LST-03_4 pax">MiamiCito (LST-03, 4 pax)</option>
+          </select>
+        </div>
+        <div class="field"><label>Tipo de caso</label>
+          <select id="cTipo">
+            <option value="1">1 — Cancelación con compensación</option>
+            <option value="2">2 — No-show sin cancelar</option>
+            <option value="3">3 — Cancelación sin compensación</option>
+            <option value="4">4 — Devolución al huésped (reserva directa)</option>
+            <option value="5">5 — Overbooking con reubicación</option>
+            <option value="6">6 — Contracargo / disputa bancaria</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Check-in original</label><input type="date" id="cCheckin"></div>
+          <div class="field"><label>Check-out original</label><input type="date" id="cCheckout"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Noches pagadas</label><input type="number" id="cNochesPagadas" min="0" step="1"></div>
+          <div class="field"><label>Noches con huésped presente</label><input type="number" id="cNochesPresente" min="0" step="1"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Noches que cuentan (ocupadas)</label><input type="number" id="cNochesCuentan" min="0" step="1"></div>
+          <div class="field"><label>Noches liberadas (vuelven a venta)</label><input type="number" id="cNochesLiberadas" min="0" step="1"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Monto bruto ($)</label><input type="number" id="cBruto" min="0" step="0.01"></div>
+          <div class="field"><label>Monto neto ($)</label><input type="number" id="cNeto" min="0" step="0.01"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Devuelto o perdido ($) — solo tipos 4 y 6</label><input type="number" id="cDevuelto" min="0" step="0.01" value="0"></div>
+          <div class="field"><label>Ingreso neto que cuenta ($)</label><input type="number" id="cNetoCuenta" min="0" step="0.01"></div>
+        </div>
+        <div class="field"><label>Gasto extra por el caso ($) — ej. reubicación en overbooking</label><input type="number" id="cGastoExtra" min="0" step="0.01" value="0"></div>
+        <div class="field"><label class="chk"><input type="checkbox" id="cLimpieza" checked> Hubo limpieza real en esta estadía</label></div>
+        <div class="field"><label>Estado</label>
+          <select id="cEstado"><option value="En curso">En curso</option><option value="Cerrado">Cerrado</option></select>
+        </div>
+        <div class="field"><label>Nota</label><textarea id="cNota" placeholder="Explica brevemente qué pasó"></textarea></div>
+        <div class="actions">
+          <button type="button" class="btn btn-acc" id="cGuardar">Guardar</button>
+          <button type="button" class="btn btn-ghost" id="cCancelar" style="display:none">Cancelar edición</button>
+        </div>
+        <div class="msg" id="cMsg"></div>
+      </div>
+      <div class="card">
+        <h3>Casos registrados</h3>
+        <div id="cLista"></div>
+      </div>
+    </div>
+
+    <!-- FORM BLOQUEO -->
+    <div id="panelBloq" style="display:none">
+      <div class="card">
+        <h3 id="bFormTitle">Registrar bloqueo</h3>
+        <p class="hint">Fechas en las que el departamento NO está disponible para renta (uso propio, mantenimiento, etc.). La fecha de salida no cuenta como noche bloqueada, igual que en Airbnb.</p>
+        <div class="row2">
+          <div class="field"><label>Fecha inicio</label><input type="date" id="bInicio"></div>
+          <div class="field"><label>Fecha fin</label><input type="date" id="bFin"></div>
+        </div>
+        <div class="field"><label>Anuncio</label>
+          <select id="bAnuncio">
+            <option value="Todos">Todos (bloquea el departamento entero)</option>
+            <option value="LST-01_6 pax">Cima Blanca (LST-01, 6 pax)</option>
+            <option value="LST-02_8 pax">Depa de Playa (LST-02, 8 pax)</option>
+            <option value="LST-03_4 pax">MiamiCito (LST-03, 4 pax)</option>
+          </select>
+        </div>
+        <div class="field"><label>Motivo</label>
+          <select id="bMotivo">
+            <option value="Uso propio">Uso propio</option>
+            <option value="Mantenimiento">Mantenimiento</option>
+            <option value="Reforma">Reforma</option>
+            <option value="Cierre comercial">Cierre comercial</option>
+          </select>
+        </div>
+        <div class="field"><label>Nota (opcional)</label><textarea id="bNota"></textarea></div>
+        <div class="actions">
+          <button type="button" class="btn btn-acc" id="bGuardar">Guardar</button>
+          <button type="button" class="btn btn-ghost" id="bCancelar" style="display:none">Cancelar edición</button>
+        </div>
+        <div class="msg" id="bMsg"></div>
+      </div>
+      <div class="card">
+        <h3>Bloqueos registrados</h3>
+        <div id="bLista"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+// ===== Pega aquí la URL de tu implementación de Apps Script (termina en /exec) =====
+const FIXED_URL = 'PEGA_AQUI_TU_URL_DE_APPS_SCRIPT';
+
+const $ = id => document.getElementById(id);
+const CFGKEY = 'cimablanca_canc_cfg';
+const DATAKEY = 'cimablanca_canc_data';
+let CFG = {};
+try { CFG = JSON.parse(localStorage.getItem(CFGKEY) || '{}') || {}; } catch (e) {}
+if (CFG && CFG.clave) CFG.url = FIXED_URL;
+
+let CANC = [];
+let BLOQ = [];
+try {
+  const d = JSON.parse(localStorage.getItem(DATAKEY) || 'null');
+  if (d) { CANC = d.cancelaciones || []; BLOQ = d.bloqueos || []; }
+} catch (e) {}
+
+let editC = null, editB = null;
+
+function uid() { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+function saveCfg() { try { localStorage.setItem(CFGKEY, JSON.stringify(CFG)); } catch (e) {} }
+function saveData() { try { localStorage.setItem(DATAKEY, JSON.stringify({ cancelaciones: CANC, bloqueos: BLOQ })); } catch (e) {} }
+
+async function call(body) {
+  const r = await fetch(CFG.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ clave: CFG.clave }, body))
+  });
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || 'Error desconocido');
+  return j;
+}
+
+function showApp() {
+  $('gate').style.display = 'none';
+  $('app').style.display = 'block';
+}
+
+async function conectar(clave) {
+  $('gateMsg').className = 'msg'; $('gateMsg').textContent = 'Conectando...';
+  CFG = { url: FIXED_URL, clave: clave };
+  try {
+    const j = await call({ accion: 'listar' });
+    CANC = j.cancelaciones || []; BLOQ = j.bloqueos || [];
+    saveCfg(); saveData();
+    showApp(); render(); setHint();
+  } catch (e) {
+    $('gateMsg').className = 'msg err'; $('gateMsg').textContent = String(e.message || e);
+    CFG = {};
+  }
+}
+
+$('gateGo').onclick = () => {
+  const k = $('gateKey').value.trim();
+  if (!k) { $('gateMsg').className = 'msg err'; $('gateMsg').textContent = 'Escribe tu clave.'; return; }
+  conectar(k);
+};
+$('gateEye').onclick = () => {
+  const i = $('gateKey'); i.type = i.type === 'password' ? 'text' : 'password';
+};
+$('gateKey').addEventListener('keydown', e => { if (e.key === 'Enter') $('gateGo').click(); });
+
+if (CFG.url && CFG.clave) {
+  showApp(); render(); setHint();
+  call({ accion: 'listar' }).then(j => {
+    CANC = j.cancelaciones || []; BLOQ = j.bloqueos || [];
+    saveData(); render(); setHint(true);
+  }).catch(() => {});
+}
+
+function setHint(ok) {
+  $('syncHint').textContent = ok ? 'Sincronizado ahora' : (CANC.length || BLOQ.length ? 'Datos guardados en este dispositivo' : 'Sin datos aún');
+}
+
+$('syncBtn').onclick = async () => {
+  $('syncHint').textContent = 'Actualizando...';
+  try {
+    const j = await call({ accion: 'listar' });
+    CANC = j.cancelaciones || []; BLOQ = j.bloqueos || [];
+    saveData(); render(); setHint(true);
+  } catch (e) { $('syncHint').textContent = 'Error: ' + (e.message || e); }
+};
+
+$('tabCanc').onclick = () => { $('tabCanc').classList.add('on'); $('tabBloq').classList.remove('on'); $('panelCanc').style.display = 'block'; $('panelBloq').style.display = 'none'; };
+$('tabBloq').onclick = () => { $('tabBloq').classList.add('on'); $('tabCanc').classList.remove('on'); $('panelBloq').style.display = 'block'; $('panelCanc').style.display = 'none'; };
+
+function limpiarFormC() {
+  ['cCodigo','cHuesped'].forEach(id => $(id).value = '');
+  $('cCanal').value = 'Airbnb'; $('cAnuncio').value = 'LST-01_6 pax'; $('cTipo').value = '1';
+  $('cCheckin').value = ''; $('cCheckout').value = '';
+  ['cNochesPagadas','cNochesPresente','cNochesCuentan','cNochesLiberadas','cBruto','cNeto','cNetoCuenta'].forEach(id => $(id).value = '');
+  $('cDevuelto').value = '0'; $('cGastoExtra').value = '0'; $('cLimpieza').checked = true;
+  $('cEstado').value = 'En curso'; $('cNota').value = '';
+  editC = null; $('cFormTitle').textContent = 'Registrar cancelación / no-show'; $('cCancelar').style.display = 'none';
+}
+
+function limpiarFormB() {
+  $('bInicio').value = ''; $('bFin').value = ''; $('bAnuncio').value = 'Todos';
+  $('bMotivo').value = 'Uso propio'; $('bNota').value = '';
+  editB = null; $('bFormTitle').textContent = 'Registrar bloqueo'; $('bCancelar').style.display = 'none';
+}
+
+$('cCancelar').onclick = limpiarFormC;
+$('bCancelar').onclick = limpiarFormB;
+
+$('cGuardar').onclick = async () => {
+  const codigo = $('cCodigo').value.trim();
+  if (!codigo) { $('cMsg').className = 'msg err'; $('cMsg').textContent = 'Falta el código de reserva.'; return; }
+  const r = {
+    id: editC || uid(), codigo, huesped: $('cHuesped').value.trim(), canal: $('cCanal').value,
+    anuncio: $('cAnuncio').value, tipo: Number($('cTipo').value),
+    checkin: $('cCheckin').value, checkout: $('cCheckout').value,
+    nochesPagadas: Number($('cNochesPagadas').value) || 0, nochesPresente: Number($('cNochesPresente').value) || 0,
+    nochesCuentan: Number($('cNochesCuentan').value) || 0, nochesLiberadas: Number($('cNochesLiberadas').value) || 0,
+    bruto: Number($('cBruto').value) || 0, neto: Number($('cNeto').value) || 0,
+    devueltoPerdido: Number($('cDevuelto').value) || 0, netoQueCuenta: Number($('cNetoCuenta').value) || 0,
+    gastoExtra: Number($('cGastoExtra').value) || 0, limpiezaReal: $('cLimpieza').checked,
+    estado: $('cEstado').value, nota: $('cNota').value.trim(), editado: !!editC
+  };
+  $('cMsg').className = 'msg'; $('cMsg').textContent = 'Guardando...';
+  try {
+    await call({ accion: 'sincronizar', upsertsCancelaciones: [r], borrarCancelaciones: [], upsertsBloqueos: [], borrarBloqueos: [] });
+    const i = CANC.findIndex(x => x.id === r.id);
+    if (i >= 0) CANC[i] = r; else CANC.push(r);
+    saveData(); render();
+    $('cMsg').className = 'msg ok'; $('cMsg').textContent = 'Guardado.';
+    limpiarFormC();
+  } catch (e) { $('cMsg').className = 'msg err'; $('cMsg').textContent = String(e.message || e); }
+};
+
+$('bGuardar').onclick = async () => {
+  const fi = $('bInicio').value, ff = $('bFin').value;
+  if (!fi || !ff) { $('bMsg').className = 'msg err'; $('bMsg').textContent = 'Falta la fecha de inicio o de fin.'; return; }
+  const r = { id: editB || uid(), fechaInicio: fi, fechaFin: ff, anuncio: $('bAnuncio').value, motivo: $('bMotivo').value, nota: $('bNota').value.trim(), editado: !!editB };
+  $('bMsg').className = 'msg'; $('bMsg').textContent = 'Guardando...';
+  try {
+    await call({ accion: 'sincronizar', upsertsCancelaciones: [], borrarCancelaciones: [], upsertsBloqueos: [r], borrarBloqueos: [] });
+    const i = BLOQ.findIndex(x => x.id === r.id);
+    if (i >= 0) BLOQ[i] = r; else BLOQ.push(r);
+    saveData(); render();
+    $('bMsg').className = 'msg ok'; $('bMsg').textContent = 'Guardado.';
+    limpiarFormB();
+  } catch (e) { $('bMsg').className = 'msg err'; $('bMsg').textContent = String(e.message || e); }
+};
+
+function editarC(id) {
+  const r = CANC.find(x => x.id === id); if (!r) return;
+  editC = id;
+  $('cCodigo').value = r.codigo || ''; $('cHuesped').value = r.huesped || ''; $('cCanal').value = r.canal || 'Airbnb';
+  $('cAnuncio').value = r.anuncio || 'LST-01_6 pax'; $('cTipo').value = String(r.tipo || 1);
+  $('cCheckin').value = r.checkin || ''; $('cCheckout').value = r.checkout || '';
+  $('cNochesPagadas').value = r.nochesPagadas || 0; $('cNochesPresente').value = r.nochesPresente || 0;
+  $('cNochesCuentan').value = r.nochesCuentan || 0; $('cNochesLiberadas').value = r.nochesLiberadas || 0;
+  $('cBruto').value = r.bruto || 0; $('cNeto').value = r.neto || 0;
+  $('cDevuelto').value = r.devueltoPerdido || 0; $('cNetoCuenta').value = r.netoQueCuenta || 0;
+  $('cGastoExtra').value = r.gastoExtra || 0; $('cLimpieza').checked = !!r.limpiezaReal;
+  $('cEstado').value = r.estado || 'En curso'; $('cNota').value = r.nota || '';
+  $('cFormTitle').textContent = 'Editando: ' + r.codigo; $('cCancelar').style.display = 'inline-block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function borrarC(id) {
+  if (!confirm('¿Borrar este caso?')) return;
+  try {
+    await call({ accion: 'sincronizar', upsertsCancelaciones: [], borrarCancelaciones: [id], upsertsBloqueos: [], borrarBloqueos: [] });
+    CANC = CANC.filter(x => x.id !== id); saveData(); render();
+  } catch (e) { alert('No se pudo borrar: ' + (e.message || e)); }
+}
+
+function editarB(id) {
+  const r = BLOQ.find(x => x.id === id); if (!r) return;
+  editB = id;
+  $('bInicio').value = r.fechaInicio || ''; $('bFin').value = r.fechaFin || '';
+  $('bAnuncio').value = r.anuncio || 'Todos'; $('bMotivo').value = r.motivo || 'Uso propio'; $('bNota').value = r.nota || '';
+  $('bFormTitle').textContent = 'Editando bloqueo'; $('bCancelar').style.display = 'inline-block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function borrarB(id) {
+  if (!confirm('¿Borrar este bloqueo?')) return;
+  try {
+    await call({ accion: 'sincronizar', upsertsCancelaciones: [], borrarCancelaciones: [], upsertsBloqueos: [], borrarBloqueos: [id] });
+    BLOQ = BLOQ.filter(x => x.id !== id); saveData(); render();
+  } catch (e) { alert('No se pudo borrar: ' + (e.message || e)); }
+}
+
+const TIPO_LABEL = { 1: 'Cancelación con compensación', 2: 'No-show sin cancelar', 3: 'Cancelación sin compensación', 4: 'Devolución al huésped', 5: 'Overbooking con reubicación', 6: 'Contracargo / disputa' };
+
+function render() {
+  const lc = $('cLista');
+  if (!CANC.length) { lc.innerHTML = '<div class="empty">Todavía no hay casos registrados.</div>'; }
+  else {
+    lc.innerHTML = CANC.slice().sort((a, b) => (b.checkin || '').localeCompare(a.checkin || '')).map(r => `
+      <div class="list-item">
+        <div class="top"><b>${esc(r.codigo)}</b><span class="tag">Tipo ${r.tipo}</span></div>
+        <div class="meta">${esc(r.huesped || '—')} · ${esc(r.canal)} · ${esc(TIPO_LABEL[r.tipo] || '')}</div>
+        <div class="meta">${r.checkin || '?'} → ${r.checkout || '?'} · noches que cuentan: ${r.nochesCuentan} de ${r.nochesPagadas} pagadas · neto que cuenta: $${(r.netoQueCuenta || 0).toFixed(2)}</div>
+        ${r.nota ? `<div class="meta">${esc(r.nota)}</div>` : ''}
+        <div class="btns">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="editarC('${r.id}')">Editar</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="borrarC('${r.id}')">Borrar</button>
+        </div>
+      </div>`).join('');
+  }
+  const lb = $('bLista');
+  if (!BLOQ.length) { lb.innerHTML = '<div class="empty">Todavía no hay bloqueos registrados.</div>'; }
+  else {
+    lb.innerHTML = BLOQ.slice().sort((a, b) => (b.fechaInicio || '').localeCompare(a.fechaInicio || '')).map(r => `
+      <div class="list-item">
+        <div class="top"><b>${r.fechaInicio} → ${r.fechaFin}</b><span class="tag">${esc(r.motivo)}</span></div>
+        <div class="meta">${esc(r.anuncio)}</div>
+        ${r.nota ? `<div class="meta">${esc(r.nota)}</div>` : ''}
+        <div class="btns">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="editarB('${r.id}')">Editar</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="borrarB('${r.id}')">Borrar</button>
+        </div>
+      </div>`).join('');
+  }
+}
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+// ===== Buscador de reservas reales (Airbnb y directas), leído del mismo archivo que ya genera el módulo de Ingresos =====
+// No se vuelve a leer Airbnb desde cero: se lee el archivo ya consolidado MAESTRO_INGRESOS_CIMA_BLANCA.json
+// que el módulo de Ingresos guarda en Drive, dentro de 1. INGRESOS / 1.1 Reservas / PROCESADO.
+// Por eso incluye también las reservas con $0 por cancelación flexible: están en ese archivo igual que cualquier otra.
+const DRIVE_CLIENT_ID = '284452253474-nkn76cksdd6hu41f79t7kfnp47iag878.apps.googleusercontent.com';
+const DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
+const DRIVE_ROOT = 'CIMA BLANCA', DRIVE_INGRESOS = '1. INGRESOS', DRIVE_RESERVAS = '1.1 Reservas', DRIVE_PROCESADO = 'PROCESADO';
+const DRIVE_JSON_NAME = 'MAESTRO_INGRESOS_CIMA_BLANCA.json';
+const RESKEY = 'cimablanca_canc_reservas_cache';
+
+let driveToken = null, driveTokenClient = null;
+let RESERVAS = [];       // lista plana de reservas (Airbnb liquidadas/por liquidar + directas)
+let RES_POR_LABEL = {};  // texto mostrado en el buscador -> registro
+
+try {
+  const c = JSON.parse(localStorage.getItem(RESKEY) || 'null');
+  if (c && Array.isArray(c.reservas)) { RESERVAS = c.reservas; indexarReservas(); pintarDriveMsg('cache'); }
+} catch (e) {}
+
+function pintarDriveMsg(estado, extra) {
+  const el = $('cDriveMsg');
+  if (estado === 'cache') { el.className = 'msg'; el.textContent = RESERVAS.length + ' reservas cargadas (de la última vez). Actualizando en segundo plano...'; }
+  else if (estado === 'conectando') { el.className = 'msg'; el.textContent = 'Conectando con Drive...'; }
+  else if (estado === 'leyendo') { el.className = 'msg'; el.textContent = 'Actualizando reservas desde Drive...'; }
+  else if (estado === 'ok') { el.className = 'msg ok'; el.textContent = RESERVAS.length + ' reservas actualizadas. Escribe el nombre del huésped o el código arriba.'; $('cDriveBtn').style.display = 'none'; }
+  else if (estado === 'primeravez') { el.className = 'msg err'; el.textContent = 'Primera vez: pulsa "Permitir acceso" una sola vez. Después se va a actualizar solo, sin que tengas que volver a pulsar nada.'; $('cDriveBtn').style.display = 'inline-block'; }
+  else if (estado === 'error') { el.className = 'msg err'; el.textContent = 'No se pudo actualizar (' + extra + '). ' + (RESERVAS.length ? 'Se muestran las ' + RESERVAS.length + ' reservas de la última vez.' : 'Puedes seguir escribiendo el código a mano abajo.'); $('cDriveBtn').style.display = 'inline-block'; $('cDriveBtn').textContent = 'Reintentar'; }
+}
+
+function driveFetch(url) {
+  return fetch(url, { headers: { Authorization: 'Bearer ' + driveToken } }).then(r => {
+    if (!r.ok) return r.text().then(t => { throw new Error('Drive respondió ' + r.status); });
+    return r.json();
+  });
+}
+function driveFindRoot(name) {
+  const q = "name='" + name.replace(/'/g, "\\'") + "' and mimeType='application/vnd.google-apps.folder' and trashed=false";
+  return driveFetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)&pageSize=10')
+    .then(d => { if (!d.files || !d.files.length) throw new Error('no encontré la carpeta "' + name + '"'); return d.files[0]; });
+}
+function driveFindChild(parentId, nameContains) {
+  const q = "'" + parentId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false";
+  return driveFetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)&pageSize=100')
+    .then(d => {
+      const needle = nameContains.toLowerCase();
+      const m = (d.files || []).find(f => f.name.toLowerCase().indexOf(needle) !== -1);
+      if (!m) throw new Error('no encontré "' + nameContains + '"');
+      return m;
+    });
+}
+function driveFindFileExact(folderId, fileName) {
+  const q = "'" + folderId + "' in parents and trashed=false and name='" + fileName.replace(/'/g, "\\'") + "'";
+  return driveFetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name,modifiedTime)&pageSize=5')
+    .then(d => (d.files && d.files[0]) || null);
+}
+function driveDownloadText(fileId) {
+  return fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media', { headers: { Authorization: 'Bearer ' + driveToken } })
+    .then(r => { if (!r.ok) throw new Error('no pude descargar el archivo'); return r.text(); });
+}
+
+function cargarReservasDesdeDrive() {
+  pintarDriveMsg('leyendo');
+  return driveFindRoot(DRIVE_ROOT)
+    .then(root => driveFindChild(root.id, DRIVE_INGRESOS))
+    .then(ing => driveFindChild(ing.id, DRIVE_RESERVAS))
+    .then(res => driveFindChild(res.id, DRIVE_PROCESADO))
+    .then(proc => driveFindFileExact(proc.id, DRIVE_JSON_NAME))
+    .then(file => {
+      if (!file) throw new Error('todavía no existe ' + DRIVE_JSON_NAME + ' (sincroniza primero el módulo de Ingresos una vez)');
+      return driveDownloadText(file.id);
+    })
+    .then(text => {
+      const payload = JSON.parse(text);
+      RESERVAS = payload.reservas || [];
+      indexarReservas();
+      try { localStorage.setItem(RESKEY, JSON.stringify({ reservas: RESERVAS, t: Date.now() })); } catch (e) {}
+      pintarDriveMsg('ok');
+    })
+    .catch(e => pintarDriveMsg('error', e.message || e));
+}
+
+function indexarReservas() {
+  RES_POR_LABEL = {};
+  RESERVAS.forEach(r => {
+    const estadoTxt = r.estado === 'Por liquidar' ? ' · por liquidar' : '';
+    const label = r.codigo_confirmacion + ' — ' + (r.huesped || 'sin nombre') + ' (' + (r.fecha_inicio || '?') + ')' + estadoTxt;
+    RES_POR_LABEL[label] = r;
+  });
+  const dl = $('cReservaList');
+  dl.innerHTML = Object.keys(RES_POR_LABEL).sort((a, b) => b.localeCompare(a)).map(l => `<option value="${esc(l)}"></option>`).join('');
+}
+
+// mapea el texto libre del "Anuncio" que viene de Airbnb/directas a uno de los 3 anuncios internos; si no reconoce ninguno, no cambia la selección actual
+function mapearAnuncio(txt) {
+  const t = (txt || '').toLowerCase();
+  if (t.indexOf('playa') !== -1 || t.indexOf('8 pax') !== -1 || t.indexOf('8 huésp') !== -1) return 'LST-02_8 pax';
+  if (t.indexOf('miami') !== -1 || t.indexOf('4 pax') !== -1 || t.indexOf('4 huésp') !== -1) return 'LST-03_4 pax';
+  if (t.indexOf('cima') !== -1 || t.indexOf('6 pax') !== -1 || t.indexOf('6 huésp') !== -1) return 'LST-01_6 pax';
+  return null;
+}
+
+function aplicarReservaAlForm(r) {
+  $('cCodigo').value = r.codigo_confirmacion || '';
+  $('cHuesped').value = r.huesped || '';
+  $('cCanal').value = r.origen === 'Reserva directa' ? 'Directa' : 'Airbnb';
+  const an = mapearAnuncio(r.anuncio); if (an) $('cAnuncio').value = an;
+  $('cCheckin').value = r.fecha_inicio || '';
+  $('cCheckout').value = r.fecha_finalizacion || '';
+  $('cNochesPagadas').value = r.noches || 0;
+  $('cBruto').value = (r.ingresos_brutos || 0).toFixed(2);
+  $('cNeto').value = (r.monto || 0).toFixed(2);
+  if ((r.monto || 0) === 0 && (r.ingresos_brutos || 0) === 0) {
+    $('cMsg').className = 'msg'; $('cMsg').textContent = 'Esta reserva aparece con $0: puede ser una cancelación flexible ya cobrada en $0 por Airbnb. Revisa el resto de los campos antes de guardar.';
+  }
+}
+
+$('cBuscarReserva').addEventListener('change', () => {
+  const r = RES_POR_LABEL[$('cBuscarReserva').value];
+  if (r) aplicarReservaAlForm(r);
+});
+
+let driveIntentoSilencioso = true;
+
+function initDriveAuth() {
+  driveTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: DRIVE_CLIENT_ID,
+    scope: DRIVE_SCOPES,
+    callback: resp => {
+      if (resp.error) {
+        if (driveIntentoSilencioso) { driveIntentoSilencioso = false; pintarDriveMsg('primeravez'); }
+        else pintarDriveMsg('error', resp.error);
+        return;
+      }
+      driveToken = resp.access_token;
+      cargarReservasDesdeDrive();
+    }
+  });
+  // Intento automático y silencioso al abrir la página: si ya diste el permiso antes (aunque haya
+  // sido desde el módulo de Ingresos), esto actualiza las reservas solo, sin pedirte nada.
+  driveTokenClient.requestAccessToken({ prompt: '' });
+}
+$('cDriveBtn').onclick = () => {
+  driveIntentoSilencioso = false;
+  pintarDriveMsg('conectando');
+  if (!driveTokenClient) { pintarDriveMsg('error', 'Google aún no cargó, intenta de nuevo en un segundo'); return; }
+  driveTokenClient.requestAccessToken({});
+};
+// Cada vez que se abre la pestaña de Cancelación, se intenta refrescar en segundo plano
+// (sin ventana emergente) para no depender de que alguien se acuerde de actualizar a mano.
+$('tabCanc').addEventListener('click', () => {
+  if (driveTokenClient) driveTokenClient.requestAccessToken({ prompt: '' });
+});
+window.addEventListener('load', () => {
+  if (window.google && google.accounts && google.accounts.oauth2) initDriveAuth();
+  else {
+    const chk = setInterval(() => {
+      if (window.google && google.accounts && google.accounts.oauth2) { clearInterval(chk); initDriveAuth(); }
+    }, 200);
+  }
+});
+</script>
+</body>
+</html>
