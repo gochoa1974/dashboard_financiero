@@ -475,7 +475,7 @@ $('cGuardar').onclick = async () => {
     nochesCuentan: Number($('cNochesCuentan').value) || 0, nochesLiberadas: Number($('cNochesLiberadas').value) || 0,
     bruto: Number($('cBruto').value) || 0, neto: Number($('cNeto').value) || 0,
     devueltoPerdido: Number($('cDevuelto').value) || 0, netoQueCuenta: Number($('cNetoCuenta').value) || 0,
-    gastoExtra: Number($('cGastoExtra').value) || 0, limpiezaReal: $('cLimpieza').checked,
+    gastoExtra: Number($('cGastoExtra').value) || 0, limpiezaReal: $('cLimpieza').checked ? 'Sí' : 'No',
     estado: $('cEstado').value, nota: getNota(), editado: !!editC
   };
   msg('Guardando...');
@@ -505,6 +505,11 @@ $('bGuardar').onclick = async () => {
   } catch (e) { $('bMsg').className = 'msg err'; $('bMsg').textContent = String(e.message || e); }
 };
 
+/* Limpieza real se guarda en español: 'Sí' / 'No'. Acepta también datos viejos (true/'TRUE'/'SI'). */
+function esSi(v) {
+  return v === true || ['SI', 'SÍ', 'TRUE'].indexOf(String(v).trim().toUpperCase()) >= 0;
+}
+
 function editarC(id) {
   const r = CANC.find(x => x.id === id); if (!r) return;
   editC = id;
@@ -516,7 +521,7 @@ function editarC(id) {
   $('cNochesCuentan').value = r.nochesCuentan || 0; $('cNochesLiberadas').value = r.nochesLiberadas || 0;
   $('cBruto').value = r.bruto || 0; $('cNeto').value = r.neto || 0;
   $('cDevuelto').value = r.devueltoPerdido || 0; $('cNetoCuenta').value = r.netoQueCuenta || 0;
-  $('cGastoExtra').value = r.gastoExtra || 0; $('cLimpieza').checked = !!r.limpiezaReal;
+  $('cGastoExtra').value = r.gastoExtra || 0; $('cLimpieza').checked = esSi(r.limpiezaReal);
   setEstado(r.estado || 'En curso'); setNota(r.nota || ''); renderMotivos();
   setTipo(Number(r.tipo) || 0, false); pintarResumen();
   $('cFormTitle').textContent = 'Editando: ' + r.codigo; $('cCancelar').style.display = 'inline-block';
@@ -785,9 +790,9 @@ const TIPOS = {
   1: { f: ['presente', 'cuentan'], limpieza: true, ayuda: 'Se recorta a las noches que el huésped ocupó. El dinero cobrado se mantiene.' },
   2: { f: [], limpieza: true, ayuda: 'No se toca nada: noches y dinero completos.' },
   3: { f: ['liberadas'], limpieza: false, ayuda: 'El dinero cobrado se mantiene. Ninguna noche cuenta como ocupada.' },
-  4: { f: ['cuentan', 'devuelto'], limpieza: true, ayuda: 'Cuentan solo las noches ocupadas y lo devuelto sale del ingreso. Regla por confirmar.' },
-  5: { f: ['presente', 'cuentan', 'gasto'], limpieza: false, ayuda: 'El dinero se mantiene y la reserva reubicada no cuenta noches. Regla por confirmar.' },
-  6: { f: ['presente', 'cuentan', 'liberadas', 'devuelto', 'gasto'], limpieza: true, ayuda: 'En curso no resta nada; si el banco lo quita, sale del ingreso. Regla por confirmar.' }
+  4: { f: ['cuentan', 'devuelto'], limpieza: true, ayuda: 'Cuentan solo las noches ocupadas y lo devuelto sale del ingreso.' },
+  5: { f: ['presente', 'cuentan', 'gasto'], limpieza: false, ayuda: 'El dinero se mantiene y la reserva reubicada no cuenta noches.' },
+  6: { f: ['presente', 'cuentan', 'liberadas', 'devuelto', 'gasto'], limpieza: true, ayuda: 'En curso no resta nada; si el banco lo quita, sale del ingreso.' }
 };
 let accTocado = false, motivoSel = '';
 
