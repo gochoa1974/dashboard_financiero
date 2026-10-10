@@ -401,10 +401,24 @@
     return byCode;
   }
 
-  function buildKeyedRecords(rowsByFile) {
-    var sorted = rowsByFile.slice().sort(function (a, b) {
-      return (a.modifiedTime || "").localeCompare(b.modifiedTime || "");
+  function fechaContenido(rows) {
+    var max = "";
+    (rows || []).forEach(function (r) {
+      if (String(r["Tipo"] || "").trim() !== "Reservación") return;
+      var d = toIsoDate(r["Fecha de la reservación"]);
+      if (d && d > max) max = d;
     });
+    return max;
+  }
+
+  function buildKeyedRecords(rowsByFile) {
+    // Orden por CONTENIDO: gana el archivo con la reserva más reciente dentro (fecha de la reservación).
+    // Así un CSV viejo que se vuelva a guardar en Drive no pisa a uno nuevo. Empate: fecha de Drive.
+    var sorted = rowsByFile.slice().map(function (f) { f.contenido = fechaContenido(f.rows); return f; }).sort(function (a, b) {
+      var c = (a.contenido || "").localeCompare(b.contenido || "");
+      return c !== 0 ? c : (a.modifiedTime || "").localeCompare(b.modifiedTime || "");
+    });
+    sorted.forEach(function (f) { log("Orden: " + f.fileName + " (última reserva dentro: " + (f.contenido || "sin fecha") + ")"); });
     var byCode = {};
     sorted.forEach(function (file) {
       var fileRecords = buildRecordsForFile(file);
