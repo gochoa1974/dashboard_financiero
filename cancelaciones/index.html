@@ -174,7 +174,7 @@ button.tab{appearance:none;font-family:inherit}
     </div>
 
     <div class="tabs" role="tablist">
-      <button type="button" class="tab on" id="tabCanc" role="tab" aria-selected="true" aria-controls="panelCanc">Cancelación / No-show</button>
+      <button type="button" class="tab on" id="tabCanc" role="tab" aria-selected="true" aria-controls="panelCanc">Evento / cancelación</button>
       <button type="button" class="tab" id="tabBloq" role="tab" aria-selected="false" aria-controls="panelBloq">Bloqueo</button>
     </div>
 
@@ -182,7 +182,7 @@ button.tab{appearance:none;font-family:inherit}
     <div id="panelCanc" role="tabpanel" aria-labelledby="tabCanc">
       <div id="cFormWrap">
       <div class="card">
-        <h3 id="cFormTitle">Registrar cancelación / no-show</h3>
+        <h3 id="cFormTitle">Registro de evento / cancelaciones</h3>
         <p class="hint">Un caso por reserva. Si editas uno guardado, se corrige la misma fila.</p>
 
         <div class="field" style="padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
@@ -427,7 +427,7 @@ function limpiarFormC() {
   ['cCheckin','cCheckout','cNochesPagadas','cBruto','cNeto'].forEach(id => $(id).value = '');
   setEstado('En curso'); setNota(''); renderMotivos();
   setTipo(0, true); pintarResumen();
-  editC = null; $('cFormTitle').textContent = 'Registrar cancelación / no-show'; $('cCancelar').style.display = 'none';
+  editC = null; $('cFormTitle').textContent = 'Registro de evento / cancelaciones'; $('cCancelar').style.display = 'none';
   $('cManual').hidden = true; $('cManualBtn').setAttribute('aria-expanded', 'false'); $('cManualBtn').textContent = 'Corregir datos a mano';
 }
 
