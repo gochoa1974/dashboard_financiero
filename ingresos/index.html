@@ -90,6 +90,11 @@
   a.folder-link:hover { text-decoration: underline; }
   .hidden { display: none; }
   .note { font-size: 13px; color: var(--text-muted); margin-top: 10px; }
+  #autoNote { font-weight: 700; font-size: 14px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); margin: 0 0 16px; }
+  #autoNote[hidden] { display: none; }
+  #autoNote.ok { color: #1c7a45; }
+  #autoNote.err { color: #c2303a; }
+  @media (prefers-color-scheme: dark) { #autoNote.ok { color: #5fd391; } #autoNote.err { color: #ff7b84; } }
   .apphead{display:flex;align-items:center;gap:12px;padding:0 0 16px}
   .backbtn{width:44px;height:44px;border-radius:14px;border:1px solid var(--border);background:var(--card);color:var(--text);display:grid;place-items:center;flex:0 0 auto;text-decoration:none}
   .backbtn svg{width:20px;height:20px}
@@ -108,6 +113,7 @@
   </header>
   <p class="note" style="margin:0 0 16px">Lee Airbnb, reservas directas e ingresos adicionales desde Google Drive y actualiza sola el archivo consolidado en PROCESADO.</p>
 
+  <p class="note" id="autoNote" hidden role="status"></p>
   <div class="card">
     <h2>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a5 5 0 0 1 5 5v3a5 5 0 0 1-10 0V7a5 5 0 0 1 5-5Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg>
@@ -176,6 +182,11 @@
 
   var accessToken = null;
   var tokenClient = null;
+  var AUTO = /[?&]auto=1/.test(location.search);   // modo automático: viene del dashboard
+  var SYNC_KEY = "cimablanca_sync_info";            // { t: cuándo se sincronizó, csvMax: CSV más nuevo visto, n: reservas }
+  var csvMaxMod = "";
+  var lastOk = false;
+  var autoStarted = false;
 
   var els = {
     authPill: document.getElementById("authPill"),
@@ -230,9 +241,17 @@
         els.authPill.className = "pill ok";
         els.syncCard.classList.remove("hidden");
         log("Sesión de Google iniciada.");
+        if (AUTO && !autoStarted) { autoStarted = true; autoRevisar(); }
+      },
+      error_callback: function (e) {
+        if (AUTO) autoNota("Google necesita que lo confirmes: toca «Conectar con Google» y seguirá solo.", "err");
       }
     });
     els.btnLogin.disabled = false;
+    if (AUTO) {
+      autoNota("Conectando con Google…");
+      try { tokenClient.requestAccessToken({ prompt: "" }); } catch (e) { autoNota("Toca «Conectar con Google» para continuar.", "err"); }
+    }
   }
 
   els.btnLogin.addEventListener("click", function () {
@@ -432,6 +451,7 @@
   function readFolderAsRecords(folderId) {
     return listFilesInFolder(folderId).then(function (files) {
       var csvFiles = files.filter(function (f) { return /\.csv$/i.test(f.name); });
+      csvFiles.forEach(function (f) { if ((f.modifiedTime || "") > csvMaxMod) csvMaxMod = f.modifiedTime; });
       if (!csvFiles.length) {
         log("No hay archivos .csv en esta carpeta.");
         return {};
@@ -560,6 +580,7 @@
   function runSync() {
     clearError();
     els.btnSync.disabled = true;
+    lastOk = false; csvMaxMod = "";
     els.resultCard.classList.add("hidden");
     log("Buscando carpeta raíz \"" + ROOT_FOLDER_NAME + "\"...");
 
@@ -569,7 +590,7 @@
     var master = null;
     var adicionales = [];
 
-    findRootFolder(ROOT_FOLDER_NAME)
+    return findRootFolder(ROOT_FOLDER_NAME)
       .then(function (root) {
         log("Raíz encontrada. Buscando \"" + INGRESOS_FOLDER_NAME + "\"...");
         return findChildFolder(root.id, INGRESOS_FOLDER_NAME);
@@ -655,16 +676,55 @@
       .then(function () {
         var resumen = computeResumen(master, adicionales);
         showResults(master, adicionales, resumen, procesadoFolder);
-        if (procesadoFolder && procesadoFolder.id) {
-          return saveOutputsToDrive(procesadoFolder, master, adicionales, resumen);
-        }
+        var guardado = (procesadoFolder && procesadoFolder.id) ? saveOutputsToDrive(procesadoFolder, master, adicionales, resumen) : null;
+        return Promise.resolve(guardado).then(function () {
+          lastOk = true;
+          guardarInfoSync(master.length);
+        });
       })
       .catch(function (err) {
         showError(err.message || String(err));
       })
       .then(function () {
         els.btnSync.disabled = false;
+        return lastOk;
       });
+  }
+
+  function guardarInfoSync(n) {
+    try { localStorage.setItem(SYNC_KEY, JSON.stringify({ t: new Date().toISOString(), csvMax: csvMaxMod, n: n })); } catch (e) {}
+  }
+  function leerInfoSync() {
+    try { return JSON.parse(localStorage.getItem(SYNC_KEY) || "null"); } catch (e) { return null; }
+  }
+  function autoNota(txt, tipo) {
+    var el = document.getElementById("autoNote");
+    if (!el) return;
+    el.hidden = false; el.textContent = txt; el.className = "note" + (tipo ? " " + tipo : "");
+  }
+  function volverAlDashboard(estado) {
+    autoNota(estado === "ok" ? "Listo: datos de Airbnb actualizados. Volviendo al dashboard…" : "Los datos de Airbnb ya estaban al día. Volviendo al dashboard…", "ok");
+    setTimeout(function () { location.href = "../dashboard/?sync=" + estado; }, 1300);
+  }
+  // B: antes de sincronizar, mira solo la lista de CSV; si no hay ninguno más nuevo que el de la última sincronización, no gasta tiempo
+  function autoRevisar() {
+    autoNota("Revisando si hay archivos nuevos de Airbnb…");
+    log("Modo automático: revisando CSV nuevos…");
+    var mx = "";
+    return findRootFolder(ROOT_FOLDER_NAME)
+      .then(function (root) { return findChildFolder(root.id, INGRESOS_FOLDER_NAME); })
+      .then(function (ing) { return findChildFolder(ing.id, RESERVAS_FOLDER_NAME); })
+      .then(function (res) { return findChildFolder(res.id, RAW_FOLDER_NAME); })
+      .then(function (raw) { return Promise.all([findChildFolder(raw.id, "Pagados"), findChildFolder(raw.id, "Pendientes")]); })
+      .then(function (fs) { return Promise.all([listFilesInFolder(fs[0].id), listFilesInFolder(fs[1].id)]); })
+      .then(function (ls) {
+        ls[0].concat(ls[1]).forEach(function (f) { if (/\.csv$/i.test(f.name) && (f.modifiedTime || "") > mx) mx = f.modifiedTime; });
+        var info = leerInfoSync();
+        if (info && info.csvMax && mx && mx <= info.csvMax) { log("Sin CSV nuevos desde la última sincronización."); volverAlDashboard("al_dia"); return; }
+        autoNota("Hay archivos nuevos. Actualizando datos de Airbnb…");
+        return runSync().then(function (ok) { if (ok) volverAlDashboard("ok"); else autoNota("No se pudo terminar. Revisa el aviso rojo o toca «Leer Drive y procesar».", "err"); });
+      })
+      .catch(function (err) { showError(err.message || String(err)); autoNota("No se pudo revisar. Toca «Leer Drive y procesar» para intentarlo a mano.", "err"); });
   }
 
   function money(n) {
