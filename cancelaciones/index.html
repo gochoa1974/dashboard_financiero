@@ -83,6 +83,61 @@ textarea{resize:vertical;min-height:60px}
 .list-item .btns{display:flex;gap:8px;margin-top:10px}
 .empty{font-size:13px;color:var(--mut);font-weight:600;text-align:center;padding:18px 0}
 .sync{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;font-size:12.5px;color:var(--mut);font-weight:700}
+
+[hidden]{display:none!important}
+body{padding-bottom:48px}
+button.tab{appearance:none;font-family:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.field label.chk{display:flex;align-items:center;gap:10px;min-height:44px;font-size:13.5px;color:var(--ink);margin:0}
+.chk input{width:20px;height:20px;accent-color:var(--accent)}
+.link{appearance:none;background:none;border:none;padding:10px 0;margin:0 0 6px;color:var(--accent);font-family:inherit;font-weight:800;font-size:13px;cursor:pointer}
+.resumen{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--bg);margin:0 0 4px}
+.resumen b{display:block;font-size:14.5px;font-weight:800;overflow-wrap:anywhere}
+.resumen span{display:block;margin-top:2px;font-size:12.5px;color:var(--mut);font-weight:600}
+.resumen.vacio b{color:var(--mut)}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chips-s{display:flex;flex-wrap:wrap;gap:8px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chip{appearance:none;font-family:inherit;font-weight:700;font-size:13px;line-height:1.25;text-align:left;min-height:48px;padding:10px 12px;
+  border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;
+  transition:transform .12s,border-color .15s,background .15s,color .15s}
+.chip:active{transform:scale(.97)}
+.chip.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.chip-s{min-height:40px;padding:8px 14px;border-radius:999px;font-size:12.5px;text-align:center}
+.seg .chip{text-align:center;min-height:44px}
+.tipo-help{margin-top:8px;font-size:12.5px;color:var(--mut);font-weight:600;line-height:1.5}
+.acc{border:1px solid var(--line);border-radius:14px;margin:0 0 14px;background:var(--bg)}
+.acc-h{appearance:none;width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;font-family:inherit;
+  color:var(--ink);font-weight:800;font-size:14px;padding:14px;cursor:pointer;text-align:left;min-height:48px}
+.acc-h .acc-s{margin-left:auto;font-size:12px;color:var(--mut);font-weight:700}
+.acc-h.falta .acc-s{color:var(--accent)}
+.acc-h.falta .acc-s::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px}
+.acc-h svg{flex:none;color:var(--mut);transition:transform .2s}
+.acc.open .acc-h svg{transform:rotate(180deg)}
+.acc-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .22s ease}
+.acc.open .acc-body{grid-template-rows:1fr}
+.acc-in{overflow:hidden;min-height:0;visibility:hidden;transition:visibility 0s .22s}
+.acc.open .acc-in{visibility:visible;transition:visibility 0s}
+.acc-pad{padding:2px 14px 6px}
+.stepper{display:grid;grid-template-columns:48px 1fr 48px;gap:8px;align-items:stretch}
+.stp{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;font-family:inherit;
+  font-size:22px;font-weight:800;min-height:48px;cursor:pointer;transition:transform .12s}
+.stp:active{transform:scale(.94)}
+.stepper input{text-align:center;font-weight:800;font-size:18px;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 16px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg)}
+.stat .k{font-size:11.5px;color:var(--mut);font-weight:700}
+.stat .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px}
+.stat .c{font-size:11.5px;color:var(--mut);font-weight:600;margin-top:2px}
+.sticky{position:sticky;bottom:10px;z-index:20;margin-top:12px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 28px -10px rgba(10,34,51,.35)}
+.sticky .msg{margin:0 0 8px;min-height:0}
+.sticky .msg:empty{display:none}
+.sticky .actions{margin:0}
+.sticky .btn-acc{flex:1;min-height:48px}
+.sticky .btn-ghost{min-height:48px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
@@ -113,82 +168,111 @@ textarea{resize:vertical;min-height:60px}
       <button type="button" class="btn btn-ghost btn-sm" id="syncBtn">Actualizar</button>
     </div>
 
-    <div class="tabs">
-      <div class="tab on" id="tabCanc">Cancelación / No-show</div>
-      <div class="tab" id="tabBloq">Bloqueo</div>
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab on" id="tabCanc" role="tab" aria-selected="true" aria-controls="panelCanc">Cancelación / No-show</button>
+      <button type="button" class="tab" id="tabBloq" role="tab" aria-selected="false" aria-controls="panelBloq">Bloqueo</button>
     </div>
 
     <!-- FORM CANCELACION -->
-    <div id="panelCanc">
+    <div id="panelCanc" role="tabpanel" aria-labelledby="tabCanc">
+      <div id="cFormWrap">
       <div class="card">
         <h3 id="cFormTitle">Registrar cancelación / no-show</h3>
-        <p class="hint">Un caso por reserva. Si editas uno ya guardado, se corrige la fila existente (no se duplica).</p>
+        <p class="hint">Un caso por reserva. Si editas uno guardado, se corrige la misma fila.</p>
 
         <div class="field" style="padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
-          <label>Buscar la reserva real (en vez de escribir el código)</label>
+          <label for="cBuscarReserva">Reserva</label>
           <div class="pw" style="position:relative">
-            <input id="cBuscarReserva" placeholder="Escribe el nombre del huésped o el código..." autocomplete="off">
+            <input id="cBuscarReserva" placeholder="Nombre del huésped o código" autocomplete="off">
             <button type="button" class="btn btn-ghost btn-sm" id="cDriveBtn" style="display:none">Permitir acceso</button>
             <div id="cReservaDropdown" style="display:none;position:absolute;left:0;right:0;top:100%;margin-top:4px;background:var(--surface,#fff);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:260px;overflow-y:auto;z-index:50"></div>
           </div>
           <div class="msg" id="cDriveMsg">Se actualiza solo al abrir esta página — no necesitas hacer nada.</div>
         </div>
 
-        <div class="field"><label>Código de reserva</label><input id="cCodigo" placeholder="Ej. HMJWRMSPT4 o Reserva_Directa_003"></div>
-        <div class="row2">
-          <div class="field"><label>Huésped</label><input id="cHuesped" placeholder="Nombre"></div>
-          <div class="field"><label>Canal</label>
-            <select id="cCanal"><option value="Airbnb">Airbnb</option><option value="Booking">Booking</option><option value="Directa">Directa</option></select>
+        <div class="resumen" id="cResumen" aria-live="polite"></div>
+        <button type="button" class="link" id="cManualBtn" aria-expanded="false" aria-controls="cManual">Corregir datos a mano</button>
+        <div id="cManual" hidden>
+          <div class="field"><label for="cCodigo">Código de reserva</label><input id="cCodigo" placeholder="Ej. HMJWRMSPT4 o Reserva_Directa_003"></div>
+          <div class="row2">
+            <div class="field"><label for="cHuesped">Huésped</label><input id="cHuesped" placeholder="Nombre"></div>
+            <div class="field"><label for="cCanal">Canal</label>
+              <select id="cCanal"><option value="Airbnb">Airbnb</option><option value="Booking">Booking</option><option value="Directa">Directa</option></select>
+            </div>
+          </div>
+          <div class="field"><label for="cAnuncio">Anuncio</label>
+            <select id="cAnuncio">
+              <option value="LST-01_6 pax">Cima Blanca (LST-01, 6 pax)</option>
+              <option value="LST-02_8 pax">Depa de Playa (LST-02, 8 pax)</option>
+              <option value="LST-03_4 pax">MiamiCito (LST-03, 4 pax)</option>
+            </select>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="cCheckin">Check-in original</label><input type="date" id="cCheckin"></div>
+            <div class="field"><label for="cCheckout">Check-out original</label><input type="date" id="cCheckout"></div>
+          </div>
+          <div class="field"><label for="cNochesPagadas">Noches pagadas</label><input type="number" inputmode="numeric" id="cNochesPagadas" min="0" step="1"></div>
+          <div class="row2">
+            <div class="field"><label for="cBruto">Monto bruto ($)</label><input type="number" inputmode="decimal" id="cBruto" min="0" step="0.01"></div>
+            <div class="field"><label for="cNeto">Monto neto ($)</label><input type="number" inputmode="decimal" id="cNeto" min="0" step="0.01"></div>
           </div>
         </div>
-        <div class="field"><label>Anuncio</label>
-          <select id="cAnuncio">
-            <option value="LST-01_6 pax">Cima Blanca (LST-01, 6 pax)</option>
-            <option value="LST-02_8 pax">Depa de Playa (LST-02, 8 pax)</option>
-            <option value="LST-03_4 pax">MiamiCito (LST-03, 4 pax)</option>
-          </select>
+
+        <div class="field"><label id="cTipoLbl">Tipo de caso</label>
+          <div class="chips" role="radiogroup" aria-labelledby="cTipoLbl" id="cTipoChips">
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="1">Cancelación con compensación</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="2">No-show sin cancelar</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="3">Cancelación sin compensación</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="4">Devolución al huésped</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="5">Overbooking con reubicación</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="6">Contracargo / disputa</button>
+          </div>
+          <input type="hidden" id="cTipo" value="">
+          <div class="tipo-help" id="cTipoHelp" hidden></div>
         </div>
-        <div class="field"><label>Tipo de caso</label>
-          <select id="cTipo">
-            <option value="1">1 — Cancelación con compensación</option>
-            <option value="2">2 — No-show sin cancelar</option>
-            <option value="3">3 — Cancelación sin compensación</option>
-            <option value="4">4 — Devolución al huésped (reserva directa)</option>
-            <option value="5">5 — Overbooking con reubicación</option>
-            <option value="6">6 — Contracargo / disputa bancaria</option>
-          </select>
+
+        <div class="acc" id="cAcc" hidden>
+          <button type="button" class="acc-h" id="cAccBtn" aria-expanded="false" aria-controls="cAccBody">
+            <span>Detalles del caso</span><span class="acc-s" id="cAccEstado"></span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="acc-body" id="cAccBody"><div class="acc-in"><div class="acc-pad">
+            <div class="field" data-f="presente" hidden><label for="cNochesPresente">Noches con huésped presente</label><div class="stepper"><button type="button" class="stp" data-t="cNochesPresente" data-d="-1" aria-label="Restar una noche">−</button><input type="number" inputmode="numeric" id="cNochesPresente" min="0" step="1" value="0" data-max="noches"><button type="button" class="stp" data-t="cNochesPresente" data-d="1" aria-label="Sumar una noche">+</button></div></div>
+            <div class="field" data-f="cuentan" hidden><label for="cNochesCuentan">Noches que cuentan como ocupadas</label><div class="stepper"><button type="button" class="stp" data-t="cNochesCuentan" data-d="-1" aria-label="Restar una noche">−</button><input type="number" inputmode="numeric" id="cNochesCuentan" min="0" step="1" value="0" data-max="noches"><button type="button" class="stp" data-t="cNochesCuentan" data-d="1" aria-label="Sumar una noche">+</button></div></div>
+            <div class="field" data-f="liberadas" hidden><label for="cNochesLiberadas">Noches liberadas (vuelven a venta)</label><div class="stepper"><button type="button" class="stp" data-t="cNochesLiberadas" data-d="-1" aria-label="Restar una noche">−</button><input type="number" inputmode="numeric" id="cNochesLiberadas" min="0" step="1" value="0" data-max="noches"><button type="button" class="stp" data-t="cNochesLiberadas" data-d="1" aria-label="Sumar una noche">+</button></div></div>
+            <div class="field" data-f="devuelto" hidden><label for="cDevuelto">Devuelto o perdido ($)</label><div class="stepper"><button type="button" class="stp" data-t="cDevuelto" data-d="-5" aria-label="Restar 5 dólares">−</button><input type="number" inputmode="decimal" id="cDevuelto" min="0" step="0.01" value="0"><button type="button" class="stp" data-t="cDevuelto" data-d="5" aria-label="Sumar 5 dólares">+</button></div></div>
+            <div class="field" data-f="gasto" hidden><label for="cGastoExtra">Gasto extra por reubicación ($)</label><div class="stepper"><button type="button" class="stp" data-t="cGastoExtra" data-d="-5" aria-label="Restar 5 dólares">−</button><input type="number" inputmode="decimal" id="cGastoExtra" min="0" step="0.01" value="0"><button type="button" class="stp" data-t="cGastoExtra" data-d="5" aria-label="Sumar 5 dólares">+</button></div></div>
+          </div></div></div>
         </div>
-        <div class="row2">
-          <div class="field"><label>Check-in original</label><input type="date" id="cCheckin"></div>
-          <div class="field"><label>Check-out original</label><input type="date" id="cCheckout"></div>
+
+        <div class="stats" id="cStats" hidden>
+          <div class="stat"><div class="k">Noches que cuentan</div><div class="v" id="sCuentan">0</div><div class="c" id="sCuentanDe"></div></div>
+          <div class="stat"><div class="k">Noches liberadas</div><div class="v" id="sLib">0</div><div class="c">vuelven a venta</div></div>
+          <div class="stat"><div class="k">Ingreso que cuenta</div><div class="v" id="sIng">$0.00</div><div class="c" id="sIngDe"></div></div>
         </div>
-        <div class="row2">
-          <div class="field"><label>Noches pagadas</label><input type="number" id="cNochesPagadas" min="0" step="1"></div>
-          <div class="field"><label>Noches con huésped presente</label><input type="number" id="cNochesPresente" min="0" step="1"></div>
+        <input type="hidden" id="cNetoCuenta" value="0">
+
+        <div class="field"><label id="cMotivoLbl">Motivo</label>
+          <div class="chips-s" id="cMotivos" role="group" aria-labelledby="cMotivoLbl"></div>
+          <div id="cNotaWrap" hidden style="margin-top:10px"><textarea id="cNota" placeholder="Explica brevemente qué pasó" aria-label="Otro motivo"></textarea></div>
         </div>
-        <div class="row2">
-          <div class="field"><label>Noches que cuentan (ocupadas)</label><input type="number" id="cNochesCuentan" min="0" step="1"></div>
-          <div class="field"><label>Noches liberadas (vuelven a venta)</label><input type="number" id="cNochesLiberadas" min="0" step="1"></div>
+
+        <div class="field"><label id="cEstadoLbl">Estado</label>
+          <div class="seg" role="radiogroup" aria-labelledby="cEstadoLbl" id="cEstadoSeg">
+            <button type="button" class="chip on" role="radio" aria-checked="true" data-e="En curso">En curso</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-e="Cerrado">Cerrado</button>
+          </div>
+          <input type="hidden" id="cEstado" value="En curso">
         </div>
-        <div class="row2">
-          <div class="field"><label>Monto bruto ($)</label><input type="number" id="cBruto" min="0" step="0.01"></div>
-          <div class="field"><label>Monto neto ($)</label><input type="number" id="cNeto" min="0" step="0.01"></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Devuelto o perdido ($) — solo tipos 4 y 6</label><input type="number" id="cDevuelto" min="0" step="0.01" value="0"></div>
-          <div class="field"><label>Ingreso neto que cuenta ($)</label><input type="number" id="cNetoCuenta" min="0" step="0.01"></div>
-        </div>
-        <div class="field"><label>Gasto extra por el caso ($) — ej. reubicación en overbooking</label><input type="number" id="cGastoExtra" min="0" step="0.01" value="0"></div>
-        <div class="field"><label class="chk"><input type="checkbox" id="cLimpieza" checked> Hubo limpieza real en esta estadía</label></div>
-        <div class="field"><label>Estado</label>
-          <select id="cEstado"><option value="En curso">En curso</option><option value="Cerrado">Cerrado</option></select>
-        </div>
-        <div class="field"><label>Nota</label><textarea id="cNota" placeholder="Explica brevemente qué pasó"></textarea></div>
+        <div class="field" style="margin-bottom:0"><label class="chk"><input type="checkbox" id="cLimpieza" checked> Hubo limpieza real en esta estadía</label></div>
+      </div>
+      <div class="sticky">
+        <div class="msg" id="cMsg" role="status"></div>
         <div class="actions">
           <button type="button" class="btn btn-acc" id="cGuardar">Guardar</button>
           <button type="button" class="btn btn-ghost" id="cCancelar" style="display:none">Cancelar edición</button>
         </div>
-        <div class="msg" id="cMsg"></div>
+      </div>
       </div>
       <div class="card">
         <h3>Casos registrados</h3>
@@ -197,7 +281,8 @@ textarea{resize:vertical;min-height:60px}
     </div>
 
     <!-- FORM BLOQUEO -->
-    <div id="panelBloq" style="display:none">
+    <div id="panelBloq" role="tabpanel" aria-labelledby="tabBloq" style="display:none">
+      <div id="bFormWrap">
       <div class="card">
         <h3 id="bFormTitle">Registrar bloqueo</h3>
         <p class="hint">Fechas en las que el departamento NO está disponible para renta (uso propio, mantenimiento, etc.). La fecha de salida no cuenta como noche bloqueada, igual que en Airbnb.</p>
@@ -222,11 +307,14 @@ textarea{resize:vertical;min-height:60px}
           </select>
         </div>
         <div class="field"><label>Nota (opcional)</label><textarea id="bNota"></textarea></div>
+      </div>
+      <div class="sticky">
+        <div class="msg" id="bMsg" role="status"></div>
         <div class="actions">
           <button type="button" class="btn btn-acc" id="bGuardar">Guardar</button>
           <button type="button" class="btn btn-ghost" id="bCancelar" style="display:none">Cancelar edición</button>
         </div>
-        <div class="msg" id="bMsg"></div>
+      </div>
       </div>
       <div class="card">
         <h3>Bloqueos registrados</h3>
@@ -325,17 +413,17 @@ $('syncBtn').onclick = async () => {
   } catch (e) { $('syncHint').textContent = 'Error: ' + (e.message || e); }
 };
 
-$('tabCanc').onclick = () => { $('tabCanc').classList.add('on'); $('tabBloq').classList.remove('on'); $('panelCanc').style.display = 'block'; $('panelBloq').style.display = 'none'; };
-$('tabBloq').onclick = () => { $('tabBloq').classList.add('on'); $('tabCanc').classList.remove('on'); $('panelBloq').style.display = 'block'; $('panelCanc').style.display = 'none'; };
+$('tabCanc').onclick = () => { $('tabCanc').classList.add('on'); $('tabBloq').classList.remove('on'); $('tabCanc').setAttribute('aria-selected', 'true'); $('tabBloq').setAttribute('aria-selected', 'false'); $('panelCanc').style.display = 'block'; $('panelBloq').style.display = 'none'; };
+$('tabBloq').onclick = () => { $('tabBloq').classList.add('on'); $('tabCanc').classList.remove('on'); $('tabBloq').setAttribute('aria-selected', 'true'); $('tabCanc').setAttribute('aria-selected', 'false'); $('panelBloq').style.display = 'block'; $('panelCanc').style.display = 'none'; };
 
 function limpiarFormC() {
-  ['cCodigo','cHuesped'].forEach(id => $(id).value = '');
-  $('cCanal').value = 'Airbnb'; $('cAnuncio').value = 'LST-01_6 pax'; $('cTipo').value = '1';
-  $('cCheckin').value = ''; $('cCheckout').value = '';
-  ['cNochesPagadas','cNochesPresente','cNochesCuentan','cNochesLiberadas','cBruto','cNeto','cNetoCuenta'].forEach(id => $(id).value = '');
-  $('cDevuelto').value = '0'; $('cGastoExtra').value = '0'; $('cLimpieza').checked = true;
-  $('cEstado').value = 'En curso'; $('cNota').value = '';
+  ['cCodigo','cHuesped','cBuscarReserva'].forEach(id => $(id).value = '');
+  $('cCanal').value = 'Airbnb'; $('cAnuncio').value = 'LST-01_6 pax';
+  ['cCheckin','cCheckout','cNochesPagadas','cBruto','cNeto'].forEach(id => $(id).value = '');
+  setEstado('En curso'); setNota(''); renderMotivos();
+  setTipo(0, true); pintarResumen();
   editC = null; $('cFormTitle').textContent = 'Registrar cancelación / no-show'; $('cCancelar').style.display = 'none';
+  $('cManual').hidden = true; $('cManualBtn').setAttribute('aria-expanded', 'false'); $('cManualBtn').textContent = 'Corregir datos a mano';
 }
 
 function limpiarFormB() {
@@ -348,8 +436,15 @@ $('cCancelar').onclick = limpiarFormC;
 $('bCancelar').onclick = limpiarFormB;
 
 $('cGuardar').onclick = async () => {
+  const msg = (t, c) => { $('cMsg').className = 'msg' + (c ? ' ' + c : ''); $('cMsg').textContent = t; };
   const codigo = $('cCodigo').value.trim();
-  if (!codigo) { $('cMsg').className = 'msg err'; $('cMsg').textContent = 'Falta el código de reserva.'; return; }
+  if (!codigo) { msg('Busca la reserva o corrige los datos a mano.', 'err'); return; }
+  const c = calcular();
+  if (!c.t) { msg('Elige el tipo de caso.', 'err'); return; }
+  if (c.cue > c.P || c.pres > c.P) { toggleAcc(true); msg('Las noches no pueden superar las pagadas (' + c.P + ').', 'err'); return; }
+  if (c.t === 1 && c.cue < 1) { toggleAcc(true); msg('Indica cuántas noches ocupó el huésped.', 'err'); return; }
+  if (c.t === 4 && c.dev <= 0) { toggleAcc(true); msg('Indica cuánto se devolvió.', 'err'); return; }
+  recalcular();
   const r = {
     id: editC || uid(), codigo, huesped: $('cHuesped').value.trim(), canal: $('cCanal').value,
     anuncio: $('cAnuncio').value, tipo: Number($('cTipo').value),
@@ -359,17 +454,17 @@ $('cGuardar').onclick = async () => {
     bruto: Number($('cBruto').value) || 0, neto: Number($('cNeto').value) || 0,
     devueltoPerdido: Number($('cDevuelto').value) || 0, netoQueCuenta: Number($('cNetoCuenta').value) || 0,
     gastoExtra: Number($('cGastoExtra').value) || 0, limpiezaReal: $('cLimpieza').checked,
-    estado: $('cEstado').value, nota: $('cNota').value.trim(), editado: !!editC
+    estado: $('cEstado').value, nota: getNota(), editado: !!editC
   };
-  $('cMsg').className = 'msg'; $('cMsg').textContent = 'Guardando...';
+  msg('Guardando...');
   try {
     await call({ accion: 'sincronizar', upsertsCancelaciones: [r], borrarCancelaciones: [], upsertsBloqueos: [], borrarBloqueos: [] });
     const i = CANC.findIndex(x => x.id === r.id);
     if (i >= 0) CANC[i] = r; else CANC.push(r);
     saveData(); render();
-    $('cMsg').className = 'msg ok'; $('cMsg').textContent = 'Guardado.';
     limpiarFormC();
-  } catch (e) { $('cMsg').className = 'msg err'; $('cMsg').textContent = String(e.message || e); }
+    msg('Guardado.', 'ok');
+  } catch (e) { msg(String(e.message || e), 'err'); }
 };
 
 $('bGuardar').onclick = async () => {
@@ -390,15 +485,17 @@ $('bGuardar').onclick = async () => {
 function editarC(id) {
   const r = CANC.find(x => x.id === id); if (!r) return;
   editC = id;
+  $('cBuscarReserva').value = '';
   $('cCodigo').value = r.codigo || ''; $('cHuesped').value = r.huesped || ''; $('cCanal').value = r.canal || 'Airbnb';
-  $('cAnuncio').value = r.anuncio || 'LST-01_6 pax'; $('cTipo').value = String(r.tipo || 1);
+  $('cAnuncio').value = r.anuncio || 'LST-01_6 pax';
   $('cCheckin').value = r.checkin || ''; $('cCheckout').value = r.checkout || '';
   $('cNochesPagadas').value = r.nochesPagadas || 0; $('cNochesPresente').value = r.nochesPresente || 0;
   $('cNochesCuentan').value = r.nochesCuentan || 0; $('cNochesLiberadas').value = r.nochesLiberadas || 0;
   $('cBruto').value = r.bruto || 0; $('cNeto').value = r.neto || 0;
   $('cDevuelto').value = r.devueltoPerdido || 0; $('cNetoCuenta').value = r.netoQueCuenta || 0;
   $('cGastoExtra').value = r.gastoExtra || 0; $('cLimpieza').checked = !!r.limpiezaReal;
-  $('cEstado').value = r.estado || 'En curso'; $('cNota').value = r.nota || '';
+  setEstado(r.estado || 'En curso'); setNota(r.nota || ''); renderMotivos();
+  setTipo(Number(r.tipo) || 0, false); pintarResumen();
   $('cFormTitle').textContent = 'Editando: ' + r.codigo; $('cCancelar').style.display = 'inline-block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -476,6 +573,7 @@ const RESKEY = 'cimablanca_canc_reservas_cache';
 let driveToken = null, driveTokenClient = null;
 let RESERVAS = [];       // lista plana de reservas (Airbnb liquidadas/por liquidar + directas)
 let RES_POR_LABEL = {};  // texto mostrado en el buscador -> registro
+let RESERVA_LABELS = [];
 
 try {
   const c = JSON.parse(localStorage.getItem(RESKEY) || 'null');
@@ -544,8 +642,6 @@ function cargarReservasDesdeDrive() {
     .catch(e => pintarDriveMsg('error', e.message || e));
 }
 
-let RESERVA_LABELS = [];
-
 function indexarReservas() {
   RES_POR_LABEL = {};
   RESERVAS.forEach(r => {
@@ -575,8 +671,12 @@ function aplicarReservaAlForm(r) {
   $('cNochesPagadas').value = r.noches || 0;
   $('cBruto').value = (r.ingresos_brutos || 0).toFixed(2);
   $('cNeto').value = (r.monto || 0).toFixed(2);
+  $('cMsg').className = 'msg'; $('cMsg').textContent = '';
+  pintarResumen();
+  const t = Number($('cTipo').value) || 0;
+  if (t) setTipo(t, true); else recalcular();
   if ((r.monto || 0) === 0 && (r.ingresos_brutos || 0) === 0) {
-    $('cMsg').className = 'msg'; $('cMsg').textContent = 'Esta reserva aparece con $0: puede ser una cancelación flexible ya cobrada en $0 por Airbnb. Revisa el resto de los campos antes de guardar.';
+    $('cMsg').className = 'msg'; $('cMsg').textContent = 'Esta reserva aparece con $0: puede ser una cancelación flexible ya cobrada en $0 por Airbnb. Revisa los datos antes de guardar.';
   }
 }
 
@@ -651,6 +751,147 @@ window.addEventListener('load', () => {
     }, 200);
   }
 });
+
+// ===== v2: formulario de cancelación simplificado =====
+const MESES_L = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const MOTIVOS = ['Canceló por viaje', 'Canceló por trabajo', 'Imprevisto del huésped', 'Doble reserva', 'No se presentó', 'Problema de pago'];
+// f = campos visibles del acordeón "Detalles del caso"; limpieza = valor por defecto de "Hubo limpieza real"
+const TIPOS = {
+  1: { f: ['presente', 'cuentan'], limpieza: true, ayuda: 'Se recorta a las noches que el huésped ocupó. El dinero cobrado se mantiene.' },
+  2: { f: [], limpieza: true, ayuda: 'No se toca nada: noches y dinero completos.' },
+  3: { f: ['liberadas'], limpieza: false, ayuda: 'El dinero cobrado se mantiene. Ninguna noche cuenta como ocupada.' },
+  4: { f: ['cuentan', 'devuelto'], limpieza: true, ayuda: 'Cuentan solo las noches ocupadas y lo devuelto sale del ingreso. Regla por confirmar.' },
+  5: { f: ['presente', 'cuentan', 'gasto'], limpieza: false, ayuda: 'El dinero se mantiene y la reserva reubicada no cuenta noches. Regla por confirmar.' },
+  6: { f: ['presente', 'cuentan', 'liberadas', 'devuelto', 'gasto'], limpieza: true, ayuda: 'En curso no resta nada; si el banco lo quita, sale del ingreso. Regla por confirmar.' }
+};
+let accTocado = false, motivoSel = '';
+
+const num = id => Number($(id).value) || 0;
+const money = n => '$' + (Number(n) || 0).toFixed(2);
+function fp(s) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? { y: +m[1], m: +m[2] - 1, d: +m[3] } : null; }
+function rangoFechas(a, b) {
+  const x = fp(a), y = fp(b);
+  if (x && y) return (x.m === y.m && x.y === y.y) ? x.d + ' al ' + y.d + ' de ' + MESES_L[y.m] : x.d + ' de ' + MESES_L[x.m] + ' al ' + y.d + ' de ' + MESES_L[y.m];
+  const z = x || y; return z ? z.d + ' de ' + MESES_L[z.m] : '';
+}
+function nochesEntre(a, b) { const x = fp(a), y = fp(b); if (!x || !y) return 0; return Math.round((Date.UTC(y.y, y.m, y.d) - Date.UTC(x.y, x.m, x.d)) / 86400000); }
+
+function pintarResumen() {
+  const cod = $('cCodigo').value.trim(), el = $('cResumen');
+  if (!cod) { el.className = 'resumen vacio'; el.innerHTML = '<b>Sin reserva elegida</b><span>Búscala arriba o corrige los datos a mano.</span>'; return; }
+  const partes = [$('cHuesped').value.trim() || cod, $('cCanal').value, rangoFechas($('cCheckin').value, $('cCheckout').value)].filter(Boolean);
+  const P = num('cNochesPagadas');
+  el.className = 'resumen';
+  el.innerHTML = '<b>' + esc(partes.join(' · ')) + '</b><span>' + esc(cod) + ' · ' + P + (P === 1 ? ' noche' : ' noches') + ' · bruto ' + money(num('cBruto')) + ' · neto ' + money(num('cNeto')) + '</span>';
+}
+
+function calcular() {
+  const t = Number($('cTipo').value) || 0, P = num('cNochesPagadas'), neto = num('cNeto');
+  const vis = TIPOS[t] ? TIPOS[t].f : [];
+  let pres = num('cNochesPresente'), cue = num('cNochesCuentan'), lib = num('cNochesLiberadas');
+  const dev = vis.indexOf('devuelto') >= 0 ? num('cDevuelto') : 0;
+  const gas = vis.indexOf('gasto') >= 0 ? num('cGastoExtra') : 0;
+  if (t === 2) { pres = P; cue = P; lib = 0; }
+  else if (t === 3) { pres = 0; cue = 0; }
+  else if (t === 1 || t === 5) { lib = Math.max(P - pres, 0); }
+  else if (t === 4) { pres = cue; lib = Math.max(P - cue, 0); }
+  let nq = neto;
+  if (t === 4) nq = Math.max(neto - dev, 0);
+  if (t === 6 && $('cEstado').value !== 'En curso') nq = Math.max(neto - dev, 0);
+  return { t, P, neto, pres, cue, lib, dev, gas, nq };
+}
+
+function recalcular() {
+  const c = calcular();
+  if (!c.t) { $('cStats').hidden = true; return c; }
+  const vis = TIPOS[c.t].f;
+  [['presente', 'cNochesPresente', c.pres], ['cuentan', 'cNochesCuentan', c.cue], ['liberadas', 'cNochesLiberadas', c.lib],
+   ['devuelto', 'cDevuelto', c.dev], ['gasto', 'cGastoExtra', c.gas]].forEach(a => { if (vis.indexOf(a[0]) < 0) $(a[1]).value = a[2]; });
+  $('cNetoCuenta').value = c.nq.toFixed(2);
+  const hay = !!$('cCodigo').value.trim();
+  $('cStats').hidden = !hay;
+  if (hay) {
+    $('sCuentan').textContent = c.cue; $('sCuentanDe').textContent = 'de ' + c.P + ' pagadas';
+    $('sLib').textContent = c.lib;
+    $('sIng').textContent = money(c.nq); $('sIngDe').textContent = 'de ' + money(c.neto) + ' neto';
+  }
+  const pend = (c.t === 1 && c.cue === 0) || (c.t === 4 && c.dev === 0);
+  $('cAccBtn').classList.toggle('falta', pend);
+  $('cAccEstado').textContent = pend ? 'Falta completar' : (accTocado ? 'Editado' : 'Valores por defecto');
+  return c;
+}
+
+function toggleAcc(open) { $('cAcc').classList.toggle('open', open); $('cAccBtn').setAttribute('aria-expanded', String(open)); }
+
+function setTipo(t, reset) {
+  const cfg = TIPOS[t];
+  $('cTipo').value = cfg ? String(t) : '';
+  document.querySelectorAll('#cTipoChips .chip').forEach(b => { const on = b.dataset.tipo === String(t); b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+  $('cTipoHelp').textContent = cfg ? cfg.ayuda : ''; $('cTipoHelp').hidden = !cfg;
+  const vis = cfg ? cfg.f : [];
+  document.querySelectorAll('#cAccBody [data-f]').forEach(el => { el.hidden = vis.indexOf(el.dataset.f) < 0; });
+  $('cAcc').hidden = !vis.length;
+  if (!vis.length) toggleAcc(false);
+  if (reset) {
+    ['cNochesPresente', 'cNochesCuentan', 'cNochesLiberadas', 'cDevuelto', 'cGastoExtra'].forEach(id => $(id).value = 0);
+    if (t === 3) $('cNochesLiberadas').value = num('cNochesPagadas');
+    $('cLimpieza').checked = cfg ? cfg.limpieza : true;
+    accTocado = false;
+  }
+  recalcular();
+}
+
+function setEstado(v) {
+  $('cEstado').value = v;
+  document.querySelectorAll('#cEstadoSeg .chip').forEach(b => { const on = b.dataset.e === v; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+}
+
+function renderMotivos() {
+  $('cMotivos').innerHTML = MOTIVOS.concat(['Otro']).map(m =>
+    '<button type="button" class="chip chip-s' + (motivoSel === m ? ' on' : '') + '" aria-pressed="' + (motivoSel === m) + '" data-m="' + esc(m) + '">' + esc(m) + '</button>').join('');
+  $('cNotaWrap').hidden = motivoSel !== 'Otro';
+}
+function getNota() { return motivoSel === 'Otro' ? $('cNota').value.trim() : motivoSel; }
+function setNota(n) {
+  if (!n) { motivoSel = ''; $('cNota').value = ''; }
+  else if (MOTIVOS.indexOf(n) >= 0) { motivoSel = n; $('cNota').value = ''; }
+  else { motivoSel = 'Otro'; $('cNota').value = n; }
+}
+
+$('cTipoChips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  const t = Number(b.dataset.tipo); if (t === (Number($('cTipo').value) || 0)) return;
+  setTipo(t, true);
+});
+$('cEstadoSeg').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; setEstado(b.dataset.e); recalcular(); });
+$('cMotivos').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  const m = b.dataset.m; motivoSel = (motivoSel === m) ? '' : m; renderMotivos();
+  if (motivoSel === 'Otro') $('cNota').focus();
+});
+$('cAccBtn').onclick = () => toggleAcc(!$('cAcc').classList.contains('open'));
+$('cAccBody').addEventListener('click', e => {
+  const b = e.target.closest('.stp'); if (!b) return;
+  const inp = $(b.dataset.t), P = num('cNochesPagadas');
+  let v = Math.max(0, (Number(inp.value) || 0) + Number(b.dataset.d));
+  if (inp.dataset.max === 'noches' && P > 0) v = Math.min(v, P);
+  inp.value = Math.round(v * 100) / 100;
+  inp.dispatchEvent(new Event('input', { bubbles: true }));
+});
+$('cAccBody').addEventListener('input', () => { accTocado = true; recalcular(); });
+$('cManualBtn').onclick = () => {
+  const abrir = $('cManual').hidden;
+  $('cManual').hidden = !abrir; $('cManualBtn').setAttribute('aria-expanded', String(abrir));
+  $('cManualBtn').textContent = abrir ? 'Ocultar datos de la reserva' : 'Corregir datos a mano';
+};
+$('cManual').addEventListener('input', e => {
+  if (e.target.id === 'cCheckin' || e.target.id === 'cCheckout') {
+    const n = nochesEntre($('cCheckin').value, $('cCheckout').value); if (n > 0) $('cNochesPagadas').value = n;
+  }
+  pintarResumen(); recalcular();
+});
+
+limpiarFormC();
 </script>
 </body>
 </html>
