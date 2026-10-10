@@ -302,7 +302,7 @@ input,select{font-family:inherit;color:inherit}
   <div class="gcard">
     <img src="../Cima-Blanca-logo.png" alt="Cima Blanca" style="width:72px;height:72px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 12px">
     <h1>Registro de gastos</h1>
-    <p>Escribe tu clave para conectar con tu hoja. Se guarda en este dispositivo y no te la vuelvo a pedir.</p>
+    <p>Escribe tu clave una sola vez. Se guarda en este dispositivo y sirve para todos los módulos.</p>
     <div class="pw"><input type="password" id="gateKey" placeholder="Tu clave" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"><button type="button" class="eye" id="gateEye">Ver</button></div>
     <div class="gmsg" id="gateMsg" role="alert"></div>
     <button type="button" class="save" id="gateGo">Conectar</button>
@@ -430,11 +430,14 @@ const ANUNCIOS=['Departamento completo','LST-01_6 pax','LST-02_8 pax','LST-03_4 
 const KEY='cb_gastos_ops_v4';
 let OPS=[],stOK=true;
 try{OPS=JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){stOK=false;}
-const CFGKEY='cb_gastos_cfg_v1',SYNKEY='cb_gastos_synced_v1',BASEKEY='cb_gastos_base_v1';
+const SYNKEY='cb_gastos_synced_v1',BASEKEY='cb_gastos_base_v1';
 const FIXED_URL='https://script.google.com/macros/s/AKfycbzQZA1MHQWd0i_Q6Ejo79icmE3kLEjbYGobBv4JQsHFnxnq8YUDTbCCcwHc8LWtbIZPHg/exec';
+const SHARED_KEY='cimablanca_clave',LEGACY_KEYS=['cimablanca_canc_cfg','cimablanca_dir_cfg','cb_gastos_cfg_v1'];
+function getClave(){try{const k=localStorage.getItem(SHARED_KEY);if(k)return k;for(const lk of LEGACY_KEYS){const o=JSON.parse(localStorage.getItem(lk)||'null');if(o&&o.clave){localStorage.setItem(SHARED_KEY,o.clave);return o.clave;}}}catch(e){}return '';}
+function setClave(k){try{localStorage.setItem(SHARED_KEY,k);LEGACY_KEYS.forEach(x=>localStorage.removeItem(x));}catch(e){}}
+function clearClave(){try{localStorage.removeItem(SHARED_KEY);LEGACY_KEYS.forEach(x=>localStorage.removeItem(x));}catch(e){}}
 let CFG={},SYNCED=null,BASE=null,syncBusy=false,syncAgain=false,syncSt={k:'off',msg:''},lastPull=0,ftimer=null;
-try{CFG=JSON.parse(localStorage.getItem(CFGKEY)||'{}')||{};}catch(e){}
-if(CFG&&CFG.clave){CFG.url=FIXED_URL;}
+{const k0=getClave();if(k0)CFG={url:FIXED_URL,clave:k0};}
 try{SYNCED=JSON.parse(localStorage.getItem(SYNKEY)||'null');}catch(e){}
 try{BASE=JSON.parse(localStorage.getItem(BASEKEY)||'null');}catch(e){}
 function persistOnly(){try{localStorage.setItem(KEY,JSON.stringify(OPS));}catch(e){stOK=false;}}
@@ -936,7 +939,7 @@ function openCfg(){
  $('cfgSync').onclick=()=>{if(!connected()){$('cfgMsg').textContent='Primero escribe la clave y presiona Conectar.';return;}sync({pull:true});};
  const un=$('cfgUndo');if(un)un.onclick=()=>{closeSheet();undoLast();};
  $('csvBtn').onclick=csvDownload;
- $('cfgOff').onclick=()=>{CFG={};SYNCED=null;saveCfg();saveSync();setHint();setSync('off');$('cfgMsg').textContent='Desconectado. Lo que tienes aquí sigue guardado en este dispositivo.';};
+ $('cfgOff').onclick=()=>{CFG={};SYNCED=null;saveCfg();saveSync();setHint();setSync('off');$('cfgMsg').textContent='Sesión cerrada en todos los módulos. Lo que tienes aquí sigue guardado en este dispositivo.';};
 }
 
 function pendingRec(DS){
@@ -1022,7 +1025,7 @@ function wire(e){const r={};FLDS.forEach(k=>{let v=e[k];if(v===undefined||v===''
 const canon=e=>JSON.stringify(wire(e));
 function snap(list){const o={};list.forEach(e=>{o[e.id]=canon(e);});return o;}
 function saveSync(){try{localStorage.setItem(SYNKEY,JSON.stringify(SYNCED));localStorage.setItem(BASEKEY,JSON.stringify(BASE));}catch(e){}}
-function saveCfg(){try{localStorage.setItem(CFGKEY,JSON.stringify(CFG));}catch(e){}}
+function saveCfg(){if(CFG.clave)setClave(CFG.clave);else clearClave();}
 const connected=()=>!!(CFG.url&&CFG.clave);
 function pendingDiff(){
  const DS=dataset(),cur=snap(DS);
@@ -1092,7 +1095,7 @@ function setSync(k,msg){
   setStale(false);
  }
 
- if(k==='err'&&/clave/i.test(msg||'')){CFG={};saveCfg();SYNCED=null;saveSync();showGate(msg);}
+ if(k==='err'&&/clave/i.test(msg||'')){CFG={};saveCfg();SYNCED=null;saveSync();showGate(gateOpen()?msg:'La clave ya no es válida en Gastos. Escríbela de nuevo.');}
  else if(k==='err'&&gateOpen())$('gateMsg').textContent=msg||'Sin conexión';
  if(k!=='busy'&&k!=='pend'){const gb=$('gateGo');gb.disabled=false;gb.textContent='Conectar';}
  if(k==='ok'){
