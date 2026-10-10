@@ -101,6 +101,11 @@ button.tab{appearance:none;font-family:inherit}
 .chip{appearance:none;font-family:inherit;font-weight:700;font-size:13px;line-height:1.25;text-align:left;min-height:48px;padding:10px 12px;
   border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;
   transition:transform .12s,border-color .15s,background .15s,color .15s}
+.chip{display:flex;align-items:center;gap:10px}
+.chip-s,.seg .chip{justify-content:center}
+.chip .num{flex:none;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;
+  background:var(--line);color:var(--ink);font-size:12.5px;font-weight:800;transition:background .15s,color .15s}
+.chip.on .num{background:var(--accent);color:var(--accent-ink)}
 .chip:active{transform:scale(.97)}
 .chip.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
 .chip-s{min-height:40px;padding:8px 14px;border-radius:999px;font-size:12.5px;text-align:center}
@@ -220,12 +225,12 @@ button.tab{appearance:none;font-family:inherit}
 
         <div class="field"><label id="cTipoLbl">Tipo de caso</label>
           <div class="chips" role="radiogroup" aria-labelledby="cTipoLbl" id="cTipoChips">
-            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="1">Cancelación con compensación</button>
-            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="2">No-show sin cancelar</button>
-            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="3">Cancelación sin compensación</button>
-            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="4">Devolución al huésped</button>
-            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="5">Overbooking con reubicación</button>
-            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="6">Contracargo / disputa</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="1" aria-label="Tipo 1: Cancelación con compensación"><span class="num">1</span><span>Cancelación con compensación</span></button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="2" aria-label="Tipo 2: No-show sin cancelar"><span class="num">2</span><span>No-show sin cancelar</span></button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="3" aria-label="Tipo 3: Cancelación sin compensación"><span class="num">3</span><span>Cancelación sin compensación</span></button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="4" aria-label="Tipo 4: Devolución al huésped"><span class="num">4</span><span>Devolución al huésped</span></button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="5" aria-label="Tipo 5: Overbooking con reubicación"><span class="num">5</span><span>Overbooking con reubicación</span></button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="6" aria-label="Tipo 6: Contracargo / disputa"><span class="num">6</span><span>Contracargo / disputa</span></button>
           </div>
           <input type="hidden" id="cTipo" value="">
           <div class="tipo-help" id="cTipoHelp" hidden></div>
