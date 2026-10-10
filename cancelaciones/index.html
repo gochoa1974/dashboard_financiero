@@ -194,6 +194,9 @@ input[readonly]{opacity:.75;cursor:not-allowed}
         <h3 id="cFormTitle">Registro de evento / cancelaciones</h3>
         <p class="hint">Un caso por reserva. Si editas uno guardado, se corrige la misma fila.</p>
 
+        <div class="field"><label for="cCanal">Canal</label>
+          <select id="cCanal"><option value="Airbnb">Airbnb</option><option value="Booking">Booking</option><option value="Directa">Directa</option></select>
+        </div>
         <div class="field" style="padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
           <label for="cBuscarReserva">Reserva</label>
           <div class="pw" style="position:relative">
@@ -208,12 +211,7 @@ input[readonly]{opacity:.75;cursor:not-allowed}
         <button type="button" class="link" id="cManualBtn" aria-expanded="false" aria-controls="cManual">Corregir datos a mano</button>
         <div id="cManual" hidden>
           <div class="field"><label for="cCodigo">Código de reserva</label><input id="cCodigo" placeholder="Ej. HMJWRMSPT4 o Reserva_Directa_003"></div>
-          <div class="row2">
-            <div class="field"><label for="cHuesped">Huésped</label><input id="cHuesped" placeholder="Nombre"></div>
-            <div class="field"><label for="cCanal">Canal</label>
-              <select id="cCanal"><option value="Airbnb">Airbnb</option><option value="Booking">Booking</option><option value="Directa">Directa</option></select>
-            </div>
-          </div>
+          <div class="field"><label for="cHuesped">Huésped</label><input id="cHuesped" placeholder="Nombre"></div>
           <div class="field"><label for="cAnuncio">Anuncio</label>
             <select id="cAnuncio">
               <option value="LST-01_6 pax">Cima Blanca (LST-01, 6 pax)</option>
@@ -840,7 +838,9 @@ function ocultarDropdown() { $('cReservaDropdown').style.display = 'none'; }
 function mostrarDropdown(filtro) {
   const dd = $('cReservaDropdown');
   const q = (filtro || '').trim().toLowerCase();
-  const coincidencias = (q ? RESERVA_LABELS.filter(l => l.toLowerCase().indexOf(q) !== -1) : RESERVA_LABELS).slice(0, 30);
+  const cn = $('cCanal').value;
+  const delCanal = RESERVA_LABELS.filter(l => cn === 'Directa' ? !!RES_POR_LABEL[l].__dir : (cn === 'Airbnb' ? !RES_POR_LABEL[l].__dir : false));
+  const coincidencias = (q ? delCanal.filter(l => l.toLowerCase().indexOf(q) !== -1) : delCanal).slice(0, 30);
   if (!coincidencias.length) { ocultarDropdown(); return; }
   dd.innerHTML = coincidencias.map(l => `<div class="drop-item" data-label="${esc(l)}" style="padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line)">${esc(l)}</div>`).join('');
   dd.style.display = 'block';
@@ -1066,6 +1066,12 @@ $('cManualBtn').onclick = () => {
   $('cManual').hidden = !abrir; $('cManualBtn').setAttribute('aria-expanded', String(abrir));
   $('cManualBtn').textContent = abrir ? 'Ocultar datos de la reserva' : 'Corregir datos a mano';
 };
+$('cCanal').addEventListener('change', () => {
+  $('cBuscarReserva').value = ''; ocultarDropdown();
+  if ($('cCanal').value !== 'Directa' && DIRECTAS.some(x => x.codigo === $('cCodigo').value)) { $('cCodigo').value = ''; $('cHuesped').value = ''; }
+  $('cBuscarReserva').placeholder = $('cCanal').value === 'Directa' ? 'Busca la reserva directa por huésped o código' : 'Nombre del huésped o código';
+  syncCanal(); pintarResumen(); recalcular();
+});
 $('cManual').addEventListener('input', e => {
   if (e.target.id === 'cCheckin' || e.target.id === 'cCheckout') {
     const ci = $('cCheckin').value;
@@ -1076,7 +1082,7 @@ $('cManual').addEventListener('input', e => {
     }
     if (ci && $('cCheckout').value) $('cNochesPagadas').value = Math.max(nochesEntre(ci, $('cCheckout').value), 0);
   }
-  if (e.target.id === 'cCanal' || e.target.id === 'cBruto') syncCanal();
+  if (e.target.id === 'cBruto') syncCanal();
   pintarResumen(); recalcular();
 });
 
