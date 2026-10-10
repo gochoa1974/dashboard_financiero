@@ -160,7 +160,7 @@ input[readonly]{opacity:.75;cursor:not-allowed}
 
   <div id="gate" class="gate">
     <h2>Conectar con tu hoja</h2>
-    <p>Escribe tu clave para conectar. Se guarda en este dispositivo y no te la vuelvo a pedir.</p>
+    <p>Escribe tu clave una sola vez. Se guarda en este dispositivo y sirve para todos los módulos.</p>
     <div class="pw">
       <input type="password" id="gateKey" placeholder="Tu clave" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
       <button type="button" class="btn btn-ghost btn-sm" id="gateEye">Ver</button>
@@ -338,11 +338,31 @@ input[readonly]{opacity:.75;cursor:not-allowed}
 const FIXED_URL = 'https://script.google.com/macros/s/AKfycbxTCzl3Phwj8v9NkiMWB8imltqsz16fRzd5NYWx7-UDDsiRjGSkc7M77a5e45fCw--y/exec';
 
 const $ = id => document.getElementById(id);
-const CFGKEY = 'cimablanca_canc_cfg';
+const SHARED_KEY = 'cimablanca_clave';
+const LEGACY_KEYS = ['cimablanca_canc_cfg', 'cimablanca_dir_cfg', 'cb_gastos_cfg_v1'];
+function getClave() {
+  try {
+    const k = localStorage.getItem(SHARED_KEY);
+    if (k) return k;
+    for (const lk of LEGACY_KEYS) {
+      const o = JSON.parse(localStorage.getItem(lk) || 'null');
+      if (o && o.clave) { localStorage.setItem(SHARED_KEY, o.clave); return o.clave; }
+    }
+  } catch (e) {}
+  return '';
+}
+function setClave(k) { try { localStorage.setItem(SHARED_KEY, k); } catch (e) {} }
+function clearClave() { try { localStorage.removeItem(SHARED_KEY); LEGACY_KEYS.forEach(k => localStorage.removeItem(k)); } catch (e) {} }
+function claveRechazada(modulo) {
+  CFG = {}; clearClave();
+  document.getElementById('app').style.display = 'none'; document.getElementById('gate').style.display = 'block';
+  const m = document.getElementById('gateMsg'); m.className = 'msg err';
+  m.textContent = 'La clave ya no es válida en ' + modulo + '. Escríbela de nuevo.';
+}
+
 const DATAKEY = 'cimablanca_canc_data';
 let CFG = {};
-try { CFG = JSON.parse(localStorage.getItem(CFGKEY) || '{}') || {}; } catch (e) {}
-if (CFG && CFG.clave) CFG.url = FIXED_URL;
+{ const k0 = getClave(); if (k0) CFG = { url: FIXED_URL, clave: k0 }; }
 
 let CANC = [];
 let BLOQ = [];
@@ -357,7 +377,7 @@ const TIPO_LABEL = { 1: 'Cancelación con compensación', 2: 'No-show sin cancel
 
 function uid() { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
-function saveCfg() { try { localStorage.setItem(CFGKEY, JSON.stringify(CFG)); } catch (e) {} }
+function saveCfg() { if (CFG.clave) setClave(CFG.clave); }
 function saveData() { try { localStorage.setItem(DATAKEY, JSON.stringify({ cancelaciones: CANC, bloqueos: BLOQ })); } catch (e) {} }
 
 async function call(body) {
@@ -367,7 +387,10 @@ async function call(body) {
     body: JSON.stringify(Object.assign({ clave: CFG.clave }, body))
   });
   const j = await r.json();
-  if (!j.ok) throw new Error(j.error || 'Error desconocido');
+  if (!j.ok) {
+    if (/Clave incorrecta/.test(String(j.error))) claveRechazada('Cancelaciones');
+    throw new Error(j.error || 'Error desconocido');
+  }
   return j;
 }
 
