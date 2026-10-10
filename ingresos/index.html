@@ -316,7 +316,7 @@
 
   function findFileByExactName(folderId, fileName) {
     var q = "'" + folderId + "' in parents and trashed=false and name='" + fileName.replace(/'/g, "\\'") + "'";
-    var url = "https://www.googleapis.com/drive/v3/files?q=" + encodeURIComponent(q) + "&fields=files(id,name)&pageSize=10";
+    var url = "https://www.googleapis.com/drive/v3/files?q=" + encodeURIComponent(q) + "&fields=files(id,name,modifiedTime)&pageSize=10";
     return driveFetch(url).then(function (data) { return (data.files && data.files[0]) || null; });
   }
 
@@ -706,21 +706,28 @@
     autoNota(estado === "ok" ? "Listo: datos de Airbnb actualizados. Volviendo al dashboard…" : "Los datos de Airbnb ya estaban al día. Volviendo al dashboard…", "ok");
     setTimeout(function () { location.href = "../dashboard/?sync=" + estado; }, 1300);
   }
-  // B: antes de sincronizar, mira solo la lista de CSV; si no hay ninguno más nuevo que el de la última sincronización, no gasta tiempo
+  // B: antes de sincronizar, compara SOLO fechas en Drive: ¿hay algún CSV guardado después de la última vez que se escribió el resumen (MAESTRO) en PROCESADO?
+  // No depende de lo guardado en el navegador: si borras los datos de navegación, igual sabe si hay algo nuevo.
   function autoRevisar() {
     autoNota("Revisando si hay archivos nuevos de Airbnb…");
-    log("Modo automático: revisando CSV nuevos…");
+    log("Modo automático: comparando CSV con el último resumen…");
     var mx = "";
+    var maestro = null;
     return findRootFolder(ROOT_FOLDER_NAME)
       .then(function (root) { return findChildFolder(root.id, INGRESOS_FOLDER_NAME); })
       .then(function (ing) { return findChildFolder(ing.id, RESERVAS_FOLDER_NAME); })
-      .then(function (res) { return findChildFolder(res.id, RAW_FOLDER_NAME); })
-      .then(function (raw) { return Promise.all([findChildFolder(raw.id, "Pagados"), findChildFolder(raw.id, "Pendientes")]); })
-      .then(function (fs) { return Promise.all([listFilesInFolder(fs[0].id), listFilesInFolder(fs[1].id)]); })
+      .then(function (res) { return Promise.all([findChildFolder(res.id, RAW_FOLDER_NAME), findChildFolder(res.id, PROCESADO_FOLDER_NAME)]); })
+      .then(function (fo) {
+        return Promise.all([findChildFolder(fo[0].id, "Pagados"), findChildFolder(fo[0].id, "Pendientes"), findFileByExactName(fo[1].id, OUTPUT_JSON_NAME)]);
+      })
+      .then(function (r) { maestro = r[2]; return Promise.all([listFilesInFolder(r[0].id), listFilesInFolder(r[1].id)]); })
       .then(function (ls) {
         ls[0].concat(ls[1]).forEach(function (f) { if (/\.csv$/i.test(f.name) && (f.modifiedTime || "") > mx) mx = f.modifiedTime; });
-        var info = leerInfoSync();
-        if (info && info.csvMax && mx && mx <= info.csvMax) { log("Sin CSV nuevos desde la última sincronización."); volverAlDashboard("al_dia"); return; }
+        if (maestro && maestro.modifiedTime && mx && mx <= maestro.modifiedTime) {
+          log("Sin CSV nuevos: el resumen (" + maestro.modifiedTime + ") es posterior al CSV más nuevo (" + mx + ").");
+          try { localStorage.setItem(SYNC_KEY, JSON.stringify({ t: maestro.modifiedTime, csvMax: mx })); } catch (e) {}
+          volverAlDashboard("al_dia"); return;
+        }
         autoNota("Hay archivos nuevos. Actualizando datos de Airbnb…");
         return runSync().then(function (ok) { if (ok) volverAlDashboard("ok"); else autoNota("No se pudo terminar. Revisa el aviso rojo o toca «Leer Drive y procesar».", "err"); });
       })
