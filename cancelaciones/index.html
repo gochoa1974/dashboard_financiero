@@ -691,6 +691,7 @@ const DRIVE_JSON_NAME = 'MAESTRO_INGRESOS_CIMA_BLANCA.json';
 const RESKEY = 'cimablanca_canc_reservas_cache';
 
 let driveToken = null, driveTokenClient = null;
+let GENERADO = ''; try { GENERADO = localStorage.getItem('cimablanca_canc_generado') || ''; } catch (e) {}
 
 try {
   const c = JSON.parse(localStorage.getItem(RESKEY) || 'null');
@@ -698,6 +699,16 @@ try {
 } catch (e) {}
 
 function pintarDriveMsg(estado, extra) {
+  pintarDriveMsg0(estado, extra);
+  if ((estado === 'ok' || estado === 'cache') && GENERADO) {
+    const el = $('cDriveMsg');
+    const f = new Date(GENERADO).toLocaleString('es-EC', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    el.appendChild(document.createTextNode(' Datos de Airbnb al ' + f + '. '));
+    const a = document.createElement('a'); a.href = '../ingresos/?auto=1'; a.textContent = 'Actualizar desde Airbnb'; a.style.cssText = 'color:inherit;text-decoration:underline;display:inline-block;min-height:44px;line-height:44px';
+    el.appendChild(a);
+  }
+}
+function pintarDriveMsg0(estado, extra) {
   const el = $('cDriveMsg');
   if (estado === 'cache') { el.className = 'msg'; el.textContent = RESERVAS.length + ' reservas cargadas (de la última vez). Actualizando en segundo plano...'; }
   else if (estado === 'conectando') { el.className = 'msg'; el.textContent = 'Conectando con Drive...'; }
@@ -752,6 +763,8 @@ function cargarReservasDesdeDrive() {
     .then(text => {
       const payload = JSON.parse(text);
       RESERVAS = payload.reservas || [];
+      GENERADO = payload.generado || '';
+      try { localStorage.setItem('cimablanca_canc_generado', GENERADO); } catch (e) {}
       indexarReservas();
       try { localStorage.setItem(RESKEY, JSON.stringify({ reservas: RESERVAS, t: Date.now() })); } catch (e) {}
       pintarDriveMsg('ok');
