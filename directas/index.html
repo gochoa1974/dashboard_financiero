@@ -1,1 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Reservas directas · Cima Blanca</title>
+<link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
+<link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#edf2f4;--surface:#ffffff;--ink:#0a2233;--mut:#5f7080;--line:#dde5ea;
+  --hero1:#0a2233;--hero2:#123a52;--hero-mute:#9fc0d3;
+  --accent:#0f9d6e;--accent-ink:#ffffff;--accent-bg:rgba(15,157,110,.12);
+  --warn:#b45309;--warn-bg:rgba(180,83,9,.12);
+  --ok:#0f9d6e;--bad:#dc2626;
+  --shadow:0 1px 2px rgba(10,34,51,.05),0 8px 20px -12px rgba(10,34,51,.2)
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#071722;--surface:#0e2536;--ink:#eaf2f6;--mut:#8fa6b5;--line:#1a3649;
+    --hero1:#0f3550;--hero2:#14506b;--hero-mute:#9fc0d3;
+    --accent:#2fd49a;--accent-ink:#04231a;--accent-bg:rgba(47,212,154,.16);
+    --warn:#f59e0b;--warn-bg:rgba(245,158,11,.16);
+    --ok:#2fd49a;--bad:#f87171;
+    --shadow:0 1px 2px rgba(0,0,0,.4)
+  }
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;min-height:100vh;padding:20px 16px 48px;
+  font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased}
+.wrap{width:100%;max-width:640px;margin:0 auto}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--mut);font-size:13px;font-weight:700;text-decoration:none;margin-bottom:14px;min-height:36px}
+.hero{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--hero1),var(--hero2));color:#fff;
+  border-radius:24px;padding:22px 20px;box-shadow:0 18px 34px -16px rgba(10,34,51,.7);text-align:center;margin-bottom:18px}
+.hero h1{margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}
+.hero p{margin:6px 0 0;font-size:13px;color:var(--hero-mute);font-weight:600}
 
+.gate{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px 18px;box-shadow:var(--shadow)}
+.gate h2{margin:0 0 6px;font-size:16px;font-weight:800}
+.gate p{margin:0 0 14px;font-size:13px;color:var(--mut);font-weight:600;line-height:1.5}
+.pw{display:flex;gap:8px}
+input,select,textarea{font-family:inherit;font-size:16px;border:1px solid var(--line);border-radius:12px;
+  padding:11px 12px;background:var(--bg);color:var(--ink);width:100%;min-height:46px}
+.btn{appearance:none;border:none;border-radius:12px;padding:11px 16px;font-family:inherit;font-weight:800;font-size:14px;cursor:pointer;min-height:44px;transition:transform .12s,opacity .15s}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.55;cursor:wait}
+.btn-acc{background:var(--accent);color:var(--accent-ink)}
+.btn-ghost{background:transparent;color:var(--mut);border:1px solid var(--line)}
+.btn-sm{padding:8px 12px;font-size:13px;border-radius:10px;min-height:40px}
+.btn-bad{background:var(--bad);color:#fff}
+.msg{font-size:12.5px;font-weight:700;margin-top:8px;min-height:16px}
+.msg.err{color:var(--bad)}
+.msg.ok{color:var(--ok)}
+#app{display:none}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+.card h3{margin:0 0 4px;font-size:15px;font-weight:800}
+.card .hint{margin:0 0 14px;font-size:12.5px;color:var(--mut);font-weight:600;line-height:1.5}
+.field{margin-bottom:14px}
+.field label,.lbl{display:block;font-size:12.5px;font-weight:700;color:var(--mut);margin-bottom:5px}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.row2>*{min-width:0}
+input[type=date]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none}
+.sync{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;font-size:12.5px;color:var(--mut);font-weight:700}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[readonly]{opacity:.8;cursor:not-allowed}
+
+.codigo{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px dashed var(--line);border-radius:12px;padding:10px 12px;margin-bottom:14px;background:var(--bg)}
+.codigo b{font-size:14px;font-weight:800;overflow-wrap:anywhere}
+.codigo span{font-size:12px;color:var(--mut);font-weight:700;white-space:nowrap}
+
+.alerta{border:1px solid var(--warn);background:var(--warn-bg);color:var(--ink);border-radius:14px;padding:12px 14px;margin-bottom:16px}
+.alerta b{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:800;color:var(--warn);margin-bottom:6px}
+.alerta ul{margin:0;padding-left:18px;font-size:12.5px;font-weight:600;line-height:1.55}
+
+.chips{display:grid;grid-template-columns:1fr;gap:8px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chip{appearance:none;font-family:inherit;font-weight:700;font-size:13px;line-height:1.25;text-align:left;min-height:48px;padding:10px 12px;
+  border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:10px;
+  transition:transform .12s,border-color .15s,background .15s,color .15s}
+.chip:active{transform:scale(.97)}
+.chip.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.chip small{display:block;font-size:11.5px;font-weight:600;color:var(--mut);margin-top:1px}
+.chip.on small{color:var(--accent)}
+.seg .chip{justify-content:center;text-align:center}
+.dot{flex:none;width:18px;height:18px;border-radius:50%;border:2px solid var(--line);transition:all .15s}
+.chip.on .dot{border-color:var(--accent);background:radial-gradient(var(--accent) 45%,transparent 50%)}
+
+.tramo{border:1px solid var(--line);border-radius:14px;padding:12px 14px 4px;margin-bottom:12px;background:var(--bg)}
+.tramo-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:13.5px;font-weight:800}
+.tramo input,.tramo select{background:var(--surface)}
+.link{appearance:none;background:none;border:none;padding:10px 0;margin:0;color:var(--accent);font-family:inherit;font-weight:800;font-size:13px;cursor:pointer;min-height:44px}
+.link.bad{color:var(--bad)}
+.stepper{display:grid;grid-template-columns:48px 1fr 48px;gap:8px;align-items:stretch}
+.stp{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;font-family:inherit;font-size:22px;font-weight:800;min-height:48px;cursor:pointer;transition:transform .12s}
+.stp:active{transform:scale(.94)}
+.stepper input{text-align:center;font-weight:800;font-size:18px;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 16px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg)}
+.stat .k{font-size:11.5px;color:var(--mut);font-weight:700}
+.stat .v{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px;overflow-wrap:anywhere}
+
+.sticky{position:sticky;bottom:10px;z-index:20;margin-top:12px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 28px -10px rgba(10,34,51,.35)}
+.sticky .msg{margin:0 0 8px;min-height:0}
+.sticky .msg:empty{display:none}
+.actions{display:flex;gap:10px}
+.sticky .btn-acc{flex:1;min-height:48px}
+.sticky .btn-ghost{min-height:48px}
+
+.list-item{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;background:var(--bg)}
+.list-item .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.list-item b{font-size:14px;overflow-wrap:anywhere}
+.tag{font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--accent-bg);color:var(--accent);white-space:nowrap}
+.tag.warn{background:var(--warn-bg);color:var(--warn)}
+.list-item .meta{font-size:12.5px;color:var(--mut);font-weight:600;margin-top:4px;line-height:1.55}
+.list-item .tot{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
+.list-item .btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.list-item.flash{animation:flash 1.4s ease}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
+.empty{font-size:13px;color:var(--mut);font-weight:600;text-align:center;padding:18px 0}
+@media (min-width:900px){.wrap{max-width:760px}.chips{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:380px){.row2{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Dashboard
+  </a>
+  <div class="hero">
+    <h1>Reservas directas</h1>
+    <p>Cima Blanca · Punta Blanca</p>
+  </div>
+
+  <div id="gate" class="gate">
+    <h2>Conectar con tu hoja</h2>
+    <p>Escribe tu clave para conectar. Se guarda en este dispositivo y no te la vuelvo a pedir.</p>
+    <div class="pw">
+      <input type="password" id="gateKey" placeholder="Tu clave" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" aria-label="Clave">
+      <button type="button" class="btn btn-ghost btn-sm" id="gateEye">Ver</button>
+    </div>
+    <div style="margin-top:10px"><button type="button" class="btn btn-acc" id="gateGo">Conectar</button></div>
+    <div class="msg" id="gateMsg" role="status"></div>
+  </div>
+
+  <div id="app">
+    <div class="sync">
+      <span id="syncHint">Sin sincronizar</span>
+      <button type="button" class="btn btn-ghost btn-sm" id="syncBtn">Actualizar</button>
+    </div>
+
+    <div class="alerta" id="alerta" role="status" hidden>
+      <b><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 3l10 18H2L12 3z" stroke-linejoin="round"/><path d="M12 10v5M12 18.5v.01" stroke-linecap="round"/></svg><span id="alertaT">Revisa estos puntos</span></b>
+      <ul id="alertaL"></ul>
+    </div>
+
+    <div id="formWrap">
+      <div class="card" id="formCard">
+        <h3 id="formTitle">Nueva reserva directa</h3>
+        <p class="hint">Una reserva por huésped. Si cambió el precio entre noches, agrega otro tramo.</p>
+
+        <div class="codigo" aria-live="polite">
+          <b id="codigoTxt">Reserva_Directa_—</b><span id="codigoNota">Código automático</span>
+        </div>
+
+        <div class="field"><label for="huesped">Huésped</label>
+          <input id="huesped" placeholder="Nombre y apellido" autocomplete="off" autocapitalize="words" maxlength="80"></div>
+
+        <div class="field"><span class="lbl" id="anLbl">Anuncio</span>
+          <div class="chips" role="radiogroup" aria-labelledby="anLbl" id="anuncios"></div></div>
+
+        <div class="field"><span class="lbl">Fechas y monto</span>
+          <div id="tramos"></div>
+          <button type="button" class="link" id="addTramo">+ Agregar otro tramo</button>
+        </div>
+
+        <div class="stats" aria-live="polite">
+          <div class="stat"><div class="k">Noches</div><div class="v" id="sNoches">0</div></div>
+          <div class="stat"><div class="k">Total</div><div class="v" id="sTotal">$0.00</div></div>
+          <div class="stat"><div class="k">Por noche</div><div class="v" id="sProm">—</div></div>
+        </div>
+
+        <div class="field"><span class="lbl" id="mdLbl">Medio de cobro</span>
+          <div class="seg" role="radiogroup" aria-labelledby="mdLbl" id="medios"></div></div>
+
+        <div class="field" style="margin-bottom:0"><label for="anio">Ingresos del año</label>
+          <input id="anio" type="number" inputmode="numeric" min="2024" max="2100" step="1">
+          <div class="msg" id="anioHint" style="min-height:0;font-weight:600;color:var(--mut)">Se llena solo con el año del check-in. Cámbialo si el ingreso corresponde a otro año.</div></div>
+      </div>
+      <div class="sticky">
+        <div class="msg" id="msg" role="status"></div>
+        <div class="actions">
+          <button type="button" class="btn btn-acc" id="guardar">Guardar reserva</button>
+          <button type="button" class="btn btn-ghost" id="cancelar" hidden>Cancelar edición</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Reservas registradas <span class="tag" id="cuenta">0</span></h3>
+      <div class="field" style="margin:10px 0 12px"><input id="buscar" type="search" placeholder="Buscar por huésped o código" aria-label="Buscar reserva" autocomplete="off"></div>
+      <div id="lista"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Pega aquí la URL de tu implementación de Apps Script (termina en /exec) =====
+const FIXED_URL = 'PEGA-AQUI-LA-URL-DE-DIRECTAS';
+
+const $ = id => document.getElementById(id);
+const CFGKEY = 'cimablanca_dir_cfg';
+const DATAKEY = 'cimablanca_dir_data';
+const ANUNCIOS = [
+  { v: 'LST-01_6 pax', n: 'Cima Blanca', s: 'LST-01 · 6 pax' },
+  { v: 'LST-02_8 pax', n: 'Depa de Playa', s: 'LST-02 · 8 pax' },
+  { v: 'LST-03_4 pax', n: 'MiamiCito', s: 'LST-03 · 4 pax' }
+];
+const MEDIOS = [
+  { v: 'TRANSFERENCIA', n: 'Transferencia' },
+  { v: 'EFECTIVO', n: 'Efectivo' },
+  { v: 'OTRO', n: 'Otro' }
+];
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+let CFG = {};
+try { CFG = JSON.parse(localStorage.getItem(CFGKEY) || '{}') || {}; } catch (e) {}
+if (CFG && CFG.clave) CFG.url = FIXED_URL;
+
+let RESERVAS = [], ALERTAS = [], SIGUIENTE = '';
+try {
+  const d = JSON.parse(localStorage.getItem(DATAKEY) || 'null');
+  if (d) { RESERVAS = d.reservas || []; ALERTAS = d.alertas || []; SIGUIENTE = d.siguiente || ''; }
+} catch (e) {}
+
+let editCodigo = null, anuncio = ANUNCIOS[0].v, medio = 'TRANSFERENCIA', anioManual = false, guardando = false;
+let tramos = [nuevoTramo()];
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function money(n) { return '$' + (Math.round((Number(n) || 0) * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function numCod(c) { const m = /^Reserva_Directa_(\d+)$/.exec(String(c || '')); return m ? parseInt(m[1], 10) : 0; }
+function nuevoTramo(ci) { return { checkin: ci || '', checkout: '', monto: '', pax: 2 }; }
+function addDiasISO(iso, dias) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + dias);
+  return dt.toISOString().slice(0, 10);
+}
+function difDias(a, b) {
+  const p = s => { const x = s.split('-'); return Date.UTC(+x[0], +x[1] - 1, +x[2]); };
+  return Math.round((p(b) - p(a)) / 86400000);
+}
+function nochesDe(t) { return (t.checkin && t.checkout && t.checkout > t.checkin) ? difDias(t.checkin, t.checkout) : 0; }
+function fechaBonita(iso) { if (!iso) return ''; const x = iso.split('-'); return +x[2] + ' ' + MESES[+x[1] - 1] + ' ' + x[0]; }
+function anuncioNombre(v) { const a = ANUNCIOS.filter(x => x.v === v)[0]; return a ? a.n + ' (' + a.s + ')' : v; }
+
+function saveCfg() { try { localStorage.setItem(CFGKEY, JSON.stringify(CFG)); } catch (e) {} }
+function saveData() { try { localStorage.setItem(DATAKEY, JSON.stringify({ reservas: RESERVAS, alertas: ALERTAS, siguiente: SIGUIENTE })); } catch (e) {} }
+
+async function call(body) {
+  if (!CFG.url || CFG.url.indexOf('PEGA-AQUI') >= 0) throw new Error('Falta pegar la URL del Apps Script en el archivo.');
+  const r = await fetch(CFG.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ clave: CFG.clave }, body))
+  });
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || 'Error desconocido');
+  return j;
+}
+
+function aplicar(j) {
+  RESERVAS = j.reservas || []; ALERTAS = j.alertas || []; SIGUIENTE = j.siguiente || '';
+  saveData(); render();
+}
+
+function showApp() { $('gate').style.display = 'none'; $('app').style.display = 'block'; }
+function setHint(ok) {
+  $('syncHint').textContent = ok ? 'Sincronizado ahora' : (RESERVAS.length ? 'Datos guardados en este dispositivo' : 'Sin datos aún');
+}
+
+async function conectar(clave) {
+  $('gateMsg').className = 'msg'; $('gateMsg').textContent = 'Conectando...';
+  CFG = { url: FIXED_URL, clave: clave };
+  try {
+    const j = await call({ accion: 'listar' });
+    saveCfg(); showApp(); aplicar(j); resetForm(); setHint(true);
+  } catch (e) {
+    $('gateMsg').className = 'msg err'; $('gateMsg').textContent = String(e.message || e);
+    CFG = {};
+  }
+}
+
+$('gateGo').onclick = () => {
+  const k = $('gateKey').value.trim();
+  if (!k) { $('gateMsg').className = 'msg err'; $('gateMsg').textContent = 'Escribe tu clave.'; return; }
+  conectar(k);
+};
+$('gateEye').onclick = () => { const i = $('gateKey'); i.type = i.type === 'password' ? 'text' : 'password'; };
+$('gateKey').addEventListener('keydown', e => { if (e.key === 'Enter') $('gateGo').click(); });
+
+$('syncBtn').onclick = async () => {
+  $('syncHint').textContent = 'Actualizando...';
+  try { aplicar(await call({ accion: 'listar' })); setHint(true); }
+  catch (e) { $('syncHint').textContent = 'Error: ' + (e.message || e); }
+};
+
+/* ---------- formulario ---------- */
+function pintarChips() {
+  $('anuncios').innerHTML = ANUNCIOS.map(a =>
+    '<button type="button" class="chip' + (a.v === anuncio ? ' on' : '') + '" role="radio" aria-checked="' + (a.v === anuncio) + '" data-v="' + esc(a.v) + '"><span class="dot"></span><span>' + esc(a.n) + '<small>' + esc(a.s) + '</small></span></button>').join('');
+  $('medios').innerHTML = MEDIOS.map(m =>
+    '<button type="button" class="chip' + (m.v === medio ? ' on' : '') + '" role="radio" aria-checked="' + (m.v === medio) + '" data-v="' + esc(m.v) + '">' + esc(m.n) + '</button>').join('');
+}
+$('anuncios').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; anuncio = b.dataset.v; pintarChips(); });
+$('medios').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; medio = b.dataset.v; pintarChips(); });
+
+function pintarTramos() {
+  $('tramos').innerHTML = tramos.map((t, i) =>
+    '<div class="tramo" data-i="' + i + '">' +
+      '<div class="tramo-h"><span>Tramo ' + (i + 1) + '</span>' + (tramos.length > 1 ? '<button type="button" class="link bad" data-quitar="' + i + '" style="padding:0;min-height:32px">Quitar</button>' : '') + '</div>' +
+      '<div class="row2">' +
+        '<div class="field"><label for="ci' + i + '">Check-in</label><input type="date" id="ci' + i + '" data-k="checkin" value="' + esc(t.checkin) + '"></div>' +
+        '<div class="field"><label for="co' + i + '">Check-out</label><input type="date" id="co' + i + '" data-k="checkout" value="' + esc(t.checkout) + '"' + (t.checkin ? ' min="' + addDiasISO(t.checkin, 1) + '"' : '') + '></div>' +
+      '</div>' +
+      '<div class="row2">' +
+        '<div class="field"><label for="no' + i + '">Noches</label><input id="no' + i + '" readonly value="' + (nochesDe(t) || '') + '" aria-live="polite"></div>' +
+        '<div class="field"><label for="mo' + i + '">Monto ($)</label><input type="number" inputmode="decimal" id="mo' + i + '" data-k="monto" min="0" step="0.01" placeholder="0.00" value="' + esc(t.monto) + '"></div>' +
+      '</div>' +
+      '<div class="field"><label for="px' + i + '">Huéspedes</label><div class="stepper"><button type="button" class="stp" data-px="' + i + '" data-d="-1" aria-label="Restar un huésped">−</button><input type="number" inputmode="numeric" id="px' + i + '" data-k="pax" min="1" max="30" step="1" value="' + esc(t.pax) + '"><button type="button" class="stp" data-px="' + i + '" data-d="1" aria-label="Sumar un huésped">+</button></div></div>' +
+    '</div>').join('');
+}
+
+function resumen() {
+  const noches = tramos.reduce((s, t) => s + nochesDe(t), 0);
+  const total = tramos.reduce((s, t) => s + (Number(t.monto) || 0), 0);
+  $('sNoches').textContent = noches;
+  $('sTotal').textContent = money(total);
+  $('sProm').textContent = noches ? money(total / noches) : '—';
+  if (!anioManual) {
+    const ci = tramos.map(t => t.checkin).filter(Boolean).sort()[0];
+    $('anio').value = ci ? ci.slice(0, 4) : '';
+  }
+}
+
+$('tramos').addEventListener('input', e => {
+  const box = e.target.closest('.tramo'); if (!box || !e.target.dataset.k) return;
+  const i = +box.dataset.i, k = e.target.dataset.k, t = tramos[i];
+  t[k] = e.target.value;
+  if (k === 'checkin') {
+    const co = $('co' + i);
+    if (t.checkin) {
+      co.min = addDiasISO(t.checkin, 1);
+      if (!t.checkout || t.checkout <= t.checkin) { t.checkout = addDiasISO(t.checkin, 1); co.value = t.checkout; }
+    } else co.removeAttribute('min');
+  }
+  if (k === 'checkin' || k === 'checkout') $('no' + i).value = nochesDe(t) || '';
+  resumen();
+});
+$('tramos').addEventListener('click', e => {
+  const q = e.target.closest('[data-quitar]');
+  if (q) { tramos.splice(+q.dataset.quitar, 1); pintarTramos(); resumen(); return; }
+  const s = e.target.closest('[data-px]');
+  if (s) {
+    const i = +s.dataset.px, t = tramos[i];
+    t.pax = Math.min(30, Math.max(1, (Number(t.pax) || 1) + Number(s.dataset.d)));
+    $('px' + i).value = t.pax;
+  }
+});
+$('addTramo').onclick = () => {
+  const ult = tramos[tramos.length - 1];
+  const t = nuevoTramo(ult && ult.checkout ? ult.checkout : '');
+  if (t.checkin) t.checkout = addDiasISO(t.checkin, 1);
+  if (ult) t.pax = ult.pax;
+  tramos.push(t); pintarTramos(); resumen();
+  const el = $('ci' + (tramos.length - 1)); if (el) el.focus();
+};
+$('anio').addEventListener('input', () => { anioManual = true; });
+
+function msg(t, c) { $('msg').className = 'msg' + (c ? ' ' + c : ''); $('msg').textContent = t; }
+
+function resetForm() {
+  editCodigo = null; anuncio = ANUNCIOS[0].v; medio = 'TRANSFERENCIA'; anioManual = false;
+  tramos = [nuevoTramo()];
+  $('huesped').value = '';
+  $('formTitle').textContent = 'Nueva reserva directa';
+  $('codigoTxt').textContent = SIGUIENTE || 'Reserva_Directa_—';
+  $('codigoNota').textContent = 'Código automático';
+  $('cancelar').hidden = true;
+  pintarChips(); pintarTramos(); resumen();
+}
+$('cancelar').onclick = () => { resetForm(); msg(''); };
+
+/* ---------- validación (misma lógica que el Apps Script) ---------- */
+function leerForm() {
+  return {
+    codigo: editCodigo || '',
+    huesped: $('huesped').value.trim(),
+    anuncio: anuncio, medio: medio,
+    anio: Number($('anio').value),
+    tramos: tramos.map(t => ({ checkin: t.checkin, checkout: t.checkout, noches: nochesDe(t), monto: Math.round((Number(t.monto) || 0) * 100) / 100, noHuesped: Math.round(Number(t.pax)) }))
+  };
+}
+function validar(r) {
+  if (!r.huesped) return 'Escribe el nombre del huésped.';
+  for (let i = 0; i < r.tramos.length; i++) {
+    const t = r.tramos[i], k = r.tramos.length > 1 ? ' (tramo ' + (i + 1) + ')' : '';
+    if (!t.checkin || !t.checkout) return 'Completa check-in y check-out' + k + '.';
+    if (t.checkout <= t.checkin) return 'El check-out debe ser posterior al check-in' + k + '.';
+    if (!(t.monto > 0)) return 'Escribe el monto' + k + '.';
+    if (!(t.noHuesped >= 1 && t.noHuesped <= 30)) return 'Revisa el número de huéspedes' + k + '.';
+  }
+  if (!(r.anio >= 2024 && r.anio <= 2100)) return 'Revisa el año de ingresos.';
+  for (let i = 0; i < r.tramos.length; i++) for (let j = i + 1; j < r.tramos.length; j++) {
+    if (r.tramos[i].checkin < r.tramos[j].checkout && r.tramos[j].checkin < r.tramos[i].checkout) return 'Los tramos ' + (i + 1) + ' y ' + (j + 1) + ' se pisan.';
+  }
+  for (const o of RESERVAS) {
+    if (o.codigo === r.codigo || o.anuncio !== r.anuncio) continue;
+    for (const to of o.tramos) for (const t of r.tramos) {
+      if (t.checkin < to.checkout && to.checkin < t.checkout) return 'Se cruza con ' + o.codigo + ' (' + o.huesped + ', ' + fechaBonita(to.checkin) + ' → ' + fechaBonita(to.checkout) + ') en el mismo anuncio.';
+    }
+  }
+  return '';
+}
+
+$('guardar').onclick = async () => {
+  if (guardando) return;
+  const r = leerForm();
+  const err = validar(r);
+  if (err) { msg(err, 'err'); return; }
+  guardando = true; $('guardar').disabled = true; msg('Guardando...');
+  try {
+    const j = await call({ accion: 'guardar', reserva: r });
+    const nuevo = !editCodigo;
+    aplicar(j); setHint(true); resetForm();
+    msg((nuevo ? 'Guardada como ' : 'Corregida: ') + j.guardada, 'ok');
+    flash(j.guardada);
+  } catch (e) {
+    msg(String(e.message || e), 'err');
+  } finally {
+    guardando = false; $('guardar').disabled = false;
+  }
+};
+
+/* ---------- lista ---------- */
+function flash(cod) {
+  const el = document.querySelector('[data-cod="' + cod + '"]');
+  if (el) { el.classList.add('flash'); }
+}
+
+function renderAlertas() {
+  $('alerta').hidden = !ALERTAS.length;
+  $('alertaT').textContent = ALERTAS.length === 1 ? 'Revisa 1 punto' : 'Revisa ' + ALERTAS.length + ' puntos';
+  $('alertaL').innerHTML = ALERTAS.map(a => '<li>' + esc(a.texto) + '</li>').join('');
+}
+
+function renderLista() {
+  const q = $('buscar').value.trim().toLowerCase();
+  const orden = RESERVAS.slice().sort((a, b) => numCod(b.codigo) - numCod(a.codigo));
+  const filtradas = q ? orden.filter(r => (r.huesped + ' ' + r.codigo).toLowerCase().indexOf(q) >= 0) : orden;
+  $('cuenta').textContent = RESERVAS.length;
+  if (!filtradas.length) { $('lista').innerHTML = '<div class="empty">' + (RESERVAS.length ? 'No hay reservas con ese texto.' : 'Aún no hay reservas directas.') + '</div>'; return; }
+  $('lista').innerHTML = filtradas.map(r => {
+    const ci = r.tramos.map(t => t.checkin).sort()[0], co = r.tramos.map(t => t.checkout).sort().slice(-1)[0];
+    const noches = r.tramos.reduce((s, t) => s + t.noches, 0), total = r.tramos.reduce((s, t) => s + t.monto, 0);
+    const pax = Math.max.apply(null, r.tramos.map(t => t.noHuesped));
+    return '<div class="list-item" data-cod="' + esc(r.codigo) + '">' +
+      '<div class="top"><div><b>' + esc(r.huesped) + '</b></div><span class="tag">' + esc(r.codigo.replace('Reserva_Directa_', 'Directa ')) + '</span></div>' +
+      '<div class="meta">' + esc(anuncioNombre(r.anuncio)) + '<br>' + esc(fechaBonita(ci)) + ' → ' + esc(fechaBonita(co)) + ' · ' + noches + (noches === 1 ? ' noche' : ' noches') + (r.tramos.length > 1 ? ' · ' + r.tramos.length + ' tramos' : '') + ' · ' + pax + ' huésp.<br>' +
+      '<span class="tot">' + money(total) + '</span> · ' + esc(MEDIOS.filter(m => m.v === r.medio).map(m => m.n)[0] || r.medio) + ' · año ' + esc(r.anio) + '</div>' +
+      '<div class="btns"><button type="button" class="btn btn-ghost btn-sm" data-edit="' + esc(r.codigo) + '">Editar</button>' +
+      '<button type="button" class="btn btn-ghost btn-sm" data-del="' + esc(r.codigo) + '">Borrar</button></div></div>';
+  }).join('');
+}
+$('buscar').addEventListener('input', renderLista);
+
+function render() {
+  if (!editCodigo) $('codigoTxt').textContent = SIGUIENTE || 'Reserva_Directa_—';
+  renderAlertas(); renderLista();
+}
+
+$('lista').addEventListener('click', async e => {
+  const ed = e.target.closest('[data-edit]');
+  if (ed) {
+    const r = RESERVAS.filter(x => x.codigo === ed.dataset.edit)[0]; if (!r) return;
+    editCodigo = r.codigo; anuncio = r.anuncio; medio = r.medio; anioManual = true;
+    tramos = r.tramos.map(t => ({ checkin: t.checkin, checkout: t.checkout, monto: t.monto, pax: t.noHuesped }));
+    $('huesped').value = r.huesped;
+    $('formTitle').textContent = 'Editando ' + r.codigo;
+    $('codigoTxt').textContent = r.codigo; $('codigoNota').textContent = 'No cambia';
+    $('cancelar').hidden = false;
+    pintarChips(); pintarTramos(); resumen(); $('anio').value = r.anio; msg('');
+    $('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+  const del = e.target.closest('[data-del]');
+  if (del) {
+    if (del.dataset.armed !== '1') {
+      del.dataset.armed = '1'; del.textContent = '¿Seguro? Borrar'; del.classList.remove('btn-ghost'); del.classList.add('btn-bad');
+      setTimeout(() => { if (del.isConnected) { del.dataset.armed = ''; del.textContent = 'Borrar'; del.classList.add('btn-ghost'); del.classList.remove('btn-bad'); } }, 4000);
+      return;
+    }
+    del.disabled = true; del.textContent = 'Borrando...';
+    try {
+      const j = await call({ accion: 'borrar', codigo: del.dataset.del });
+      if (editCodigo === del.dataset.del) resetForm();
+      aplicar(j); setHint(true); msg('Reserva borrada: ' + del.dataset.del, 'ok');
+    } catch (err) { del.disabled = false; del.textContent = 'Borrar'; msg(String(err.message || err), 'err'); }
+  }
+});
+
+/* ---------- arranque ---------- */
+pintarChips(); pintarTramos(); resumen();
+if (CFG.url && CFG.clave) {
+  showApp(); render(); setHint(); resetForm();
+  call({ accion: 'listar' }).then(j => { aplicar(j); setHint(true); }).catch(e => {
+    if (/Clave incorrecta/.test(String(e.message))) { CFG = {}; try { localStorage.removeItem(CFGKEY); } catch (x) {} $('app').style.display = 'none'; $('gate').style.display = 'block'; $('gateMsg').className = 'msg err'; $('gateMsg').textContent = 'La clave cambió. Escríbela de nuevo.'; }
+  });
+}
+</script>
+</body>
+</html>
