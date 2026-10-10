@@ -305,10 +305,10 @@ button.tab{appearance:none;font-family:inherit}
         </div>
         <div class="field"><label>Motivo</label>
           <select id="bMotivo">
-            <option value="Uso propio">Uso propio</option>
-            <option value="Mantenimiento">Mantenimiento</option>
-            <option value="Reforma">Reforma</option>
-            <option value="Cierre comercial">Cierre comercial</option>
+            <option value="Uso del propietario">Uso del propietario</option>
+            <option value="Mantenimiento o reparación">Mantenimiento o reparación</option>
+            <option value="Limpieza profunda o fumigación">Limpieza profunda o fumigación</option>
+            <option value="Otro">Otro</option>
           </select>
         </div>
         <div class="field"><label>Nota (opcional)</label><textarea id="bNota"></textarea></div>
@@ -433,7 +433,7 @@ function limpiarFormC() {
 
 function limpiarFormB() {
   $('bInicio').value = ''; $('bFin').value = ''; $('bAnuncio').value = 'Todos'; $('bFin').removeAttribute('min');
-  $('bMotivo').value = 'Uso propio'; $('bNota').value = '';
+  $('bMotivo').value = 'Uso del propietario'; $('bNota').value = '';
   editB = null; $('bFormTitle').textContent = 'Registrar bloqueo'; $('bCancelar').style.display = 'none';
 }
 
@@ -537,7 +537,7 @@ function editarB(id) {
   $('bInicio').value = r.fechaInicio || ''; $('bFin').value = r.fechaFin || '';
   if (r.fechaInicio) $('bFin').min = addDiasISO(r.fechaInicio, 1); else $('bFin').removeAttribute('min');
   if (r.fechaInicio) { $('bFin').min = addDiasISO(r.fechaInicio, 1); }
-  $('bAnuncio').value = r.anuncio || 'Todos'; $('bMotivo').value = r.motivo || 'Uso propio'; $('bNota').value = r.nota || '';
+  $('bAnuncio').value = r.anuncio || 'Todos'; $('bMotivo').value = ({ 'Uso propio': 'Uso del propietario', 'Mantenimiento': 'Mantenimiento o reparación' })[r.motivo] || r.motivo || 'Uso del propietario'; $('bNota').value = r.nota || '';
   $('bFormTitle').textContent = 'Editando bloqueo'; $('bCancelar').style.display = 'inline-block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
