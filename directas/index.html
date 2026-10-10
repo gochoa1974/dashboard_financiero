@@ -154,7 +154,7 @@ input[readonly]{opacity:.8;cursor:not-allowed}
 
   <div id="gate" class="gate">
     <h2>Conectar con tu hoja</h2>
-    <p>Escribe tu clave para conectar. Se guarda en este dispositivo y no te la vuelvo a pedir.</p>
+    <p>Escribe tu clave una sola vez. Se guarda en este dispositivo y sirve para todos los módulos.</p>
     <div class="pw">
       <input type="password" id="gateKey" placeholder="Tu clave" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" aria-label="Clave">
       <button type="button" class="btn btn-ghost btn-sm" id="gateEye">Ver</button>
@@ -231,7 +231,28 @@ input[readonly]{opacity:.8;cursor:not-allowed}
 const FIXED_URL = 'https://script.google.com/macros/s/AKfycbw_iMuMSlc-dfdeXI71xk4x6Zir53mC93uPwZpHS-iInB4-OqvKLZIf57gAKIVkS8BbfA/exec';
 
 const $ = id => document.getElementById(id);
-const CFGKEY = 'cimablanca_dir_cfg';
+const SHARED_KEY = 'cimablanca_clave';
+const LEGACY_KEYS = ['cimablanca_canc_cfg', 'cimablanca_dir_cfg', 'cb_gastos_cfg_v1'];
+function getClave() {
+  try {
+    const k = localStorage.getItem(SHARED_KEY);
+    if (k) return k;
+    for (const lk of LEGACY_KEYS) {
+      const o = JSON.parse(localStorage.getItem(lk) || 'null');
+      if (o && o.clave) { localStorage.setItem(SHARED_KEY, o.clave); return o.clave; }
+    }
+  } catch (e) {}
+  return '';
+}
+function setClave(k) { try { localStorage.setItem(SHARED_KEY, k); } catch (e) {} }
+function clearClave() { try { localStorage.removeItem(SHARED_KEY); LEGACY_KEYS.forEach(k => localStorage.removeItem(k)); } catch (e) {} }
+function claveRechazada(modulo) {
+  CFG = {}; clearClave();
+  document.getElementById('app').style.display = 'none'; document.getElementById('gate').style.display = 'block';
+  const m = document.getElementById('gateMsg'); m.className = 'msg err';
+  m.textContent = 'La clave ya no es válida en ' + modulo + '. Escríbela de nuevo.';
+}
+
 const DATAKEY = 'cimablanca_dir_data';
 // De menor a mayor capacidad. La capacidad real la manda el Apps Script (se actualiza al conectar).
 const ANUNCIOS = [
@@ -251,8 +272,7 @@ function hoyEC() { try { return new Date().toLocaleDateString('en-CA', { timeZon
 let HOY = hoyEC();
 
 let CFG = {};
-try { CFG = JSON.parse(localStorage.getItem(CFGKEY) || '{}') || {}; } catch (e) {}
-if (CFG && CFG.clave) CFG.url = FIXED_URL;
+{ const k0 = getClave(); if (k0) CFG = { url: FIXED_URL, clave: k0 }; }
 
 let RESERVAS = [], ALERTAS = [], SIGUIENTE = '';
 try {
@@ -283,7 +303,7 @@ function anuncioObj(v) { return ANUNCIOS.filter(x => x.v === v)[0]; }
 function capDe(v) { const a = anuncioObj(v); return a ? a.cap : 10; }
 function anuncioNombre(v) { const a = anuncioObj(v); return a ? a.n + ' (' + a.alias + ', ' + a.cap + ' pax)' : v; }
 
-function saveCfg() { try { localStorage.setItem(CFGKEY, JSON.stringify(CFG)); } catch (e) {} }
+function saveCfg() { if (CFG.clave) setClave(CFG.clave); }
 function saveData() { try { localStorage.setItem(DATAKEY, JSON.stringify({ reservas: RESERVAS, alertas: ALERTAS, siguiente: SIGUIENTE })); } catch (e) {} }
 
 async function call(body) {
@@ -294,7 +314,10 @@ async function call(body) {
     body: JSON.stringify(Object.assign({ clave: CFG.clave }, body))
   });
   const j = await r.json();
-  if (!j.ok) { const e = new Error(j.error || 'Error desconocido'); e.confirmar = !!j.requiereConfirmar; throw e; }
+  if (!j.ok) {
+    if (/Clave incorrecta/.test(String(j.error))) claveRechazada('Reservas directas');
+    const e = new Error(j.error || 'Error desconocido'); e.confirmar = !!j.requiereConfirmar; throw e;
+  }
   return j;
 }
 
@@ -594,9 +617,7 @@ $('lista').addEventListener('click', async e => {
 pintarChips(); pintarTramos(); resumen();
 if (CFG.url && CFG.clave) {
   showApp(); render(); setHint(); resetForm();
-  call({ accion: 'listar' }).then(j => { aplicar(j); setHint(true); }).catch(e => {
-    if (/Clave incorrecta/.test(String(e.message))) { CFG = {}; try { localStorage.removeItem(CFGKEY); } catch (x) {} $('app').style.display = 'none'; $('gate').style.display = 'block'; $('gateMsg').className = 'msg err'; $('gateMsg').textContent = 'La clave cambió. Escríbela de nuevo.'; }
-  });
+  call({ accion: 'listar' }).then(j => { aplicar(j); setHint(true); }).catch(() => {});
 }
 </script>
 </body>
