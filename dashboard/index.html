@@ -62,6 +62,10 @@ body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:c
 @media (prefers-color-scheme:dark){.msg.err{color:#ff7b84}}
 .out{display:block;margin:18px auto 0;border:0;background:transparent;color:var(--mut);font:700 13px "Manrope",sans-serif;min-height:44px;padding:0 14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 #menuBox{display:none}
+.syncline{margin:16px 4px 0;font-size:13px;font-weight:700;color:var(--mut);text-align:center;line-height:1.5}
+.syncline a{color:inherit;text-decoration:underline;text-underline-offset:3px;display:inline-block;min-height:44px;line-height:44px;padding:0 6px}
+.syncline.ok{color:#1c7a45}
+@media (prefers-color-scheme:dark){.syncline.ok{color:#5fd391}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -124,6 +128,7 @@ body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:c
       </div>
     </a>
   </div>
+  <div class="syncline" id="syncLine" role="status"></div>
   <button type="button" class="out" id="outBtn">Cerrar sesión / cambiar clave</button>
   </div>
 </div>
@@ -145,7 +150,19 @@ function getClave() {
 }
 function setClave(k) { try { localStorage.setItem(SHARED_KEY, k); LEGACY_KEYS.forEach(x => localStorage.removeItem(x)); } catch (e) {} }
 function clearClave() { try { localStorage.removeItem(SHARED_KEY); LEGACY_KEYS.forEach(x => localStorage.removeItem(x)); } catch (e) {} }
-function showMenu() { $('gate').style.display = 'none'; $('menuBox').style.display = 'block'; }
+function pintarSync() {
+  const el = $('syncLine'); if (!el) return;
+  let info = null; try { info = JSON.parse(localStorage.getItem('cimablanca_sync_info') || 'null'); } catch (e) {}
+  const q = (location.search.match(/[?&]sync=(\w+)/) || [])[1];
+  let txt = info && info.t ? 'Datos de Airbnb al ' + new Date(info.t).toLocaleString('es-EC', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Datos de Airbnb sin sincronizar';
+  el.className = 'syncline';
+  if (q === 'ok') { txt = '✓ Datos de Airbnb actualizados'; el.className = 'syncline ok'; }
+  else if (q === 'al_dia') { txt = '✓ Datos de Airbnb al día'; el.className = 'syncline ok'; }
+  el.textContent = txt + ' · ';
+  const a = document.createElement('a'); a.href = '../ingresos/?auto=1'; a.textContent = 'Actualizar'; el.appendChild(a);
+  if (q) { try { history.replaceState(null, '', location.pathname); } catch (e) {} }
+}
+function showMenu() { $('gate').style.display = 'none'; $('menuBox').style.display = 'block'; pintarSync(); }
 function showGate(msg) {
   $('menuBox').style.display = 'none'; $('gate').style.display = 'block';
   $('gateKey').value = ''; $('gateMsg').className = 'msg err'; $('gateMsg').textContent = msg || '';
@@ -168,7 +185,9 @@ $('gateGo').onclick = async () => {
   const v = await validar(k);
   $('gateGo').disabled = false; $('gateGo').textContent = 'Entrar';
   if (v === 'mala') { $('gateMsg').className = 'msg err'; $('gateMsg').textContent = 'Clave incorrecta. Revisa e intenta de nuevo.'; return; }
-  setClave(k); showMenu();
+  setClave(k);
+  // al entrar con la clave: ir a revisar/actualizar los datos de Airbnb y volver aquí
+  location.href = '../ingresos/?auto=1';
 };
 $('gateEye').onclick = () => { const i = $('gateKey'); i.type = i.type === 'password' ? 'text' : 'password'; };
 $('gateKey').addEventListener('keydown', e => { if (e.key === 'Enter') $('gateGo').click(); });
