@@ -108,6 +108,8 @@ button.tab{appearance:none;font-family:inherit}
 .chip.on .num{background:var(--accent);color:var(--accent-ink)}
 .chip:active{transform:scale(.97)}
 .chip.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.chip.bloq{opacity:.45;cursor:not-allowed}
+input[readonly]{opacity:.75;cursor:not-allowed}
 .chip-s{min-height:40px;padding:8px 14px;border-radius:999px;font-size:12.5px;text-align:center}
 .seg .chip{text-align:center;min-height:44px}
 .tipo-help{margin-top:8px;font-size:12.5px;color:var(--mut);font-weight:600;line-height:1.5}
@@ -216,11 +218,12 @@ button.tab{appearance:none;font-family:inherit}
             <div class="field"><label for="cCheckin">Check-in original</label><input type="date" id="cCheckin"></div>
             <div class="field"><label for="cCheckout">Check-out original</label><input type="date" id="cCheckout"></div>
           </div>
-          <div class="field"><label for="cNochesPagadas">Noches pagadas</label><input type="number" inputmode="numeric" id="cNochesPagadas" min="0" step="1"></div>
+          <div class="field"><label for="cNochesPagadas">Noches pagadas (se calculan con las fechas)</label><input type="number" inputmode="numeric" id="cNochesPagadas" min="0" step="1" readonly></div>
           <div class="row2">
             <div class="field"><label for="cBruto">Monto bruto ($)</label><input type="number" inputmode="decimal" id="cBruto" min="0" step="0.01"></div>
             <div class="field"><label for="cNeto">Monto neto ($)</label><input type="number" inputmode="decimal" id="cNeto" min="0" step="0.01"></div>
           </div>
+          <div class="tipo-help" id="cCanalHint" hidden>Reserva directa: no hay comisión de Airbnb, el neto es igual al bruto.</div>
         </div>
 
         <div class="field"><label id="cTipoLbl">Tipo de caso</label>
@@ -426,7 +429,7 @@ function limpiarFormC() {
   $('cCanal').value = 'Airbnb'; $('cAnuncio').value = 'LST-01_6 pax';
   ['cCheckin','cCheckout','cNochesPagadas','cBruto','cNeto'].forEach(id => $(id).value = '');
   setEstado('En curso'); setNota(''); renderMotivos();
-  setTipo(0, true); pintarResumen();
+  setTipo(0, true); ajustarMinCheckout(); syncCanal();
   editC = null; $('cFormTitle').textContent = 'Registro de evento / cancelaciones'; $('cCancelar').style.display = 'none';
   $('cManual').hidden = true; $('cManualBtn').setAttribute('aria-expanded', 'false'); $('cManualBtn').textContent = 'Corregir datos a mano';
 }
@@ -466,6 +469,13 @@ $('cGuardar').onclick = async () => {
   if (c.cue > c.P || c.pres > c.P) { toggleAcc(true); msg('Las noches no pueden superar las pagadas (' + c.P + ').', 'err'); return; }
   if (c.t === 1 && c.cue < 1) { toggleAcc(true); msg('Indica cuántas noches ocupó el huésped.', 'err'); return; }
   if (c.t === 4 && c.dev <= 0) { toggleAcc(true); msg('Indica cuánto se devolvió.', 'err'); return; }
+  const abrirManual = () => { if ($('cManual').hidden) $('cManualBtn').click(); };
+  const ci = $('cCheckin').value, co = $('cCheckout').value, canal = $('cCanal').value, bruto = num('cBruto'), netoV = num('cNeto');
+  if (!ci || !co) { abrirManual(); msg('Faltan las fechas de check-in y check-out.', 'err'); return; }
+  if (co <= ci) { abrirManual(); msg('El check-out debe ser posterior al check-in.', 'err'); return; }
+  if (c.t >= 4 && canal !== 'Directa') { msg('Los tipos 4, 5 y 6 solo aplican a reservas directas.', 'err'); return; }
+  if (netoV > bruto + 0.005) { abrirManual(); msg('El neto no puede ser mayor que el bruto.', 'err'); return; }
+  if (canal === 'Directa' && Math.abs(netoV - bruto) > 0.005) { abrirManual(); msg('En reserva directa no hay comisión: el neto debe ser igual al bruto.', 'err'); return; }
   recalcular();
   const r = {
     id: editC || uid(), codigo, huesped: $('cHuesped').value.trim(), canal: $('cCanal').value,
@@ -523,7 +533,7 @@ function editarC(id) {
   $('cDevuelto').value = r.devueltoPerdido || 0; $('cNetoCuenta').value = r.netoQueCuenta || 0;
   $('cGastoExtra').value = r.gastoExtra || 0; $('cLimpieza').checked = esSi(r.limpiezaReal);
   setEstado(r.estado || 'En curso'); setNota(r.nota || ''); renderMotivos();
-  setTipo(Number(r.tipo) || 0, false); pintarResumen();
+  setTipo(Number(r.tipo) || 0, false); ajustarMinCheckout(); syncCanal();
   $('cFormTitle').textContent = 'Editando: ' + r.codigo; $('cCancelar').style.display = 'inline-block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -702,7 +712,7 @@ function aplicarReservaAlForm(r) {
   $('cBruto').value = (r.ingresos_brutos || 0).toFixed(2);
   $('cNeto').value = (r.monto || 0).toFixed(2);
   $('cMsg').className = 'msg'; $('cMsg').textContent = '';
-  pintarResumen();
+  ajustarMinCheckout(); syncCanal();
   const t = Number($('cTipo').value) || 0;
   if (t) setTipo(t, true); else recalcular();
   if ((r.monto || 0) === 0 && (r.ingresos_brutos || 0) === 0) {
@@ -787,12 +797,12 @@ const MESES_L = ['enero','febrero','marzo','abril','mayo','junio','julio','agost
 const MOTIVOS = ['Canceló por viaje', 'Canceló por trabajo', 'Imprevisto del huésped', 'Doble reserva', 'No se presentó', 'Problema de pago'];
 // f = campos visibles del acordeón "Detalles del caso"; limpieza = valor por defecto de "Hubo limpieza real"
 const TIPOS = {
-  1: { f: ['presente', 'cuentan'], limpieza: true, ayuda: 'Se recorta a las noches que el huésped ocupó. El dinero cobrado se mantiene.' },
+  1: { f: ['presente'], limpieza: true, ayuda: 'Se recorta a las noches que el huésped ocupó. El dinero cobrado se mantiene.' },
   2: { f: [], limpieza: true, ayuda: 'No se toca nada: noches y dinero completos.' },
   3: { f: ['liberadas'], limpieza: false, ayuda: 'El dinero cobrado se mantiene. Ninguna noche cuenta como ocupada.' },
-  4: { f: ['cuentan', 'devuelto'], limpieza: true, ayuda: 'Cuentan solo las noches ocupadas y lo devuelto sale del ingreso.' },
-  5: { f: ['presente', 'cuentan', 'gasto'], limpieza: false, ayuda: 'El dinero se mantiene y la reserva reubicada no cuenta noches.' },
-  6: { f: ['presente', 'cuentan', 'liberadas', 'devuelto', 'gasto'], limpieza: true, ayuda: 'En curso no resta nada; si el banco lo quita, sale del ingreso.' }
+  4: { f: ['cuentan', 'devuelto'], limpieza: true, ayuda: 'Solo reservas directas. Cuentan solo las noches ocupadas y lo devuelto sale del ingreso.' },
+  5: { f: ['presente', 'gasto'], limpieza: false, ayuda: 'Solo reservas directas. El dinero se mantiene, la reserva reubicada no cuenta noches y lo pagado por reubicar sale como gasto extra.' },
+  6: { f: ['presente', 'cuentan', 'liberadas', 'devuelto', 'gasto'], limpieza: true, ayuda: 'Solo reservas directas. En curso no resta nada; si el banco lo quita, sale del ingreso.' }
 };
 let accTocado = false, motivoSel = '';
 
@@ -823,7 +833,8 @@ function calcular() {
   const gas = vis.indexOf('gasto') >= 0 ? num('cGastoExtra') : 0;
   if (t === 2) { pres = P; cue = P; lib = 0; }
   else if (t === 3) { pres = 0; cue = 0; }
-  else if (t === 1 || t === 5) { lib = Math.max(P - pres, 0); }
+  else if (t === 1) { cue = pres; lib = Math.max(P - pres, 0); }
+  else if (t === 5) { cue = 0; lib = Math.max(P - pres, 0); }
   else if (t === 4) { pres = cue; lib = Math.max(P - cue, 0); }
   let nq = neto;
   if (t === 4) nq = Math.max(neto - dev, 0);
@@ -871,6 +882,29 @@ function setTipo(t, reset) {
   recalcular();
 }
 
+/* v9: reglas de negocio aplicadas en el formulario */
+function ajustarMinCheckout() {
+  const ci = $('cCheckin').value;
+  if (ci) $('cCheckout').min = addDiasISO(ci, 1); else $('cCheckout').removeAttribute('min');
+}
+
+function syncCanal() {
+  const dir = $('cCanal').value === 'Directa';
+  const n = $('cNeto');
+  if (dir) { n.value = $('cBruto').value; n.readOnly = true; }
+  else { n.readOnly = false; }
+  $('cCanalHint').hidden = !dir;
+  document.querySelectorAll('#cTipoChips .chip').forEach(b => {
+    const bl = Number(b.dataset.tipo) >= 4 && !dir;
+    b.classList.toggle('bloq', bl); b.setAttribute('aria-disabled', String(bl)); b.title = bl ? 'Solo para reservas directas' : '';
+  });
+  if ((Number($('cTipo').value) || 0) >= 4 && !dir) {
+    setTipo(0, true);
+    $('cMsg').className = 'msg err'; $('cMsg').textContent = 'Los tipos 4, 5 y 6 solo aplican a reservas directas. Elige otro tipo o cambia el canal.';
+  }
+  pintarResumen(); recalcular();
+}
+
 function setEstado(v) {
   $('cEstado').value = v;
   document.querySelectorAll('#cEstadoSeg .chip').forEach(b => { const on = b.dataset.e === v; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
@@ -891,6 +925,8 @@ function setNota(n) {
 $('cTipoChips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if (!b) return;
   const t = Number(b.dataset.tipo); if (t === (Number($('cTipo').value) || 0)) return;
+  if (b.classList.contains('bloq')) { $('cMsg').className = 'msg err'; $('cMsg').textContent = 'El tipo ' + t + ' solo aplica a reservas directas. Cambia el canal a Directa para usarlo.'; return; }
+  $('cMsg').textContent = '';
   setTipo(t, true);
 });
 $('cEstadoSeg').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; setEstado(b.dataset.e); recalcular(); });
@@ -916,8 +952,15 @@ $('cManualBtn').onclick = () => {
 };
 $('cManual').addEventListener('input', e => {
   if (e.target.id === 'cCheckin' || e.target.id === 'cCheckout') {
-    const n = nochesEntre($('cCheckin').value, $('cCheckout').value); if (n > 0) $('cNochesPagadas').value = n;
+    const ci = $('cCheckin').value;
+    ajustarMinCheckout();
+    if (ci && $('cCheckout').value && $('cCheckout').value <= ci) {
+      $('cCheckout').value = addDiasISO(ci, 1);
+      if (e.target.id === 'cCheckout') { $('cMsg').className = 'msg err'; $('cMsg').textContent = 'El check-out debe ser posterior al check-in.'; }
+    }
+    if (ci && $('cCheckout').value) $('cNochesPagadas').value = Math.max(nochesEntre(ci, $('cCheckout').value), 0);
   }
+  if (e.target.id === 'cCanal' || e.target.id === 'cBruto') syncCanal();
   pintarResumen(); recalcular();
 });
 
