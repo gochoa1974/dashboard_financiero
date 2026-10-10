@@ -238,13 +238,15 @@ input,select{font-family:inherit;color:inherit}
 .tabs button:hover,.seg button:hover,.nav:hover,.ghost2:hover,.addrec:hover{filter:brightness(.97)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.backbtn{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;flex:0 0 auto;text-decoration:none;box-shadow:var(--shadow)}
+.backbtn:active{transform:scale(.94)}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
     <div class="head">
-      <div class="who"><img src="../Cima-Blanca-logo.png" alt="Cima Blanca" style="width:40px;height:40px;border-radius:50%;object-fit:cover;display:block"><div><b>Cima Blanca</b><span>Registro de gastos</span></div></div>
+      <div class="who"><a class="backbtn" href="../dashboard/" aria-label="Volver al dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><img src="../Cima-Blanca-logo.png" alt="Cima Blanca" style="width:40px;height:40px;border-radius:50%;object-fit:cover;display:block"><div><b>Cima Blanca</b><span>Registro de gastos</span></div></div>
       <button type="button" class="sync off" id="syncPill"><i></i><span id="syncTxt">Sin conectar</span></button>
     </div>
     <div class="stalebar" id="staleBar"><i></i><span id="staleTxt"></span></div>
