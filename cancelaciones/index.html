@@ -145,18 +145,25 @@ input[readonly]{opacity:.75;cursor:not-allowed}
 .sticky .btn-acc{flex:1;min-height:48px}
 .sticky .btn-ghost{min-height:48px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.apphead{display:flex;align-items:center;gap:12px;padding:4px 0 16px}
+.backbtn{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;flex:0 0 auto;text-decoration:none;box-shadow:var(--shadow)}
+.backbtn:active{transform:scale(.94)}
+.backbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.apphead .logo{width:40px;height:40px;border-radius:50%;object-fit:cover;display:block;flex:0 0 auto}
+.apphead .ttl{min-width:0}
+.apphead .ttl b{display:block;font-size:15px;font-weight:700;letter-spacing:-.01em}
+.apphead .ttl span{display:block;font-size:12px;color:var(--mut);font-weight:600;margin-top:1px}
 </style>
+<style>.bad-field{border-color:var(--bad)!important;box-shadow:0 0 0 2px rgba(220,38,38,.18)}.msg .btn{margin-top:8px;width:auto;padding:0 14px}</style>
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="../">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    Dashboard
-  </a>
-  <div class="hero">
-    <h1>Cancelaciones y bloqueos</h1>
-    <p>Cima Blanca · Punta Blanca</p>
-  </div>
+  <header class="apphead">
+    <a class="backbtn" href="../dashboard/" aria-label="Volver al dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <img class="logo" src="../Cima-Blanca-logo.png" alt="Cima Blanca">
+    <div class="ttl"><b>Cima Blanca</b><span>Cancelaciones y bloqueos</span></div>
+  </header>
 
   <div id="gate" class="gate">
     <h2>Conectar con tu hoja</h2>
@@ -361,6 +368,14 @@ function claveRechazada(modulo) {
 }
 
 const DATAKEY = 'cimablanca_canc_data';
+const DIR_URL = 'https://script.google.com/macros/s/AKfycbw_iMuMSlc-dfdeXI71xk4x6Zir53mC93uPwZpHS-iInB4-OqvKLZIf57gAKIVkS8BbfA/exec';
+const DIRKEY = 'cimablanca_canc_dir_cache';
+let DIRECTAS = [];
+try { const dc = JSON.parse(localStorage.getItem(DIRKEY) || 'null'); if (dc && Array.isArray(dc.reservas)) DIRECTAS = dc.reservas; } catch (e) {}
+let DIR_OK = false;
+let RESERVAS = [];       // lista plana de reservas (Airbnb liquidadas/por liquidar + directas)
+let RES_POR_LABEL = {};  // texto mostrado en el buscador -> registro
+let RESERVA_LABELS = [];
 let CFG = {};
 { const k0 = getClave(); if (k0) CFG = { url: FIXED_URL, clave: k0 }; }
 
@@ -406,7 +421,7 @@ async function conectar(clave) {
     const j = await call({ accion: 'listar' });
     CANC = j.cancelaciones || []; BLOQ = j.bloqueos || [];
     saveCfg(); saveData();
-    showApp(); render(); setHint();
+    showApp(); render(); setHint(); cargarDirectas();
   } catch (e) {
     $('gateMsg').className = 'msg err'; $('gateMsg').textContent = String(e.message || e);
     CFG = {};
@@ -424,7 +439,7 @@ $('gateEye').onclick = () => {
 $('gateKey').addEventListener('keydown', e => { if (e.key === 'Enter') $('gateGo').click(); });
 
 if (CFG.url && CFG.clave) {
-  showApp(); render(); setHint();
+  showApp(); render(); setHint(); cargarDirectas();
   call({ accion: 'listar' }).then(j => {
     CANC = j.cancelaciones || []; BLOQ = j.bloqueos || [];
     saveData(); render(); setHint(true);
@@ -440,7 +455,7 @@ $('syncBtn').onclick = async () => {
   try {
     const j = await call({ accion: 'listar' });
     CANC = j.cancelaciones || []; BLOQ = j.bloqueos || [];
-    saveData(); render(); setHint(true);
+    saveData(); render(); setHint(true); cargarDirectas();
   } catch (e) { $('syncHint').textContent = 'Error: ' + (e.message || e); }
 };
 
@@ -458,7 +473,7 @@ function limpiarFormC() {
 }
 
 function limpiarFormB() {
-  $('bInicio').value = ''; $('bFin').value = ''; $('bAnuncio').value = 'Todos'; $('bFin').removeAttribute('min');
+  $('bInicio').value = ''; $('bFin').value = ''; $('bAnuncio').value = 'Todos'; $('bFin').removeAttribute('min'); bFinManual = false; bForzar = false; desmarcar(['bInicio', 'bFin']);
   $('bMotivo').value = 'Uso del propietario'; $('bNota').value = '';
   editB = null; $('bFormTitle').textContent = 'Registrar bloqueo'; $('bCancelar').style.display = 'none';
 }
@@ -473,15 +488,39 @@ function addDiasISO(iso, dias) {
   return dt.toISOString().slice(0, 10);
 }
 
-$('bInicio').addEventListener('change', () => {
+let bFinManual = false, bForzar = false;
+function marcar(ids) {
+  ids.forEach(id => { const el = $(id); el.classList.add('bad-field'); el.setAttribute('aria-invalid', 'true'); });
+  if (ids.length) $(ids[0]).focus();
+}
+function desmarcar(ids) { ids.forEach(id => { $(id).classList.remove('bad-field'); $(id).removeAttribute('aria-invalid'); }); }
+function ajustarFinBloqueo() {
   const ini = $('bInicio').value;
   if (!ini) { $('bFin').removeAttribute('min'); return; }
   const minFin = addDiasISO(ini, 1);
   $('bFin').min = minFin;
-  if (!$('bFin').value || $('bFin').value <= ini) {
-    $('bFin').value = minFin;
-  }
+  if (!bFinManual || !$('bFin').value || $('bFin').value <= ini) { $('bFin').value = minFin; bFinManual = false; }
+}
+['input', 'change'].forEach(ev => {
+  $('bInicio').addEventListener(ev, () => { ajustarFinBloqueo(); desmarcar(['bInicio', 'bFin']); bForzar = false; });
+  $('bFin').addEventListener(ev, () => { bFinManual = true; desmarcar(['bInicio', 'bFin']); bForzar = false; });
+  $('bAnuncio').addEventListener(ev, () => { bForzar = false; });
 });
+
+function solapa(aIni, aFin, bIni, bFin) { return aIni < bFin && bIni < aFin; }
+function mismoAnuncio(x, y) { return x === 'Todos' || y === 'Todos' || x === y; }
+function fechaCorta(iso) { const m = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'], p = iso.split('-'); return Number(p[2]) + ' ' + m[Number(p[1]) - 1] + ' ' + p[0]; }
+function cruceBloqueo(r) {
+  return BLOQ.find(o => o.id !== r.id && mismoAnuncio(o.anuncio, r.anuncio) && solapa(o.fechaInicio, o.fechaFin, r.fechaInicio, r.fechaFin));
+}
+function cruceDirecta(r) {
+  for (const d of DIRECTAS) {
+    if (!mismoAnuncio(d.anuncio, r.anuncio)) continue;
+    const t = (d.tramos || []).find(x => x.checkin && x.checkout && solapa(x.checkin, x.checkout, r.fechaInicio, r.fechaFin));
+    if (t) return { d: d, t: t };
+  }
+  return null;
+}
 
 $('cGuardar').onclick = async () => {
   const msg = (t, c) => { $('cMsg').className = 'msg' + (c ? ' ' + c : ''); $('cMsg').textContent = t; };
@@ -496,6 +535,10 @@ $('cGuardar').onclick = async () => {
   const ci = $('cCheckin').value, co = $('cCheckout').value, canal = $('cCanal').value, bruto = num('cBruto'), netoV = num('cNeto');
   if (!ci || !co) { abrirManual(); msg('Faltan las fechas de check-in y check-out.', 'err'); return; }
   if (co <= ci) { abrirManual(); msg('El check-out debe ser posterior al check-in.', 'err'); return; }
+  if (canal === 'Directa') {
+    if (!DIRECTAS.length) { abrirManual(); msg('No pude cargar las reservas directas. Revisa tu conexión y toca Actualizar.', 'err'); return; }
+    if (!DIRECTAS.some(x => x.codigo === codigo)) { abrirManual(); marcar(['cCodigo']); msg('Ese código no existe en Reservas directas. Búscalo en el buscador y elígelo de la lista.', 'err'); return; }
+  }
   if (c.t >= 4 && canal !== 'Directa') { msg('Los tipos 4, 5 y 6 solo aplican a reservas directas.', 'err'); return; }
   if (netoV > bruto + 0.005) { abrirManual(); msg('El neto no puede ser mayor que el bruto.', 'err'); return; }
   if (canal === 'Directa' && Math.abs(netoV - bruto) > 0.005) { abrirManual(); msg('En reserva directa no hay comisión: el neto debe ser igual al bruto.', 'err'); return; }
@@ -527,6 +570,22 @@ $('bGuardar').onclick = async () => {
   if (!fi || !ff) { $('bMsg').className = 'msg err'; $('bMsg').textContent = 'Falta la fecha de inicio o de fin.'; return; }
   if (ff <= fi) { $('bMsg').className = 'msg err'; $('bMsg').textContent = 'La fecha de fin debe ser posterior a la de inicio.'; return; }
   const r = { id: editB || uid(), fechaInicio: fi, fechaFin: ff, anuncio: $('bAnuncio').value, motivo: $('bMotivo').value, nota: $('bNota').value.trim(), editado: !!editB };
+  const cb = cruceBloqueo(r);
+  if (cb) {
+    $('bMsg').className = 'msg err';
+    $('bMsg').textContent = 'Esas fechas ya están bloqueadas: ' + fechaCorta(cb.fechaInicio) + ' → ' + fechaCorta(cb.fechaFin) + ' (' + (cb.anuncio === 'Todos' ? 'Todos' : cb.anuncio.replace('_', ' ')) + ' · ' + cb.motivo + '). Cambia las fechas o edita ese bloqueo.';
+    marcar(['bInicio', 'bFin']); return;
+  }
+  const cd = bForzar ? null : cruceDirecta(r);
+  if (cd) {
+    $('bMsg').className = 'msg err';
+    $('bMsg').textContent = 'Ojo: ese bloqueo cae sobre la reserva directa ' + cd.d.codigo + ' (' + (cd.d.huesped || 'sin nombre') + ', ' + fechaCorta(cd.t.checkin) + ' → ' + fechaCorta(cd.t.checkout) + '). ';
+    const bt = document.createElement('button'); bt.type = 'button'; bt.className = 'btn btn-ghost btn-sm'; bt.id = 'bGuardarIgual'; bt.textContent = 'Guardar igual';
+    bt.onclick = () => { bForzar = true; $('bGuardar').click(); };
+    $('bMsg').appendChild(document.createElement('br')); $('bMsg').appendChild(bt);
+    return;
+  }
+  bForzar = false;
   $('bMsg').className = 'msg'; $('bMsg').textContent = 'Guardando...';
   try {
     await call({ accion: 'sincronizar', upsertsCancelaciones: [], borrarCancelaciones: [], upsertsBloqueos: [r], borrarBloqueos: [] });
@@ -574,7 +633,7 @@ function editarB(id) {
   editB = id;
   $('bInicio').value = r.fechaInicio || ''; $('bFin').value = r.fechaFin || '';
   if (r.fechaInicio) $('bFin').min = addDiasISO(r.fechaInicio, 1); else $('bFin').removeAttribute('min');
-  if (r.fechaInicio) { $('bFin').min = addDiasISO(r.fechaInicio, 1); }
+  bFinManual = !!(r.fechaInicio && r.fechaFin && r.fechaFin !== addDiasISO(r.fechaInicio, 1)); bForzar = false;
   $('bAnuncio').value = r.anuncio || 'Todos'; $('bMotivo').value = ({ 'Uso propio': 'Uso del propietario', 'Mantenimiento': 'Mantenimiento o reparación' })[r.motivo] || r.motivo || 'Uso del propietario'; $('bNota').value = r.nota || '';
   $('bFormTitle').textContent = 'Editando bloqueo'; $('bCancelar').style.display = 'inline-block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -634,9 +693,6 @@ const DRIVE_JSON_NAME = 'MAESTRO_INGRESOS_CIMA_BLANCA.json';
 const RESKEY = 'cimablanca_canc_reservas_cache';
 
 let driveToken = null, driveTokenClient = null;
-let RESERVAS = [];       // lista plana de reservas (Airbnb liquidadas/por liquidar + directas)
-let RES_POR_LABEL = {};  // texto mostrado en el buscador -> registro
-let RESERVA_LABELS = [];
 
 try {
   const c = JSON.parse(localStorage.getItem(RESKEY) || 'null');
@@ -707,7 +763,12 @@ function cargarReservasDesdeDrive() {
 
 function indexarReservas() {
   RES_POR_LABEL = {};
-  RESERVAS.forEach(r => {
+  DIRECTAS.forEach(d => {
+    const t = d.tramos || [];
+    const label = d.codigo + ' — ' + (d.huesped || 'sin nombre') + ' (' + ((t[0] && t[0].checkin) || '?') + ') · directa';
+    RES_POR_LABEL[label] = { __dir: true, d: d };
+  });
+  RESERVAS.filter(r => r.origen !== 'Reserva directa').forEach(r => {
     const estadoTxt = r.estado === 'Por liquidar' ? ' · por liquidar' : '';
     const label = r.codigo_confirmacion + ' — ' + (r.huesped || 'sin nombre') + ' (' + (r.fecha_inicio || '?') + ')' + estadoTxt;
     RES_POR_LABEL[label] = r;
@@ -722,6 +783,35 @@ function mapearAnuncio(txt) {
   if (t.indexOf('miami') !== -1 || t.indexOf('4 pax') !== -1 || t.indexOf('4 huésp') !== -1) return 'LST-03_4 pax';
   if (t.indexOf('cima') !== -1 || t.indexOf('6 pax') !== -1 || t.indexOf('6 huésp') !== -1) return 'LST-01_6 pax';
   return null;
+}
+
+async function cargarDirectas() {
+  if (!CFG.clave) return;
+  try {
+    const r = await fetch(DIR_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ clave: CFG.clave, accion: 'listar' }) });
+    const j = await r.json();
+    if (!j.ok) { if (/Clave incorrecta/.test(String(j.error))) claveRechazada('Cancelaciones'); return; }
+    DIRECTAS = j.reservas || []; DIR_OK = true;
+    try { localStorage.setItem(DIRKEY, JSON.stringify({ reservas: DIRECTAS, t: Date.now() })); } catch (e) {}
+    indexarReservas();
+  } catch (e) { /* sin red: se usa la última lista guardada */ }
+}
+
+function aplicarDirectaAlForm(d) {
+  const t = d.tramos || [];
+  const ci = t.length ? t[0].checkin : '', co = t.length ? t[t.length - 1].checkout : '';
+  const bruto = t.reduce((a, x) => a + (Number(x.monto) || 0), 0);
+  const noches = t.reduce((a, x) => a + (Number(x.noches) || 0), 0);
+  $('cCanal').value = 'Directa';
+  $('cCodigo').value = d.codigo; $('cHuesped').value = d.huesped || '';
+  if (['LST-01_6 pax', 'LST-02_8 pax', 'LST-03_4 pax'].indexOf(d.anuncio) >= 0) $('cAnuncio').value = d.anuncio;
+  $('cCheckin').value = ci || ''; $('cCheckout').value = co || '';
+  $('cNochesPagadas').value = noches;
+  $('cBruto').value = bruto.toFixed(2); $('cNeto').value = bruto.toFixed(2);
+  $('cMsg').className = 'msg'; $('cMsg').textContent = '';
+  ajustarMinCheckout(); syncCanal();
+  const tp = Number($('cTipo').value) || 0;
+  if (tp) setTipo(tp, true); else recalcular();
 }
 
 function aplicarReservaAlForm(r) {
@@ -765,7 +855,7 @@ $('cReservaDropdown').addEventListener('click', (e) => {
   $('cBuscarReserva').value = label;
   ocultarDropdown();
   const r = RES_POR_LABEL[label];
-  if (r) aplicarReservaAlForm(r);
+  if (r) { if (r.__dir) aplicarDirectaAlForm(r.d); else aplicarReservaAlForm(r); }
 });
 document.addEventListener('click', (e) => {
   if (e.target !== $('cBuscarReserva') && !$('cReservaDropdown').contains(e.target)) ocultarDropdown();
@@ -917,6 +1007,9 @@ function syncCanal() {
   if (dir) { n.value = $('cBruto').value; n.readOnly = true; }
   else { n.readOnly = false; }
   $('cCanalHint').hidden = !dir;
+  $('cCodigo').readOnly = dir;
+  $('cCodigo').placeholder = dir ? 'Elige la reserva directa en el buscador de arriba' : 'Ej. HMJWRMSPT4';
+  if (dir && $('cCodigo').value && !DIRECTAS.some(x => x.codigo === $('cCodigo').value)) $('cCodigo').value = '';
   document.querySelectorAll('#cTipoChips .chip').forEach(b => {
     const bl = Number(b.dataset.tipo) >= 4 && !dir;
     b.classList.toggle('bloq', bl); b.setAttribute('aria-disabled', String(bl)); b.title = bl ? 'Solo para reservas directas' : '';
@@ -986,6 +1079,8 @@ $('cManual').addEventListener('input', e => {
   if (e.target.id === 'cCanal' || e.target.id === 'cBruto') syncCanal();
   pintarResumen(); recalcular();
 });
+
+document.addEventListener('input', e => { if (e.target && e.target.classList) e.target.classList.remove('bad-field'); });
 
 limpiarFormC();
 </script>
