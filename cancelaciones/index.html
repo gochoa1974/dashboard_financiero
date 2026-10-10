@@ -200,7 +200,7 @@ input[readonly]{opacity:.75;cursor:not-allowed}
         <div class="field" style="padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
           <label for="cBuscarReserva">Reserva</label>
           <div class="pw" style="position:relative">
-            <input id="cBuscarReserva" placeholder="Nombre del huésped o código" autocomplete="off">
+            <input id="cBuscarReserva" style="scroll-margin-top:12px" placeholder="Nombre del huésped o código" autocomplete="off">
             <button type="button" class="btn btn-ghost btn-sm" id="cDriveBtn" style="display:none">Permitir acceso</button>
             <div id="cReservaDropdown" style="display:none;position:absolute;left:0;right:0;top:100%;margin-top:4px;background:var(--surface,#fff);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:260px;overflow-y:auto;z-index:50"></div>
           </div>
@@ -835,6 +835,12 @@ function aplicarReservaAlForm(r) {
 // se muestra como una cinta pegada al teclado difícil de usar) =====
 function ocultarDropdown() { $('cReservaDropdown').style.display = 'none'; }
 
+function ajustarAlturaDropdown() {
+  const dd = $('cReservaDropdown'); if (dd.style.display === 'none') return;
+  const vv = window.visualViewport, alto = vv ? vv.height : window.innerHeight;
+  const top = dd.getBoundingClientRect().top - (vv ? 0 : 0);
+  dd.style.maxHeight = Math.max(120, Math.min(340, alto - top - 12)) + 'px';
+}
 function mostrarDropdown(filtro) {
   const dd = $('cReservaDropdown');
   const q = (filtro || '').trim().toLowerCase();
@@ -842,18 +848,30 @@ function mostrarDropdown(filtro) {
   const delCanal = RESERVA_LABELS.filter(l => cn === 'Directa' ? !!RES_POR_LABEL[l].__dir : (cn === 'Airbnb' ? !RES_POR_LABEL[l].__dir : false));
   const coincidencias = (q ? delCanal.filter(l => l.toLowerCase().indexOf(q) !== -1) : delCanal).slice(0, 30);
   if (!coincidencias.length) { ocultarDropdown(); return; }
-  dd.innerHTML = coincidencias.map(l => `<div class="drop-item" data-label="${esc(l)}" style="padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line)">${esc(l)}</div>`).join('');
+  dd.innerHTML = coincidencias.map(l => {
+    const i = l.indexOf(' — ');
+    const cod = i > 0 ? l.slice(0, i) : l, resto = i > 0 ? l.slice(i + 3) : '';
+    return `<div class="drop-item" role="option" data-label="${esc(l)}" style="padding:12px 14px;min-height:44px;cursor:pointer;border-bottom:1px solid var(--line)"><div style="font-weight:700;overflow-wrap:anywhere">${esc(cod)}</div>${resto ? `<div style="font-size:13px;color:var(--mut,#64748b);margin-top:2px">${esc(resto)}</div>` : ''}</div>`;
+  }).join('');
   dd.style.display = 'block';
+  ajustarAlturaDropdown();
 }
+// En celular: al tocar el buscador, subirlo al tope para que la lista quede libre sobre el teclado
+function subirBuscador() {
+  if (window.innerWidth >= 820) return;
+  const el = $('cBuscarReserva');
+  setTimeout(() => { try { el.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) { el.scrollIntoView(true); } setTimeout(ajustarAlturaDropdown, 350); }, 250);
+}
+if (window.visualViewport) window.visualViewport.addEventListener('resize', ajustarAlturaDropdown);
 
 $('cBuscarReserva').addEventListener('input', () => mostrarDropdown($('cBuscarReserva').value));
-$('cBuscarReserva').addEventListener('focus', () => mostrarDropdown($('cBuscarReserva').value));
+$('cBuscarReserva').addEventListener('focus', () => { mostrarDropdown($('cBuscarReserva').value); subirBuscador(); });
 $('cReservaDropdown').addEventListener('click', (e) => {
   const item = e.target.closest('.drop-item');
   if (!item) return;
   const label = item.getAttribute('data-label');
   $('cBuscarReserva').value = label;
-  ocultarDropdown();
+  ocultarDropdown(); $('cBuscarReserva').blur();
   const r = RES_POR_LABEL[label];
   if (r) { if (r.__dir) aplicarDirectaAlForm(r.d); else aplicarReservaAlForm(r); }
 });
@@ -1069,7 +1087,7 @@ $('cManualBtn').onclick = () => {
 $('cCanal').addEventListener('change', () => {
   $('cBuscarReserva').value = ''; ocultarDropdown();
   if ($('cCanal').value !== 'Directa' && DIRECTAS.some(x => x.codigo === $('cCodigo').value)) { $('cCodigo').value = ''; $('cHuesped').value = ''; }
-  $('cBuscarReserva').placeholder = $('cCanal').value === 'Directa' ? 'Busca la reserva directa por huésped o código' : 'Nombre del huésped o código';
+  $('cBuscarReserva').placeholder = $('cCanal').value === 'Directa' ? 'Busca por huésped o código' : 'Nombre del huésped o código';
   syncCanal(); pintarResumen(); recalcular();
 });
 $('cManual').addEventListener('input', e => {
