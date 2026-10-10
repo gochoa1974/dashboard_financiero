@@ -432,13 +432,30 @@ function limpiarFormC() {
 }
 
 function limpiarFormB() {
-  $('bInicio').value = ''; $('bFin').value = ''; $('bAnuncio').value = 'Todos';
+  $('bInicio').value = ''; $('bFin').value = ''; $('bAnuncio').value = 'Todos'; $('bFin').removeAttribute('min');
   $('bMotivo').value = 'Uso propio'; $('bNota').value = '';
   editB = null; $('bFormTitle').textContent = 'Registrar bloqueo'; $('bCancelar').style.display = 'none';
 }
 
 $('cCancelar').onclick = limpiarFormC;
 $('bCancelar').onclick = limpiarFormB;
+
+function addDiasISO(iso, dias) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + dias);
+  return dt.toISOString().slice(0, 10);
+}
+
+$('bInicio').addEventListener('change', () => {
+  const ini = $('bInicio').value;
+  if (!ini) { $('bFin').removeAttribute('min'); return; }
+  const minFin = addDiasISO(ini, 1);
+  $('bFin').min = minFin;
+  if (!$('bFin').value || $('bFin').value <= ini) {
+    $('bFin').value = minFin;
+  }
+});
 
 $('cGuardar').onclick = async () => {
   const msg = (t, c) => { $('cMsg').className = 'msg' + (c ? ' ' + c : ''); $('cMsg').textContent = t; };
@@ -475,6 +492,7 @@ $('cGuardar').onclick = async () => {
 $('bGuardar').onclick = async () => {
   const fi = $('bInicio').value, ff = $('bFin').value;
   if (!fi || !ff) { $('bMsg').className = 'msg err'; $('bMsg').textContent = 'Falta la fecha de inicio o de fin.'; return; }
+  if (ff <= fi) { $('bMsg').className = 'msg err'; $('bMsg').textContent = 'La fecha de fin debe ser posterior a la de inicio.'; return; }
   const r = { id: editB || uid(), fechaInicio: fi, fechaFin: ff, anuncio: $('bAnuncio').value, motivo: $('bMotivo').value, nota: $('bNota').value.trim(), editado: !!editB };
   $('bMsg').className = 'msg'; $('bMsg').textContent = 'Guardando...';
   try {
@@ -517,6 +535,8 @@ function editarB(id) {
   const r = BLOQ.find(x => x.id === id); if (!r) return;
   editB = id;
   $('bInicio').value = r.fechaInicio || ''; $('bFin').value = r.fechaFin || '';
+  if (r.fechaInicio) $('bFin').min = addDiasISO(r.fechaInicio, 1); else $('bFin').removeAttribute('min');
+  if (r.fechaInicio) { $('bFin').min = addDiasISO(r.fechaInicio, 1); }
   $('bAnuncio').value = r.anuncio || 'Todos'; $('bMotivo').value = r.motivo || 'Uso propio'; $('bNota').value = r.nota || '';
   $('bFormTitle').textContent = 'Editando bloqueo'; $('bCancelar').style.display = 'inline-block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
