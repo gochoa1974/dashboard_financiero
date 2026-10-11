@@ -735,7 +735,9 @@
   }
 
   function money(n) {
-    return "$" + n.toFixed(2);
+    n = Number(n) || 0;
+    var p = Math.abs(n).toFixed(2).split(".");
+    return (n < 0 ? "-" : "") + "$" + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "," + p[1];
   }
 
   function showResults(master, adicionales, resumen, procesadoFolder) {
