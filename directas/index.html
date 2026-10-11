@@ -87,6 +87,14 @@ input[readonly]{opacity:.8;cursor:not-allowed}
 .alerta.info b{color:var(--mut)}
 .alerta ul{margin:0;padding-left:18px;font-size:12.5px;font-weight:600;line-height:1.55}
 .alerta li.inf{color:var(--mut)}
+.regb{margin:4px 2px 24px;font-size:12.5px;color:var(--mut)}
+.regb summary{cursor:pointer;font-weight:700;padding:10px 4px;min-height:44px;display:flex;align-items:center;list-style:none}
+.regb summary::-webkit-details-marker{display:none}
+.regb summary::before{content:'▸';display:inline-block;margin-right:8px;transition:transform .15s}
+.regb[open] summary::before{transform:rotate(90deg)}
+.regb summary:focus-visible{outline:2px solid var(--brand,#0f9d6b);outline-offset:2px;border-radius:8px}
+.regb ul{margin:0 0 6px;padding-left:22px;line-height:1.7;font-weight:600}
+.regb .regn{margin:0;padding-left:4px;font-weight:500;font-size:12px}
 
 .chips{display:grid;grid-template-columns:1fr;gap:8px}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -347,6 +355,12 @@ input[readonly]{opacity:.8;cursor:not-allowed}
       <div class="field" style="margin:10px 0 12px"><input id="buscar" type="search" placeholder="Buscar por huésped o código" aria-label="Buscar reserva" autocomplete="off"></div>
       <div id="lista"></div>
     </div>
+
+    <details class="regb" id="regB" hidden>
+      <summary id="regBT">Registro de números borrados</summary>
+      <ul id="regBL"></ul>
+      <p class="regn">Solo informativo: estos números no se reutilizan. El detalle completo está en la pestaña BITACORA del Sheet.</p>
+    </details>
   </div>
 </div>
 
@@ -1033,11 +1047,16 @@ function irA(cod) {
 }
 
 function renderAlertas() {
+  /* Arriba solo lo que pide acción; el registro de borradas (informativo) va al final de la página */
   const warn = ALERTAS.filter(a => a.tipo !== 'borrada'), info = ALERTAS.filter(a => a.tipo === 'borrada');
-  $('alerta').hidden = !ALERTAS.length;
-  $('alerta').className = 'alerta' + (warn.length ? '' : ' info');
-  $('alertaT').textContent = warn.length ? (warn.length === 1 ? 'Revisa 1 punto' : 'Revisa ' + warn.length + ' puntos') : 'Registro de números borrados';
-  $('alertaL').innerHTML = warn.map(a => '<li>' + esc(a.texto) + '</li>').join('') + info.map(a => '<li class="inf">' + esc(a.texto) + '</li>').join('');
+  $('alerta').hidden = !warn.length;
+  $('alerta').className = 'alerta';
+  $('alertaT').textContent = warn.length === 1 ? 'Revisa 1 punto' : 'Revisa ' + warn.length + ' puntos';
+  $('alertaL').innerHTML = warn.map(a => '<li>' + esc(a.texto) + '</li>').join('');
+  const lis = []; info.forEach(a => { const t = String(a.texto || '').replace(/^[^:]*:\s*/, '').replace(/\.$/, ''); (t.match(/Reserva_Directa_\d+ \(borrada el [\d-]+\)/g) || []).forEach(x => lis.push(x)); });
+  $('regB').hidden = !lis.length;
+  $('regBT').textContent = 'Registro de números borrados (' + lis.length + ')';
+  $('regBL').innerHTML = lis.map(x => '<li>' + esc(x.replace('Reserva_Directa_', 'Directa ').replace(' (borrada el ', ' · borrada el ').replace(')', '')) + '</li>').join('');
 }
 
 const ICO_ED = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z" stroke-linecap="round" stroke-linejoin="round"/></svg>';
