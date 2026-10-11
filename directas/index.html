@@ -111,6 +111,7 @@ input[readonly]{opacity:.8;cursor:not-allowed}
 .noche input{background:var(--surface);text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
 .neto{font-size:13px;font-weight:700;margin:0 0 10px;line-height:1.5;color:var(--mut)}
 .neto b{color:var(--ink);font-variant-numeric:tabular-nums}
+.noche .nd small em{font-style:normal;color:var(--mut)}
 .noche .nd small b{color:var(--accent)}
 .chk{border-radius:12px;padding:10px 12px;font-size:13px;font-weight:800;margin:4px 0 12px;border:1px solid var(--line);background:var(--bg)}
 .chk.ok{color:var(--ok,#0a7d4b);border-color:currentColor}
@@ -325,7 +326,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ 
 const fnum = (n, d) => { n = Number(n) || 0; const p = Math.abs(n).toFixed(d == null ? 2 : d).split('.'); return (n < 0 ? '-' : '') + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (p[1] ? ',' + p[1] : ''); };
 function money(n) { const v = Math.round((Number(n) || 0) * 100) / 100; return (v < 0 ? '-' : '') + '$' + fnum(Math.abs(v), 2); }
 function numCod(c) { const m = /^Reserva_Directa_(\d+)$/.exec(String(c || '')); return m ? parseInt(m[1], 10) : 0; }
-function nuevoForm() { return { ci: '', co: '', coManual: false, tot: '', lim: '', limManual: false, pax: 2, modo: 'prom', noches: [] }; }
+function nuevoForm() { return { ci: '', co: '', coManual: false, tot: '', lim: '', limManual: false, ultManual: false, pax: 2, modo: 'prom', noches: [] }; }
 const NOCHES_MAX = 60, DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 function diaDe(iso) { const x = iso.split('-'); return DIAS[new Date(Date.UTC(+x[0], +x[1] - 1, +x[2])).getUTCDay()]; }
 function cents(n) { return Math.round((Number(n) || 0) * 100); }
@@ -340,9 +341,17 @@ function promedios() {
 }
 /* Reconstruye la lista de noches conservando lo ya digitado por fecha */
 function armarNoches() {
-  const n = nNoches(), prev = {}; F.noches.forEach(x => { prev[x.f] = x; });
+  const n = nNoches(), prev = {}; F.ultManual = false; F.noches.forEach(x => { prev[x.f] = x; });
   F.noches = [];
   for (let i = 0; i < Math.min(n, NOCHES_MAX); i++) { const f = addDiasISO(F.ci, i); F.noches.push({ f: f, m: prev[f] ? prev[f].m : '', pax: prev[f] ? prev[f].pax : null }); }
+}
+/* En "por noche": la última casilla se llena sola con lo que falta para llegar al total (hasta que la escribas a mano) */
+function autoUltimo() {
+  if (F.modo !== 'noche' || F.ultManual || !F.noches.length) return;
+  const n = F.noches.length, T = cents(F.tot);
+  const otras = F.noches.slice(0, n - 1).reduce((s, x) => s + cents(x.m), 0), resto = T - otras;
+  F.noches[n - 1].m = (T > 0 && resto > 0) ? resto / 100 : '';
+  const el = document.querySelector('#noches input[data-n="' + (n - 1) + '"]'); if (el) el.value = F.noches[n - 1].m;
 }
 function montosFinales() { return F.modo === 'prom' ? promedios() : F.noches.map(x => Math.round((Number(x.m) || 0) * 100) / 100); }
 function addDiasISO(iso, dias) {
@@ -439,7 +448,7 @@ function pintarNoches() {
   $('modoWrap').hidden = !nNoches();
   $('no').value = nNoches() || '';
   $('noches').innerHTML = (F.modo === 'noche') ? F.noches.map((x, i) =>
-    '<div class="noche"><div class="nd">' + esc(diaDe(x.f).charAt(0).toUpperCase() + diaDe(x.f).slice(1)) + ' ' + esc(fechaBonita(x.f)) + '<small>Noche ' + (i + 1) + ' · Neto <b>—</b></small></div>' +
+    '<div class="noche"><div class="nd">' + esc(diaDe(x.f).charAt(0).toUpperCase() + diaDe(x.f).slice(1)) + ' ' + esc(fechaBonita(x.f)) + '<small>Noche ' + (i + 1) + ' · Neto <b>—</b>' + (i === F.noches.length - 1 && F.noches.length > 1 ? ' · <em class="auto">' + (F.ultManual ? 'escrita a mano' : 'se calcula sola') + '</em>' : '') + '</small></div>' +
     '<input type="number" inputmode="decimal" data-n="' + i + '" min="0" max="' + MONTO_MAX + '" step="0.01" placeholder="0.00" aria-label="Valor de la noche ' + (i + 1) + '" value="' + esc(x.m) + '"></div>').join('') : '';
   document.querySelectorAll('#modos .chip').forEach(b => { const on = b.dataset.m === F.modo; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
   pintarCheck();
@@ -487,10 +496,10 @@ $('ci').addEventListener('input', () => {
     $('co').min = addDiasISO(F.ci, 1);
     if (!F.coManual || !F.co || F.co <= F.ci) { F.co = addDiasISO(F.ci, 1); F.coManual = false; $('co').value = F.co; }
   }
-  armarNoches(); pintarNoches(); resumen(); ocultarConfirmar(); cargarLimpieza();
+  armarNoches(); autoUltimo(); pintarNoches(); resumen(); ocultarConfirmar(); cargarLimpieza();
 });
-$('co').addEventListener('input', () => { F.co = $('co').value; F.coManual = !!F.co; armarNoches(); pintarNoches(); resumen(); ocultarConfirmar(); });
-$('tot').addEventListener('input', () => { F.tot = $('tot').value; pintarCheck(); resumen(); ocultarConfirmar(); });
+$('co').addEventListener('input', () => { F.co = $('co').value; F.coManual = !!F.co; armarNoches(); autoUltimo(); pintarNoches(); resumen(); ocultarConfirmar(); });
+$('tot').addEventListener('input', () => { F.tot = $('tot').value; autoUltimo(); pintarCheck(); resumen(); ocultarConfirmar(); });
 $('lim').addEventListener('input', () => { F.lim = $('lim').value; F.limManual = true; resumen(); ocultarConfirmar(); });
 /* Costo real de limpieza vigente en la fecha de check-in (lo pone el panel de Parámetros) */
 let limReq = 0;
@@ -518,12 +527,16 @@ $('modos').addEventListener('click', e => {
     // al pasar a "por noche", se precargan los promedios para que solo ajustes
     const p = promedios(); armarNoches(); F.noches.forEach((x, i) => { if (x.m === '') x.m = cents(F.tot) ? p[i] : ''; });
   }
-  F.modo = b.dataset.m; pintarNoches(); resumen(); ocultarConfirmar();
+  F.modo = b.dataset.m; F.ultManual = false; autoUltimo(); pintarNoches(); resumen(); ocultarConfirmar();
   if (F.modo === 'noche') { const el = document.querySelector('#noches input'); if (el) el.focus(); }
 });
 $('noches').addEventListener('input', e => {
   const i = e.target.dataset.n; if (i == null) return;
-  F.noches[+i].m = e.target.value; e.target.classList.remove('bad'); pintarCheck(); resumen(); ocultarConfirmar();
+  const last = F.noches.length - 1;
+  F.noches[+i].m = e.target.value; e.target.classList.remove('bad');
+  if (+i === last) { F.ultManual = e.target.value !== ''; const em = document.querySelector('#noches .noche:last-child em.auto'); if (em) em.textContent = F.ultManual ? 'escrita a mano' : 'se calcula sola'; if (!F.ultManual) autoUltimo(); }
+  else autoUltimo();
+  pintarCheck(); resumen(); ocultarConfirmar();
 });
 
 $('comentario').addEventListener('input', () => { $('comCnt').textContent = $('comentario').value.length; });
