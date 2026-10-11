@@ -339,6 +339,7 @@ input[readonly]{opacity:.75;cursor:not-allowed}
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
+const fnum = (n, d) => { n = Number(n) || 0; const p = Math.abs(n).toFixed(d == null ? 2 : d).split('.'); return (n < 0 ? '-' : '') + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (p[1] ? ',' + p[1] : ''); };
 // ===== Pega aquí la URL de tu implementación de Apps Script (termina en /exec) =====
 const FIXED_URL = 'https://script.google.com/macros/s/AKfycbxTCzl3Phwj8v9NkiMWB8imltqsz16fRzd5NYWx7-UDDsiRjGSkc7M77a5e45fCw--y/exec';
 
@@ -654,7 +655,7 @@ function render() {
       <div class="list-item">
         <div class="top"><b>${esc(r.codigo)}</b><span class="tag">Tipo ${r.tipo}</span></div>
         <div class="meta">${esc(r.huesped || '—')} · ${esc(r.canal)} · ${esc(TIPO_LABEL[r.tipo] || '')}</div>
-        <div class="meta">${r.checkin || '?'} → ${r.checkout || '?'} · noches que cuentan: ${r.nochesCuentan} de ${r.nochesPagadas} pagadas · neto que cuenta: $${(r.netoQueCuenta || 0).toFixed(2)}</div>
+        <div class="meta">${r.checkin || '?'} → ${r.checkout || '?'} · noches que cuentan: ${r.nochesCuentan} de ${r.nochesPagadas} pagadas · neto que cuenta: $${fnum(r.netoQueCuenta || 0, 2)}</div>
         ${r.nota ? `<div class="meta">${esc(r.nota)}</div>` : ''}
         <div class="btns">
           <button type="button" class="btn btn-ghost btn-sm" onclick="editarC('${r.id}')">Editar</button>
@@ -954,7 +955,7 @@ const TIPOS = {
 let accTocado = false, motivoSel = '';
 
 const num = id => Number($(id).value) || 0;
-const money = n => '$' + (Number(n) || 0).toFixed(2);
+const money = n => (Number(n) < 0 ? '-' : '') + '$' + fnum(Math.abs(Number(n) || 0), 2);
 function fp(s) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? { y: +m[1], m: +m[2] - 1, d: +m[3] } : null; }
 function rangoFechas(a, b) {
   const x = fp(a), y = fp(b);
