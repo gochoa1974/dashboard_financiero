@@ -245,7 +245,8 @@ let DATA = null, abierto = null; // abierto: {p, modo:'base'|'exc', id}
 
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function fb(iso) { if (!iso) return ''; const x = iso.split('-'); return +x[2] + ' ' + MESES[+x[1] - 1] + ' ' + x[0]; }
-function fmt(p, v) { const n = Number(v); const t = (Math.round(n * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: p.unidad === '%' ? 1 : 2, maximumFractionDigits: 2 }); return p.unidad === '%' ? t + '%' : '$' + t; }
+const fnum = (n, d) => { n = Number(n) || 0; const p = Math.abs(n).toFixed(d == null ? 2 : d).split('.'); return (n < 0 ? '-' : '') + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (p[1] ? ',' + p[1] : ''); };
+function fmt(p, v) { const n = Math.round(Number(v) * 100) / 100; if (p.unidad === '%') return fnum(n, 2).replace(/,?0+$/, '') + '%'; return '$' + fnum(n, 2); }
 
 async function call(body) {
   if (!CFG.url || CFG.url.indexOf('PEGA-AQUI') >= 0) throw new Error('Falta pegar la URL del Apps Script de Parámetros en el archivo.');
