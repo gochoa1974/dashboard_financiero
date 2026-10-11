@@ -333,6 +333,13 @@ details.cat-i.off{opacity:.65}
 .seg>.chip{min-width:0;overflow-wrap:anywhere;padding-left:6px;padding-right:6px}
 @media (max-width:420px){.ln .seg{grid-template-columns:1fr}}
 
+.alerta.resol{margin-bottom:14px}
+.alerta.resol ul{list-style:none;margin:10px 0 0;padding:0}
+.rl-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.rl-row:first-child{border-top:none}
+.rl-t b{display:block;font-size:14px;overflow-wrap:anywhere}
+.rl-t span{display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin-top:2px;overflow-wrap:anywhere}
+
 </style>
 </head>
 <body>
@@ -373,6 +380,12 @@ details.cat-i.off{opacity:.65}
 
     <!-- ======== REGISTRAR ======== -->
     <section id="p-reg" role="tabpanel" aria-labelledby="tab-reg">
+      <div class="alerta resol" id="resolAlerta" role="status" hidden>
+        <b><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.01" stroke-linecap="round"/></svg><span id="resolT">Faltan resoluciones</span></b>
+        <div class="small" id="resolS"></div>
+        <ul id="resolL"></ul>
+      </div>
+      <div class="small" id="resolNota" hidden style="margin:0 4px 12px">Para ver las resoluciones del CSV, abre Ingresos una vez y pulsa «Leer Drive y procesar».</div>
       <div class="card" id="resCard">
         <h3 id="resTitle">¿A qué reserva se cobró?</h3>
         <p class="hint">Escribe el código o el nombre del huésped. Puedes agregar varios servicios a la misma reserva.</p>
@@ -804,7 +817,8 @@ function claveRechazada(modulo) {
   m.textContent = 'La clave ya no es válida en ' + modulo + '. Escríbela de nuevo.';
 }
 
-const DATAKEY = 'cimablanca_adic_data', TABKEY = 'cimablanca_adic_tab';
+const DATAKEY = 'cimablanca_adic_data', TABKEY = 'cimablanca_adic_tab', RESOLKEY = 'cimablanca_adic_resol';
+const ITEM_DESCUENTO = 'Descuento acordado', ITEM_AJUSTE = 'Ajuste de la resolución', CONCEPTO_AJUSTE = 'Resolución Airbnb (Extra)';
 const RESKEY = 'cimablanca_canc_reservas_cache', DIRKEY = 'cimablanca_canc_dir_cache';
 const ANUNCIOS = [
   { v: 'LST-03_4 pax', n: 'MiamiCito', alias: 'LST-03', cap: 4 },
@@ -819,7 +833,8 @@ const MEDIOS = [
 const COBROS = [
   { v: 'unidad', n: 'Por unidad', d: 'Cantidad × precio. Ej. 2 lavadas.' },
   { v: 'unidad_noche', n: 'Por unidad y por noche', d: 'Cantidad × noches × precio. Ej. 1 vehículo, 3 noches.' },
-  { v: 'noche', n: 'Por noche', d: 'Noches × precio. Ej. una noche extra.' }
+  { v: 'noche', n: 'Por noche', d: 'Noches × precio. Ej. una noche extra.' },
+  { v: 'descuento', n: 'Descuento o ajuste', d: 'Resta un valor a un servicio. Ej. un descuento negociado.' }
 ];
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const FMIN = '2024-01-01', FMAX = '2100-12-31';
@@ -838,6 +853,8 @@ try {
 } catch (e) {}
 try { const dc = JSON.parse(localStorage.getItem(DIRKEY) || 'null'); if (dc && Array.isArray(dc.reservas)) DIRECTAS = dc.reservas; } catch (e) {}
 try { const c = JSON.parse(localStorage.getItem(RESKEY) || 'null'); if (c && Array.isArray(c.reservas)) RESERVAS = c.reservas; } catch (e) {}
+let RESOL = null;   // pagos y ajustes de resolución del CSV (los guarda /ingresos/ v8 en el archivo maestro); null = el archivo aún no los trae
+try { const rc = JSON.parse(localStorage.getItem(RESOLKEY) || 'null'); if (rc && Array.isArray(rc.resoluciones)) RESOL = rc.resoluciones; } catch (e) {}
 let GENERADO = ''; try { GENERADO = localStorage.getItem('cimablanca_canc_generado') || ''; } catch (e) {}
 
 /* ---------- utilidades ---------- */
@@ -870,11 +887,16 @@ function numIn(v) { const n = parseFloat(String(v).replace(',', '.')); return is
 
 /* ---------- catálogo: consultas ---------- */
 function catItem(id) { return DATA.catalogo.filter(c => c.id === id)[0] || null; }
-function catDeLinea(l) { return DATA.catalogo.filter(c => c.concepto === l.concepto && c.item === l.item)[0] || null; }
+function esDesc(it) { return !!it && it.cobro === 'descuento'; }
+function esNegLinea(l) { return l.origen === 'Descuento' || l.origen === 'Ajuste'; }
+function catDeLinea(l) {
+  if (esNegLinea(l)) return DATA.catalogo.filter(c => c.cobro === 'descuento' && c.item === l.item)[0] || null;
+  return DATA.catalogo.filter(c => c.concepto === l.concepto && c.item === l.item)[0] || null;
+}
 function precioVigente(it, fecha) { let r = null; (it.precios || []).forEach(p => { if (p.desde && p.desde <= fecha) r = p; }); return r; }
 function cobroDe(v) { return COBROS.filter(c => c.v === v)[0] || COBROS[0]; }
-function usaCant(it) { return it.cobro !== 'noche'; }
-function usaFechas(it) { return it.cobro !== 'unidad'; }
+function usaCant(it) { return it.cobro !== 'noche' && it.cobro !== 'descuento'; }
+function usaFechas(it) { return it.cobro !== 'unidad' && it.cobro !== 'descuento'; }
 function multDe(cobro, cant, noches) { return cobro === 'noche' ? noches : (cobro === 'unidad_noche' ? cant * noches : cant); }
 function multLinea(l) {
   const it = catDeLinea(l), cobro = it ? it.cobro : 'unidad';
@@ -1039,10 +1061,12 @@ function cargarReservasDesdeDrive() {
     .then(text => {
       const payload = JSON.parse(text);
       RESERVAS = payload.reservas || [];
+      RESOL = Array.isArray(payload.resoluciones) ? payload.resoluciones : null;
+      try { if (RESOL) localStorage.setItem(RESOLKEY, JSON.stringify({ resoluciones: RESOL, t: Date.now() })); } catch (e) {}
       GENERADO = payload.generado || '';
       try { localStorage.setItem('cimablanca_canc_generado', GENERADO); } catch (e) {}
       try { localStorage.setItem(RESKEY, JSON.stringify({ reservas: RESERVAS, t: Date.now() })); } catch (e) {}
-      construirReservas(); pintarDriveMsg('ok'); renderSim();
+      construirReservas(); pintarDriveMsg('ok'); renderSim(); renderResol();
     })
     .catch(e => pintarDriveMsg('error', e.message || e));
 }
@@ -1091,15 +1115,16 @@ let guardando = false;
 let manualAn = ANUNCIOS[1].v;
 
 function nuevaLinea(extra) {
-  return Object.assign({ k: ++lnSeq, itemId: '', cant: 1, ini: '', fin: '', precio: '', precioTocado: false, medio: 'TRANSFERENCIA', anio: '', anioTocado: false, coment: '', id: null, firma: '', origen: '', cargando: false }, extra || {});
+  return Object.assign({ k: ++lnSeq, itemId: '', cant: 1, ini: '', fin: '', precio: '', precioTocado: false, valor: '', aplica: '', medio: 'TRANSFERENCIA', anio: '', anioTocado: false, coment: '', id: null, firma: '', origen: '', cargando: false }, extra || {});
 }
 function inicioDe(L) {
   const it = catItem(L.itemId); if (!it || !RES) return '';
-  return it.cobro === 'unidad' ? RES.checkin : (L.ini || '');
+  return (it.cobro === 'unidad' || esDesc(it)) ? RES.checkin : (L.ini || '');
 }
 function nochesDe(L) { return (L.ini && L.fin && L.fin > L.ini) ? difDias(L.ini, L.fin) : 0; }
 function montoDe(L) {
   const it = catItem(L.itemId); if (!it) return 0;
+  if (esDesc(it)) { const v = numIn(L.valor); return v > 0 ? -Math.round(v * 100) / 100 : 0; }
   const p = numIn(L.precio); if (!(p > 0)) return 0;
   const c = usaCant(it) ? (Math.round(Number(L.cant)) || 0) : 1;
   const n = usaFechas(it) ? nochesDe(L) : 1;
@@ -1107,6 +1132,7 @@ function montoDe(L) {
 }
 function formulaDe(L) {
   const it = catItem(L.itemId); if (!it) return '';
+  if (esDesc(it)) return 'Resta' + (L.aplica ? ' de «' + L.aplica + '»' : '');
   const p = numIn(L.precio); const ps = p > 0 ? money(p) : '$—';
   const n = nochesDe(L), c = Math.round(Number(L.cant)) || 0;
   if (it.cobro === 'noche') return n + (n === 1 ? ' noche' : ' noches') + ' × ' + ps;
@@ -1114,7 +1140,7 @@ function formulaDe(L) {
   return c + ' × ' + ps;
 }
 async function sugerirPrecio(L) {
-  const it = catItem(L.itemId); if (!it || L.precioTocado) return;
+  const it = catItem(L.itemId); if (!it || L.precioTocado || esDesc(it)) return;
   const f = inicioDe(L); if (!f) return;
   if (it.ligado) {
     L.cargando = true; actualizarLinea(L);
@@ -1137,7 +1163,7 @@ function optsItems(sel) {
     '<optgroup label="' + esc(g.concepto) + '">' + g.items.map(c => '<option value="' + esc(c.id) + '"' + (c.id === sel ? ' selected' : '') + '>' + esc(c.item) + (c.activo ? '' : ' (desactivado)') + '</option>').join('') + '</optgroup>').join('');
 }
 function badgeDe(L) {
-  const it = catItem(L.itemId); if (!it) return '';
+  const it = catItem(L.itemId); if (!it || esDesc(it)) return '';
   if (L.cargando) return '<span class="pbadge">Consultando…</span>';
   const p = numIn(L.precio);
   if (it.ligado) return '<span class="pbadge cat">Según Parámetros</span>';
@@ -1147,11 +1173,37 @@ function badgeDe(L) {
   return Math.abs(pv.precio - p) < 0.005 ? '<span class="pbadge cat">Catálogo</span>' : '<span class="pbadge man">Precio manual</span>';
 }
 function hintPrecio(L) {
-  const it = catItem(L.itemId); if (!it) return '';
+  const it = catItem(L.itemId); if (!it || esDesc(it)) return '';
   if (it.ligado) return 'Costo de limpieza vigente en Parámetros para esa fecha (regla del no-show).';
   const pv = precioVigente(it, inicioDe(L));
   if (!pv) return 'Este servicio no tiene precio fijo: escríbelo cada vez.';
   return 'Catálogo: ' + money(pv.precio) + ' (rige desde ' + fechaBonita(pv.desde) + ').';
+}
+function conceptosAplica(L) {
+  const enRes = {}; DATA.lineas.forEach(l => { if (RES && l.codigo === RES.codigo && l.monto > 0 && !esNegLinea(l) && l.id !== editId) enRes[l.concepto] = 1; });
+  LN.forEach(x => { const c = catItem(x.itemId); if (c && !esDesc(c)) enRes[c.concepto] = 1; });
+  const todos = {}; DATA.catalogo.forEach(c => { if (!esDesc(c)) todos[c.concepto] = 1; });
+  const a = Object.keys(enRes).sort((x, y) => x.localeCompare(y, 'es')), b = Object.keys(todos).filter(c => !enRes[c]).sort((x, y) => x.localeCompare(y, 'es'));
+  return { a: a, b: b };
+}
+function defaultAplica(L) {
+  const it = catItem(L.itemId), c = conceptosAplica(L);
+  if (it && it.item === ITEM_AJUSTE) return DATA.catalogo.some(x => x.concepto === CONCEPTO_AJUSTE) ? CONCEPTO_AJUSTE : (c.a[0] || '');
+  return c.a[0] || '';
+}
+function descHTML(L, it, k) {
+  const c = conceptosAplica(L), sel = L.aplica || '';
+  const opt = n => '<option value="' + esc(n) + '"' + (n === sel ? ' selected' : '') + '>' + esc(n) + '</option>';
+  let h = '<div class="field"><label for="ap' + k + '">¿A qué servicio se aplica?</label><select id="ap' + k + '" data-f="aplica"><option value="">Elige el servicio…</option>' +
+    (c.a.length ? '<optgroup label="Cobrados en esta reserva">' + c.a.map(opt).join('') + '</optgroup>' : '') + (c.b.length ? '<optgroup label="Otros servicios">' + c.b.map(opt).join('') + '</optgroup>' : '') + '</select></div>';
+  h += '<div class="field"><label for="vl' + k + '">Valor a restar ($)</label><input type="number" inputmode="decimal" id="vl' + k + '" data-f="valor" min="0" step="0.01" placeholder="0,00" value="' + esc(L.valor) + '"><div class="small">Escribe el valor en positivo: el panel lo resta.</div></div>';
+  h += '<div class="monto" aria-live="polite"><span class="mf" data-mf="' + k + '"></span><span class="mv" data-mv="' + k + '">$0,00</span></div>';
+  h += '<div class="field"><span class="lbl" id="md' + k + '">Medio de cobro</span><div class="seg" role="radiogroup" aria-labelledby="md' + k + '">' +
+    MEDIOS.map(m => '<button type="button" class="chip' + (m.v === L.medio ? ' on' : '') + '" role="radio" aria-checked="' + (m.v === L.medio) + '" data-md="' + esc(m.v) + '" data-k="' + k + '">' + esc(m.n) + '</button>').join('') + '</div></div>';
+  h += '<details class="mas"><summary class="link" style="list-style:none;display:flex;align-items:center">Más opciones</summary>' +
+    '<div class="field"><label for="an' + k + '">Año de ingreso</label><select id="an' + k + '" data-f="anio">' + anioOpts(L) + '</select></div>' +
+    '<div class="field"><label for="cm' + k + '">Comentario (opcional)</label><textarea id="cm' + k + '" data-f="coment" maxlength="300" placeholder="Ej. acuerdo al final de la estadía">' + esc(L.coment) + '</textarea></div></details>';
+  return h;
 }
 function lineaHTML(L, i) {
   const it = catItem(L.itemId), k = L.k;
@@ -1159,6 +1211,7 @@ function lineaHTML(L, i) {
     (LN.length > 1 && !editId ? '<button type="button" class="link bad" data-rm="' + k + '" style="padding:0;min-height:44px">Quitar</button>' : '') + '</div>';
   h += '<div class="field"><label for="it' + k + '">Servicio o producto</label><select id="it' + k + '" data-f="item">' + optsItems(L.itemId) + '</select>' +
     (it ? '<div class="small">' + esc(cobroDe(it.cobro).n) + ': ' + esc(cobroDe(it.cobro).d) + '</div>' : '') + '</div>';
+  if (it && esDesc(it)) { return h + descHTML(L, it, k) + '</div>'; }
   if (it) {
     if (usaCant(it)) {
       h += '<div class="field"><label for="ct' + k + '">Cantidad</label><div class="stepper"><button type="button" class="stp" data-st="-1" data-k="' + k + '" aria-label="Restar uno">−</button>' +
@@ -1203,7 +1256,13 @@ function renderLineas() {
   actualizarResumen();
 }
 function actualizarLinea(L, tocarCampo) {
-  const k = L.k, it = catItem(L.itemId); if (!it || !$('pr' + k)) { actualizarResumen(); return; }
+  const k = L.k, it = catItem(L.itemId);
+  if (it && esDesc(it)) {
+    const mv0 = document.querySelector('[data-mv="' + k + '"]'); if (mv0) mv0.textContent = money(montoDe(L));
+    const mf0 = document.querySelector('[data-mf="' + k + '"]'); if (mf0) mf0.textContent = formulaDe(L);
+    actualizarResumen(); return;
+  }
+  if (!it || !$('pr' + k)) { actualizarResumen(); return; }
   if (tocarCampo && document.activeElement !== $('pr' + k)) $('pr' + k).value = L.precio;
   const bd = document.querySelector('[data-bd="' + k + '"]'); if (bd) bd.innerHTML = badgeDe(L);
   const ph = document.querySelector('[data-ph="' + k + '"]'); if (ph) ph.textContent = hintPrecio(L);
@@ -1232,7 +1291,8 @@ $('lineas').addEventListener('change', e => {
   const t = e.target, card = t.closest('.ln'); if (!card) return;
   const L = lineaPorK(card.dataset.k), f = t.dataset.f; if (!L || !f) return;
   if (f === 'item') {
-    L.itemId = t.value; L.precio = ''; L.precioTocado = false; L.origen = ''; L.cant = 1; L.ini = ''; L.fin = ''; defaultsFechas(L);
+    L.itemId = t.value; L.precio = ''; L.precioTocado = false; L.origen = ''; L.cant = 1; L.ini = ''; L.fin = ''; L.valor = ''; L.aplica = ''; defaultsFechas(L);
+    { const ni = catItem(L.itemId); if (esDesc(ni)) { L.aplica = defaultAplica(L); if (ni.item === ITEM_AJUSTE) L.medio = 'CENTRO DE RESOLUCIONES'; else { const otra = LN.filter(x => x !== L && catItem(x.itemId))[0]; if (otra) L.medio = otra.medio; } } }
     renderLineas(); sugerirPrecio(L);
   } else if (f === 'ini' || f === 'fin') {
     L[f] = t.value;
@@ -1242,12 +1302,14 @@ $('lineas').addEventListener('change', e => {
     actualizarLinea(L); sugerirPrecio(L);
     const aEl = $('an' + L.k); if (aEl && !L.anioTocado) aEl.innerHTML = anioOpts(L);
   } else if (f === 'anio') { L.anio = t.value; L.anioTocado = true; }
+  else if (f === 'aplica') { L.aplica = t.value; actualizarLinea(L); }
 });
 $('lineas').addEventListener('input', e => {
   const t = e.target, card = t.closest('.ln'); if (!card) return;
   const L = lineaPorK(card.dataset.k), f = t.dataset.f; if (!L || !f) return;
   if (f === 'cant') { L.cant = t.value; actualizarLinea(L); }
   else if (f === 'precio') { L.precio = t.value; L.precioTocado = true; actualizarLinea(L); }
+  else if (f === 'valor') { L.valor = t.value; actualizarLinea(L); }
   else if (f === 'coment') L.coment = t.value;
   else if (f === 'ini' || f === 'fin') { L[f] = t.value; actualizarLinea(L); }
   t.classList.remove('bad');
@@ -1336,6 +1398,12 @@ function validarForm() {
   for (let i = 0; i < LN.length; i++) {
     const L = LN[i], it = catItem(L.itemId), n = LN.length > 1 ? ' (servicio ' + (i + 1) + ')' : '';
     if (!it) { const s = $('it' + L.k); if (s) { s.classList.add('bad'); s.focus(); } return 'Elige el servicio o producto' + n + '.'; }
+    if (esDesc(it)) {
+      if (!L.aplica) { const a = $('ap' + L.k); if (a) { a.classList.add('bad'); a.focus(); } return 'Elige a qué servicio se aplica' + n + '.'; }
+      if (!(numIn(L.valor) > 0)) { const v = $('vl' + L.k); if (v) { v.classList.add('bad'); v.focus(); } return 'Escribe el valor a restar' + n + '.'; }
+      if (numIn(L.valor) > 5000) return 'El valor no puede superar $5.000' + n + '.';
+      continue;
+    }
     if (usaCant(it) && !(Math.round(Number(L.cant)) >= 1)) { $('ct' + L.k).classList.add('bad'); return 'La cantidad debe ser 1 o más' + n + '.'; }
     if (usaFechas(it) && !(L.ini && L.fin && L.fin > L.ini)) { const b = $('df' + L.k); if (b) b.classList.add('bad'); return 'Elige las fechas del servicio (la salida después de la entrada)' + n + '.'; }
     if (!(numIn(L.precio) > 0)) { $('pr' + L.k).classList.add('bad'); $('pr' + L.k).focus(); return 'Escribe el precio' + n + '.'; }
@@ -1350,7 +1418,7 @@ $('guardar').onclick = async () => {
   const payload = {
     accion: 'guardarLineas',
     reserva: { codigo: RES.codigo, huesped: RES.huesped, anuncio: RES.anuncio, checkin: RES.checkin, checkout: RES.checkout },
-    lineas: LN.map(L => { const it = catItem(L.itemId); return { id: L.id || undefined, firma: L.firma || undefined, itemId: L.itemId, cantidad: usaCant(it) ? Math.round(Number(L.cant)) : undefined, inicio: usaFechas(it) ? L.ini : undefined, fin: usaFechas(it) ? L.fin : undefined, precio: numIn(L.precio), medio: L.medio, anio: L.anio || undefined, comentario: L.coment }; })
+    lineas: LN.map(L => { const it = catItem(L.itemId); if (esDesc(it)) return { id: L.id || undefined, firma: L.firma || undefined, itemId: L.itemId, monto: numIn(L.valor), aplicaConcepto: L.aplica, medio: L.medio, anio: L.anio || undefined, comentario: L.coment }; return { id: L.id || undefined, firma: L.firma || undefined, itemId: L.itemId, cantidad: usaCant(it) ? Math.round(Number(L.cant)) : undefined, inicio: usaFechas(it) ? L.ini : undefined, fin: usaFechas(it) ? L.fin : undefined, precio: numIn(L.precio), medio: L.medio, anio: L.anio || undefined, comentario: L.coment }; })
   };
   const tot = LN.reduce((a, L) => a + montoDe(L), 0), n = LN.length, cod = RES.codigo, eraEdicion = !!editId;
   try {
@@ -1379,6 +1447,14 @@ function editarLinea(id) {
   if (rr.origen === 'Hoja') {   // las fechas de la reserva salen de un cobro "por unidad" si existe
     const u = DATA.lineas.filter(x => x.codigo === l.codigo).filter(x => { const c = catDeLinea(x); return c && c.cobro === 'unidad'; })[0];
     if (u) { rr.checkin = u.checkin; rr.checkout = u.checkout; }
+  }
+  if (esNegLinea(l)) {
+    editId = id; const base0 = RES_POR_COD[l.codigo] || { codigo: l.codigo, huesped: l.huesped, anuncio: l.anuncio, checkin: l.checkin, checkout: l.checkout, origen: 'Hoja' };
+    RES = Object.assign({}, base0, { checkin: base0.checkin || l.checkin, checkout: base0.checkout || l.checkout }); if (!RES.anuncio || !anuncioObj(RES.anuncio)) RES.anuncio = l.anuncio;
+    LN = [nuevaLinea({ itemId: it.id, valor: String(-l.monto), aplica: l.concepto, medio: l.medio, anio: String(l.anio), anioTocado: true, coment: l.comentario || '', id: l.id, firma: l.firma, origen: l.origen })];
+    $('resBuscaWrap').hidden = true; $('rManual').hidden = true; $('resTitle').textContent = 'Reserva del cobro';
+    pintarResSel(); $('lineasWrap').hidden = false; renderLineas(); msg('');
+    $('resCard').scrollIntoView({ behavior: 'smooth', block: 'start' }); return;
   }
   const ini = l.checkin, fin = l.checkout;
   const noches = l.noches || (ini && fin ? difDias(ini, fin) : 1), cant = l.cantidad || 1;
@@ -1413,10 +1489,10 @@ function renderLista() {
       '<div class="meta">' + esc(gr.c) + ' · ' + esc(anuncioN(h.anuncio)) + ' · ' + esc(fechaBonita(gr.f)) + '</div>' +
       gr.l.map(l => {
         const it = catDeLinea(l), partes = [];
-        if (l.cantidad) partes.push(l.cantidad + ' u.');
+        if (l.cantidad && !esNegLinea(l)) partes.push(l.cantidad + ' u.');
         if (it && it.cobro !== 'unidad' && (l.noches)) partes.push(l.noches + (l.noches === 1 ? ' noche' : ' noches'));
-        if (l.precio != null) partes.push(money(l.precio) + (it && it.cobro === 'unidad' ? ' c/u' : ''));
-        return '<div class="li-row" data-l="' + esc(l.id) + '"><div><div class="lt">' + esc(l.item) + '</div><div class="ls">' + esc(l.concepto) + (partes.length ? ' · ' + esc(partes.join(' · ')) : '') + '<br>' + esc((MEDIOS.filter(m => m.v === l.medio)[0] || { n: l.medio }).n) + ' · ' + l.anio + (l.origen === 'Manual' ? ' · precio manual' : (l.precio == null ? ' · histórico' : '')) + '</div></div>' +
+        if (l.precio != null && !esNegLinea(l)) partes.push(money(l.precio) + (it && it.cobro === 'unidad' ? ' c/u' : ''));
+        return '<div class="li-row" data-l="' + esc(l.id) + '"><div><div class="lt">' + esc(l.item) + '</div><div class="ls">' + esc(l.concepto) + (partes.length ? ' · ' + esc(partes.join(' · ')) : '') + '<br>' + esc((MEDIOS.filter(m => m.v === l.medio)[0] || { n: l.medio }).n) + ' · ' + l.anio + (l.origen === 'Manual' ? ' · precio manual' : (l.origen === 'Descuento' ? ' · descuento' : (l.origen === 'Ajuste' ? ' · ajuste' : (l.precio == null ? ' · histórico' : '')))) + '</div></div>' +
           '<div class="lm">' + money(l.monto) + '</div><div class="lb"><button type="button" class="btn btn-edit btn-sm" data-ed="' + esc(l.id) + '">Editar</button><button type="button" class="btn btn-ghost btn-sm" data-del="' + esc(l.id) + '"><span>Borrar</span></button></div></div>';
       }).join('') + '</div>';
   }).join('') + (grupos.length > regVer ? '<button type="button" class="btn btn-ghost" id="verMas" style="width:100%">Ver más (' + (grupos.length - regVer) + ')</button>' : '');
@@ -1476,6 +1552,7 @@ function renderCat() {
   pintarCobroChips();
 }
 function precioActualTxt(c) {
+  if (c.cobro === 'descuento') return 'Valor libre';
   if (c.ligado) return 'Según Parámetros';
   const p = precioVigente(c, HOY);
   if (p) return money(p.precio);
@@ -1485,7 +1562,9 @@ function itemCatHTML(c) {
   const vig = c.ligado ? null : precioVigente(c, HOY);
   const hist = (c.precios || []).slice().reverse();
   let h = '<details class="cat-i' + (c.activo ? '' : ' off') + '" data-id="' + esc(c.id) + '"' + (CAT_OPEN[c.id] ? ' open' : '') + '><summary><span><span class="ci-n">' + esc(c.item) + '</span><br><span class="ci-s">' + esc(cobroDe(c.cobro).n) + (c.activo ? '' : ' · desactivado') + '</span></span><span class="ci-p">' + esc(precioActualTxt(c)) + '</span></summary><div class="ci-b">';
-  if (c.ligado) {
+  if (c.cobro === 'descuento') {
+    h += '<p class="small" style="margin-top:12px">Resta un valor a otro servicio. El valor y el servicio al que se aplica los eliges al registrar el cobro. No tiene precio fijo.</p>';
+  } else if (c.ligado) {
     h += '<p class="small" style="margin-top:12px">Este precio no se edita aquí: viene de Parámetros (' + esc(c.ligado) + '), según la fecha del check-in.</p>';
   } else {
     h += '<h5>Historial de precios</h5>';
@@ -1529,7 +1608,7 @@ $('catLista').addEventListener('click', e => {
 });
 
 function pintarCobroChips() {
-  $('ncCobro').innerHTML = COBROS.map(c => '<button type="button" class="chip' + (c.v === ncCobro ? ' on' : '') + '" role="radio" aria-checked="' + (c.v === ncCobro) + '" data-cb="' + c.v + '"><span class="dot"></span><span>' + esc(c.n) + '<small>' + esc(c.d) + '</small></span></button>').join('');
+  $('ncCobro').innerHTML = COBROS.filter(c => c.v !== 'descuento').map(c => '<button type="button" class="chip' + (c.v === ncCobro ? ' on' : '') + '" role="radio" aria-checked="' + (c.v === ncCobro) + '" data-cb="' + c.v + '"><span class="dot"></span><span>' + esc(c.n) + '<small>' + esc(c.d) + '</small></span></button>').join('');
 }
 $('ncCobro').addEventListener('click', e => { const b = e.target.closest('[data-cb]'); if (!b) return; ncCobro = b.dataset.cb; pintarCobroChips(); });
 $('ncConcepto').addEventListener('change', () => { $('ncConceptoNuevoWrap').hidden = $('ncConcepto').value !== '__nuevo'; });
@@ -1566,10 +1645,11 @@ const SIM = { over: {} };   // key -> {p, a} (valores escritos a mano)
 function simDatos(anio) {
   const lin = DATA.lineas.filter(l => String(l.anio) === String(anio));
   const cods = {}; lin.forEach(l => { cods[l.codigo] = 1; });
+  const desc = lin.filter(esNegLinea).reduce((a, l) => a + l.monto, 0);   // descuentos y ajustes: restan y no se simulan
   const resAnio = RES_LIST.filter(r => (r.checkin || '').slice(0, 4) === String(anio) && r.estado !== 'Cancelada').length;
   const N = Math.max(resAnio, Object.keys(cods).length);
   const g = {};
-  lin.forEach(l => {
+  lin.filter(l => !esNegLinea(l)).forEach(l => {
     const k = l.concepto + '||' + l.item, x = g[k] = g[k] || { key: k, concepto: l.concepto, item: l.item, R0: 0, sumM: 0, cods: {} };
     x.R0 += l.monto; x.sumM += multLinea(l); x.cods[l.codigo] = 1;
   });
@@ -1578,7 +1658,7 @@ function simDatos(anio) {
     const it = DATA.catalogo.filter(c => c.concepto === x.concepto && c.item === x.item)[0];
     return { key: k, concepto: x.concepto, item: x.item, R0: x.R0, a0: a0, m: a0 ? x.sumM / a0 : 1, p0: x.sumM ? x.R0 / x.sumM : 0, ligado: it ? it.ligado : '', itemId: it ? it.id : '' };
   }).sort((a, b) => b.R0 - a.R0);
-  return { N: N, filas: filas, total: lin.reduce((a, l) => a + l.monto, 0), conAdic: Object.keys(cods).length };
+  return { N: N, filas: filas, desc: desc, total: lin.reduce((a, l) => a + l.monto, 0), conAdic: Object.keys(cods).length };
 }
 function simEsc(f, dP, dA, N) {
   const o = SIM.over[f.key] || {};
@@ -1620,14 +1700,14 @@ function pintarFilaSim(D, f, i) {
 }
 function simTotales(D) {
   const { dP, dA } = simGlobales();
-  let R1 = 0; D.filas.forEach(f => { R1 += simEsc(f, dP, dA, D.N).R1; });
+  let R1 = D.desc; D.filas.forEach(f => { R1 += simEsc(f, dP, dA, D.N).R1; });
   return R1;
 }
 function renderSimRes(D) {
   const R1 = simTotales(D), d = R1 - D.total, pct = D.total ? d / D.total * 100 : 0;
   $('simRes').innerHTML = '<div class="sr-k">Con estos cambios habrías cobrado</div><div class="sr-v">' + money(R1) + '</div>' +
     '<div class="sr-g"><div><div class="sr-k">Real</div><div class="sr-v" style="font-size:18px">' + money(D.total) + '</div></div><div><div class="sr-k">Diferencia</div><div class="sr-v" style="font-size:18px">' + (d >= 0 ? '+' : '') + money(d) + '</div></div><div><div class="sr-k">Variación</div><div class="sr-v" style="font-size:18px">' + (pct >= 0 ? '+' : '') + fnum(pct, 1) + '%</div></div></div>' +
-    '<div class="sr-d">' + (D.N ? 'Por reserva: <b>' + money(D.total / D.N) + '</b> → <b>' + money(R1 / D.N) + '</b>. ' : '') + 'Simulación sobre ' + simAnio + ': no cambia nada guardado.</div>';
+    '<div class="sr-d">' + (D.N ? 'Por reserva: <b>' + money(D.total / D.N) + '</b> → <b>' + money(R1 / D.N) + '</b>. ' : '') + (D.desc ? 'Incluye descuentos y ajustes por <b>' + money(D.desc) + '</b> (no se simulan). ' : '') + 'Simulación sobre ' + simAnio + ': no cambia nada guardado.</div>';
 }
 $('simAnios').addEventListener('click', e => { const b = e.target.closest('[data-sy]'); if (!b) return; simAnio = b.dataset.sy; SIM.over = {}; renderSim(); });
 ['simDP', 'simDA'].forEach(id => $(id).addEventListener('input', () => { if (simAnio === null) return; const D = simDatos(simAnio); renderSimLista(D); renderSimRes(D); }));
@@ -1651,10 +1731,48 @@ $('simLista').addEventListener('click', e => {
 });
 $('simReset').onclick = () => { $('simDP').value = 0; $('simDA').value = 0; SIM.over = {}; if (simAnio !== null) { const D = simDatos(simAnio); renderSimLista(D); renderSimRes(D); } };
 
+/* ================= RESOLUCIONES DEL CSV SIN REGISTRAR ================= */
+// Por reserva: lo que dice el CSV (pagos menos ajustes de resolución) frente a lo registrado aquí con medio CENTRO DE RESOLUCIONES.
+function resolFaltantes() {
+  if (!Array.isArray(RESOL)) return null;
+  const g = {};
+  RESOL.forEach(r => { const x = g[r.codigo_confirmacion] = g[r.codigo_confirmacion] || { codigo: r.codigo_confirmacion, huesped: r.huesped, anuncio: r.anuncio, ini: r.fecha_inicio, fin: r.fecha_finalizacion, csv: 0, lineas: [] }; x.csv += r.monto; x.lineas.push(r); });
+  const out = [];
+  Object.keys(g).forEach(c => {
+    const reg = DATA.lineas.filter(l => l.codigo === c && l.medio === 'CENTRO DE RESOLUCIONES').reduce((a, l) => a + l.monto, 0);
+    const falta = Math.round((g[c].csv - reg) * 100) / 100;
+    if (falta > 0.005) out.push(Object.assign({ reg: Math.round(reg * 100) / 100, falta: falta }, g[c]));
+  });
+  return out.sort((a, b) => (b.lineas[b.lineas.length - 1].fecha || '').localeCompare(a.lineas[a.lineas.length - 1].fecha || ''));
+}
+function renderResol() {
+  const box = $('resolAlerta'), nota = $('resolNota'); if (!box) return;
+  const f = resolFaltantes();
+  nota.hidden = !(f === null && RESERVAS.length);
+  if (f === null) { box.hidden = true; return; }
+  box.hidden = !f.length; if (!f.length) return;
+  const tot = f.reduce((a, x) => a + x.falta, 0);
+  $('resolT').textContent = f.length === 1 ? 'Falta registrar 1 resolución del CSV' : 'Faltan registrar ' + f.length + ' resoluciones del CSV';
+  $('resolS').textContent = 'Suma pendiente: ' + money(tot) + '. Airbnb ya te las pagó; falta anotarlas aquí.';
+  $('resolL').innerHTML = f.map(x => '<li class="rl-row"><div class="rl-t"><b>' + esc(x.huesped || 'Sin nombre') + '</b><span>' + esc(x.codigo) + ' · ' + esc(fechaCorta((x.lineas[x.lineas.length - 1] || {}).fecha || '')) + '</span>' +
+    '<span>CSV ' + money(x.csv) + ' · registrado ' + money(x.reg) + ' · <b>falta ' + money(x.falta) + '</b></span></div><button type="button" class="btn btn-acc btn-sm" data-rr="' + esc(x.codigo) + '">Registrar</button></li>').join('');
+}
+$('resolL').addEventListener('click', e => {
+  const b = e.target.closest('[data-rr]'); if (!b) return;
+  const f = (resolFaltantes() || []).filter(x => x.codigo === b.dataset.rr)[0]; if (!f) return;
+  if (editId) resetForm();
+  const base = RES_POR_COD[f.codigo] || { codigo: f.codigo, huesped: f.huesped, anuncio: mapearAnuncio(f.anuncio), checkin: f.ini, checkout: f.fin, noches: difDias(f.ini, f.fin), origen: 'Airbnb' };
+  irTab('reg', true);
+  elegirReserva(base);
+  if (LN[0]) { LN[0].medio = 'CENTRO DE RESOLUCIONES'; renderLineas(); }
+  msg('Falta registrar ' + money(f.falta) + ' de la resolución de ' + (f.huesped || f.codigo) + '. Elige el servicio y guarda.', '');
+  $('resCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
 /* ================= TODO ================= */
 function renderTodo() {
   construirReservas();
-  renderAlertas(); renderLista(); renderCat();
+  renderAlertas(); renderResol(); renderLista(); renderCat();
   if (RES) pintarResSel();
   if (!$('p-sim').hidden) renderSim();
 }
