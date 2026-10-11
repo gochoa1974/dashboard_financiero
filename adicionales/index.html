@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
+<meta name="app-version" content="adicionales v7 · 8 rubros fijos, descuento/cortesía integrado, techo semanal">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -340,6 +341,21 @@ details.cat-i.off{opacity:.65}
 .rl-t b{display:block;font-size:14px;overflow-wrap:anywhere}
 .rl-t span{display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin-top:2px;overflow-wrap:anywhere}
 
+/* ===== v7: descuento / cortesía, techo semanal, avisos ===== */
+input[type=checkbox]{width:22px;height:22px;min-height:0;padding:0;flex:none;accent-color:var(--accent)}
+.dsc{border-top:1px dashed var(--line);margin:2px 0 12px;padding-top:12px}
+.dsc .seg{grid-template-columns:1fr 1fr}
+.dsc-f{margin-top:12px}
+.cort{display:flex;align-items:center;gap:10px;min-height:48px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer;font-size:14px;font-weight:700}
+.cort:has(input:checked){border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.aviso{border:1px solid var(--line);background:var(--info-bg);border-radius:12px;padding:10px 12px;font-size:12.5px;font-weight:700;line-height:1.5;margin:0 0 12px;color:var(--ink)}
+.aviso.on{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.desg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;font-weight:700;color:var(--mut);margin:-4px 0 12px;font-variant-numeric:tabular-nums}
+.desg b{color:var(--ink)}
+.desg.bad{color:var(--bad)}
+.cat-sep{margin:20px 4px 8px;font-size:12px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.chk{margin:8px 0 0;font-weight:700;line-height:1.45}
+@media (max-width:420px){.dsc .seg{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -775,19 +791,6 @@ details.cat-i.off{opacity:.65}
   window.RangoFechas = { montar, _estado: () => st, _abrir: abrir, _cerrar: cerrar };
 })();
 
-function mapA(t){t=(t||'').toLowerCase();if(t.indexOf('playa')!==-1||t.indexOf('8 pax')!==-1||t.indexOf('8 huésp')!==-1)return 'LST-02_8 pax';if(t.indexOf('miami')!==-1||t.indexOf('4 pax')!==-1||t.indexOf('4 huésp')!==-1)return 'LST-03_4 pax';if(t.indexOf('cima')!==-1||t.indexOf('6 pax')!==-1||t.indexOf('6 huésp')!==-1)return 'LST-01_6 pax';return null;}function libres(){var s={};try{var d=JSON.parse(localStorage.getItem('cimablanca_canc_data')||'null');((d&&d.cancelaciones)||[]).forEach(function(c){if(c.codigo&&Number(c.nochesCuentan)===0&&Number(c.nochesLiberadas)>0)s[c.codigo]=1;});}catch(e){}return s;}
-function ocupDirectas(){
-  var out=[],a=(typeof anuncio!=='undefined')?anuncio:'',lib=libres();
-  (typeof RESERVAS!=='undefined'?RESERVAS:[]).forEach(function(r){
-    if(r.anuncio!==a||(typeof editCodigo!=='undefined'&&editCodigo&&r.codigo===editCodigo)||lib[r.codigo])return;
-    (r.tramos||[]).forEach(function(t){if(t.checkin&&t.checkout)out.push({ini:t.checkin,fin:t.checkout,etq:'Directa '+r.codigo.replace('Reserva_Directa_','#')+' · '+(r.huesped||'')});});});
-  try{var b=JSON.parse(localStorage.getItem('cimablanca_canc_data')||'null');((b&&b.bloqueos)||[]).forEach(function(x){
-    if(x.fechaInicio&&x.fechaFin&&(x.anuncio==='Todos'||x.anuncio===a))out.push({ini:x.fechaInicio,fin:x.fechaFin,etq:'Bloqueo ('+(x.motivo||'sin motivo')+')'});});}catch(e){}
-  try{var c=JSON.parse(localStorage.getItem('cimablanca_canc_reservas_cache')||'null');((c&&c.reservas)||[]).forEach(function(r){
-    if(r.origen==='Reserva directa'||!r.fecha_inicio||!r.fecha_finalizacion||mapA(r.anuncio)!==a||lib[r.codigo_confirmacion])return;
-    out.push({ini:r.fecha_inicio,fin:r.fecha_finalizacion,etq:'Airbnb '+(r.codigo_confirmacion||'')+' · '+(r.huesped||'')});});}catch(e){}
-  return out;}
-RangoFechas.montar({ ci: document.getElementById('ci'), co: document.getElementById('co'), titulo: 'Fechas de la estadía', ocupadas: ocupDirectas });
 </script>
 <script>
 // ===== URL de tu implementación de Apps Script de INGRESOS ADICIONALES (termina en /exec) =====
@@ -1117,29 +1120,63 @@ let guardando = false;
 let manualAn = ANUNCIOS[1].v;
 
 function nuevaLinea(extra) {
-  return Object.assign({ k: ++lnSeq, itemId: '', cant: 1, ini: '', fin: '', precio: '', precioTocado: false, valor: '', aplica: '', medio: 'TRANSFERENCIA', anio: '', anioTocado: false, coment: '', id: null, firma: '', origen: '', cargando: false }, extra || {});
+  return Object.assign({ k: ++lnSeq, itemId: '', cant: 1, ini: '', fin: '', precio: '', precioTocado: false, valor: '', aplica: '', medio: 'TRANSFERENCIA', anio: '', anioTocado: false, coment: '', id: null, firma: '', origen: '', cargando: false, conDesc: false, pct: '', fijo: '', cortesia: false }, extra || {});
 }
 function inicioDe(L) {
   const it = catItem(L.itemId); if (!it || !RES) return '';
   return (it.cobro === 'unidad' || esDesc(it)) ? RES.checkin : (L.ini || '');
 }
 function nochesDe(L) { return (L.ini && L.fin && L.fin > L.ini) ? difDias(L.ini, L.fin) : 0; }
-function montoDe(L) {
-  const it = catItem(L.itemId); if (!it) return 0;
-  if (esDesc(it)) { const v = numIn(L.valor); return v > 0 ? -Math.round(v * 100) / 100 : 0; }
-  const p = numIn(L.precio); if (!(p > 0)) return 0;
+/* v7: reglas del catálogo y cálculo de la línea (el servidor siempre lo recalcula) */
+function sinDesc(it) { return !!it && (esDesc(it) || (it.reglas || []).indexOf('sin_descuento') >= 0); }
+function exigeNota(it) { return !!it && (it.reglas || []).indexOf('nota') >= 0; }
+function costoNoches(n, d, w) { return Math.floor(n / 7) * Math.min(7 * d, w) + Math.min((n % 7) * d, w); }
+function techoInfo(it, f) {
+  if (!it || !it.techo || it.cobro !== 'unidad_noche') return null;
+  const sem = catItem(it.techo), pv = (sem && f) ? precioVigente(sem, f) : null;
+  return pv ? { w: pv.precio, nombre: sem.item } : null;
+}
+function calcLinea(L) {
+  const o = { subtotal: 0, bruto: 0, techo: null, descuento: 0, exceso: false, neto: 0, cortesia: false };
+  const it = catItem(L.itemId); if (!it) return o;
+  if (esDesc(it)) { const v = numIn(L.valor); o.neto = v > 0 ? -Math.round(v * 100) / 100 : 0; o.subtotal = o.neto; return o; }
+  const p = numIn(L.precio); if (!(p > 0)) return o;
   const c = usaCant(it) ? (Math.round(Number(L.cant)) || 0) : 1;
   const n = usaFechas(it) ? nochesDe(L) : 1;
-  return Math.round(multDe(it.cobro, c, n) * p * 100) / 100;
+  let sub = Math.round(multDe(it.cobro, c, n) * p * 100) / 100; o.bruto = sub;
+  const ti = techoInfo(it, inicioDe(L));
+  if (ti && n > 0 && c > 0) {
+    const ct = Math.round(c * costoNoches(n, p, ti.w) * 100) / 100;
+    o.techo = { w: ti.w, nombre: ti.nombre, aplicado: ct < sub - 0.005 };
+    if (o.techo.aplicado) sub = ct;
+  }
+  o.subtotal = sub;
+  if (L.conDesc && !sinDesc(it)) {
+    if (L.cortesia) { o.cortesia = true; o.descuento = sub; }
+    else { const pc = numIn(L.pct) || 0, fj = numIn(L.fijo) || 0; o.descuento = Math.round((sub * pc / 100 + fj) * 100) / 100; }
+  }
+  o.exceso = o.descuento > o.subtotal + 0.005;
+  o.neto = Math.round((o.subtotal - o.descuento) * 100) / 100;
+  return o;
+}
+function montoDe(L) { return calcLinea(L).neto; }
+function dscPayload(L, it) {
+  if (!L.conDesc || sinDesc(it)) return undefined;
+  if (L.cortesia) return { cortesia: true };
+  const o = {}; if (numIn(L.pct) > 0) o.pct = numIn(L.pct); if (numIn(L.fijo) > 0) o.fijo = numIn(L.fijo);
+  return o;
 }
 function formulaDe(L) {
   const it = catItem(L.itemId); if (!it) return '';
   if (esDesc(it)) return 'Resta' + (L.aplica ? ' de «' + L.aplica + '»' : '');
   const p = numIn(L.precio); const ps = p > 0 ? money(p) : '$—';
   const n = nochesDe(L), c = Math.round(Number(L.cant)) || 0;
-  if (it.cobro === 'noche') return n + (n === 1 ? ' noche' : ' noches') + ' × ' + ps;
-  if (it.cobro === 'unidad_noche') return c + ' × ' + n + (n === 1 ? ' noche' : ' noches') + ' × ' + ps;
-  return c + ' × ' + ps;
+  let base;
+  if (it.cobro === 'noche') base = n + (n === 1 ? ' noche' : ' noches') + ' × ' + ps;
+  else if (it.cobro === 'unidad_noche') base = c + ' × ' + n + (n === 1 ? ' noche' : ' noches') + ' × ' + ps;
+  else base = c + ' × ' + ps;
+  const t = calcLinea(L).techo;
+  return t && t.aplicado ? base + ' · techo semanal' : base;
 }
 async function sugerirPrecio(L) {
   const it = catItem(L.itemId); if (!it || L.precioTocado || esDesc(it)) return;
@@ -1152,27 +1189,26 @@ async function sugerirPrecio(L) {
     actualizarLinea(L, true); return;
   }
   const p = precioVigente(it, f);
-  L.precio = p ? String(p.precio) : ''; L.origen = p ? 'Catálogo' : 'Manual';
+  if (p) { L.precio = String(p.precio); L.origen = 'Catálogo'; }
+  else if (it.sugerido != null) { L.precio = String(it.sugerido); L.origen = 'Sugerido'; }
+  else { L.precio = ''; L.origen = 'Manual'; }
   actualizarLinea(L, true);
 }
+function ordO(c) { return c.orden == null ? 99999 : c.orden; }
 function itemsPorConcepto(activosSolo, incluirId) {
   const g = {};
   DATA.catalogo.forEach(c => { if (activosSolo && !c.activo && c.id !== incluirId) return; (g[c.concepto] = g[c.concepto] || []).push(c); });
-  return Object.keys(g).sort((a, b) => a.localeCompare(b, 'es')).map(k => ({ concepto: k, items: g[k].sort((a, b) => a.item.localeCompare(b.item, 'es')) }));
+  return Object.keys(g).map(k => ({ concepto: k, items: g[k].sort((a, b) => ordO(a) - ordO(b) || a.item.localeCompare(b.item, 'es')) }))
+    .sort((a, b) => ordO(a.items[0]) - ordO(b.items[0]) || a.concepto.localeCompare(b.concepto, 'es'));
 }
-function usoDeItems() {
-  const u = {};
-  DATA.lineas.forEach(l => { const k = (l.origen === 'Descuento' || l.origen === 'Ajuste' ? '' : l.concepto) + '|' + l.item; u[k] = (u[k] || 0) + 1; });
-  return c => u[(esDesc(c) ? '' : c.concepto) + '|' + c.item] || 0;
-}
-/* Desplegable de servicios: de mayor a menor uso (rubros e ítems); empates en orden alfabético. */
-function itemsPorUso(sel) {
-  const uso = usoDeItems(), gs = itemsPorConcepto(true, sel);
-  gs.forEach(g => { g.items.sort((a, b) => uso(b) - uso(a) || a.item.localeCompare(b.item, 'es')); g.n = g.items.reduce((s, c) => s + uso(c), 0); });
-  return gs.sort((a, b) => b.n - a.n || a.concepto.localeCompare(b.concepto, 'es'));
+
+/* Desplegable «Servicio o producto» (v7): rubros e ítems en el orden fijo del catálogo. Los ítems ligados a Parámetros (no-show) no salen aquí. */
+function esTecho(id) { return (DATA.catalogo || []).some(c => c.activo && c.techo === id); }
+function itemsPorRubro(sel) {
+  return itemsPorConcepto(true, sel).map(g => ({ concepto: g.concepto, items: g.items.filter(c => c.id === sel || (!c.ligado && !esTecho(c.id))) })).filter(g => g.items.length);
 }
 function optsItems(sel) {
-  return '<option value="">Elige un servicio o producto…</option>' + itemsPorUso(sel).map(g =>
+  return '<option value="">Elige un servicio o producto…</option>' + itemsPorRubro(sel).map(g =>
     '<optgroup label="' + esc(g.concepto) + '">' + g.items.map(c => '<option value="' + esc(c.id) + '"' + (c.id === sel ? ' selected' : '') + '>' + esc(c.item) + (c.activo ? '' : ' (desactivado)') + '</option>').join('') + '</optgroup>').join('');
 }
 function badgeDe(L) {
@@ -1181,7 +1217,10 @@ function badgeDe(L) {
   const p = numIn(L.precio);
   if (it.ligado) return '<span class="pbadge cat">Según Parámetros</span>';
   const pv = precioVigente(it, inicioDe(L));
-  if (!pv) return '<span class="pbadge man">Precio libre</span>';
+  if (!pv) {
+    if (it.sugerido != null && p > 0) return Math.abs(it.sugerido - p) < 0.005 ? '<span class="pbadge">Sugerido</span>' : '<span class="pbadge man">Precio manual</span>';
+    return '<span class="pbadge man">Precio libre</span>';
+  }
   if (!(p > 0)) return '';
   return Math.abs(pv.precio - p) < 0.005 ? '<span class="pbadge cat">Catálogo</span>' : '<span class="pbadge man">Precio manual</span>';
 }
@@ -1189,19 +1228,18 @@ function hintPrecio(L) {
   const it = catItem(L.itemId); if (!it || esDesc(it)) return '';
   if (it.ligado) return 'Costo de limpieza vigente en Parámetros para esa fecha (regla del no-show).';
   const pv = precioVigente(it, inicioDe(L));
-  if (!pv) return 'Este servicio no tiene precio fijo: escríbelo cada vez.';
+  if (!pv) return it.sugerido != null ? 'Sugerido ' + money(it.sugerido) + ' (editable). Escribe el precio de ese día.' : 'Este servicio no tiene precio fijo: escríbelo cada vez.';
   return 'Catálogo: ' + money(pv.precio) + ' (rige desde ' + fechaBonita(pv.desde) + ').';
 }
 function conceptosAplica(L) {
   const enRes = {}; DATA.lineas.forEach(l => { if (RES && l.codigo === RES.codigo && l.monto > 0 && !esNegLinea(l) && l.id !== editId) enRes[l.concepto] = 1; });
   LN.forEach(x => { const c = catItem(x.itemId); if (c && !esDesc(c)) enRes[c.concepto] = 1; });
-  const todos = {}; DATA.catalogo.forEach(c => { if (!esDesc(c)) todos[c.concepto] = 1; });
+  const todos = {}; DATA.catalogo.forEach(c => { if (!esDesc(c) && (c.activo || enRes[c.concepto])) todos[c.concepto] = 1; });
   const a = Object.keys(enRes).sort((x, y) => x.localeCompare(y, 'es')), b = Object.keys(todos).filter(c => !enRes[c]).sort((x, y) => x.localeCompare(y, 'es'));
   return { a: a, b: b };
 }
 function defaultAplica(L) {
-  const it = catItem(L.itemId), c = conceptosAplica(L);
-  if (it && it.item === ITEM_AJUSTE) return DATA.catalogo.some(x => x.concepto === CONCEPTO_AJUSTE) ? CONCEPTO_AJUSTE : (c.a[0] || '');
+  const c = conceptosAplica(L);
   return c.a[0] || '';
 }
 function descHTML(L, it, k) {
@@ -1218,12 +1256,28 @@ function descHTML(L, it, k) {
     '<div class="field"><label for="cm' + k + '">Comentario (opcional)</label><textarea id="cm' + k + '" data-f="coment" maxlength="300" placeholder="Ej. acuerdo al final de la estadía">' + esc(L.coment) + '</textarea></div></details>';
   return h;
 }
+function medioHTML(L, k) {
+  return '<div class="field"><span class="lbl" id="md' + k + '">Medio de cobro</span><div class="seg" role="radiogroup" aria-labelledby="md' + k + '">' +
+    MEDIOS.map(m => '<button type="button" class="chip' + (m.v === L.medio ? ' on' : '') + '" role="radio" aria-checked="' + (m.v === L.medio) + '" data-md="' + esc(m.v) + '" data-k="' + k + '">' + esc(m.n) + '</button>').join('') + '</div></div>';
+}
+function dscHTML(L, k) {
+  const on = !!L.conDesc;
+  let h = '<div class="dsc"><span class="lbl" id="ds' + k + '">Descuento o cortesía</span><div class="seg" role="radiogroup" aria-labelledby="ds' + k + '">' +
+    '<button type="button" class="chip' + (!on ? ' on' : '') + '" role="radio" aria-checked="' + (!on) + '" data-dsc="0" data-k="' + k + '">Sin descuento</button>' +
+    '<button type="button" class="chip' + (on ? ' on' : '') + '" role="radio" aria-checked="' + on + '" data-dsc="1" data-k="' + k + '">Con descuento o cortesía</button></div>';
+  if (on) {
+    h += '<div class="dsc-f"><label class="cort" for="cx' + k + '"><input type="checkbox" id="cx' + k + '" data-f="cortesia"' + (L.cortesia ? ' checked' : '') + '><span>Cortesía: se cobra $0,00</span></label></div>';
+    if (!L.cortesia) h += '<div class="row2 dsc-f"><div class="field"><label for="dpc' + k + '">Descuento (%)</label><input type="number" inputmode="decimal" id="dpc' + k + '" data-f="pct" min="0" max="100" step="0.01" placeholder="0" value="' + esc(L.pct) + '"></div>' +
+      '<div class="field"><label for="dmt' + k + '">Descuento ($)</label><input type="number" inputmode="decimal" id="dmt' + k + '" data-f="fijo" min="0" step="0.01" placeholder="0,00" value="' + esc(L.fijo) + '"></div></div>';
+  }
+  return h + '</div>';
+}
 function lineaHTML(L, i) {
   const it = catItem(L.itemId), k = L.k;
   let h = '<div class="ln" data-k="' + k + '"><div class="ln-h"><span>' + (editId ? 'Editando ' + esc(editId) : 'Servicio ' + (i + 1)) + '</span>' +
     (LN.length > 1 && !editId ? '<button type="button" class="link bad" data-rm="' + k + '" style="padding:0;min-height:44px">Quitar</button>' : '') + '</div>';
   h += '<div class="field"><label for="it' + k + '">Servicio o producto</label><select id="it' + k + '" data-f="item">' + optsItems(L.itemId) + '</select>' +
-    (it ? '<div class="small">' + esc(cobroDe(it.cobro).n) + ': ' + esc(cobroDe(it.cobro).d) + '</div>' : '') + '</div>';
+    (it ? '<div class="small">' + esc(cobroDe(it.cobro).n) + ': ' + esc(cobroDe(it.cobro).d) + (it.nota && !it.techo ? ' ' + esc(it.nota) + '.' : '') + '</div>' : '') + '</div>';
   if (it && esDesc(it)) { return h + descHTML(L, it, k) + '</div>'; }
   if (it) {
     if (usaCant(it)) {
@@ -1234,18 +1288,22 @@ function lineaHTML(L, i) {
       h += '<div class="field" style="margin-bottom:6px"><span class="lbl">' + (it.cobro === 'noche' ? 'Noches que se cobran' : 'Fechas del servicio') + '</span><div class="row2">' +
         '<div class="field"><label for="di' + k + '">Desde</label><input type="date" id="di' + k + '" data-f="ini" value="' + esc(L.ini) + '"></div>' +
         '<div class="field"><label for="df' + k + '">Hasta</label><input type="date" id="df' + k + '" data-f="fin" value="' + esc(L.fin) + '"></div></div>' +
-        '<div class="small" data-nn="' + k + '"></div></div>';
+        '<div class="small" data-nn="' + k + '"></div>' + (it.cobro === 'noche' ? '<div class="chk" role="status" data-ch="' + k + '" hidden></div>' : '') + '</div>';
     }
     h += '<div class="field"><label for="pr' + k + '">Precio ($) <span data-bd="' + k + '">' + badgeDe(L) + '</span></label>' +
       '<input type="number" inputmode="decimal" id="pr' + k + '" data-f="precio" min="0" step="0.01" placeholder="0,00" value="' + esc(L.precio) + '">' +
       '<div class="small" data-ph="' + k + '"></div>' +
       '<button type="button" class="link" data-reset="' + k + '" data-rs="' + k + '" hidden>Usar el precio del catálogo</button></div>';
+    h += '<div class="aviso" role="status" data-tp="' + k + '" hidden></div>';
+    if (exigeNota(it)) h += '<div class="field"><label for="cm' + k + '">Nota explicativa <span class="pbadge man">Obligatoria</span></label><textarea id="cm' + k + '" data-f="coment" maxlength="300" placeholder="Ej. se rompió un cuadro · se perdió un tenedor">' + esc(L.coment) + '</textarea><div class="small">Queda guardada en el cobro para poder rastrearlo.</div></div>';
+    if (!sinDesc(it)) h += dscHTML(L, k);
+    else h += '<div class="small" style="margin:0 0 12px">Este rubro no lleva descuento ni cortesía.</div>';
     h += '<div class="monto" aria-live="polite"><span class="mf" data-mf="' + k + '"></span><span class="mv" data-mv="' + k + '">$0,00</span></div>';
-    h += '<div class="field"><span class="lbl" id="md' + k + '">Medio de cobro</span><div class="seg" role="radiogroup" aria-labelledby="md' + k + '">' +
-      MEDIOS.map(m => '<button type="button" class="chip' + (m.v === L.medio ? ' on' : '') + '" role="radio" aria-checked="' + (m.v === L.medio) + '" data-md="' + esc(m.v) + '" data-k="' + k + '">' + esc(m.n) + '</button>').join('') + '</div></div>';
+    h += '<div class="desg" data-dg="' + k + '" hidden></div>';
+    h += medioHTML(L, k);
     h += '<details class="mas"><summary class="link" style="list-style:none;display:flex;align-items:center">Más opciones</summary>' +
       '<div class="field"><label for="an' + k + '">Año de ingreso</label><select id="an' + k + '" data-f="anio">' + anioOpts(L) + '</select><div class="small">Por defecto, el año en que empieza el servicio.</div></div>' +
-      '<div class="field"><label for="cm' + k + '">Comentario (opcional)</label><textarea id="cm' + k + '" data-f="coment" maxlength="300" placeholder="Ej. pagó al llegar">' + esc(L.coment) + '</textarea></div></details>';
+      (exigeNota(it) ? '' : '<div class="field"><label for="cm' + k + '">Comentario (opcional)</label><textarea id="cm' + k + '" data-f="coment" maxlength="300" placeholder="Ej. pagó al llegar">' + esc(L.coment) + '</textarea></div>') + '</details>';
   }
   return h + '</div>';
 }
@@ -1259,7 +1317,7 @@ function renderLineas() {
   $('lineas').innerHTML = LN.map(lineaHTML).join('');
   LN.forEach(L => {
     const it = catItem(L.itemId);
-    if (it && usaFechas(it)) { const a = $('di' + L.k), b = $('df' + L.k); if (a && b && window.RangoFechas) RangoFechas.montar({ ci: a, co: b, titulo: 'Fechas del servicio' }); }
+    if (it && usaFechas(it)) { const a = $('di' + L.k), b = $('df' + L.k); if (a && b && window.RangoFechas) RangoFechas.montar({ ci: a, co: b, titulo: it.cobro === 'noche' ? 'Noches extra' : 'Fechas del servicio', ocupadas: it.cobro === 'noche' ? ocupadasPara : null }); }
     actualizarLinea(L);
   });
   $('lnAdd').hidden = !!editId;
@@ -1267,6 +1325,39 @@ function renderLineas() {
   $('cancelar').hidden = !editId;
   $('guardar').textContent = editId ? 'Guardar cambios' : 'Guardar';
   actualizarResumen();
+}
+function libresCanc() {
+  const s = {};
+  try { const d = JSON.parse(localStorage.getItem('cimablanca_canc_data') || 'null'); ((d && d.cancelaciones) || []).forEach(c => { if (c.codigo && Number(c.nochesCuentan) === 0 && Number(c.nochesLiberadas) > 0) s[c.codigo] = 1; }); } catch (e) {}
+  return s;
+}
+/* Noches ocupadas del anuncio de la reserva elegida: reservas directas, reservas de Airbnb y bloqueos (Cancelaciones). Excluye la propia reserva y las noches ya liberadas. */
+function ocupadasPara() {
+  const out = []; if (!RES || !RES.anuncio) return out;
+  const a = RES.anuncio, lib = libresCanc();
+  DIRECTAS.forEach(r => {
+    if (r.anuncio !== a || r.codigo === RES.codigo || lib[r.codigo]) return;
+    (r.tramos || []).forEach(t => { if (t.checkin && t.checkout) out.push({ ini: t.checkin, fin: t.checkout, etq: 'Directa ' + String(r.codigo).replace('Reserva_Directa_', '#') + ' · ' + (r.huesped || '') }); });
+  });
+  try { const b = JSON.parse(localStorage.getItem('cimablanca_canc_data') || 'null'); ((b && b.bloqueos) || []).forEach(x => { if (x.fechaInicio && x.fechaFin && (x.anuncio === 'Todos' || x.anuncio === a)) out.push({ ini: x.fechaInicio, fin: x.fechaFin, etq: 'Bloqueo (' + (x.motivo || 'sin motivo') + ')' }); }); } catch (e) {}
+  RESERVAS.forEach(r => {
+    if (r.origen === 'Reserva directa' || !r.fecha_inicio || !r.fecha_finalizacion || mapearAnuncio(r.anuncio) !== a || r.codigo_confirmacion === RES.codigo || lib[r.codigo_confirmacion]) return;
+    out.push({ ini: r.fecha_inicio, fin: r.fecha_finalizacion, etq: 'Airbnb ' + (r.codigo_confirmacion || '') + ' · ' + (r.huesped || '') });
+  });
+  return out;
+}
+function choqueDe(L) {
+  if (!L.ini || !L.fin || L.fin <= L.ini) return null;
+  return ocupadasPara().filter(o => o.fin > o.ini && o.ini < L.fin && L.ini < o.fin)[0] || null;
+}
+function pintarChoque(L, el) {
+  const it = catItem(L.itemId);
+  if (!it || it.cobro !== 'noche' || !L.ini || !L.fin || L.fin <= L.ini) { el.hidden = true; return; }
+  el.hidden = false;
+  if (!(RESERVAS.length || DIRECTAS.length)) { el.className = 'chk'; el.textContent = 'Todavía no hay reservas cargadas para revisar choques.'; return; }
+  const ch = choqueDe(L);
+  if (ch) { el.className = 'chk bad'; el.textContent = 'Estas noches chocan con ' + ch.etq + ' (' + fechaCorta(ch.ini) + ' → ' + fechaCorta(ch.fin) + '). Revisa las fechas antes de guardar.'; }
+  else { el.className = 'chk ok'; el.textContent = 'Sin choques con las reservas y bloqueos cargados.'; }
 }
 function actualizarLinea(L, tocarCampo) {
   const k = L.k, it = catItem(L.itemId);
@@ -1283,9 +1374,25 @@ function actualizarLinea(L, tocarCampo) {
   if (nn) { const n = nochesDe(L); nn.textContent = n ? n + (n === 1 ? ' noche' : ' noches') : 'Elige las fechas.'; }
   const pv = !it.ligado ? precioVigente(it, inicioDe(L)) : null, p = numIn(L.precio);
   const rs = document.querySelector('[data-rs="' + k + '"]'); if (rs) rs.hidden = !(pv && p > 0 && Math.abs(pv.precio - p) >= 0.005);
-  const m = montoDe(L);
-  const mv = document.querySelector('[data-mv="' + k + '"]'); if (mv) mv.textContent = money(m);
+  const cl = calcLinea(L);
+  const mv = document.querySelector('[data-mv="' + k + '"]'); if (mv) mv.textContent = money(cl.neto);
   const mf = document.querySelector('[data-mf="' + k + '"]'); if (mf) mf.textContent = formulaDe(L);
+  const dg = document.querySelector('[data-dg="' + k + '"]');
+  if (dg) {
+    if (cl.exceso) { dg.hidden = false; dg.className = 'desg bad'; dg.textContent = 'El descuento supera el subtotal (' + money(cl.subtotal) + ').'; }
+    else if (cl.descuento > 0) { dg.hidden = false; dg.className = 'desg'; dg.innerHTML = 'Subtotal <b>' + money(cl.subtotal) + '</b> · Descuento <b>−' + money(cl.descuento) + '</b>' + (cl.cortesia ? ' · cortesía' : ''); }
+    else dg.hidden = true;
+  }
+  const tp = document.querySelector('[data-tp="' + k + '"]');
+  if (tp) {
+    if (!cl.techo) tp.hidden = true;
+    else {
+      tp.hidden = false;
+      if (cl.techo.aplicado) { tp.className = 'aviso on'; tp.textContent = 'Techo semanal aplicado: noches × tarifa daba ' + money(cl.bruto) + ' y se cobra ' + money(cl.subtotal) + '.'; }
+      else { tp.className = 'aviso'; tp.textContent = 'Techo semanal: ' + money(cl.techo.w) + '. Se aplica solo cuando noches × tarifa lo supere.'; }
+    }
+  }
+  const ch = document.querySelector('[data-ch="' + k + '"]'); if (ch) pintarChoque(L, ch);
   actualizarResumen();
 }
 function actualizarResumen() {
@@ -1316,6 +1423,7 @@ $('lineas').addEventListener('change', e => {
     const aEl = $('an' + L.k); if (aEl && !L.anioTocado) aEl.innerHTML = anioOpts(L);
   } else if (f === 'anio') { L.anio = t.value; L.anioTocado = true; }
   else if (f === 'aplica') { L.aplica = t.value; actualizarLinea(L); }
+  else if (f === 'cortesia') { L.cortesia = t.checked; if (L.cortesia) { L.pct = ''; L.fijo = ''; } renderLineas(); }
 });
 $('lineas').addEventListener('input', e => {
   const t = e.target, card = t.closest('.ln'); if (!card) return;
@@ -1323,6 +1431,8 @@ $('lineas').addEventListener('input', e => {
   if (f === 'cant') { L.cant = t.value; actualizarLinea(L); }
   else if (f === 'precio') { L.precio = t.value; L.precioTocado = true; actualizarLinea(L); }
   else if (f === 'valor') { L.valor = t.value; actualizarLinea(L); }
+  else if (f === 'pct') { L.pct = t.value; actualizarLinea(L); }
+  else if (f === 'fijo') { L.fijo = t.value; actualizarLinea(L); }
   else if (f === 'coment') L.coment = t.value;
   else if (f === 'ini' || f === 'fin') { L[f] = t.value; actualizarLinea(L); }
   t.classList.remove('bad');
@@ -1330,6 +1440,8 @@ $('lineas').addEventListener('input', e => {
 $('lineas').addEventListener('click', e => {
   const st = e.target.closest('[data-st]');
   if (st) { const L = lineaPorK(st.dataset.k); if (!L) return; L.cant = Math.max(1, Math.min(99, (Math.round(Number(L.cant)) || 1) + Number(st.dataset.st))); $('ct' + L.k).value = L.cant; actualizarLinea(L); return; }
+  const dc = e.target.closest('[data-dsc]');
+  if (dc) { const L = lineaPorK(dc.dataset.k); if (!L) return; L.conDesc = dc.dataset.dsc === '1'; if (!L.conDesc) { L.cortesia = false; L.pct = ''; L.fijo = ''; } renderLineas(); const f0 = L.conDesc ? ($('dpc' + L.k) || $('cx' + L.k)) : null; if (f0) f0.focus(); return; }
   const md = e.target.closest('[data-md]');
   if (md) { const L = lineaPorK(md.dataset.k); L.medio = md.dataset.md; md.parentNode.querySelectorAll('.chip').forEach(c => { const on = c === md; c.classList.toggle('on', on); c.setAttribute('aria-checked', on); }); return; }
   const rm = e.target.closest('[data-rm]');
@@ -1420,6 +1532,14 @@ function validarForm() {
     if (usaCant(it) && !(Math.round(Number(L.cant)) >= 1)) { $('ct' + L.k).classList.add('bad'); return 'La cantidad debe ser 1 o más' + n + '.'; }
     if (usaFechas(it) && !(L.ini && L.fin && L.fin > L.ini)) { const b = $('df' + L.k); if (b) b.classList.add('bad'); return 'Elige las fechas del servicio (la salida después de la entrada)' + n + '.'; }
     if (!(numIn(L.precio) > 0)) { $('pr' + L.k).classList.add('bad'); $('pr' + L.k).focus(); return 'Escribe el precio' + n + '.'; }
+    if (it.techo && it.cobro === 'unidad_noche' && !techoInfo(it, inicioDe(L))) return 'No hay tarifa semanal vigente para «' + it.item + '». Revísala en Catálogo' + n + '.';
+    if (L.conDesc && !sinDesc(it) && !L.cortesia) {
+      const pc = numIn(L.pct), fj = numIn(L.fijo);
+      if (!(pc > 0) && !(fj > 0)) { const d = $('dpc' + L.k); if (d) { d.classList.add('bad'); d.focus(); } return 'Escribe el % o el monto del descuento, o elige «Sin descuento»' + n + '.'; }
+      if (pc > 100) { const d = $('dpc' + L.k); if (d) { d.classList.add('bad'); d.focus(); } return 'El descuento no puede pasar de 100 %' + n + '.'; }
+    }
+    if (calcLinea(L).exceso) return 'El descuento supera el subtotal' + n + '.';
+    if (exigeNota(it) && !String(L.coment || '').trim()) { const c = $('cm' + L.k); if (c) { c.classList.add('bad'); c.focus(); } return 'Escribe la nota explicativa (obligatoria en este rubro)' + n + '.'; }
     if (montoDe(L) > 5000) return 'El monto no puede superar $5.000' + n + '.';
   }
   return '';
@@ -1427,11 +1547,13 @@ function validarForm() {
 $('guardar').onclick = async () => {
   if (guardando) return;
   const err = validarForm(); if (err) { msg(err, 'err'); return; }
+  const chq = LN.map(L => { const it = catItem(L.itemId); return it && it.cobro === 'noche' ? choqueDe(L) : null; }).filter(Boolean);
+  if (chq.length && !confirm('Estas noches chocan con ' + chq[0].etq + ' (' + fechaCorta(chq[0].ini) + ' → ' + fechaCorta(chq[0].fin) + '). ¿Guardar igual?')) return;
   guardando = true; $('guardar').disabled = true; msg('Guardando...');
   const payload = {
     accion: 'guardarLineas',
     reserva: { codigo: RES.codigo, huesped: RES.huesped, anuncio: RES.anuncio, checkin: RES.checkin, checkout: RES.checkout },
-    lineas: LN.map(L => { const it = catItem(L.itemId); if (esDesc(it)) return { id: L.id || undefined, firma: L.firma || undefined, itemId: L.itemId, monto: numIn(L.valor), aplicaConcepto: L.aplica, medio: L.medio, anio: L.anio || undefined, comentario: L.coment }; return { id: L.id || undefined, firma: L.firma || undefined, itemId: L.itemId, cantidad: usaCant(it) ? Math.round(Number(L.cant)) : undefined, inicio: usaFechas(it) ? L.ini : undefined, fin: usaFechas(it) ? L.fin : undefined, precio: numIn(L.precio), medio: L.medio, anio: L.anio || undefined, comentario: L.coment }; })
+    lineas: LN.map(L => { const it = catItem(L.itemId); if (esDesc(it)) return { id: L.id || undefined, firma: L.firma || undefined, itemId: L.itemId, monto: numIn(L.valor), aplicaConcepto: L.aplica, medio: L.medio, anio: L.anio || undefined, comentario: L.coment }; return { id: L.id || undefined, firma: L.firma || undefined, itemId: L.itemId, cantidad: usaCant(it) ? Math.round(Number(L.cant)) : undefined, inicio: usaFechas(it) ? L.ini : undefined, fin: usaFechas(it) ? L.fin : undefined, precio: numIn(L.precio), medio: L.medio, anio: L.anio || undefined, comentario: L.coment, descuento: dscPayload(L, it) }; })
   };
   const tot = LN.reduce((a, L) => a + montoDe(L), 0), n = LN.length, cod = RES.codigo, eraEdicion = !!editId;
   try {
@@ -1476,7 +1598,8 @@ function editarLinea(id) {
   const mult = multDe(it.cobro, cant, noches) || 1;
   const pu = l.precio != null ? l.precio : Math.round(l.monto / mult * 10000) / 10000;
   RES = rr; if (!RES.anuncio || !anuncioObj(RES.anuncio)) RES.anuncio = l.anuncio;
-  LN = [nuevaLinea({ itemId: it.id, cant: cant, ini: usaFechas(it) ? ini : '', fin: usaFechas(it) ? fin : '', precio: String(pu), precioTocado: true, medio: l.medio, anio: String(l.anio), anioTocado: true, coment: l.comentario || '', id: l.id, firma: l.firma, origen: l.origen })];
+  LN = [nuevaLinea({ itemId: it.id, cant: cant, ini: usaFechas(it) ? ini : '', fin: usaFechas(it) ? fin : '', precio: String(pu), precioTocado: true, medio: l.medio, anio: String(l.anio), anioTocado: true, coment: l.comentario || '', id: l.id, firma: l.firma, origen: l.origen,
+    conDesc: (l.descTotal || 0) > 0, pct: l.descPct != null ? String(l.descPct) : '', fijo: l.descFijo != null ? String(l.descFijo) : '', cortesia: /cortes[ií]a/i.test(l.obs || '') })];
   $('resBuscaWrap').hidden = true; $('rManual').hidden = true; $('resTitle').textContent = 'Reserva del cobro';
   pintarResSel(); $('lineasWrap').hidden = false; renderLineas(); msg('');
   $('resCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1526,6 +1649,8 @@ function renderLista() {
         if (l.cantidad && !esNegLinea(l)) partes.push(l.cantidad + ' u.');
         if (it && it.cobro !== 'unidad' && (l.noches)) partes.push(l.noches + (l.noches === 1 ? ' noche' : ' noches'));
         if (l.precio != null && !esNegLinea(l)) partes.push(money(l.precio) + (it && it.cobro === 'unidad' ? ' c/u' : ''));
+        if (l.subtotal != null && l.descTotal) partes.push('subtotal ' + money(l.subtotal) + ' − ' + money(l.descTotal));
+        if (l.obs) partes.push(l.obs);
         return '<div class="li-row" data-l="' + esc(l.id) + '"><div><div class="lt">' + esc(l.item) + '</div><div class="ls">' + esc(l.concepto) + (partes.length ? ' · ' + esc(partes.join(' · ')) : '') + '<br>' + esc((MEDIOS.filter(m => m.v === l.medio)[0] || { n: l.medio }).n) + ' · ' + l.anio + (l.origen === 'Manual' ? ' · precio manual' : (l.origen === 'Descuento' ? ' · descuento' : (l.origen === 'Ajuste' ? ' · ajuste' : (l.precio == null ? ' · histórico' : '')))) + '</div></div>' +
           '<div class="lm">' + money(l.monto) + '</div><div class="lb"><button type="button" class="btn btn-edit btn-sm" data-ed="' + esc(l.id) + '">Editar</button><button type="button" class="btn btn-ghost btn-sm" data-del="' + esc(l.id) + '"><span>Borrar</span></button></div></div>';
       }).join('') + '</div>';
@@ -1579,7 +1704,12 @@ let ncCobro = 'unidad';
 function renderCat() {
   const gs = itemsPorConcepto(false);
   if (!gs.length) { $('catLista').innerHTML = '<div class="empty">El catálogo está vacío.</div>'; return; }
-  $('catLista').innerHTML = gs.map(g => '<div class="cat-g"><h4>' + esc(g.concepto) + '</h4>' + g.items.map(itemCatHTML).join('') + '</div>').join('');
+  let sepPuesto = false;
+  $('catLista').innerHTML = gs.map(g => {
+    let sep = '';
+    if (ordO(g.items[0]) >= 99999 && !sepPuesto) { sepPuesto = true; sep = '<div class="cat-sep">Rubros anteriores · se conservan por el histórico</div>'; }
+    return sep + '<div class="cat-g"><h4>' + esc(g.concepto) + '</h4>' + g.items.map(itemCatHTML).join('') + '</div>';
+  }).join('');
   // concepto del formulario de nuevo
   const sel = $('ncConcepto'), prev = sel.value;
   sel.innerHTML = gs.map(g => '<option value="' + esc(g.concepto) + '">' + esc(g.concepto) + '</option>').join('') + '<option value="__nuevo">+ Crear un concepto nuevo…</option>';
@@ -1591,7 +1721,7 @@ function precioActualTxt(c) {
   if (c.ligado) return 'Según Parámetros';
   const p = precioVigente(c, HOY);
   if (p) return money(p.precio);
-  return c.precios && c.precios.length ? 'Desde ' + fechaCorta(c.precios[0].desde) : 'Precio libre';
+  return c.precios && c.precios.length ? 'Desde ' + fechaCorta(c.precios[0].desde) : (c.sugerido != null ? 'Sugerido ' + money(c.sugerido) : 'Precio libre');
 }
 function itemCatHTML(c) {
   const vig = c.ligado ? null : precioVigente(c, HOY);
@@ -1609,6 +1739,10 @@ function itemCatHTML(c) {
       '<div class="field"><label for="cd-' + esc(c.id) + '">Rige desde</label><input type="date" id="cd-' + esc(c.id) + '" value="' + esc(HOY) + '"></div></div>' +
       '<div class="actions"><button type="button" class="btn btn-acc btn-sm" data-pp="' + esc(c.id) + '">Guardar precio</button></div><div class="small">Lo ya registrado no cambia. Si ya existe un precio con esa fecha, se reemplaza.</div>';
   }
+  if (c.techo) { const sm = catItem(c.techo), pvs = sm ? precioVigente(sm, HOY) : null; h += '<h5>Techo semanal</h5><p class="small">' + (sm ? 'Toma la tarifa de «' + esc(sm.item) + '»' + (pvs ? ' (' + money(pvs.precio) + ' hoy)' : ' (sin precio vigente)') + '. Si noches × tarifa diaria la supera, se cobra la semanal. Para cambiarla, edita el precio de ese ítem.' : 'El ítem semanal ya no existe: revísalo.') + '</p>'; }
+  if ((c.reglas || []).indexOf('sin_descuento') >= 0) h += '<p class="small" style="margin-top:12px">Este rubro no lleva descuento ni cortesía' + ((c.reglas || []).indexOf('nota') >= 0 ? ' y exige una nota explicativa en cada cobro' : '') + '.</p>';
+  if (!c.ligado && c.cobro !== 'descuento' && !(c.precios || []).length) h += '<h5>Precio sugerido</h5><div class="field"><label for="sg-' + esc(c.id) + '">Sugerido ($)</label><input type="number" inputmode="decimal" id="sg-' + esc(c.id) + '" min="0" step="0.01" placeholder="Sin sugerido" value="' + (c.sugerido != null ? esc(c.sugerido) : '') + '"></div>' +
+    '<div class="actions"><button type="button" class="btn btn-ghost btn-sm" data-sg="' + esc(c.id) + '">Guardar sugerido</button></div><div class="small">Solo es una ayuda: el precio real se escribe en cada cobro. Déjalo vacío para quitarlo.</div>';
   if (c.cobro !== 'descuento' && !c.ligado) h += '<h5>Forma de cobro</h5><div class="field"><select id="cc-' + esc(c.id) + '" data-cc="' + esc(c.id) + '" aria-label="Forma de cobro de ' + esc(c.item) + '">' + COBROS.filter(x => x.v !== 'descuento').map(x => '<option value="' + x.v + '"' + (x.v === c.cobro ? ' selected' : '') + '>' + esc(x.n) + '</option>').join('') + '</select></div><div class="small">' + esc(cobroDe(c.cobro).d) + ' Lo ya registrado no cambia.</div>';
   h += '<h5>Nota</h5><div class="field"><input id="cn-' + esc(c.id) + '" maxlength="120" value="' + esc(c.nota) + '" placeholder="Opcional" aria-label="Nota de ' + esc(c.item) + '"></div>' +
     '<div class="actions"><button type="button" class="btn btn-ghost btn-sm" data-nt="' + esc(c.id) + '">Guardar nota</button><button type="button" class="btn btn-ghost btn-sm" data-ac="' + esc(c.id) + '" data-v="' + (c.activo ? '0' : '1') + '">' + (c.activo ? 'Desactivar' : 'Activar') + '</button></div>' +
@@ -1638,6 +1772,8 @@ $('catLista').addEventListener('click', e => {
     if (qp.dataset.armed !== '1') { qp.dataset.armed = '1'; qp.textContent = '¿Seguro?'; setTimeout(() => { if (qp.isConnected) { qp.dataset.armed = ''; qp.textContent = 'Quitar'; } }, 4000); return; }
     catCall(id, { accion: 'borrarPrecio', precioId: qp.dataset.qp }, 'Precio quitado.', qp); return;
   }
+  const sg = e.target.closest('[data-sg]');
+  if (sg) { const id = sg.dataset.sg, v = $('sg-' + id).value.trim(); if (v && !(numIn(v) > 0)) { catMsg(id, 'El sugerido debe ser mayor que 0 (o déjalo vacío).', 'err'); return; } catCall(id, { accion: 'editarItem', itemId: id, sugerido: v ? numIn(v) : '' }, v ? 'Sugerido guardado: ' + money(numIn(v)) + '.' : 'Sugerido quitado.', sg); return; }
   const nt = e.target.closest('[data-nt]');
   if (nt) { const id = nt.dataset.nt; catCall(id, { accion: 'editarItem', itemId: id, nota: $('cn-' + id).value }, 'Nota guardada.', nt); return; }
   const ac = e.target.closest('[data-ac]');
