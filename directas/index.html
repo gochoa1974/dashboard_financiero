@@ -105,6 +105,16 @@ input[readonly]{opacity:.8;cursor:not-allowed}
 .tramo-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:13.5px;font-weight:800}
 .tramo-h small{font-size:11.5px;font-weight:700;color:var(--mut);margin-left:6px}
 .tramo input,.tramo select{background:var(--surface)}
+.noche{display:grid;grid-template-columns:1fr 130px;gap:10px;align-items:center;margin-bottom:8px}
+.noche .nd{font-size:14px;font-weight:700}
+.noche .nd small{display:block;font-size:11.5px;color:var(--mut);font-weight:600}
+.noche input{background:var(--surface);text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+.neto{font-size:13px;font-weight:700;margin:0 0 10px;line-height:1.5;color:var(--mut)}
+.neto b{color:var(--ink);font-variant-numeric:tabular-nums}
+.noche .nd small b{color:var(--accent)}
+.chk{border-radius:12px;padding:10px 12px;font-size:13px;font-weight:800;margin:4px 0 12px;border:1px solid var(--line);background:var(--bg)}
+.chk.ok{color:var(--ok,#0a7d4b);border-color:currentColor}
+.chk.bad{color:var(--bad)}
 .link{appearance:none;background:none;border:none;padding:10px 0;margin:0;color:var(--accent);font-family:inherit;font-weight:800;font-size:13px;cursor:pointer;min-height:44px}
 .link.bad{color:var(--bad)}
 .stepper{display:grid;grid-template-columns:48px 1fr 48px;gap:8px;align-items:stretch}
@@ -183,7 +193,7 @@ input[readonly]{opacity:.8;cursor:not-allowed}
     <div id="formWrap">
       <div class="card" id="formCard">
         <h3 id="formTitle">Nueva reserva directa</h3>
-        <p class="hint">Una reserva por huésped. Si cambió el precio entre noches, agrega otro tramo.</p>
+        <p class="hint">Una reserva por huésped. Cada noche queda guardada con su valor.</p>
 
         <div class="codigo" aria-live="polite">
           <b id="codigoTxt">Reserva_Directa_—</b><span id="codigoNota">Código automático</span>
@@ -196,15 +206,34 @@ input[readonly]{opacity:.8;cursor:not-allowed}
           <div class="chips" role="radiogroup" aria-labelledby="anLbl" id="anuncios"></div>
           <div class="small" id="anHint"></div></div>
 
-        <div class="field"><span class="lbl">Fechas y monto</span>
-          <div id="tramos"></div>
-          <button type="button" class="link" id="addTramo">+ Agregar otro tramo</button>
+        <div class="field"><span class="lbl">Fechas y valor de la estadía</span>
+          <div class="row2">
+            <div class="field"><label for="ci">Check-in</label><input type="date" id="ci"></div>
+            <div class="field"><label for="co">Check-out</label><input type="date" id="co"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="no">Noches</label><input id="no" readonly aria-live="polite"></div>
+            <div class="field"><label for="tot">Valor total ($)</label><input type="number" inputmode="decimal" id="tot" min="0" step="0.01" placeholder="0.00"></div>
+          </div>
+          <div class="field"><label for="lim">Limpieza interna ($)</label><input type="number" inputmode="decimal" id="lim" min="0" max="500" step="0.01" placeholder="0.00"><div class="small" id="limHint">No se le muestra al huésped: se descuenta por dentro para calcular tu neto.</div></div>
+          <div class="field" style="margin-bottom:0"><label for="px">Huéspedes</label><div class="stepper"><button type="button" class="stp" data-px="-1" aria-label="Restar un huésped">−</button><input type="number" inputmode="numeric" id="px" min="1" step="1" value="2"><button type="button" class="stp" data-px="1" aria-label="Sumar un huésped">+</button></div><div class="small" id="pxHint"></div></div>
         </div>
 
+        <div class="field" id="modoWrap" hidden><span class="lbl" id="mdoLbl">¿Mismo precio por noche?</span>
+          <div class="seg" role="radiogroup" aria-labelledby="mdoLbl" id="modos">
+            <button type="button" class="chip on" role="radio" aria-checked="true" data-m="prom">Sí, promedio</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-m="noche">No, por noche</button>
+          </div>
+          <div class="small" id="promTxt"></div>
+          <div id="noches" style="margin-top:10px"></div>
+          <div class="chk" id="chk" role="status" hidden></div>
+        </div>
+
+        <div class="neto" id="netoTxt" aria-live="polite"></div>
         <div class="stats" aria-live="polite">
           <div class="stat"><div class="k">Noches</div><div class="v" id="sNoches">0</div></div>
-          <div class="stat"><div class="k">Total</div><div class="v" id="sTotal">$0.00</div></div>
-          <div class="stat"><div class="k">Por noche</div><div class="v" id="sProm">—</div></div>
+          <div class="stat"><div class="k">Cobrado</div><div class="v" id="sTotal">$0.00</div></div>
+          <div class="stat"><div class="k">Neto por noche</div><div class="v" id="sProm">—</div></div>
         </div>
 
         <div class="field"><span class="lbl" id="mdLbl">Medio de cobro</span>
@@ -235,6 +264,9 @@ input[readonly]{opacity:.8;cursor:not-allowed}
 <script>
 // ===== URL de tu implementación de Apps Script (termina en /exec) =====
 const FIXED_URL = 'https://script.google.com/macros/s/AKfycbw_iMuMSlc-dfdeXI71xk4x6Zir53mC93uPwZpHS-iInB4-OqvKLZIf57gAKIVkS8BbfA/exec';
+
+// ===== URL del Apps Script de PARÁMETROS (para leer el costo de limpieza vigente) =====
+const PARAM_URL = 'https://script.google.com/macros/s/AKfycbxJX9a0T36KJWdDB4sGZ0FAGufRCTRwQgxmUwGQqZAlXu5754Jh2ghxv6nU8wkMmqV8xw/exec';
 
 const $ = id => document.getElementById(id);
 const SHARED_KEY = 'cimablanca_clave';
@@ -287,12 +319,31 @@ try {
 } catch (e) {}
 
 let editCodigo = null, editFirma = '', anuncio = ANUNCIOS[0].v, medio = 'TRANSFERENCIA', guardando = false;
-let tramos = [nuevoTramo()];
+let F = nuevoForm();
 
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function money(n) { return '$' + (Math.round((Number(n) || 0) * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function numCod(c) { const m = /^Reserva_Directa_(\d+)$/.exec(String(c || '')); return m ? parseInt(m[1], 10) : 0; }
-function nuevoTramo(ci) { return { checkin: ci || '', checkout: '', monto: '', pax: 2, coManual: false }; }
+function nuevoForm() { return { ci: '', co: '', coManual: false, tot: '', lim: '', limManual: false, pax: 2, modo: 'prom', noches: [] }; }
+const NOCHES_MAX = 60, DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+function diaDe(iso) { const x = iso.split('-'); return DIAS[new Date(Date.UTC(+x[0], +x[1] - 1, +x[2])).getUTCDay()]; }
+function cents(n) { return Math.round((Number(n) || 0) * 100); }
+function nNoches() { return (F.ci && F.co && F.co > F.ci) ? difDias(F.ci, F.co) : 0; }
+/* Reparte el total en centavos exactos: la diferencia va a la última noche */
+function promedios() {
+  const n = nNoches(), T = cents(F.tot); if (!n) return [];
+  const base = Math.floor(T / n), out = [];
+  for (let i = 0; i < n; i++) out.push(base / 100);
+  out[n - 1] = (T - base * (n - 1)) / 100;
+  return out;
+}
+/* Reconstruye la lista de noches conservando lo ya digitado por fecha */
+function armarNoches() {
+  const n = nNoches(), prev = {}; F.noches.forEach(x => { prev[x.f] = x; });
+  F.noches = [];
+  for (let i = 0; i < Math.min(n, NOCHES_MAX); i++) { const f = addDiasISO(F.ci, i); F.noches.push({ f: f, m: prev[f] ? prev[f].m : '', pax: prev[f] ? prev[f].pax : null }); }
+}
+function montosFinales() { return F.modo === 'prom' ? promedios() : F.noches.map(x => Math.round((Number(x.m) || 0) * 100) / 100); }
 function addDiasISO(iso, dias) {
   const [y, m, d] = iso.split('-').map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d));
@@ -376,92 +427,103 @@ function pintarChips() {
 $('anuncios').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if (!b) return;
   anuncio = b.dataset.v; const cap = capDe(anuncio); let ajusto = false;
-  tramos.forEach(t => { if ((Number(t.pax) || 1) > cap) { t.pax = cap; ajusto = true; } });
-  pintarChips(); pintarTramos();
+  if ((Number(F.pax) || 1) > cap) { F.pax = cap; F.noches.forEach(x => { x.pax = null; }); ajusto = true; }
+  pintarChips(); pintarForm();
   msg(ajusto ? 'Los huéspedes se ajustaron al máximo de ' + anuncioObj(anuncio).n + ' (' + cap + ').' : '');
   ocultarConfirmar();
 });
 $('medios').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; medio = b.dataset.v; pintarChips(); });
 
-function pintarTramos() {
-  const cap = capDe(anuncio);
-  $('tramos').innerHTML = tramos.map((t, i) => {
-    const ultimo = i === tramos.length - 1;
-    const minCi = (i === 0 && !editCodigo) ? HOY : FMIN;
-    return '<div class="tramo" data-i="' + i + '">' +
-      '<div class="tramo-h"><span>Tramo ' + (i + 1) + '<small id="an' + i + '">Año ' + esc(t.checkin ? t.checkin.slice(0, 4) : '—') + '</small></span>' + (tramos.length > 1 && ultimo ? '<button type="button" class="link bad" data-quitar="' + i + '" style="padding:0;min-height:32px">Quitar este tramo</button>' : '') + '</div>' +
-      '<div class="row2">' +
-        '<div class="field"><label for="ci' + i + '">Check-in' + (i > 0 ? ' (automático)' : '') + '</label><input type="date" id="ci' + i + '" data-k="checkin" value="' + esc(t.checkin) + '" min="' + minCi + '" max="' + FMAX + '"' + (i > 0 ? ' readonly tabindex="-1"' : '') + '></div>' +
-        '<div class="field"><label for="co' + i + '">Check-out</label><input type="date" id="co' + i + '" data-k="checkout" value="' + esc(t.checkout) + '" min="' + (t.checkin ? addDiasISO(t.checkin, 1) : FMIN) + '" max="' + FMAX + '"></div>' +
-      '</div>' +
-      '<div class="row2">' +
-        '<div class="field"><label for="no' + i + '">Noches</label><input id="no' + i + '" readonly value="' + (nochesDe(t) || '') + '" aria-live="polite"></div>' +
-        '<div class="field"><label for="mo' + i + '">Monto ($)</label><input type="number" inputmode="decimal" id="mo' + i + '" data-k="monto" min="0" max="' + MONTO_MAX + '" step="0.01" placeholder="0.00" value="' + esc(t.monto) + '"></div>' +
-      '</div>' +
-      '<div class="field"><label for="px' + i + '">Huéspedes (máx. ' + cap + ')</label><div class="stepper"><button type="button" class="stp" data-px="' + i + '" data-d="-1" aria-label="Restar un huésped">−</button><input type="number" inputmode="numeric" id="px' + i + '" data-k="pax" min="1" max="' + cap + '" step="1" value="' + esc(t.pax) + '"><button type="button" class="stp" data-px="' + i + '" data-d="1" aria-label="Sumar un huésped">+</button></div></div>' +
-    '</div>';
-  }).join('');
+function pintarNoches() {
+  $('modoWrap').hidden = !nNoches();
+  $('no').value = nNoches() || '';
+  $('noches').innerHTML = (F.modo === 'noche') ? F.noches.map((x, i) =>
+    '<div class="noche"><div class="nd">' + esc(diaDe(x.f).charAt(0).toUpperCase() + diaDe(x.f).slice(1)) + ' ' + esc(fechaBonita(x.f)) + '<small>Noche ' + (i + 1) + ' · Neto <b>—</b></small></div>' +
+    '<input type="number" inputmode="decimal" data-n="' + i + '" min="0" max="' + MONTO_MAX + '" step="0.01" placeholder="0.00" aria-label="Valor de la noche ' + (i + 1) + '" value="' + esc(x.m) + '"></div>').join('') : '';
+  document.querySelectorAll('#modos .chip').forEach(b => { const on = b.dataset.m === F.modo; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+  pintarCheck();
 }
-
+function pintarCheck() {
+  const n = nNoches(), chk = $('chk'), pt = $('promTxt');
+  if (F.modo === 'prom') {
+    chk.hidden = true;
+    const p = promedios();
+    pt.textContent = (n && cents(F.tot) > 0) ? n + (n === 1 ? ' noche' : ' noches') + ' × ' + money(p[0]) + (p.length > 1 && p[n - 1] !== p[0] ? ' (la última ' + money(p[n - 1]) + ' para cuadrar centavos)' : '') : 'Escribe el valor total para ver el promedio.';
+    return;
+  }
+  pt.textContent = 'Escribe el valor de cada noche. Debe sumar el total.';
+  const suma = F.noches.reduce((s, x) => s + cents(x.m), 0), T = cents(F.tot), d = T - suma;
+  chk.hidden = false;
+  if (!T) { chk.className = 'chk'; chk.textContent = 'Escribe primero el valor total de la estadía.'; }
+  else if (d === 0) { chk.className = 'chk ok'; chk.textContent = 'Suma ' + money(suma / 100) + ' de ' + money(T / 100) + ' ✓'; }
+  else { chk.className = 'chk bad'; chk.textContent = 'Suma ' + money(suma / 100) + ' de ' + money(T / 100) + ' · ' + (d > 0 ? 'Faltan ' : 'Sobran ') + money(Math.abs(d) / 100); }
+}
+function totalCobrado() { return F.modo === 'prom' ? cents(F.tot) : F.noches.reduce((s, x) => s + cents(x.m), 0); }
+/* Neto de hospedaje por noche: la limpieza interna se reparte en partes iguales; los centavos van a la última noche */
+function netosPorNoche() {
+  const m = montosFinales(), n = m.length; if (!n) return [];
+  const L = cents(F.lim), ded = Math.round(L / n);
+  return m.map((v, i) => (cents(v) - (i === n - 1 ? L - ded * (n - 1) : ded)) / 100);
+}
 function resumen() {
-  const noches = tramos.reduce((s, t) => s + nochesDe(t), 0);
-  const total = tramos.reduce((s, t) => s + (Number(t.monto) || 0), 0);
-  $('sNoches').textContent = noches;
-  $('sTotal').textContent = money(total);
-  $('sProm').textContent = noches ? money(total / noches) : '—';
+  const n = nNoches(), T = totalCobrado(), L = F.lim === '' ? 0 : cents(F.lim), N = T - L;
+  $('sNoches').textContent = n;
+  $('sTotal').textContent = money(T / 100);
+  $('sProm').textContent = (n && T) ? money(N / 100 / n) : '—';
+  $('netoTxt').innerHTML = (n && T) ? 'Cobrado <b>' + money(T / 100) + '</b> − Limpieza interna <b>' + money(L / 100) + '</b> = Neto <b>' + money(N / 100) + '</b>' + (F.lim === '' ? ' <span style="color:var(--bad)">· falta la limpieza</span>' : '') : '';
+  if (F.modo === 'noche') { const ne = netosPorNoche(); document.querySelectorAll('#noches .nd small b').forEach((el, i) => { el.textContent = (F.lim !== '' && F.noches[i] && F.noches[i].m !== '') ? money(ne[i]) : '—'; }); }
 }
-
-/* El check-in de cada tramo siguiente es el check-out del anterior */
-function propagar(i) {
-  for (let j = i + 1; j < tramos.length; j++) {
-    const prev = tramos[j - 1], t = tramos[j];
-    if (!prev.checkout) break;
-    t.checkin = prev.checkout;
-    $('ci' + j).value = t.checkin;
-    if (!t.checkout || t.checkout <= t.checkin) { t.checkout = addDiasISO(t.checkin, 1); t.coManual = false; $('co' + j).value = t.checkout; }
-    $('co' + j).min = addDiasISO(t.checkin, 1);
-    $('no' + j).value = nochesDe(t) || '';
-    $('an' + j).textContent = 'Año ' + t.checkin.slice(0, 4);
-  }
+function pintarForm() {
+  $('ci').value = F.ci; $('co').value = F.co; $('tot').value = F.tot; $('lim').value = F.lim; $('px').value = F.pax;
+  $('ci').min = editCodigo ? FMIN : HOY; $('ci').max = FMAX;
+  $('co').min = F.ci ? addDiasISO(F.ci, 1) : FMIN; $('co').max = FMAX;
+  $('pxHint').textContent = 'Máximo ' + capDe(anuncio) + ' en ' + (anuncioObj(anuncio) || { n: '' }).n + '.';
+  armarNoches(); pintarNoches(); resumen();
 }
-
-function alCambiar(e) {
-  const box = e.target.closest('.tramo'); if (!box || !e.target.dataset.k) return;
-  const i = +box.dataset.i, k = e.target.dataset.k, t = tramos[i];
-  t[k] = e.target.value;
-  if (k === 'checkout') t.coManual = !!t.checkout;
-  if (k === 'checkin') {
-    const co = $('co' + i);
-    if (t.checkin) {
-      co.min = addDiasISO(t.checkin, 1);
-      // el check-out sigue al check-in (+1 día) mientras no lo hayas elegido tú
-      if (!t.coManual || !t.checkout || t.checkout <= t.checkin) { t.checkout = addDiasISO(t.checkin, 1); co.value = t.checkout; t.coManual = false; }
-    } else co.removeAttribute('min');
-    $('an' + i).textContent = 'Año ' + (t.checkin ? t.checkin.slice(0, 4) : '—');
+$('ci').addEventListener('input', () => {
+  F.ci = $('ci').value;
+  if (F.ci) {
+    $('co').min = addDiasISO(F.ci, 1);
+    if (!F.coManual || !F.co || F.co <= F.ci) { F.co = addDiasISO(F.ci, 1); F.coManual = false; $('co').value = F.co; }
   }
-  if (k === 'checkin' || k === 'checkout') { $('no' + i).value = nochesDe(t) || ''; propagar(i); }
-  resumen(); ocultarConfirmar();
-}
-$('tramos').addEventListener('input', alCambiar);
-$('tramos').addEventListener('change', alCambiar);
-$('tramos').addEventListener('click', e => {
-  const q = e.target.closest('[data-quitar]');
-  if (q) { tramos.pop(); pintarTramos(); resumen(); return; }
-  const s = e.target.closest('[data-px]');
-  if (s) {
-    const i = +s.dataset.px, t = tramos[i];
-    t.pax = Math.min(capDe(anuncio), Math.max(1, (Number(t.pax) || 1) + Number(s.dataset.d)));
-    $('px' + i).value = t.pax;
-  }
+  armarNoches(); pintarNoches(); resumen(); ocultarConfirmar(); cargarLimpieza();
 });
-$('addTramo').onclick = () => {
-  const ult = tramos[tramos.length - 1];
-  if (!ult.checkout) { fallar({ msg: 'Completa el check-out del tramo ' + tramos.length + ' antes de agregar otro.', id: 'co' + (tramos.length - 1) }); return; }
-  const t = nuevoTramo(ult.checkout);
-  t.checkout = addDiasISO(t.checkin, 1); t.pax = ult.pax;
-  tramos.push(t); pintarTramos(); resumen();
-  const el = $('co' + (tramos.length - 1)); if (el) el.focus();
-};
+$('co').addEventListener('input', () => { F.co = $('co').value; F.coManual = !!F.co; armarNoches(); pintarNoches(); resumen(); ocultarConfirmar(); });
+$('tot').addEventListener('input', () => { F.tot = $('tot').value; pintarCheck(); resumen(); ocultarConfirmar(); });
+$('lim').addEventListener('input', () => { F.lim = $('lim').value; F.limManual = true; resumen(); ocultarConfirmar(); });
+/* Costo real de limpieza vigente en la fecha de check-in (lo pone el panel de Parámetros) */
+let limReq = 0;
+async function cargarLimpieza() {
+  if (!F.ci || F.limManual) return;
+  if (!PARAM_URL || PARAM_URL.indexOf('PEGA-AQUI') >= 0 || !CFG.clave) { $('limHint').textContent = 'Parámetros no está conectado: escribe la limpieza interna a mano.'; return; }
+  const mi = ++limReq;
+  try {
+    const r = await fetch(PARAM_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ clave: CFG.clave, accion: 'valorEn', parametro: 'costo_limpieza', fecha: F.ci }) });
+    const j = await r.json();
+    if (mi !== limReq || F.limManual) return;
+    if (!j.ok) throw new Error(j.error || 'error');
+    F.lim = String(j.resultado.valor); $('lim').value = F.lim;
+    $('limHint').textContent = 'Según Parámetros para el check-in del ' + fechaBonita(F.ci) + (j.resultado.origen === 'excepcion' ? ' (renegociado)' : '') + '. No se le muestra al huésped. Puedes cambiarlo en esta reserva.';
+    resumen();
+  } catch (e) { if (mi === limReq) $('limHint').textContent = 'No pude leer Parámetros: escribe la limpieza interna a mano.'; }
+}
+$('px').addEventListener('input', () => { F.pax = $('px').value; F.noches.forEach(x => { x.pax = null; }); });
+document.querySelector('[data-px="-1"]').onclick = () => cambiarPax(-1);
+document.querySelector('[data-px="1"]').onclick = () => cambiarPax(1);
+function cambiarPax(d) { F.pax = Math.min(capDe(anuncio), Math.max(1, (Number(F.pax) || 1) + d)); $('px').value = F.pax; F.noches.forEach(x => { x.pax = null; }); }
+$('modos').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  if (b.dataset.m === 'noche' && F.modo === 'prom') {
+    // al pasar a "por noche", se precargan los promedios para que solo ajustes
+    const p = promedios(); armarNoches(); F.noches.forEach((x, i) => { if (x.m === '') x.m = cents(F.tot) ? p[i] : ''; });
+  }
+  F.modo = b.dataset.m; pintarNoches(); resumen(); ocultarConfirmar();
+  if (F.modo === 'noche') { const el = document.querySelector('#noches input'); if (el) el.focus(); }
+});
+$('noches').addEventListener('input', e => {
+  const i = e.target.dataset.n; if (i == null) return;
+  F.noches[+i].m = e.target.value; e.target.classList.remove('bad'); pintarCheck(); resumen(); ocultarConfirmar();
+});
 
 $('comentario').addEventListener('input', () => { $('comCnt').textContent = $('comentario').value.length; });
 
@@ -470,53 +532,60 @@ function ocultarConfirmar() { $('confirmar').hidden = true; }
 
 function fallar(f) {
   msg(f.msg, 'err');
-  const el = f.id ? $(f.id) : null;
+  const el = f.id ? $(f.id) : (f.noche != null ? document.querySelector('#noches input[data-n="' + f.noche + '"]') : null);
   if (el) { el.classList.add('bad'); try { el.focus(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} }
 }
 document.addEventListener('input', e => { if (e.target && e.target.classList) e.target.classList.remove('bad'); });
 
 function resetForm() {
   editCodigo = null; editFirma = ''; anuncio = ANUNCIOS[0].v; medio = 'TRANSFERENCIA';
-  tramos = [nuevoTramo()];
+  F = nuevoForm();
   $('huesped').value = ''; $('comentario').value = ''; $('comCnt').textContent = '0';
   $('formTitle').textContent = 'Nueva reserva directa';
   $('codigoTxt').textContent = SIGUIENTE || 'Reserva_Directa_—';
   $('codigoNota').textContent = 'Código automático';
   $('cancelar').hidden = true; ocultarConfirmar();
-  pintarChips(); pintarTramos(); resumen();
+  pintarChips(); pintarForm();
 }
 $('cancelar').onclick = () => { resetForm(); msg(''); };
 
 /* ---------- validación (misma lógica que el Apps Script) ---------- */
 function leerForm() {
-  return {
-    codigo: editCodigo || '', firma: editFirma,
-    huesped: $('huesped').value.trim(),
-    anuncio: anuncio, medio: medio, comentario: $('comentario').value.trim(),
-    tramos: tramos.map(t => ({ checkin: t.checkin, checkout: t.checkout, noches: nochesDe(t), monto: Math.round((Number(t.monto) || 0) * 100) / 100, noHuesped: Math.round(Number(t.pax)) }))
-  };
+  const n = nNoches(), m = montosFinales(), pax = Math.round(Number(F.pax)), t = [];
+  for (let i = 0; i < n; i++) {
+    const nx = F.noches[i];
+    t.push({ checkin: addDiasISO(F.ci, i), checkout: addDiasISO(F.ci, i + 1), noches: 1, monto: m[i], noHuesped: (nx && nx.pax) ? nx.pax : pax });
+  }
+  return { codigo: editCodigo || '', firma: editFirma, huesped: $('huesped').value.trim(), anuncio: anuncio, medio: medio, comentario: $('comentario').value.trim(), tramos: t, limpieza: F.lim === '' ? '' : Math.round(Number(F.lim) * 100) / 100, _total: cents(F.tot), _pax: pax };
 }
 function validar(r) {
   if (!r.huesped) return { msg: 'Escribe el nombre del huésped.', id: 'huesped' };
-  const cap = capDe(r.anuncio);
+  const cap = capDe(r.anuncio), n = nNoches();
+  if (!F.ci) return { msg: 'Completa el check-in.', id: 'ci' };
+  if (!F.co) return { msg: 'Completa el check-out.', id: 'co' };
+  if (F.ci < FMIN || F.ci > FMAX) return { msg: 'El check-in debe estar entre 2024 y 2100.', id: 'ci' };
+  if (F.co < FMIN || F.co > FMAX) return { msg: 'El check-out debe estar entre 2024 y 2100.', id: 'co' };
+  if (F.co <= F.ci) return { msg: 'El check-out debe ser posterior al check-in.', id: 'co' };
+  if (n > NOCHES_MAX) return { msg: 'Máximo ' + NOCHES_MAX + ' noches por reserva.', id: 'co' };
+  if (!editCodigo && F.ci < HOY) return { msg: 'El check-in de una reserva nueva debe ser de hoy en adelante.', id: 'ci' };
+  if (!(r._total > 0)) return { msg: 'Escribe el valor total de la estadía.', id: 'tot' };
+  if (r.limpieza === '' || !(r.limpieza >= 0)) return { msg: 'Escribe la limpieza interna (puede ser 0).', id: 'lim' };
+  if (r.limpieza > 500) return { msg: 'La limpieza interna no puede superar $500.', id: 'lim' };
+  if (cents(r.limpieza) >= r._total) return { msg: 'La limpieza interna debe ser menor que el total cobrado.', id: 'lim' };
+  if (!(r._pax >= 1 && r._pax <= cap)) return { msg: 'Los huéspedes deben ser de 1 a ' + cap + ' en este anuncio.', id: 'px' };
   for (let i = 0; i < r.tramos.length; i++) {
-    const t = r.tramos[i], k = r.tramos.length > 1 ? ' (tramo ' + (i + 1) + ')' : '';
-    if (!t.checkin) return { msg: 'Completa el check-in' + k + '.', id: 'ci' + i };
-    if (!t.checkout) return { msg: 'Completa el check-out' + k + '.', id: 'co' + i };
-    if (t.checkin < FMIN || t.checkin > FMAX) return { msg: 'El check-in debe estar entre 2024 y 2100' + k + '.', id: 'ci' + i };
-    if (t.checkout < FMIN || t.checkout > FMAX) return { msg: 'El check-out debe estar entre 2024 y 2100' + k + '.', id: 'co' + i };
-    if (t.checkout <= t.checkin) return { msg: 'El check-out debe ser posterior al check-in' + k + '.', id: 'co' + i };
-    if (i === 0 && !editCodigo && t.checkin < HOY) return { msg: 'El check-in de una reserva nueva debe ser de hoy en adelante.', id: 'ci0' };
-    if (!(t.monto > 0)) return { msg: 'Escribe el monto' + k + '.', id: 'mo' + i };
-    if (t.monto > MONTO_MAX) return { msg: 'El monto no puede superar ' + money(MONTO_MAX) + k + '.', id: 'mo' + i };
-    if (!(t.noHuesped >= 1 && t.noHuesped <= cap)) return { msg: 'Los huéspedes deben ser de 1 a ' + cap + ' en este anuncio' + k + '.', id: 'px' + i };
-    if (i > 0 && r.tramos[i - 1].checkout !== t.checkin) return { msg: 'Los tramos deben ser seguidos' + k + '.', id: 'ci' + i };
+    const t = r.tramos[i];
+    if (F.modo === 'noche' && !(t.monto > 0)) return { msg: 'Escribe el valor de la noche ' + (i + 1) + ' (' + fechaBonita(t.checkin) + ').', id: null, noche: i };
+    if (t.monto > MONTO_MAX) return { msg: 'Una noche no puede superar ' + money(MONTO_MAX) + ' (noche ' + (i + 1) + ').', id: null, noche: i };
+    if (!(t.monto > 0)) return { msg: 'Cada noche debe tener un valor mayor que 0; revisa el total.', id: 'tot' };
   }
+  const suma = r.tramos.reduce((s, t) => s + cents(t.monto), 0);
+  if (suma !== r._total) { const d = r._total - suma; return { msg: 'El desglose por noche no cuadra con el total: ' + (d > 0 ? 'faltan ' : 'sobran ') + money(Math.abs(d) / 100) + '.', id: null, noche: 0 }; }
   for (const o of RESERVAS) {
     if (o.codigo === r.codigo || o.anuncio !== r.anuncio) continue;
     for (const to of o.tramos) for (let i = 0; i < r.tramos.length; i++) {
       const t = r.tramos[i];
-      if (t.checkin < to.checkout && to.checkin < t.checkout) return { msg: 'Se cruza con ' + o.codigo + ' (' + o.huesped + ', ' + fechaBonita(to.checkin) + ' → ' + fechaBonita(to.checkout) + ') en el mismo anuncio.', id: 'ci' + (i === 0 ? 0 : i) };
+      if (t.checkin < to.checkout && to.checkin < t.checkout) return { msg: 'Se cruza con ' + o.codigo + ' (' + o.huesped + ', ' + fechaBonita(to.checkin) + ' → ' + fechaBonita(to.checkout) + ') en el mismo anuncio.', id: 'ci' };
     }
   }
   return null;
@@ -530,6 +599,7 @@ async function enviar(confirmar) {
   guardando = true; $('guardar').disabled = true; $('confirmar').disabled = true; msg('Guardando...');
   try {
     const nuevo = !editCodigo;
+    delete r._total; delete r._pax;
     const j = await call({ accion: 'guardar', reserva: r, confirmar: confirmar === true });
     aplicar(j); setHint(true); resetForm();
     $('buscar').value = ''; renderLista();
@@ -574,8 +644,9 @@ function renderLista() {
     const pax = Math.max.apply(null, r.tramos.map(t => t.noHuesped));
     return '<div class="list-item" data-cod="' + esc(r.codigo) + '">' +
       '<div class="top"><div><b>' + esc(r.huesped) + '</b></div><span class="tag">' + esc(r.codigo.replace('Reserva_Directa_', 'Directa ')) + '</span></div>' +
-      '<div class="meta">' + esc(anuncioNombre(r.anuncio)) + '<br>' + esc(fechaBonita(ci)) + ' → ' + esc(fechaBonita(co)) + ' · ' + noches + (noches === 1 ? ' noche' : ' noches') + (r.tramos.length > 1 ? ' · ' + r.tramos.length + ' tramos' : '') + ' · ' + pax + ' huésp.<br>' +
-      '<span class="tot">' + money(total) + '</span> · ' + esc(MEDIOS.filter(m => m.v === r.medio).map(m => m.n)[0] || r.medio) + '</div>' +
+      '<div class="meta">' + esc(anuncioNombre(r.anuncio)) + '<br>' + esc(fechaBonita(ci)) + ' → ' + esc(fechaBonita(co)) + ' · ' + noches + (noches === 1 ? ' noche' : ' noches') + '' + ' · ' + pax + ' huésp.<br>' +
+      (r.tramos.length > 1 ? '<br>' + r.tramos.map(t => t.noches === 1 ? esc(fechaBonita(t.checkin).slice(0, -5)) + ' ' + money(t.monto) : esc(fechaBonita(t.checkin).slice(0, -5)) + '→' + esc(fechaBonita(t.checkout).slice(0, -5)) + ' ' + money(t.monto)).join(' · ') : '') + '<br>' +
+      '<span class="tot">' + money(total) + '</span>' + (r.limpieza != null ? ' · neto ' + money(total - r.limpieza) : '') + ' · ' + esc(MEDIOS.filter(m => m.v === r.medio).map(m => m.n)[0] || r.medio) + '</div>' +
       (r.comentario ? '<div class="cmt">' + esc(r.comentario) + '</div>' : '') +
       '<div class="btns"><button type="button" class="btn btn-edit btn-sm" data-edit="' + esc(r.codigo) + '" aria-label="Editar ' + esc(r.codigo) + '">' + ICO_ED + 'Editar</button>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-del="' + esc(r.codigo) + '" aria-label="Borrar ' + esc(r.codigo) + '">' + ICO_DEL + 'Borrar</button></div></div>';
@@ -593,12 +664,19 @@ $('lista').addEventListener('click', async e => {
   if (ed) {
     const r = RESERVAS.filter(x => x.codigo === ed.dataset.edit)[0]; if (!r) return;
     editCodigo = r.codigo; editFirma = r.firma || ''; anuncio = r.anuncio; medio = r.medio;
-    tramos = r.tramos.map(t => ({ checkin: t.checkin, checkout: t.checkout, monto: t.monto, pax: t.noHuesped, coManual: true }));
+    F = nuevoForm();
+    const ts = r.tramos.slice().sort((x, y) => x.checkin < y.checkin ? -1 : 1);
+    F.ci = ts[0].checkin; F.co = ts[ts.length - 1].checkout; F.coManual = true; F.modo = 'noche';
+    F.lim = r.limpieza == null ? '' : String(r.limpieza); F.limManual = true;
+    F.tot = String(Math.round(ts.reduce((q, t) => q + cents(t.monto), 0)) / 100); F.pax = Math.max.apply(null, ts.map(t => t.noHuesped));
+    F.noches = [];
+    ts.forEach(t => { const n = Math.max(1, t.noches), base = Math.floor(cents(t.monto) / n); for (let k = 0; k < n; k++) F.noches.push({ f: addDiasISO(t.checkin, k), m: (k === n - 1 ? cents(t.monto) - base * (n - 1) : base) / 100, pax: t.noHuesped }); });
     $('huesped').value = r.huesped; $('comentario').value = r.comentario || ''; $('comCnt').textContent = ($('comentario').value || '').length;
     $('formTitle').textContent = 'Editando ' + r.codigo;
     $('codigoTxt').textContent = r.codigo; $('codigoNota').textContent = 'No cambia';
     $('cancelar').hidden = false; ocultarConfirmar();
-    pintarChips(); pintarTramos(); resumen(); msg('');
+    pintarChips(); pintarForm(); msg('');
+    if (r.limpieza == null) $('limHint').textContent = 'Esta reserva no tiene limpieza registrada: escríbela para calcular el neto.';
     $('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
   }
@@ -620,7 +698,7 @@ $('lista').addEventListener('click', async e => {
 });
 
 /* ---------- arranque ---------- */
-pintarChips(); pintarTramos(); resumen();
+pintarChips(); pintarForm();
 if (CFG.url && CFG.clave) {
   showApp(); render(); setHint(); resetForm();
   call({ accion: 'listar' }).then(j => { aplicar(j); setHint(true); }).catch(() => {});
