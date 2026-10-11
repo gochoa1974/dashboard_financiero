@@ -433,7 +433,9 @@ details.cat-i.off{opacity:.65}
       <div class="card" style="margin-top:16px" id="regCard">
         <h3>Cobros registrados <span class="tag" id="regCuenta">0</span></h3>
         <div class="field" style="margin:10px 0 10px"><input id="buscar" type="search" placeholder="Buscar por huésped, código o servicio" aria-label="Buscar cobro" autocomplete="off"></div>
-        <div class="seg yrs" id="regAnios" role="group" aria-label="Año de ingreso"></div>
+        <div class="seg yrs" id="regAnios" role="group" aria-label="Periodo de los cobros"></div>
+        <div class="row2" id="regRango" hidden style="margin-bottom:12px"><div class="field"><label for="rgD1">Desde</label><input type="date" id="rgD1"></div><div class="field"><label for="rgD2">Hasta</label><input type="date" id="rgD2"></div></div>
+        <div class="small" id="regPer" style="margin:0 0 10px"></div>
         <div class="stats" id="regStats" aria-live="polite"></div>
         <div id="lista"></div>
       </div>
@@ -1423,8 +1425,10 @@ $('guardar').onclick = async () => {
   const tot = LN.reduce((a, L) => a + montoDe(L), 0), n = LN.length, cod = RES.codigo, eraEdicion = !!editId;
   try {
     const j = await call(payload);
+    const ci0 = RES.checkin || '', rr0 = rangoPer(regPer), fuera = regPer !== 'todo' && !$('buscar').value && !(ci0 >= rr0[0] && ci0 <= rr0[1]);
+    if (fuera) regPer = 'todo';
     aplicar(j); setHint(true);
-    resetForm(); msg((eraEdicion ? 'Cambios guardados: ' : 'Guardado: ') + n + (n === 1 ? ' servicio' : ' servicios') + ' · ' + money(tot) + ' · ' + cod, 'ok');
+    resetForm(); msg((fuera ? 'Su check-in está fuera del periodo: ahora ves «Todo». ' : '') + (eraEdicion ? 'Cambios guardados: ' : 'Guardado: ') + n + (n === 1 ? ' servicio' : ' servicios') + ' · ' + money(tot) + ' · ' + cod, 'ok');
   } catch (e) { msg(String(e.message || e), 'err'); }
   guardando = false; $('guardar').disabled = false;
 };
@@ -1467,14 +1471,33 @@ function editarLinea(id) {
   $('resCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-let regAnio = 'todos', regVer = 40;
 function aniosDeDatos() { const s = {}; DATA.lineas.forEach(l => { if (l.anio) s[l.anio] = 1; }); return Object.keys(s).map(Number).sort((a, b) => b - a); }
+let regPer = 'mes', regVer = 40, regD1 = '', regD2 = '';
+const PERS = [['mes', 'Este mes'], ['ant', 'Mes anterior'], ['tri', '3 meses'], ['anio', 'Este año'], ['todo', 'Todo'], ['rango', 'Fechas…']];
+function ultDiaMes(y, m) { return new Date(Date.UTC(y, m, 0)).getUTCDate(); }
+function rangoPer(p) {
+  const h = hoyEC(), y = +h.slice(0, 4), m = +h.slice(5, 7), pad = n => String(n).padStart(2, '0');
+  if (p === 'mes') return [y + '-' + pad(m) + '-01', y + '-' + pad(m) + '-' + pad(ultDiaMes(y, m))];
+  if (p === 'ant') { const yy = m === 1 ? y - 1 : y, mm = m === 1 ? 12 : m - 1; return [yy + '-' + pad(mm) + '-01', yy + '-' + pad(mm) + '-' + pad(ultDiaMes(yy, mm))]; }
+  if (p === 'tri') { let yy = y, mm = m - 2; if (mm < 1) { mm += 12; yy--; } return [yy + '-' + pad(mm) + '-01', y + '-' + pad(m) + '-' + pad(ultDiaMes(y, m))]; }
+  if (p === 'anio') return [y + '-01-01', y + '-12-31'];
+  if (p === 'rango') return [regD1 || '0000-01-01', regD2 || '9999-12-31'];
+  return ['0000-01-01', '9999-12-31'];
+}
+function textoPer(p, r) {
+  if (p === 'todo') return 'Todos los cobros registrados.';
+  if (p === 'rango' && !regD1 && !regD2) return 'Elige las fechas (según el check-in de la reserva).';
+  const d = r[0] === '0000-01-01' ? 'Hasta el ' + fechaBonita(r[1]) : (r[1] === '9999-12-31' ? 'Desde el ' + fechaBonita(r[0]) : 'Del ' + fechaBonita(r[0]) + ' al ' + fechaBonita(r[1]));
+  return d + ' (según el check-in de la reserva).';
+}
 function renderLista() {
-  const anios = aniosDeDatos();
-  if (regAnio !== 'todos' && anios.indexOf(Number(regAnio)) < 0) regAnio = 'todos';
-  $('regAnios').innerHTML = ['todos'].concat(anios).map(a => '<button type="button" class="chip' + (String(a) === String(regAnio) ? ' on' : '') + '" data-y="' + a + '" aria-pressed="' + (String(a) === String(regAnio)) + '">' + (a === 'todos' ? 'Todos' : a) + '</button>').join('');
   const q = $('buscar').value.trim().toLowerCase();
-  const lin = DATA.lineas.filter(l => (regAnio === 'todos' || String(l.anio) === String(regAnio)) && (!q || (l.codigo + ' ' + l.huesped + ' ' + l.concepto + ' ' + l.item).toLowerCase().indexOf(q) !== -1));
+  $('regAnios').innerHTML = PERS.map(p => { const on = p[0] === regPer && !q; return '<button type="button" class="chip' + (on ? ' on' : '') + '" data-p="' + p[0] + '" aria-pressed="' + on + '">' + p[1] + '</button>'; }).join('');
+  $('regRango').hidden = regPer !== 'rango';
+  const r = rangoPer(regPer);
+  $('regPer').textContent = q ? 'Buscando en todos los periodos.' : textoPer(regPer, r);
+  const enPer = l => regPer === 'todo' || (!!l.checkin && l.checkin >= r[0] && l.checkin <= r[1]);
+  const lin = DATA.lineas.filter(l => q ? (l.codigo + ' ' + l.huesped + ' ' + l.concepto + ' ' + l.item).toLowerCase().indexOf(q) !== -1 : enPer(l));
   const g = {}; lin.forEach(l => { (g[l.codigo] = g[l.codigo] || []).push(l); });
   const grupos = Object.keys(g).map(c => ({ c: c, l: g[c], f: g[c].reduce((m, x) => x.checkin > m ? x.checkin : m, '') })).sort((a, b) => b.f.localeCompare(a.f) || b.c.localeCompare(a.c));
   const tot = lin.reduce((a, l) => a + l.monto, 0);
@@ -1482,7 +1505,7 @@ function renderLista() {
   $('regStats').className = 'stats s4';
   $('regStats').innerHTML = '<div class="stat"><div class="k">Cobros</div><div class="v">' + lin.length + '</div></div><div class="stat"><div class="k">Total</div><div class="v">' + money(tot) + '</div></div>' +
     '<div class="stat"><div class="k">Reservas</div><div class="v">' + grupos.length + '</div></div><div class="stat"><div class="k">Por reserva</div><div class="v">' + (grupos.length ? money(tot / grupos.length) : '—') + '</div></div>';
-  if (!grupos.length) { $('lista').innerHTML = '<div class="empty">' + (DATA.lineas.length ? 'Sin resultados.' : 'Aún no hay cobros registrados.') + '</div>'; return; }
+  if (!grupos.length) { $('lista').innerHTML = '<div class="empty">' + (!DATA.lineas.length ? 'Aún no hay cobros registrados.' : (q ? 'Sin resultados.' : 'No hay cobros en este periodo. Prueba «Mes anterior» o «Todo».')) + '</div>'; return; }
   $('lista').innerHTML = grupos.slice(0, regVer).map(gr => {
     const h = gr.l[0], s = gr.l.reduce((a, x) => a + x.monto, 0);
     return '<div class="list-item" data-g="' + esc(gr.c) + '"><div class="top"><b>' + esc(h.huesped || 'Sin nombre') + '</b><span class="tot">' + money(s) + '</span></div>' +
@@ -1498,7 +1521,8 @@ function renderLista() {
   }).join('') + (grupos.length > regVer ? '<button type="button" class="btn btn-ghost" id="verMas" style="width:100%">Ver más (' + (grupos.length - regVer) + ')</button>' : '');
 }
 $('buscar').addEventListener('input', () => { regVer = 40; renderLista(); });
-$('regAnios').addEventListener('click', e => { const b = e.target.closest('[data-y]'); if (!b) return; regAnio = b.dataset.y; regVer = 40; renderLista(); });
+$('regAnios').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (!b) return; regPer = b.dataset.p; regVer = 40; if (regPer !== 'rango' && $('buscar').value) $('buscar').value = ''; renderLista(); if (regPer === 'rango' && window.RangoFechas && !$('rgD1')._rf) { RangoFechas.montar({ ci: $('rgD1'), co: $('rgD2'), titulo: 'Periodo de los cobros' }); } });
+['rgD1', 'rgD2'].forEach(id => $(id).addEventListener('change', () => { regD1 = $('rgD1').value || ''; regD2 = $('rgD2').value || ''; regVer = 40; renderLista(); }));
 $('lista').addEventListener('click', async e => {
   if (e.target.closest('#verMas')) { regVer += 40; renderLista(); return; }
   const ed = e.target.closest('[data-ed]'); if (ed) { editarLinea(ed.dataset.ed); return; }
