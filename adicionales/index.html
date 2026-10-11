@@ -1160,8 +1160,19 @@ function itemsPorConcepto(activosSolo, incluirId) {
   DATA.catalogo.forEach(c => { if (activosSolo && !c.activo && c.id !== incluirId) return; (g[c.concepto] = g[c.concepto] || []).push(c); });
   return Object.keys(g).sort((a, b) => a.localeCompare(b, 'es')).map(k => ({ concepto: k, items: g[k].sort((a, b) => a.item.localeCompare(b.item, 'es')) }));
 }
+function usoDeItems() {
+  const u = {};
+  DATA.lineas.forEach(l => { const k = (l.origen === 'Descuento' || l.origen === 'Ajuste' ? '' : l.concepto) + '|' + l.item; u[k] = (u[k] || 0) + 1; });
+  return c => u[(esDesc(c) ? '' : c.concepto) + '|' + c.item] || 0;
+}
+/* Desplegable de servicios: de mayor a menor uso (rubros e ítems); empates en orden alfabético. */
+function itemsPorUso(sel) {
+  const uso = usoDeItems(), gs = itemsPorConcepto(true, sel);
+  gs.forEach(g => { g.items.sort((a, b) => uso(b) - uso(a) || a.item.localeCompare(b.item, 'es')); g.n = g.items.reduce((s, c) => s + uso(c), 0); });
+  return gs.sort((a, b) => b.n - a.n || a.concepto.localeCompare(b.concepto, 'es'));
+}
 function optsItems(sel) {
-  return '<option value="">Elige un servicio o producto…</option>' + itemsPorConcepto(true, sel).map(g =>
+  return '<option value="">Elige un servicio o producto…</option>' + itemsPorUso(sel).map(g =>
     '<optgroup label="' + esc(g.concepto) + '">' + g.items.map(c => '<option value="' + esc(c.id) + '"' + (c.id === sel ? ' selected' : '') + '>' + esc(c.item) + (c.activo ? '' : ' (desactivado)') + '</option>').join('') + '</optgroup>').join('');
 }
 function badgeDe(L) {
@@ -1598,11 +1609,13 @@ function itemCatHTML(c) {
       '<div class="field"><label for="cd-' + esc(c.id) + '">Rige desde</label><input type="date" id="cd-' + esc(c.id) + '" value="' + esc(HOY) + '"></div></div>' +
       '<div class="actions"><button type="button" class="btn btn-acc btn-sm" data-pp="' + esc(c.id) + '">Guardar precio</button></div><div class="small">Lo ya registrado no cambia. Si ya existe un precio con esa fecha, se reemplaza.</div>';
   }
+  if (c.cobro !== 'descuento' && !c.ligado) h += '<h5>Forma de cobro</h5><div class="field"><select id="cc-' + esc(c.id) + '" data-cc="' + esc(c.id) + '" aria-label="Forma de cobro de ' + esc(c.item) + '">' + COBROS.filter(x => x.v !== 'descuento').map(x => '<option value="' + x.v + '"' + (x.v === c.cobro ? ' selected' : '') + '>' + esc(x.n) + '</option>').join('') + '</select></div><div class="small">' + esc(cobroDe(c.cobro).d) + ' Lo ya registrado no cambia.</div>';
   h += '<h5>Nota</h5><div class="field"><input id="cn-' + esc(c.id) + '" maxlength="120" value="' + esc(c.nota) + '" placeholder="Opcional" aria-label="Nota de ' + esc(c.item) + '"></div>' +
     '<div class="actions"><button type="button" class="btn btn-ghost btn-sm" data-nt="' + esc(c.id) + '">Guardar nota</button><button type="button" class="btn btn-ghost btn-sm" data-ac="' + esc(c.id) + '" data-v="' + (c.activo ? '0' : '1') + '">' + (c.activo ? 'Desactivar' : 'Activar') + '</button></div>' +
     '<div class="msg" data-cm="' + esc(c.id) + '" role="status"></div></div></details>';
   return h;
 }
+$('catLista').addEventListener('change', e => { const s = e.target.closest('[data-cc]'); if (!s) return; const id = s.dataset.cc; catCall(id, { accion: 'editarItem', itemId: id, cobro: s.value }, 'Forma de cobro guardada: ' + cobroDe(s.value).n + '.', s); });
 $('catLista').addEventListener('toggle', e => { const d = e.target; if (d && d.dataset && d.dataset.id) CAT_OPEN[d.dataset.id] = d.open; }, true);
 function catMsg(id, t, c) { const m = document.querySelector('[data-cm="' + id + '"]') || $('catMsg'); m.className = 'msg' + (c ? ' ' + c : ''); m.textContent = t; }
 async function catCall(id, body, okTxt, btn) {
