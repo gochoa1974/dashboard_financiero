@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v7 · 8 rubros fijos, descuento/cortesía integrado, techo semanal">
+<meta name="app-version" content="adicionales v8 · catálogo unificado (8 rubros), descuento/cortesía integrado, techo semanal">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -794,7 +794,7 @@ input[type=checkbox]{width:22px;height:22px;min-height:0;padding:0;flex:none;acc
 </script>
 <script>
 // ===== URL de tu implementación de Apps Script de INGRESOS ADICIONALES (termina en /exec) =====
-const FIXED_URL = 'https://script.google.com/macros/s/AKfycbza2UyX1NhdzI3TwbwGLaMra2XJtjXIawy7cUlgz6x2UAcn_l8V8F5hl3wqLY9w1Dc71g/exec';
+const FIXED_URL = 'https://script.google.com/macros/s/AKfycbxlRTJYNRB7ZbN2lpwySWywPpyMoxbdtoIS0ycMx3B0YoMaIuoTs36SF6zc597Lvkbm/exec';
 // Reservas directas (para elegir la reserva) y Parámetros (para el no-show, regla R6)
 const DIR_URL = 'https://script.google.com/macros/s/AKfycbw_iMuMSlc-dfdeXI71xk4x6Zir53mC93uPwZpHS-iInB4-OqvKLZIf57gAKIVkS8BbfA/exec';
 const PARAM_URL = 'https://script.google.com/macros/s/AKfycbxJX9a0T36KJWdDB4sGZ0FAGufRCTRwQgxmUwGQqZAlXu5754Jh2ghxv6nU8wkMmqV8xw/exec';
@@ -823,7 +823,7 @@ function claveRechazada(modulo) {
 }
 
 const DATAKEY = 'cimablanca_adic_data', TABKEY = 'cimablanca_adic_tab', RESOLKEY = 'cimablanca_adic_resol';
-const ITEM_DESCUENTO = 'Descuento acordado', ITEM_AJUSTE = 'Ajuste de la resolución', CONCEPTO_AJUSTE = 'Resolución Airbnb (Extra)';
+const ITEM_AJUSTE = 'Ajuste de la resolución';
 const RESKEY = 'cimablanca_canc_reservas_cache', DIRKEY = 'cimablanca_canc_dir_cache';
 const ANUNCIOS = [
   { v: 'LST-03_4 pax', n: 'MiamiCito', alias: 'LST-03', cap: 4 },
@@ -900,6 +900,7 @@ function catDeLinea(l) {
 }
 function precioVigente(it, fecha) { let r = null; (it.precios || []).forEach(p => { if (p.desde && p.desde <= fecha) r = p; }); return r; }
 function cobroDe(v) { return COBROS.filter(c => c.v === v)[0] || COBROS[0]; }
+function labCant(it) { const n = (it.item || '').toLowerCase(); if (n.indexOf('huésped adicional') === 0) return 'Número de huéspedes'; if (n.indexOf('mascota') === 0) return 'Número de mascotas'; if (n.indexOf('vehículo adicional') === 0 || n.indexOf('upgrade techado') === 0) return 'Número de vehículos'; return 'Cantidad'; }
 function usaCant(it) { return it.cobro !== 'noche' && it.cobro !== 'descuento'; }
 function usaFechas(it) { return it.cobro !== 'unidad' && it.cobro !== 'descuento'; }
 function multDe(cobro, cant, noches) { return cobro === 'noche' ? noches : (cobro === 'unidad_noche' ? cant * noches : cant); }
@@ -1281,7 +1282,7 @@ function lineaHTML(L, i) {
   if (it && esDesc(it)) { return h + descHTML(L, it, k) + '</div>'; }
   if (it) {
     if (usaCant(it)) {
-      h += '<div class="field"><label for="ct' + k + '">Cantidad</label><div class="stepper"><button type="button" class="stp" data-st="-1" data-k="' + k + '" aria-label="Restar uno">−</button>' +
+      h += '<div class="field"><label for="ct' + k + '">' + labCant(it) + '</label><div class="stepper"><button type="button" class="stp" data-st="-1" data-k="' + k + '" aria-label="Restar uno">−</button>' +
         '<input type="number" inputmode="numeric" id="ct' + k + '" data-f="cant" min="1" max="99" step="1" value="' + esc(L.cant) + '"><button type="button" class="stp" data-st="1" data-k="' + k + '" aria-label="Sumar uno">+</button></div></div>';
     }
     if (usaFechas(it)) {
