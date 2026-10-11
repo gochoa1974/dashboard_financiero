@@ -322,7 +322,8 @@ let editCodigo = null, editFirma = '', anuncio = ANUNCIOS[0].v, medio = 'TRANSFE
 let F = nuevoForm();
 
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-function money(n) { return '$' + (Math.round((Number(n) || 0) * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+const fnum = (n, d) => { n = Number(n) || 0; const p = Math.abs(n).toFixed(d == null ? 2 : d).split('.'); return (n < 0 ? '-' : '') + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (p[1] ? ',' + p[1] : ''); };
+function money(n) { const v = Math.round((Number(n) || 0) * 100) / 100; return (v < 0 ? '-' : '') + '$' + fnum(Math.abs(v), 2); }
 function numCod(c) { const m = /^Reserva_Directa_(\d+)$/.exec(String(c || '')); return m ? parseInt(m[1], 10) : 0; }
 function nuevoForm() { return { ci: '', co: '', coManual: false, tot: '', lim: '', limManual: false, pax: 2, modo: 'prom', noches: [] }; }
 const NOCHES_MAX = 60, DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
