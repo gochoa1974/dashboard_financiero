@@ -185,6 +185,8 @@
   var AUTO = /[?&]auto=1/.test(location.search);   // modo automático: viene del dashboard
   var SYNC_KEY = "cimablanca_sync_info";            // { t: cuándo se sincronizó, csvMax: CSV más nuevo visto, n: reservas }
   var csvMaxMod = "";
+  var ING_VER = "8";            // v8: el resumen guarda también las resoluciones; si la versión guardada es otra, se vuelve a procesar una vez
+  var resolMap = {};            // v8: pagos y ajustes de resolución del CSV (se quitan duplicados entre archivos)
   var lastOk = false;
   var autoStarted = false;
 
@@ -392,6 +394,36 @@
     return s;
   }
 
+  // v8: "Pago de la resolución" y "Ajuste de la resolución" no son reservas (no entran en las cifras de ingresos); se guardan aparte para que el
+  // panel de Adicionales avise cuáles faltan por registrar. Pago = suma, Ajuste = resta (el CSV ya trae el monto con su signo).
+  function collectResoluciones(file) {
+    file.rows.forEach(function (row) {
+      var tipo = (row["Tipo"] || "").trim();
+      var t = tipo === "Pago de la resolución" ? "Pago" : (tipo === "Ajuste de la resolución" ? "Ajuste" : "");
+      if (!t) return;
+      var code = cleanCode(row["Código de confirmación"]);
+      if (!code) return;
+      var monto = toNumber(row["Monto"]);
+      var fecha = toIsoDate(row["Fecha"]);
+      var det = String(row["Detalles"] || "").trim();
+      var key = [t, code, fecha, monto.toFixed(2), det].join("|");
+      if (resolMap[key]) return;
+      resolMap[key] = {
+        codigo_confirmacion: code,
+        tipo: t,
+        fecha: fecha,
+        monto: Math.round(monto * 100) / 100,
+        huesped: row["Huésped"] || "",
+        anuncio: row["Anuncio"] || "",
+        fecha_inicio: toIsoDate(row["Fecha de inicio"]),
+        fecha_finalizacion: toIsoDate(row["Fecha de finalización"]),
+        noches: toNumber(row["Noches"]),
+        detalles: det,
+        archivo_origen: file.fileName
+      };
+    });
+  }
+
   function buildRecordsForFile(file) {
     var byCode = {};
     file.rows.forEach(function (row) {
@@ -462,7 +494,9 @@
         chain = chain.then(function () {
           log("Leyendo " + f.name + "...");
           return downloadFileText(f.id).then(function (text) {
-            rowsByFile.push({ fileName: f.name, modifiedTime: f.modifiedTime, rows: parseCsv(text) });
+            var parsed = parseCsv(text);
+            rowsByFile.push({ fileName: f.name, modifiedTime: f.modifiedTime, rows: parsed });
+            collectResoluciones({ fileName: f.name, rows: parsed });
           });
         });
       });
@@ -580,7 +614,7 @@
   function runSync() {
     clearError();
     els.btnSync.disabled = true;
-    lastOk = false; csvMaxMod = "";
+    lastOk = false; csvMaxMod = ""; resolMap = {};
     els.resultCard.classList.add("hidden");
     log("Buscando carpeta raíz \"" + ROOT_FOLDER_NAME + "\"...");
 
@@ -692,7 +726,7 @@
   }
 
   function guardarInfoSync(n) {
-    try { localStorage.setItem(SYNC_KEY, JSON.stringify({ t: new Date().toISOString(), csvMax: csvMaxMod, n: n })); } catch (e) {}
+    try { localStorage.setItem(SYNC_KEY, JSON.stringify({ t: new Date().toISOString(), csvMax: csvMaxMod, n: n })); localStorage.setItem("cimablanca_ing_ver", ING_VER); } catch (e) {}
   }
   function leerInfoSync() {
     try { return JSON.parse(localStorage.getItem(SYNC_KEY) || "null"); } catch (e) { return null; }
@@ -723,7 +757,8 @@
       .then(function (r) { maestro = r[2]; return Promise.all([listFilesInFolder(r[0].id), listFilesInFolder(r[1].id)]); })
       .then(function (ls) {
         ls[0].concat(ls[1]).forEach(function (f) { if (/\.csv$/i.test(f.name) && (f.modifiedTime || "") > mx) mx = f.modifiedTime; });
-        if (maestro && maestro.modifiedTime && mx && mx <= maestro.modifiedTime) {
+        var verOk = false; try { verOk = localStorage.getItem("cimablanca_ing_ver") === ING_VER; } catch (e) {}
+        if (verOk && maestro && maestro.modifiedTime && mx && mx <= maestro.modifiedTime) {
           log("Sin CSV nuevos: el resumen (" + maestro.modifiedTime + ") es posterior al CSV más nuevo (" + mx + ").");
           try { localStorage.setItem(SYNC_KEY, JSON.stringify({ t: maestro.modifiedTime, csvMax: mx })); } catch (e) {}
           volverAlDashboard("al_dia"); return;
@@ -802,7 +837,8 @@
       propiedad: "Cima Blanca",
       resumen: resumen,
       reservas: master,
-      ingresos_adicionales: adicionales
+      ingresos_adicionales: adicionales,
+      resoluciones: Object.keys(resolMap).map(function (k) { return resolMap[k]; }).sort(function (a, b) { return (a.fecha || "").localeCompare(b.fecha || "") || a.codigo_confirmacion.localeCompare(b.codigo_confirmacion); })
     };
   }
 
