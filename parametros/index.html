@@ -1,1 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Parámetros · Cima Blanca</title>
+<link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
+<link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#edf2f4;--surface:#ffffff;--ink:#0a2233;--mut:#5f7080;--line:#dde5ea;
+  --hero1:#0a2233;--hero2:#123a52;--hero-mute:#9fc0d3;
+  --accent:#0f9d6e;--accent-ink:#ffffff;--accent-bg:rgba(15,157,110,.12);
+  --warn:#b45309;--warn-bg:rgba(180,83,9,.12);--info-bg:rgba(95,112,128,.12);
+  --ok:#0f9d6e;--bad:#dc2626;
+  --shadow:0 1px 2px rgba(10,34,51,.05),0 8px 20px -12px rgba(10,34,51,.2)
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#071722;--surface:#0e2536;--ink:#eaf2f6;--mut:#8fa6b5;--line:#1a3649;
+    --hero1:#0f3550;--hero2:#14506b;--hero-mute:#9fc0d3;
+    --accent:#2fd49a;--accent-ink:#04231a;--accent-bg:rgba(47,212,154,.16);
+    --warn:#f59e0b;--warn-bg:rgba(245,158,11,.16);--info-bg:rgba(143,166,181,.14);
+    --ok:#2fd49a;--bad:#f87171;
+    --shadow:0 1px 2px rgba(0,0,0,.4)
+  }
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;min-height:100vh;padding:20px 16px 48px;
+  font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased}
+.wrap{width:100%;max-width:640px;margin:0 auto}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--mut);font-size:13px;font-weight:700;text-decoration:none;margin-bottom:14px;min-height:36px}
+.hero{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--hero1),var(--hero2));color:#fff;
+  border-radius:24px;padding:22px 20px;box-shadow:0 18px 34px -16px rgba(10,34,51,.7);text-align:center;margin-bottom:18px}
+.hero h1{margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}
+.hero p{margin:6px 0 0;font-size:13px;color:var(--hero-mute);font-weight:600}
 
+.gate{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px 18px;box-shadow:var(--shadow)}
+.gate h2{margin:0 0 6px;font-size:16px;font-weight:800}
+.gate p{margin:0 0 14px;font-size:13px;color:var(--mut);font-weight:600;line-height:1.5}
+.pw{display:flex;gap:8px}
+input,select,textarea{font-family:inherit;font-size:16px;border:1px solid var(--line);border-radius:12px;
+  padding:11px 12px;background:var(--bg);color:var(--ink);width:100%;min-height:46px}
+textarea{resize:vertical;min-height:72px;line-height:1.45}
+input.bad,textarea.bad{border-color:var(--bad);box-shadow:0 0 0 3px rgba(220,38,38,.18)}
+.btn{appearance:none;border:none;border-radius:12px;padding:11px 16px;font-family:inherit;font-weight:800;font-size:14px;cursor:pointer;min-height:44px;transition:transform .12s,opacity .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.55;cursor:wait}
+.btn-acc{background:var(--accent);color:var(--accent-ink)}
+.btn-ghost{background:transparent;color:var(--mut);border:1px solid var(--line)}
+.btn-edit{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent)}
+.btn-sm{padding:8px 12px;font-size:13px;border-radius:10px;min-height:40px}
+.btn-bad{background:var(--bad);color:#fff}
+.btn svg{width:15px;height:15px;flex:none}
+.msg{font-size:12.5px;font-weight:700;margin-top:8px;min-height:16px}
+.msg.err{color:var(--bad)}
+.msg.ok{color:var(--ok)}
+#app{display:none}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+.card h3{margin:0 0 4px;font-size:15px;font-weight:800}
+.card .hint{margin:0 0 14px;font-size:12.5px;color:var(--mut);font-weight:600;line-height:1.5}
+.field{margin-bottom:14px}
+.field label,.lbl{display:block;font-size:12.5px;font-weight:700;color:var(--mut);margin-bottom:5px}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.row2>*{min-width:0}
+input[type=date]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none}
+.sync{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;font-size:12.5px;color:var(--mut);font-weight:700}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[readonly]{opacity:.8;cursor:not-allowed}
+.small{font-size:12px;color:var(--mut);font-weight:600;margin-top:6px;line-height:1.45}
+
+.codigo{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px dashed var(--line);border-radius:12px;padding:10px 12px;margin-bottom:14px;background:var(--bg)}
+.codigo b{font-size:14px;font-weight:800;overflow-wrap:anywhere}
+.codigo span{font-size:12px;color:var(--mut);font-weight:700;white-space:nowrap}
+
+.alerta{border:1px solid var(--warn);background:var(--warn-bg);color:var(--ink);border-radius:14px;padding:12px 14px;margin-bottom:16px}
+.alerta.info{border-color:var(--line);background:var(--info-bg)}
+.alerta b{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:800;color:var(--warn);margin-bottom:6px}
+.alerta.info b{color:var(--mut)}
+.alerta ul{margin:0;padding-left:18px;font-size:12.5px;font-weight:600;line-height:1.55}
+.alerta li.inf{color:var(--mut)}
+
+.chips{display:grid;grid-template-columns:1fr;gap:8px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chip{appearance:none;font-family:inherit;font-weight:700;font-size:13px;line-height:1.25;text-align:left;min-height:48px;padding:10px 12px;
+  border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:10px;
+  transition:transform .12s,border-color .15s,background .15s,color .15s}
+.chip:active{transform:scale(.97)}
+.chip.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.chip small{display:block;font-size:11.5px;font-weight:600;color:var(--mut);margin-top:1px}
+.chip.on small{color:var(--accent)}
+.seg .chip{justify-content:center;text-align:center}
+.dot{flex:none;width:18px;height:18px;border-radius:50%;border:2px solid var(--line);transition:all .15s}
+.chip.on .dot{border-color:var(--accent);background:radial-gradient(var(--accent) 45%,transparent 50%)}
+
+.tramo{border:1px solid var(--line);border-radius:14px;padding:12px 14px 4px;margin-bottom:12px;background:var(--bg)}
+.tramo-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:13.5px;font-weight:800}
+.tramo-h small{font-size:11.5px;font-weight:700;color:var(--mut);margin-left:6px}
+.tramo input,.tramo select{background:var(--surface)}
+.noche{display:grid;grid-template-columns:1fr 130px;gap:10px;align-items:center;margin-bottom:8px}
+.noche .nd{font-size:14px;font-weight:700}
+.noche .nd small{display:block;font-size:11.5px;color:var(--mut);font-weight:600}
+.noche input{background:var(--surface);text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+.chk{border-radius:12px;padding:10px 12px;font-size:13px;font-weight:800;margin:4px 0 12px;border:1px solid var(--line);background:var(--bg)}
+.chk.ok{color:var(--ok,#0a7d4b);border-color:currentColor}
+.chk.bad{color:var(--bad)}
+.link{appearance:none;background:none;border:none;padding:10px 0;margin:0;color:var(--accent);font-family:inherit;font-weight:800;font-size:13px;cursor:pointer;min-height:44px}
+.link.bad{color:var(--bad)}
+.stepper{display:grid;grid-template-columns:48px 1fr 48px;gap:8px;align-items:stretch}
+.stp{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;font-family:inherit;font-size:22px;font-weight:800;min-height:48px;cursor:pointer;transition:transform .12s}
+.stp:active{transform:scale(.94)}
+.stepper input{text-align:center;font-weight:800;font-size:18px;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 16px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg)}
+.stat .k{font-size:11.5px;color:var(--mut);font-weight:700}
+.stat .v{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px;overflow-wrap:anywhere}
+
+.sticky{position:sticky;bottom:10px;z-index:20;margin-top:12px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 28px -10px rgba(10,34,51,.35)}
+.sticky .msg{margin:0 0 8px;min-height:0}
+.sticky .msg:empty{display:none}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.sticky .btn-acc{flex:1;min-height:48px}
+.sticky .btn-ghost{min-height:48px}
+
+.list-item{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;background:var(--bg)}
+.list-item .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.list-item b{font-size:14px;overflow-wrap:anywhere}
+.tag{font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--accent-bg);color:var(--accent);white-space:nowrap}
+.list-item .meta{font-size:12.5px;color:var(--mut);font-weight:600;margin-top:4px;line-height:1.55}
+.list-item .tot{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
+.list-item .cmt{margin-top:6px;padding:8px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:12.5px;font-weight:600;line-height:1.45;overflow-wrap:anywhere}
+.list-item .btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.list-item.flash{animation:flash 1.6s ease}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
+.empty{font-size:13px;color:var(--mut);font-weight:600;text-align:center;padding:18px 0}
+@media (min-width:900px){.wrap{max-width:760px}.chips{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:380px){.row2{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.apphead{display:flex;align-items:center;gap:12px;padding:4px 0 16px}
+.backbtn{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;flex:0 0 auto;text-decoration:none;box-shadow:var(--shadow)}
+.backbtn:active{transform:scale(.94)}
+.backbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.apphead .logo{width:40px;height:40px;border-radius:50%;object-fit:cover;display:block;flex:0 0 auto}
+.apphead .ttl{min-width:0}
+.apphead .ttl b{display:block;font-size:15px;font-weight:700;letter-spacing:-.01em}
+.apphead .ttl span{display:block;font-size:12px;color:var(--mut);font-weight:600;margin-top:1px}
+
+.vig{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--bg);margin-bottom:14px}
+.vig .k{font-size:12px;color:var(--mut);font-weight:700}
+.vig .v{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.vig .o{font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;background:var(--accent-bg);color:var(--accent);white-space:nowrap}
+.vig .o.ex{background:var(--warn-bg);color:var(--warn)}
+.sec{font-size:12.5px;font-weight:800;margin:16px 0 8px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.it{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.it .t{font-size:13px;font-weight:700;line-height:1.4;min-width:0}
+.it .t small{display:block;font-size:11.5px;color:var(--mut);font-weight:600}
+.it .val{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.it .btns{display:flex;gap:8px;width:100%}
+.frm{border:1px dashed var(--accent);border-radius:14px;padding:12px 12px 2px;margin:10px 0;background:var(--surface)}
+.frm h4{margin:0 0 10px;font-size:13.5px;font-weight:800}
+.nada{font-size:12.5px;color:var(--mut);font-weight:600;padding:4px 0 8px}
+details summary{cursor:pointer;font-size:12.5px;font-weight:800;color:var(--accent);padding:8px 0;min-height:40px;display:flex;align-items:center}
+.hist .it{opacity:.85}
+.apphead{display:flex;align-items:center;gap:12px;padding:4px 0 16px}
+.backbtn{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;flex:0 0 auto;text-decoration:none;box-shadow:var(--shadow)}
+.backbtn:active{transform:scale(.94)}
+.backbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.apphead .logo{width:40px;height:40px;border-radius:50%;object-fit:cover;display:block;flex:0 0 auto}
+.apphead .ttl{min-width:0}
+.apphead .ttl b{display:block;font-size:15px;font-weight:700;letter-spacing:-.01em}
+.apphead .ttl span{display:block;font-size:12px;color:var(--mut);font-weight:600;margin-top:1px}
+@media (min-width:900px){.wrap{max-width:760px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="apphead">
+    <a class="backbtn" href="../dashboard/" aria-label="Volver al dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <img class="logo" src="../Cima-Blanca-logo.png" alt="Cima Blanca">
+    <div class="ttl"><b>Cima Blanca</b><span>Parámetros</span></div>
+  </header>
+
+  <div id="gate" class="gate">
+    <h2>Conectar con tu hoja</h2>
+    <p>Escribe tu clave una sola vez. Se guarda en este dispositivo y sirve para todos los módulos.</p>
+    <div class="pw">
+      <input type="password" id="gateKey" placeholder="Tu clave" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" aria-label="Clave">
+      <button type="button" class="btn btn-ghost btn-sm" id="gateEye">Ver</button>
+    </div>
+    <div style="margin-top:10px"><button type="button" class="btn btn-acc" id="gateGo">Conectar</button></div>
+    <div class="msg" id="gateMsg" role="status"></div>
+  </div>
+
+  <div id="app">
+    <div class="sync"><span id="syncHint">Sin sincronizar</span><button type="button" class="btn btn-ghost btn-sm" id="syncBtn">Actualizar</button></div>
+    <p class="small" style="margin:0 0 14px">Aquí cambias los valores que usan los demás módulos. Lo ya guardado en reservas <b>no se modifica</b>: cada reserva conserva el valor con que se registró.</p>
+    <div class="msg" id="msg" role="status"></div>
+    <div id="cards"></div>
+  </div>
+</div>
+
+<script>
+// ===== URL de tu implementación de Apps Script de PARÁMETROS (termina en /exec) =====
+const FIXED_URL = 'https://script.google.com/macros/s/AKfycbxJX9a0T36KJWdDB4sGZ0FAGufRCTRwQgxmUwGQqZAlXu5754Jh2ghxv6nU8wkMmqV8xw/exec';
+
+const $ = id => document.getElementById(id);
+const SHARED_KEY = 'cimablanca_clave';
+const LEGACY_KEYS = ['cimablanca_canc_cfg', 'cimablanca_dir_cfg', 'cb_gastos_cfg_v1'];
+function getClave() {
+  try {
+    const k = localStorage.getItem(SHARED_KEY);
+    if (k) return k;
+    for (const lk of LEGACY_KEYS) {
+      const o = JSON.parse(localStorage.getItem(lk) || 'null');
+      if (o && o.clave) { localStorage.setItem(SHARED_KEY, o.clave); return o.clave; }
+    }
+  } catch (e) {}
+  return '';
+}
+function setClave(k) { try { localStorage.setItem(SHARED_KEY, k); } catch (e) {} }
+function clearClave() { try { localStorage.removeItem(SHARED_KEY); LEGACY_KEYS.forEach(k => localStorage.removeItem(k)); } catch (e) {} }
+function claveRechazada(modulo) {
+  CFG = {}; clearClave();
+  $('app').style.display = 'none'; $('gate').style.display = 'block';
+  const m = $('gateMsg'); m.className = 'msg err';
+  m.textContent = 'La clave ya no es válida en ' + modulo + '. Escríbela de nuevo.';
+}
+
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+let CFG = {};
+{ const k0 = getClave(); if (k0) CFG = { url: FIXED_URL, clave: k0 }; }
+let DATA = null, abierto = null; // abierto: {p, modo:'base'|'exc', id}
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function fb(iso) { if (!iso) return ''; const x = iso.split('-'); return +x[2] + ' ' + MESES[+x[1] - 1] + ' ' + x[0]; }
+function fmt(p, v) { const n = Number(v); const t = (Math.round(n * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: p.unidad === '%' ? 1 : 2, maximumFractionDigits: 2 }); return p.unidad === '%' ? t + '%' : '$' + t; }
+
+async function call(body) {
+  if (!CFG.url || CFG.url.indexOf('PEGA-AQUI') >= 0) throw new Error('Falta pegar la URL del Apps Script de Parámetros en el archivo.');
+  const r = await fetch(CFG.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ clave: CFG.clave }, body)) });
+  const j = await r.json();
+  if (!j.ok) { if (/Clave incorrecta/.test(String(j.error))) claveRechazada('Parámetros'); throw new Error(j.error || 'Error desconocido'); }
+  return j;
+}
+function msg(t, c) { $('msg').className = 'msg' + (c ? ' ' + c : ''); $('msg').textContent = t; }
+function showApp() { $('gate').style.display = 'none'; $('app').style.display = 'block'; }
+function setHint(ok) { $('syncHint').textContent = ok ? 'Sincronizado ahora' : 'Sin datos aún'; }
+function aplicar(j) { DATA = j; render(); }
+
+async function conectar(clave) {
+  $('gateMsg').className = 'msg'; $('gateMsg').textContent = 'Conectando...';
+  CFG = { url: FIXED_URL, clave: clave };
+  try { const j = await call({ accion: 'listar' }); setClave(clave); showApp(); aplicar(j); setHint(true); }
+  catch (e) { $('gateMsg').className = 'msg err'; $('gateMsg').textContent = String(e.message || e); CFG = {}; }
+}
+$('gateGo').onclick = () => { const k = $('gateKey').value.trim(); if (!k) { $('gateMsg').className = 'msg err'; $('gateMsg').textContent = 'Escribe tu clave.'; return; } conectar(k); };
+$('gateEye').onclick = () => { const i = $('gateKey'); i.type = i.type === 'password' ? 'text' : 'password'; };
+$('gateKey').addEventListener('keydown', e => { if (e.key === 'Enter') $('gateGo').click(); });
+$('syncBtn').onclick = async () => { $('syncHint').textContent = 'Actualizando...'; try { aplicar(await call({ accion: 'listar' })); setHint(true); } catch (e) { $('syncHint').textContent = 'Error: ' + (e.message || e); } };
+
+function hoyISO() { return (DATA && DATA.hoy) || new Date().toISOString().slice(0, 10); }
+
+function formHtml(k, p) {
+  const a = abierto; if (!a || a.p !== k) return '';
+  if (a.modo === 'base') {
+    return '<div class="frm" data-p="' + k + '"><h4>Cambiar valor base</h4><div class="row2">' +
+      '<div class="field"><label for="f_v">Nuevo valor (' + esc(p.unidad === '%' ? '%' : '$') + ')</label><input type="number" inputmode="decimal" id="f_v" step="0.01" min="0" value="' + esc(a.v || '') + '"></div>' +
+      '<div class="field"><label for="f_d">Rige desde</label><input type="date" id="f_d" min="2024-01-01" max="2100-12-31" value="' + esc(a.d || hoyISO()) + '"></div></div>' +
+      '<div class="small" style="margin:-4px 0 12px">El valor anterior se conserva en el historial. No cambia lo ya guardado en reservas.</div>' +
+      '<div class="btns" style="display:flex;gap:8px;margin-bottom:12px"><button type="button" class="btn btn-acc btn-sm" data-ok="base">Guardar</button><button type="button" class="btn btn-ghost btn-sm" data-cancel>Cancelar</button></div></div>';
+  }
+  return '<div class="frm" data-p="' + k + '"><h4>' + (a.id ? 'Editar excepción' : 'Renegociado por fechas') + '</h4><div class="row2">' +
+    '<div class="field"><label for="f_d">Desde</label><input type="date" id="f_d" min="2024-01-01" max="2100-12-31" value="' + esc(a.d || '') + '"></div>' +
+    '<div class="field"><label for="f_h">Hasta (incluido)</label><input type="date" id="f_h" min="2024-01-01" max="2100-12-31" value="' + esc(a.h || '') + '"></div></div>' +
+    '<div class="row2"><div class="field"><label for="f_v">Valor en ese período (' + esc(p.unidad === '%' ? '%' : '$') + ')</label><input type="number" inputmode="decimal" id="f_v" step="0.01" min="0" value="' + esc(a.v || '') + '"></div>' +
+    '<div class="field"><label for="f_n">Nota (opcional)</label><input id="f_n" maxlength="120" placeholder="Ej. temporada baja" value="' + esc(a.n || '') + '"></div></div>' +
+    '<div class="btns" style="display:flex;gap:8px;margin-bottom:12px"><button type="button" class="btn btn-acc btn-sm" data-ok="exc">Guardar</button><button type="button" class="btn btn-ghost btn-sm" data-cancel>Cancelar</button></div></div>';
+}
+
+function render() {
+  if (!DATA) return;
+  $('cards').innerHTML = Object.keys(DATA.parametros).map(k => {
+    const p = DATA.parametros[k], h = p.hoy, ex = h.origen === 'excepcion';
+    const baseVig = p.bases.filter(b => b.desde <= hoyISO()).slice(-1)[0] || p.bases[0];
+    const excs = p.excepciones.map(x =>
+      '<div class="it"><div class="t">' + fb(x.desde) + ' → ' + fb(x.hasta) + '<small>' + esc(x.nota || 'Sin nota') + '</small></div><div class="val">' + fmt(p, x.valor) + '</div>' +
+      '<div class="btns"><button type="button" class="btn btn-edit btn-sm" data-edit="' + esc(x.id) + '" data-p="' + k + '">Editar</button>' +
+      '<button type="button" class="btn btn-ghost btn-sm" data-del="' + esc(x.id) + '">Borrar</button></div></div>').join('');
+    const hist = p.bases.slice().reverse().map(b => '<div class="it"><div class="t">Desde ' + fb(b.desde) + '<small>' + esc(b.nota || '') + '</small></div><div class="val">' + fmt(p, b.valor) + '</div></div>').join('');
+    return '<div class="card" data-card="' + k + '"><h3>' + esc(p.nombre) + '</h3>' +
+      '<p class="hint">La fecha que cuenta es: ' + esc(p.fechaDe) + '.</p>' +
+      '<div class="vig"><div><div class="k">Hoy vale</div><div class="v">' + fmt(p, h.valor) + '</div></div><span class="o' + (ex ? ' ex' : '') + '">' + (ex ? 'Renegociado hasta ' + fb(h.hasta) : 'Valor base') + '</span></div>' +
+      '<div class="sec"><span>Valor base: ' + fmt(p, baseVig.valor) + '</span><button type="button" class="btn btn-ghost btn-sm" data-base="' + k + '">Cambiar valor base</button></div>' +
+      (abierto && abierto.p === k && abierto.modo === 'base' ? formHtml(k, p) : '') +
+      '<div class="sec"><span>Renegociado por fechas</span><button type="button" class="btn btn-ghost btn-sm" data-nueva="' + k + '">+ Agregar</button></div>' +
+      (abierto && abierto.p === k && abierto.modo === 'exc' ? formHtml(k, p) : '') +
+      (excs || '<div class="nada">Sin excepciones. Se usa el valor base en todas las fechas.</div>') +
+      '<details class="hist"><summary>Historial del valor base (' + p.bases.length + ')</summary>' + hist + '</details></div>';
+  }).join('');
+}
+
+$('cards').addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  const card = t.closest('[data-card]'), k = card && card.dataset.card;
+  if (t.dataset.base) { abierto = { p: t.dataset.base, modo: 'base' }; render(); const f = $('f_v'); if (f) f.focus(); return; }
+  if (t.dataset.nueva) { abierto = { p: t.dataset.nueva, modo: 'exc' }; render(); const f = $('f_d'); if (f) f.focus(); return; }
+  if (t.dataset.edit) {
+    const x = DATA.parametros[k].excepciones.filter(z => z.id === t.dataset.edit)[0]; if (!x) return;
+    abierto = { p: k, modo: 'exc', id: x.id, d: x.desde, h: x.hasta, v: x.valor, n: x.nota }; render(); const f = $('f_v'); if (f) f.focus(); return;
+  }
+  if (t.hasAttribute('data-cancel')) { abierto = null; render(); msg(''); return; }
+  if (t.dataset.del) {
+    if (t.dataset.armed !== '1') {
+      t.dataset.armed = '1'; t.textContent = '¿Seguro? Borrar'; t.classList.remove('btn-ghost'); t.classList.add('btn-bad');
+      setTimeout(() => { if (t.isConnected) { t.dataset.armed = ''; t.textContent = 'Borrar'; t.classList.add('btn-ghost'); t.classList.remove('btn-bad'); } }, 4000);
+      return;
+    }
+    t.disabled = true; msg('Borrando...');
+    try { aplicar(await call({ accion: 'borrarExcepcion', id: t.dataset.del })); setHint(true); msg('Excepción borrada.', 'ok'); }
+    catch (err) { t.disabled = false; msg(String(err.message || err), 'err'); }
+    return;
+  }
+  if (t.dataset.ok) {
+    const v = $('f_v').value, d = $('f_d').value; if (v === '') { msg('Escribe el valor.', 'err'); $('f_v').classList.add('bad'); $('f_v').focus(); return; }
+    t.disabled = true; msg('Guardando...');
+    try {
+      const body = t.dataset.ok === 'base' ? { accion: 'guardarBase', parametro: abierto.p, valor: v, desde: d } :
+        { accion: 'guardarExcepcion', parametro: abierto.p, id: abierto.id || '', valor: v, desde: d, hasta: $('f_h').value, nota: $('f_n').value };
+      aplicar(await call(body)); abierto = null; render(); setHint(true); msg('Guardado. Ya lo usan los demás módulos desde ahora.', 'ok');
+    } catch (err) { t.disabled = false; msg(String(err.message || err), 'err'); }
+  }
+});
+document.addEventListener('input', e => { if (e.target && e.target.classList) e.target.classList.remove('bad'); });
+
+if (CFG.url && CFG.clave) { showApp(); call({ accion: 'listar' }).then(j => { aplicar(j); setHint(true); }).catch(e => { msg(String(e.message || e), 'err'); }); }
+</script>
+</body>
+</html>
