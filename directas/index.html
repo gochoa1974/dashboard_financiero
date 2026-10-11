@@ -159,6 +159,94 @@ input[readonly]{opacity:.8;cursor:not-allowed}
 .apphead .ttl{min-width:0}
 .apphead .ttl b{display:block;font-size:15px;font-weight:700;letter-spacing:-.01em}
 .apphead .ttl span{display:block;font-size:12px;color:var(--mut);font-weight:600;margin-top:1px}
+/* ===== Calendario de rango (estilo Airbnb) · componente compartido v1 ===== */
+.row2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.row2>*{min-width:0}
+.rf-btn{min-width:0;display:flex;align-items:center;gap:8px;width:100%;min-height:46px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;
+  background:var(--bg);color:var(--ink);font-family:inherit;font-size:16px;font-weight:600;text-align:left;cursor:pointer;
+  transition:border-color .15s,box-shadow .15s,transform .12s}
+.rf-btn:active{transform:scale(.99)}
+.rf-btn svg{width:18px;height:18px;flex:none;color:var(--mut)}
+.rf-btn .rf-v{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rf-btn .rf-v.rf-ph{color:var(--mut);font-weight:500}
+.rf-btn.bad,.rf-btn.bad-field{border-color:var(--bad);box-shadow:0 0 0 3px rgba(220,38,38,.18)}
+.rf-ov{position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-end;justify-content:center;background:rgba(7,23,34,.55);
+  opacity:0;transition:opacity .18s}
+.rf-ov.rf-on{opacity:1}
+.rf-p{position:relative;width:100%;max-height:92vh;max-height:92dvh;overflow:auto;background:var(--surface);color:var(--ink);
+  border-radius:22px 22px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -18px 40px -18px rgba(0,0,0,.5);
+  transform:translateY(24px);transition:transform .2s ease-out;font-family:inherit}
+.rf-ov.rf-on .rf-p{transform:none}
+.rf-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.rf-top h4{margin:0;font-size:16px;font-weight:800}
+.rf-help{margin:2px 0 0;font-size:12.5px;font-weight:700;color:var(--accent);min-height:18px}
+.rf-x{appearance:none;border:1px solid var(--line);background:transparent;color:var(--mut);border-radius:12px;width:44px;height:44px;flex:none;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.rf-x svg{width:18px;height:18px}
+.rf-sum{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px;margin-bottom:12px;align-items:stretch}
+.rf-s{appearance:none;text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:8px 10px;
+  font-family:inherit;cursor:pointer;min-height:48px;min-width:0}
+.rf-s small{display:block;font-size:11px;font-weight:700;color:var(--mut)}
+.rf-s b{display:block;font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rf-s.rf-act{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-bg)}
+.rf-n{display:flex;align-items:center;justify-content:center;padding:0 12px;border-radius:12px;background:var(--accent-bg);color:var(--accent);
+  font-size:13px;font-weight:800;white-space:nowrap}
+.rf-n:empty{display:none}
+.rf-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.rf-nav button{appearance:none;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:12px;width:44px;height:44px;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.rf-nav button svg{width:18px;height:18px}
+.rf-nav button[disabled]{opacity:.35;cursor:default}
+.rf-ms{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.rf-m h5{margin:0 0 6px;text-align:center;font-size:14px;font-weight:800;text-transform:capitalize}
+.rf-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));row-gap:2px}
+.rf-w{text-align:center;font-size:11.5px;font-weight:700;color:var(--mut);padding:4px 0}
+.rf-d{appearance:none;border:0;background:transparent;color:var(--ink);font-family:inherit;font-size:14px;font-weight:700;height:44px;width:100%;
+  border-radius:0;cursor:pointer;position:relative;padding:0;z-index:0}
+.rf-d::before{content:"";position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:transparent;z-index:-1;transition:background .12s}
+.rf-d:hover:not([disabled]):not(.rf-st):not(.rf-en)::before{background:var(--accent-bg)}
+.rf-d.rf-hoy::after{content:"";position:absolute;left:50%;bottom:4px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--accent)}
+.rf-d.rf-mid,.rf-d.rf-pv{background:var(--accent-bg)}
+.rf-d.rf-mid.rf-c0,.rf-d.rf-pv.rf-c0{border-radius:22px 0 0 22px}
+.rf-d.rf-mid.rf-c6,.rf-d.rf-pv.rf-c6{border-radius:0 22px 22px 0}
+.rf-d.rf-st.rf-tieneco{background:linear-gradient(to right,transparent 50%,var(--accent-bg) 50%)}
+.rf-d.rf-en{background:linear-gradient(to left,transparent 50%,var(--accent-bg) 50%)}
+.rf-d.rf-st::before,.rf-d.rf-en::before{background:var(--accent)}
+.rf-d.rf-st,.rf-d.rf-en{color:var(--accent-ink)}
+.rf-d.rf-st.rf-hoy::after,.rf-d.rf-en.rf-hoy::after{background:var(--accent-ink)}
+.rf-d.rf-oc{color:var(--bad)}
+.rf-d.rf-oc::before{background:rgba(220,38,38,.14)}
+.rf-d.rf-oc.rf-mid{background:rgba(220,38,38,.10)}
+.rf-d.rf-oc.rf-st,.rf-d.rf-oc.rf-en{color:var(--accent-ink)}
+.rf-leg{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12px;font-weight:700;color:var(--mut)}
+.rf-leg span{display:inline-flex;align-items:center;gap:6px}
+.rf-sw{display:inline-block;width:14px;height:14px;border-radius:50%}
+.rf-sw-oc{background:rgba(220,38,38,.28);border:1px solid var(--bad)}
+.rf-sw-sel{background:var(--accent)}
+.rf-warn{margin-top:12px;border:1px solid var(--bad);background:rgba(220,38,38,.08);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.rf-warn b{color:var(--bad);font-weight:800}
+.rf-warn span{color:var(--ink);font-weight:600}
+.rf-wb{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.rf-igual{appearance:none;border:1px solid var(--bad);background:transparent;color:var(--bad);border-radius:12px;font-family:inherit;font-weight:800;font-size:13px;min-height:44px;padding:0 14px;cursor:pointer}
+.rf-d.rf-pop{animation:rfpop .18s ease-out}
+.rf-d[disabled]{opacity:.3;cursor:default}
+.rf-d.rf-fuera{visibility:hidden}
+.rf-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px}
+.rf-clr{appearance:none;border:1px solid var(--line);background:transparent;color:var(--mut);border-radius:12px;font-family:inherit;
+  font-weight:800;font-size:13px;min-height:44px;padding:0 14px;cursor:pointer}
+.rf-foot .rf-hint{font-size:12px;color:var(--mut);font-weight:600}
+.rf-lock{overflow:hidden!important}
+@keyframes rfpop{0%{transform:scale(.9)}100%{transform:scale(1)}}
+@media (min-width:720px){
+  .rf-ov{align-items:center}
+  .rf-p{width:auto;min-width:420px;max-width:760px;border-radius:22px;padding:20px;box-shadow:0 30px 60px -20px rgba(0,0,0,.55);transform:translateY(10px)}
+  .rf-p.rf-dos{width:700px}
+  .rf-p.rf-dos .rf-ms{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:26px}
+}
+@media (max-width:560px){.rf-sum{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.rf-n{grid-column:1/-1;min-height:34px}}
+@media (max-width:420px){.rf-btn{font-size:15px;padding:11px 10px;gap:0}.rf-btn svg{display:none}}
+@media (prefers-reduced-motion:reduce){.rf-ov,.rf-p,.rf-d.rf-pop{transition:none;animation:none}}
+
 </style>
 </head>
 <body>
@@ -262,6 +350,307 @@ input[readonly]{opacity:.8;cursor:not-allowed}
   </div>
 </div>
 
+<script>
+/* ===== Calendario de rango (estilo Airbnb) · componente compartido v1 ===== */
+(function () {
+  'use strict';
+  const MES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const MESC = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  const DSEM = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+  const SEM7 = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+  const MIN_DEF = '2024-01-01', MAX_DEF = '2100-12-31';
+  const ICON_CAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>';
+  const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const ICON_L = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>';
+  const ICON_R = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+
+  const p2 = n => (n < 10 ? '0' : '') + n;
+  const iso = (y, m, d) => y + '-' + p2(m + 1) + '-' + p2(d);
+  function parse(s) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? { y: +m[1], m: +m[2] - 1, d: +m[3] } : null; }
+  function utc(s) { const o = parse(s); return Date.UTC(o.y, o.m, o.d); }
+  function addDias(s, n) { const t = new Date(utc(s) + n * 86400000); return iso(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate()); }
+  function noches(a, b) { return Math.round((utc(b) - utc(a)) / 86400000); }
+  function hoy() { const t = new Date(); return iso(t.getFullYear(), t.getMonth(), t.getDate()); }
+  function bonita(s) { const o = parse(s); if (!o) return ''; const w = new Date(Date.UTC(o.y, o.m, o.d)).getUTCDay(); return DSEM[w] + ' ' + o.d + ' ' + MESC[o.m] + ' ' + o.y; }
+  function larga(s) { const o = parse(s); return o ? o.d + ' de ' + MES[o.m] + ' de ' + o.y : ''; }
+  function dosMeses() { try { return window.matchMedia('(min-width:720px)').matches; } catch (e) { return false; } }
+
+  const vDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  let ov = null, panel = null, cfg = null, st = null, ultimoFoco = null;
+  const pares = [];
+
+  function fijar(el, v) {
+    el.value = v;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function refrescar(c) {
+    [['ci', c.ciBtn], ['co', c.coBtn]].forEach(([k, b]) => {
+      const v = vDesc.get.call(c[k]);
+      const sp = b.querySelector('.rf-v');
+      sp.textContent = v ? bonita(v) : 'Elegir fecha';
+      sp.classList.toggle('rf-ph', !v);
+      b.setAttribute('aria-label', c[k + 'Etq'] + ': ' + (v ? larga(v) : 'sin fecha'));
+    });
+  }
+
+  function crearBoton(c, k) {
+    const el = c[k];
+    const b = document.createElement('button');
+    b.type = 'button'; b.id = el.id + '_rf'; b.className = 'rf-btn';
+    b.setAttribute('aria-haspopup', 'dialog');
+    b.innerHTML = ICON_CAL + '<span class="rf-v rf-ph">Elegir fecha</span>';
+    const lab = el.id ? document.querySelector('label[for="' + el.id + '"]') : null;
+    const cont = el.closest('.field');
+    const lab2 = lab || (cont ? cont.querySelector('label') : null);
+    c[k + 'Etq'] = lab2 ? lab2.textContent.trim() : (k === 'ci' ? 'Check-in' : 'Check-out');
+    if (lab) lab.setAttribute('for', b.id);
+    el.parentNode.insertBefore(b, el.nextSibling);
+    el.hidden = true; el.tabIndex = -1; el.setAttribute('aria-hidden', 'true');
+    // el valor asignado por código (editar, limpiar, autocompletar) refresca el botón
+    Object.defineProperty(el, 'value', { configurable: true, get() { return vDesc.get.call(this); }, set(v) { vDesc.set.call(this, v); refrescar(c); } });
+    // errores de validación: el foco y el aviso van al botón visible
+    el.focus = function () { b.focus(); };
+    el.scrollIntoView = function (o) { b.scrollIntoView(o); };
+    // copiar el estado de error (clases bad / bad-field) al botón
+    const espejo = () => {
+      ['bad', 'bad-field'].forEach(n => b.classList.toggle(n, el.classList.contains(n)));
+      if (el.getAttribute('aria-invalid')) b.setAttribute('aria-invalid', 'true'); else b.removeAttribute('aria-invalid');
+    };
+    new MutationObserver(espejo).observe(el, { attributes: true, attributeFilter: ['class', 'aria-invalid'] });
+    b.addEventListener('click', () => abrir(c, k));
+    c[k + 'Btn'] = b;
+  }
+
+  function montar(opt) {
+    const c = { ci: opt.ci, co: opt.co, titulo: opt.titulo || 'Elige las fechas', ocupadas: opt.ocupadas || null };
+    if (!c.ci || !c.co || c.ci._rf) return c;
+    crearBoton(c, 'ci'); crearBoton(c, 'co');
+    c.ci._rf = c.co._rf = true;
+    refrescar(c);
+    pares.push(c);
+    return c;
+  }
+
+  // noches ocupadas: { 'AAAA-MM-DD': {etq, ini, fin} }. La noche d está ocupada si ini <= d < fin.
+  function mapaOcupado() {
+    const m = {};
+    if (!cfg.ocupadas) return m;
+    let lista = [];
+    try { lista = cfg.ocupadas() || []; } catch (e) { lista = []; }
+    lista.forEach(o => {
+      if (!o || !parse(o.ini) || !parse(o.fin) || o.fin <= o.ini) return;
+      let f = o.ini, g = 0;
+      while (f < o.fin && g++ < 800) { if (!m[f]) m[f] = o; f = addDias(f, 1); }
+    });
+    return m;
+  }
+  function choque(ci, co) {
+    const m = mapaOcupado(); let f = ci, g = 0;
+    while (f < co && g++ < 800) { if (m[f]) return m[f]; f = addDias(f, 1); }
+    return null;
+  }
+
+  function limites() {
+    return { min: cfg.ci.getAttribute('min') || MIN_DEF, max: cfg.co.getAttribute('max') || cfg.ci.getAttribute('max') || MAX_DEF };
+  }
+
+  function construir() {
+    ov = document.createElement('div'); ov.className = 'rf-ov'; ov.hidden = true;
+    ov.innerHTML = '<div class="rf-p" role="dialog" aria-modal="true" aria-labelledby="rfTit"></div>';
+    document.body.appendChild(ov);
+    panel = ov.firstChild;
+    ov.addEventListener('mousedown', e => { if (e.target === ov) cerrar(); });
+    ov.addEventListener('keydown', teclado);
+    panel.addEventListener('click', clickPanel);
+    panel.addEventListener('mouseover', e => {
+      const d = e.target.closest && e.target.closest('.rf-d');
+      if (!d || d.disabled || !st.ci || st.co) return;
+      const f = d.dataset.d;
+      panel.querySelectorAll('.rf-d').forEach(x => x.classList.toggle('rf-pv', x.dataset.d > st.ci && x.dataset.d < f));
+    });
+    panel.addEventListener('mouseleave', () => panel.querySelectorAll('.rf-pv').forEach(x => x.classList.remove('rf-pv')));
+  }
+
+  function abrir(c, k) {
+    if (!ov) construir();
+    cfg = c;
+    const ci = vDesc.get.call(c.ci) || '', co = vDesc.get.call(c.co) || '';
+    st = { ci: ci || null, co: (ci && co && co > ci) ? co : null, etapa: (k === 'co' && ci) ? 'co' : 'ci', mes: null, foco: null, cierre: null, aviso: null };
+    const ref = (k === 'co' && co) ? co : (ci || hoy());
+    const o = parse(ref) || parse(hoy());
+    st.mes = { y: o.y, m: o.m };
+    st.foco = ref;
+    ultimoFoco = document.activeElement;
+    ov.hidden = false;
+    document.documentElement.classList.add('rf-lock');
+    render(true);
+    requestAnimationFrame(() => ov.classList.add('rf-on'));
+  }
+
+  function cerrar() {
+    if (!ov || ov.hidden) return;
+    clearTimeout(st && st.cierre);
+    ov.classList.remove('rf-on');
+    const fin = () => { ov.hidden = true; document.documentElement.classList.remove('rf-lock'); };
+    const rm = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    if (rm) fin(); else setTimeout(fin, 180);
+    const volver = (st && st.etapa === 'ok') ? cfg.coBtn : (ultimoFoco && ultimoFoco.focus ? ultimoFoco : null);
+    if (volver) { try { volver.focus(); } catch (e) {} }
+  }
+
+  function mesesVisibles() {
+    const n = dosMeses() ? 2 : 1, out = [];
+    for (let i = 0; i < n; i++) { let m = st.mes.m + i, y = st.mes.y; if (m > 11) { m -= 12; y++; } out.push({ y, m }); }
+    return out;
+  }
+
+  function render(foco) {
+    const L = limites(), hoyS = hoy(), meses = mesesVisibles(), OC = mapaOcupado();
+    st.oc = OC;
+    panel.classList.toggle('rf-dos', meses.length === 2);
+    const nn = (st.ci && st.co) ? noches(st.ci, st.co) : 0;
+    const ayuda = st.etapa === 'ci' ? 'Elige el día de ' + cfg.ciEtq.toLowerCase() : (st.etapa === 'co' ? 'Ahora elige el día de ' + cfg.coEtq.toLowerCase() : '');
+    const hayPrev = (st.mes.y * 12 + st.mes.m) > (parse(L.min).y * 12 + parse(L.min).m);
+    const ult = meses[meses.length - 1], hayNext = (ult.y * 12 + ult.m) < (parse(L.max).y * 12 + parse(L.max).m);
+    let h = '<div class="rf-top"><div><h4 id="rfTit">' + esc(cfg.titulo) + '</h4><p class="rf-help" aria-live="polite">' + esc(ayuda) + '</p></div>' +
+      '<button type="button" class="rf-x" data-a="x" aria-label="Cerrar calendario">' + ICON_X + '</button></div>';
+    h += '<div class="rf-sum"><button type="button" class="rf-s' + (st.etapa === 'ci' ? ' rf-act' : '') + '" data-a="sci"><small>' + esc(cfg.ciEtq) + '</small><b>' + (st.ci ? esc(bonita(st.ci)) : 'Elegir') + '</b></button>' +
+      '<button type="button" class="rf-s' + (st.etapa === 'co' ? ' rf-act' : '') + '" data-a="sco"' + (st.ci ? '' : ' disabled') + '><small>' + esc(cfg.coEtq) + '</small><b>' + (st.co ? esc(bonita(st.co)) : 'Elegir') + '</b></button>' +
+      '<div class="rf-n" aria-live="polite">' + (nn > 0 ? nn + (nn === 1 ? ' noche' : ' noches') : '') + '</div></div>';
+    h += '<div class="rf-nav"><button type="button" data-a="prev" aria-label="Mes anterior"' + (hayPrev ? '' : ' disabled') + '>' + ICON_L + '</button>' +
+      '<button type="button" data-a="next" aria-label="Mes siguiente"' + (hayNext ? '' : ' disabled') + '>' + ICON_R + '</button></div><div class="rf-ms">';
+    meses.forEach(mm => { h += mesHTML(mm, L, hoyS, OC); });
+    h += '</div>';
+    if (cfg.ocupadas) h += '<div class="rf-leg"><span><i class="rf-sw rf-sw-oc"></i>Ocupado</span><span><i class="rf-sw rf-sw-sel"></i>Tu selección</span></div>';
+    if (st.aviso) {
+      const a = st.aviso.item;
+      h += '<div class="rf-warn" role="alert"><b>Se cruza con otra fecha ocupada</b><span>' + esc(a.etq) + ' · ' + esc(bonita(a.ini)) + ' → ' + esc(bonita(a.fin)) + '</span>' +
+        '<div class="rf-wb"><button type="button" class="rf-clr" data-a="otras">Elegir otras</button><button type="button" class="rf-igual" data-a="igual">Usar igual</button></div></div>';
+    }
+    h += '<div class="rf-foot"><button type="button" class="rf-clr" data-a="clr">Borrar fechas</button><span class="rf-hint">Toca el día; se cierra solo.</span></div>';
+    panel.innerHTML = h;
+    // la navegación con las flechas del mes no debe mover la pantalla debajo
+    if (st.aviso) { const ba = panel.querySelector('[data-a=otras]'); if (ba) ba.focus(); }
+    else if (foco) enfocarDia(st.foco);
+  }
+
+  function mesHTML(mm, L, hoyS, OC) {
+    const primero = new Date(Date.UTC(mm.y, mm.m, 1)).getUTCDay(), off = (primero + 6) % 7;
+    const dias = new Date(Date.UTC(mm.y, mm.m + 1, 0)).getUTCDate();
+    let h = '<div class="rf-m"><h5>' + MES[mm.m] + ' ' + mm.y + '</h5><div class="rf-g" role="grid">';
+    SEM7.forEach(w => { h += '<div class="rf-w" aria-hidden="true">' + w + '</div>'; });
+    for (let i = 0; i < off; i++) h += '<span></span>';
+    for (let d = 1; d <= dias; d++) {
+      const f = iso(mm.y, mm.m, d);
+      const dis = f < L.min || f > L.max;
+      const esSt = f === st.ci, esEn = f === st.co;
+      const mid = st.ci && st.co && f > st.ci && f < st.co;
+      const oc = OC && OC[f], col = (off + d - 1) % 7;
+      let cl = 'rf-d' + (f === hoyS ? ' rf-hoy' : '') + (esSt ? ' rf-st' : '') + (esEn ? ' rf-en' : '') + (mid ? ' rf-mid' : '') + (esSt && st.co ? ' rf-tieneco' : '') + (oc ? ' rf-oc' : '') + (col === 0 ? ' rf-c0' : '') + (col === 6 ? ' rf-c6' : '');
+      const etq = larga(f) + (esSt ? ', ' + cfg.ciEtq : '') + (esEn ? ', ' + cfg.coEtq : '') + (f === hoyS ? ', hoy' : '') + (oc ? ', noche ocupada: ' + oc.etq : '');
+      h += '<button type="button" class="' + cl + '" data-d="' + f + '" tabindex="' + (f === st.foco ? '0' : '-1') + '" aria-label="' + esc(etq) + '"' + (oc ? ' title="' + esc(oc.etq) + '"' : '') +
+        (esSt || esEn ? ' aria-pressed="true"' : '') + (dis ? ' disabled' : '') + '>' + d + '</button>';
+    }
+    return h + '</div></div>';
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+  function enfocarDia(f) {
+    let b = panel.querySelector('.rf-d[data-d="' + f + '"]:not([disabled])');
+    if (!b) b = panel.querySelector('.rf-d:not([disabled])');
+    if (b) { st.foco = b.dataset.d; panel.querySelectorAll('.rf-d[tabindex="0"]').forEach(x => x.tabIndex = -1); b.tabIndex = 0; try { b.focus({ preventScroll: true }); } catch (e) { b.focus(); } }
+  }
+
+  function irMes(delta) {
+    let m = st.mes.m + delta, y = st.mes.y;
+    while (m > 11) { m -= 12; y++; } while (m < 0) { m += 12; y--; }
+    const L = limites();
+    if ((y * 12 + m) < (parse(L.min).y * 12 + parse(L.min).m)) return;
+    if ((y * 12 + m) > (parse(L.max).y * 12 + parse(L.max).m)) return;
+    st.mes = { y, m };
+  }
+
+  function elegir(d) {
+    if (st.etapa !== 'co' || !st.ci || d <= st.ci) {
+      // primer toque (o un día anterior al check-in: se toma como nuevo check-in)
+      st.ci = d; st.co = null; st.etapa = 'co'; st.foco = d; st.aviso = null; st.forzar = false;
+      fijar(cfg.ci, d);
+      render(true);
+      const b = panel.querySelector('.rf-d[data-d="' + d + '"]'); if (b) b.classList.add('rf-pop');
+    } else {
+      const ch = (cfg.ocupadas && !st.forzar) ? choque(st.ci, d) : null;
+      if (ch) { st.aviso = { co: d, item: ch }; st.foco = d; render(false); return; }
+      st.forzar = false;
+      st.co = d; st.foco = d; st.etapa = 'ok';
+      fijar(cfg.co, d);
+      render(true);
+      const b = panel.querySelector('.rf-d[data-d="' + d + '"]'); if (b) b.classList.add('rf-pop');
+      st.cierre = setTimeout(cerrar, 260);
+    }
+  }
+
+  function clickPanel(e) {
+    const t = e.target.closest('button'); if (!t || t.disabled) return;
+    if (t.classList.contains('rf-d')) { elegir(t.dataset.d); return; }
+    const a = t.dataset.a;
+    if (a === 'x') cerrar();
+    else if (a === 'prev') { irMes(-1); render(false); const b = panel.querySelector('[data-a="prev"]'); if (b && !b.disabled) b.focus(); }
+    else if (a === 'next') { irMes(1); render(false); const b = panel.querySelector('[data-a="next"]'); if (b && !b.disabled) b.focus(); }
+    else if (a === 'otras') { st.aviso = null; render(true); }
+    else if (a === 'igual') { const d = st.aviso.co; st.aviso = null; st.forzar = true; elegir(d); }
+    else if (a === 'sci') { st.etapa = 'ci'; render(false); }
+    else if (a === 'sco') { st.etapa = 'co'; render(false); }
+    else if (a === 'clr') {
+      fijar(cfg.co, ''); fijar(cfg.ci, '');
+      st.ci = null; st.co = null; st.etapa = 'ci'; render(false);
+    }
+  }
+
+  function teclado(e) {
+    if (e.key === 'Escape') { e.preventDefault(); cerrar(); return; }
+    if (e.key === 'Tab') {
+      const f = Array.from(panel.querySelectorAll('button:not([disabled]):not([tabindex="-1"])'));
+      if (!f.length) return;
+      const i = f.indexOf(document.activeElement);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && (i === f.length - 1)) { e.preventDefault(); f[0].focus(); }
+      return;
+    }
+    const d = e.target.closest && e.target.closest('.rf-d'); if (!d) return;
+    const mapa = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+    let nf = null;
+    if (mapa[e.key] !== undefined) nf = addDias(d.dataset.d, mapa[e.key]);
+    else if (e.key === 'PageDown' || e.key === 'PageUp') { const o = parse(d.dataset.d); const dm = e.key === 'PageDown' ? 1 : -1; let m = o.m + dm, y = o.y; if (m > 11) { m = 0; y++; } if (m < 0) { m = 11; y--; } const mx = new Date(Date.UTC(y, m + 1, 0)).getUTCDate(); nf = iso(y, m, Math.min(o.d, mx)); }
+    else if (e.key === 'Home') nf = addDias(d.dataset.d, -((new Date(utc(d.dataset.d)).getUTCDay() + 6) % 7));
+    else if (e.key === 'End') nf = addDias(d.dataset.d, 6 - ((new Date(utc(d.dataset.d)).getUTCDay() + 6) % 7));
+    if (!nf) return;
+    e.preventDefault();
+    const L = limites(); if (nf < L.min || nf > L.max) return;
+    const o = parse(nf), vis = mesesVisibles();
+    if (!vis.some(v => v.y === o.y && v.m === o.m)) { st.mes = { y: o.y, m: o.m }; if (o.y * 12 + o.m > vis[0].y * 12 + vis[0].m && vis.length === 2) { /* avanzó: el mes nuevo queda a la derecha */ st.mes = (function () { let m = o.m - 1, y = o.y; if (m < 0) { m = 11; y--; } return { y, m }; })(); } if (o.y * 12 + o.m < vis[0].y * 12 + vis[0].m) st.mes = { y: o.y, m: o.m }; }
+    st.foco = nf; render(true);
+  }
+
+  window.RangoFechas = { montar, _estado: () => st, _abrir: abrir, _cerrar: cerrar };
+})();
+
+function mapA(t){t=(t||'').toLowerCase();if(t.indexOf('playa')!==-1||t.indexOf('8 pax')!==-1||t.indexOf('8 huésp')!==-1)return 'LST-02_8 pax';if(t.indexOf('miami')!==-1||t.indexOf('4 pax')!==-1||t.indexOf('4 huésp')!==-1)return 'LST-03_4 pax';if(t.indexOf('cima')!==-1||t.indexOf('6 pax')!==-1||t.indexOf('6 huésp')!==-1)return 'LST-01_6 pax';return null;}function libres(){var s={};try{var d=JSON.parse(localStorage.getItem('cimablanca_canc_data')||'null');((d&&d.cancelaciones)||[]).forEach(function(c){if(c.codigo&&Number(c.nochesCuentan)===0&&Number(c.nochesLiberadas)>0)s[c.codigo]=1;});}catch(e){}return s;}
+function ocupDirectas(){
+  var out=[],a=(typeof anuncio!=='undefined')?anuncio:'',lib=libres();
+  (typeof RESERVAS!=='undefined'?RESERVAS:[]).forEach(function(r){
+    if(r.anuncio!==a||(typeof editCodigo!=='undefined'&&editCodigo&&r.codigo===editCodigo)||lib[r.codigo])return;
+    (r.tramos||[]).forEach(function(t){if(t.checkin&&t.checkout)out.push({ini:t.checkin,fin:t.checkout,etq:'Directa '+r.codigo.replace('Reserva_Directa_','#')+' · '+(r.huesped||'')});});});
+  try{var b=JSON.parse(localStorage.getItem('cimablanca_canc_data')||'null');((b&&b.bloqueos)||[]).forEach(function(x){
+    if(x.fechaInicio&&x.fechaFin&&(x.anuncio==='Todos'||x.anuncio===a))out.push({ini:x.fechaInicio,fin:x.fechaFin,etq:'Bloqueo ('+(x.motivo||'sin motivo')+')'});});}catch(e){}
+  try{var c=JSON.parse(localStorage.getItem('cimablanca_canc_reservas_cache')||'null');((c&&c.reservas)||[]).forEach(function(r){
+    if(r.origen==='Reserva directa'||!r.fecha_inicio||!r.fecha_finalizacion||mapA(r.anuncio)!==a||lib[r.codigo_confirmacion])return;
+    out.push({ini:r.fecha_inicio,fin:r.fecha_finalizacion,etq:'Airbnb '+(r.codigo_confirmacion||'')+' · '+(r.huesped||'')});});}catch(e){}
+  return out;}
+RangoFechas.montar({ ci: document.getElementById('ci'), co: document.getElementById('co'), titulo: 'Fechas de la estadía', ocupadas: ocupDirectas });
+</script>
 <script>
 // ===== URL de tu implementación de Apps Script (termina en /exec) =====
 const FIXED_URL = 'https://script.google.com/macros/s/AKfycbw_iMuMSlc-dfdeXI71xk4x6Zir53mC93uPwZpHS-iInB4-OqvKLZIf57gAKIVkS8BbfA/exec';
