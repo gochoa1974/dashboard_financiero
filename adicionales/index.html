@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v8 · catálogo unificado (8 rubros), descuento/cortesía integrado, techo semanal">
+<meta name="app-version" content="adicionales v9 · varios servicios por reserva en una sola cuenta, catálogo unificado (8 rubros), descuento/cortesía integrado, techo semanal">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -145,6 +145,20 @@ input[readonly]{opacity:.8;cursor:not-allowed}
 .sticky .btn-acc{flex:1;min-height:48px}
 .sticky .btn-ghost{min-height:48px}
 
+.sticky .actions{flex-wrap:nowrap}
+.sticky #lnAdd{flex:0 0 auto;padding-left:14px;padding-right:14px;white-space:nowrap}
+.sticky #guardar{min-width:0}
+.sres{border:1px solid var(--line);background:var(--bg);border-radius:14px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.sres .si{flex:1;min-width:0}
+.sres .sn{font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px}
+.sres .sn i{font-style:normal;color:var(--ok)}
+.sres .sd{font-size:12.5px;color:var(--mut);font-weight:600;margin-top:2px;overflow-wrap:anywhere}
+.sres .sm{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sres .sa{display:flex;gap:2px;margin-top:4px}
+.sres .link{padding:0 8px 0 0;min-height:36px;font-size:13px}
+.okbox{border:1px solid var(--ok);background:var(--accent-bg);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:14px;font-weight:700;line-height:1.5}
+.okbox.warn{border-color:var(--warn);background:var(--warn-bg)}
+.okbox small{display:block;font-weight:600;color:var(--mut);margin-top:2px;font-size:12.5px}
 .list-item{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;background:var(--bg)}
 .list-item .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .list-item b{font-size:14px;overflow-wrap:anywhere}
@@ -402,6 +416,7 @@ input[type=checkbox]{width:22px;height:22px;min-height:0;padding:0;flex:none;acc
         <ul id="resolL"></ul>
       </div>
       <div class="small" id="resolNota" hidden style="margin:0 4px 12px">Para ver las resoluciones del CSV, abre Ingresos una vez y pulsa «Leer Drive y procesar».</div>
+      <div class="okbox" id="okBox" role="status" hidden></div>
       <div class="card" id="resCard">
         <h3 id="resTitle">¿A qué reserva se cobró?</h3>
         <p class="hint">Escribe el código o el nombre del huésped. Puedes agregar varios servicios a la misma reserva.</p>
@@ -432,14 +447,14 @@ input[type=checkbox]{width:22px;height:22px;min-height:0;padding:0;flex:none;acc
       <div id="lineasWrap" hidden>
         <div class="card">
           <h3 id="lnTitle">Servicios cobrados</h3>
-          <p class="hint" id="lnHint">Elige el servicio. El precio sale del catálogo y el monto se calcula solo.</p>
+          <p class="hint" id="lnHint">Agrega todos los servicios de esta reserva y guarda una sola vez. El precio sale del catálogo.</p>
           <div id="lineas"></div>
-          <button type="button" class="btn btn-ghost" id="lnAdd" style="width:100%">+ Agregar otro servicio</button>
         </div>
         <div class="sticky">
           <div class="msg" id="msg" role="status"></div>
           <div class="sumbar"><span id="sumTxt">Sin servicios</span><b id="sumTot">$0,00</b></div>
           <div class="actions">
+            <button type="button" class="btn btn-ghost" id="lnAdd">+ Otro servicio</button>
             <button type="button" class="btn btn-acc" id="guardar">Guardar</button>
             <button type="button" class="btn btn-ghost" id="cancelar" hidden>Cancelar edición</button>
           </div>
@@ -938,6 +953,7 @@ function aplicar(j) {
   if (j.hoy) HOY = j.hoy;
   if (j.anuncios) ANUNCIOS.forEach(a => { if (j.anuncios[a.v]) a.cap = j.anuncios[a.v].cap; });
   saveData(); renderTodo();
+  if (editId && !DATA.lineas.some(l => l.id === editId)) { const idg = editId; resetForm(); okBox('La línea ' + idg + ' ya no existe.', 'Se cerró la edición. Alguien la borró o ya estaba borrada.', true); }
 }
 function showApp() { $('gate').style.display = 'none'; $('app').style.display = 'block'; }
 function setHint(ok) { $('syncHint').textContent = ok ? 'Sincronizado ahora' : (DATA.lineas.length ? 'Datos guardados en este dispositivo' : 'Sin datos aún'); }
@@ -1314,17 +1330,32 @@ function anioOpts(L) {
   if (sel && ys.indexOf(String(sel)) < 0) ys.push(String(sel));
   return ys.map(y => '<option value="' + y + '"' + (y === String(sel) ? ' selected' : '') + '>' + y + '</option>').join('');
 }
+function medioN(v) { const m = MEDIOS.filter(x => x.v === v)[0]; return m ? m.n : v; }
+function resumenHTML(L, i) {
+  const it = catItem(L.itemId); let d = [];
+  if (it && esDesc(it)) d.push('Ajuste · ' + (L.aplica || ''));
+  else if (it) {
+    if (usaCant(it)) d.push(L.cant + ' × ' + money(numIn(L.precio) || 0));
+    if (usaFechas(it)) d.push(nochesDe(L) + (nochesDe(L) === 1 ? ' noche' : ' noches'));
+    if (L.conDesc) d.push(L.cortesia ? 'Cortesía' : 'Con descuento');
+  }
+  d.push(medioN(L.medio));
+  return '<div class="sres" data-k="' + L.k + '"><div class="si"><div class="sn"><i aria-hidden="true">✓</i>' + esc(it ? it.item : '') + '</div><div class="sd">' + esc(d.join(' · ')) + '</div>' +
+    '<div class="sa"><button type="button" class="link" data-reabrir="' + L.k + '">Editar</button><button type="button" class="link bad" data-rm="' + L.k + '">Quitar</button></div></div>' +
+    '<div class="sm">' + money(montoDe(L)) + '</div></div>';
+}
 function renderLineas() {
-  $('lineas').innerHTML = LN.map(lineaHTML).join('');
+  $('lineas').innerHTML = LN.map((L, i) => (L.cerrada && !editId) ? resumenHTML(L, i) : lineaHTML(L, i)).join('');
   LN.forEach(L => {
+    if (L.cerrada && !editId) return;
     const it = catItem(L.itemId);
     if (it && usaFechas(it)) { const a = $('di' + L.k), b = $('df' + L.k); if (a && b && window.RangoFechas) RangoFechas.montar({ ci: a, co: b, titulo: it.cobro === 'noche' ? 'Noches extra' : 'Fechas del servicio', ocupadas: it.cobro === 'noche' ? ocupadasPara : null }); }
     actualizarLinea(L);
   });
   $('lnAdd').hidden = !!editId;
+  if (editId) $('okBox').hidden = true;
   $('lnTitle').textContent = editId ? 'Corregir cobro' : 'Servicios cobrados';
   $('cancelar').hidden = !editId;
-  $('guardar').textContent = editId ? 'Guardar cambios' : 'Guardar';
   actualizarResumen();
 }
 function libresCanc() {
@@ -1400,6 +1431,7 @@ function actualizarResumen() {
   const n = LN.filter(L => catItem(L.itemId)).length, tot = LN.reduce((a, L) => a + montoDe(L), 0);
   $('sumTxt').textContent = n ? n + (n === 1 ? ' servicio' : ' servicios') + (RES ? ' · ' + RES.codigo : '') : 'Sin servicios';
   $('sumTot').textContent = money(tot);
+  $('guardar').textContent = editId ? 'Guardar cambios' : (n > 1 ? 'Guardar ' + n + ' servicios' : 'Guardar');
 }
 function defaultsFechas(L) {
   const it = catItem(L.itemId); if (!it || !RES || !usaFechas(it)) return;
@@ -1446,11 +1478,35 @@ $('lineas').addEventListener('click', e => {
   const md = e.target.closest('[data-md]');
   if (md) { const L = lineaPorK(md.dataset.k); L.medio = md.dataset.md; md.parentNode.querySelectorAll('.chip').forEach(c => { const on = c === md; c.classList.toggle('on', on); c.setAttribute('aria-checked', on); }); return; }
   const rm = e.target.closest('[data-rm]');
-  if (rm) { LN = LN.filter(L => String(L.k) !== rm.dataset.rm); renderLineas(); return; }
+  if (rm) { LN = LN.filter(L => String(L.k) !== rm.dataset.rm); if (!LN.length) LN = [nuevaLinea()]; else if (!abiertas().length) LN.push(nuevaLinea({ medio: LN[LN.length - 1].medio })); renderLineas(); return; }
   const rs = e.target.closest('[data-reset]');
   if (rs) { const L = lineaPorK(rs.dataset.reset); L.precioTocado = false; L.precio = ''; sugerirPrecio(L); }
 });
-$('lnAdd').onclick = () => { LN.push(nuevaLinea()); renderLineas(); const l = LN[LN.length - 1]; const s = $('it' + l.k); if (s) { s.scrollIntoView({ block: 'center', behavior: 'smooth' }); } };
+/* v9: «+ Otro servicio» cierra el que se está llenando (lo valida), lo deja como resumen y abre uno nuevo */
+function abiertas() { return LN.filter(L => !L.cerrada); }
+function cerrarAbiertas() {
+  const ab = abiertas().filter(L => L.itemId);
+  abiertas().filter(L => !L.itemId && LN.length > 1).forEach(L => { LN = LN.filter(x => x !== L); });
+  if (!ab.length) return '';
+  const err = validarForm(ab); if (err) return err;
+  ab.forEach(L => { L.cerrada = true; }); return '';
+}
+$('lnAdd').onclick = () => {
+  if (editId) return;
+  if (!RES) { msg('Elige primero la reserva.', 'err'); return; }
+  if (!abiertas().some(L => L.itemId) && abiertas().length) { msg('Elige el servicio y luego pulsa «+ Otro servicio».', 'err'); const s0 = $('it' + abiertas()[0].k); if (s0) s0.focus(); return; }
+  const err = cerrarAbiertas(); if (err) { msg(err, 'err'); return; }
+  const ult = LN[LN.length - 1];
+  LN.push(nuevaLinea({ medio: ult ? ult.medio : 'TRANSFERENCIA' })); msg(''); renderLineas();
+  const l = LN[LN.length - 1], s1 = $('it' + l.k); if (s1) { s1.scrollIntoView({ block: 'center', behavior: 'smooth' }); s1.focus({ preventScroll: true }); }
+};
+$('lineas').addEventListener('click', e => {
+  const ro = e.target.closest('[data-reabrir]'); if (!ro) return;
+  const err = cerrarAbiertas(); if (err) { msg(err, 'err'); return; }
+  LN = LN.filter(L => L.itemId || L.cerrada);
+  const L = lineaPorK(ro.dataset.reabrir); if (L) L.cerrada = false;
+  msg(''); renderLineas(); const s2 = L && $('it' + L.k); if (s2) s2.scrollIntoView({ block: 'center', behavior: 'smooth' });
+});
 
 /* ---- elegir reserva ---- */
 function resTexto(r) { return [r.codigo, r.huesped, fechaCorta(r.checkin)].filter(Boolean).join(' · '); }
@@ -1487,7 +1543,7 @@ function elegirReserva(r) {
 function pintarResSel() {
   const el = $('resSel'); el.hidden = !RES; if (!RES) return;
   const prev = DATA.lineas.filter(l => l.codigo === RES.codigo), tot = prev.reduce((a, l) => a + l.monto, 0);
-  el.innerHTML = '<div class="rt"><b>' + esc(RES.huesped || 'Sin nombre') + '</b>' + (editId ? '' : '<button type="button" class="btn btn-ghost btn-sm" id="resCambiar">Cambiar</button>') + '</div>' +
+  el.innerHTML = '<div class="rt"><b>' + esc(RES.huesped || 'Sin nombre') + '</b>' + (editId ? '' : '<button type="button" class="btn btn-ghost btn-sm" id="resCambiar">Otra reserva</button>') + '</div>' +
     '<div class="rm">' + esc(RES.codigo) + ' · ' + esc(RES.origen) + '<br>' + esc(fechaBonita(RES.checkin)) + ' → ' + esc(fechaBonita(RES.checkout)) + (RES.checkin && RES.checkout ? ' · ' + difDias(RES.checkin, RES.checkout) + ' noches' : '') +
     '<br>' + (prev.length ? 'Ya tiene ' + prev.length + (prev.length === 1 ? ' cobro' : ' cobros') + ' adicionales (' + money(tot) + ').' : 'Sin cobros adicionales todavía.') + '</div>' +
     (!RES.anuncio ? '<div class="small" style="margin-top:8px">No pude saber el anuncio. Elígelo:</div><div class="chips" role="radiogroup" aria-label="Anuncio" id="resAn"></div>' : '');
@@ -1517,12 +1573,13 @@ $('mUsar').onclick = () => {
 };
 
 /* ---- guardar ---- */
-function validarForm() {
+function validarForm(subset) {
   if (!RES) return 'Elige primero la reserva.';
   if (!RES.anuncio) return 'Elige el anuncio de la reserva.';
   if (!LN.length) return 'Agrega al menos un servicio.';
   for (let i = 0; i < LN.length; i++) {
     const L = LN[i], it = catItem(L.itemId), n = LN.length > 1 ? ' (servicio ' + (i + 1) + ')' : '';
+    if (subset && subset.indexOf(L) < 0) continue;
     if (!it) { const s = $('it' + L.k); if (s) { s.classList.add('bad'); s.focus(); } return 'Elige el servicio o producto' + n + '.'; }
     if (esDesc(it)) {
       if (!L.aplica) { const a = $('ap' + L.k); if (a) { a.classList.add('bad'); a.focus(); } return 'Elige a qué servicio se aplica' + n + '.'; }
@@ -1547,7 +1604,8 @@ function validarForm() {
 }
 $('guardar').onclick = async () => {
   if (guardando) return;
-  const err = validarForm(); if (err) { msg(err, 'err'); return; }
+  if (LN.some(L => L.itemId)) LN = LN.filter(L => L.itemId);
+  const err = validarForm(); if (err) { msg(err, 'err'); renderLineas(); abrirConError(); return; }
   const chq = LN.map(L => { const it = catItem(L.itemId); return it && it.cobro === 'noche' ? choqueDe(L) : null; }).filter(Boolean);
   if (chq.length && !confirm('Estas noches chocan con ' + chq[0].etq + ' (' + fechaCorta(chq[0].ini) + ' → ' + fechaCorta(chq[0].fin) + '). ¿Guardar igual?')) return;
   guardando = true; $('guardar').disabled = true; msg('Guardando...');
@@ -1562,12 +1620,20 @@ $('guardar').onclick = async () => {
     const ci0 = RES.checkin || '', rr0 = rangoPer(regPer), fuera = regPer !== 'todo' && !$('buscar').value && !(ci0 >= rr0[0] && ci0 <= rr0[1]);
     if (fuera) regPer = 'todo';
     aplicar(j); setHint(true);
-    resetForm(); msg((fuera ? 'Su check-in está fuera del periodo: ahora ves «Todo». ' : '') + (eraEdicion ? 'Cambios guardados: ' : 'Guardado: ') + n + (n === 1 ? ' servicio' : ' servicios') + ' · ' + money(tot) + ' · ' + cod, 'ok');
+    const resumen = (eraEdicion ? 'Cambios guardados' : 'Guardado ✓') + ' · ' + n + (n === 1 ? ' servicio' : ' servicios') + ' · ' + money(tot) + ' · ' + cod;
+    const resG = RES, huG = RES && RES.huesped;
+    resetForm();
+    if (!eraEdicion && resG) { RES = resG; $('resBuscaWrap').hidden = true; pintarResSel(); $('lineasWrap').hidden = false; LN = [nuevaLinea()]; renderLineas(); okBox(resumen, '¿Otro servicio para ' + (huG || 'esta reserva') + '? Agrégalo abajo. Para otra reserva pulsa «Otra reserva».'); }
+    else okBox(resumen, (fuera ? 'Su check-in está fuera del periodo: ahora ves «Todo».' : ''));
+    msg('');
+    $('okBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (e) { msg(String(e.message || e), 'err'); }
   guardando = false; $('guardar').disabled = false;
 };
+function okBox(t, sub, warn) { const b = $('okBox'); b.className = 'okbox' + (warn ? ' warn' : ''); b.innerHTML = esc(t) + (sub ? '<small>' + esc(sub) + '</small>' : ''); b.hidden = false; }
+function abrirConError() { /* si la validación falló en una línea cerrada, la reabre */ }
 function resetForm() {
-  editId = null; RES = null; LN = [];
+  $('okBox').hidden = true; editId = null; RES = null; LN = [];
   $('resSel').hidden = true; $('lineasWrap').hidden = true; $('resBuscaWrap').hidden = false; $('rManual').hidden = true;
   $('resTitle').textContent = '¿A qué reserva se cobró?';
   renderLineas();
