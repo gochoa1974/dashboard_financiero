@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v18 · forma de pago obligatoria (sin valor por defecto) · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
+<meta name="app-version" content="adicionales v20 · botón No llegó · No-show en ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,7 +19,7 @@
   --accent:#0B6B58;--accent-ink:#FFFFFF;--accent-bg:#E3F2EE;--acc-tx:#07503F;
   --warn:#8A5100;--warn-bg:#FFF2DC;--info-bg:#EAEFF2;
   --ok:#127A4A;--bad:#B3261E;--bad-bg:#FCEBEA;
-  --shadow:0 1px 2px rgba(15,31,40,.05),0 6px 16px -8px rgba(15,31,40,.12);--glow:rgba(11,107,88,.38)
+  --shadow:0 1px 2px rgba(15,31,40,.05),0 6px 16px -8px rgba(15,31,40,.12);--glow:rgba(11,107,88,.38);--ns-ln:#C77700;--ns-g1:rgba(224,140,0,.32);--ns-g2:rgba(224,140,0,.55)
 }
 @media (prefers-color-scheme:dark){
   :root{
@@ -28,7 +28,7 @@
     --accent:#43D9A6;--accent-ink:#04251C;--accent-bg:#143A33;--acc-tx:#7BE8C3;
     --warn:#FFB454;--warn-bg:#3A2A10;--info-bg:#1B2B35;
     --ok:#43D9A6;--bad:#FF8A80;--bad-bg:#3A1B1A;
-    --shadow:0 1px 2px rgba(0,0,0,.5);--glow:rgba(67,217,166,.42)
+    --shadow:0 1px 2px rgba(0,0,0,.5);--glow:rgba(67,217,166,.42);--ns-ln:#FFB454;--ns-g1:rgba(255,180,84,.36);--ns-g2:rgba(255,180,84,.62)
   }
 }
 *{box-sizing:border-box}
@@ -533,6 +533,13 @@ details.cat-i,.sim-i{border:1.5px solid var(--line)}
 .cr-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .cr-t{min-width:0}
 .cr-ns{flex:0 0 auto}
+/* v20: No-show ámbar con glow suave estático (más fuerte en hover/foco; sin animación) */
+.btn.cr-ns{display:inline-flex;align-items:center;gap:6px;background:var(--warn-bg);color:var(--warn);border:1.5px solid var(--ns-ln);font-weight:800;white-space:nowrap;box-shadow:0 0 12px -2px var(--ns-g1);transition:box-shadow .18s,transform .12s,background .15s}
+.btn.cr-ns svg{flex:0 0 auto}
+@media (hover:hover){.btn.cr-ns:hover{box-shadow:0 0 18px 0 var(--ns-g2)}}
+.btn.cr-ns:focus-visible{outline:2px solid var(--ns-ln);outline-offset:2px;box-shadow:0 0 18px 0 var(--ns-g2)}
+.btn.cr-ns:active{transform:scale(.97);box-shadow:0 0 20px 1px var(--ns-g2)}
+@media (max-width:480px){.btn.cr-ns .nsl{display:none}}
 .cr-b{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .rl-b{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .list-item.cp{padding:10px 12px;margin-bottom:8px}
@@ -1698,7 +1705,7 @@ $('lineas').addEventListener('click', e => {
   const md = e.target.closest('[data-md]');
   if (md) { const L = lineaPorK(md.dataset.k); L.medio = md.dataset.md; md.parentNode.classList.remove('bad'); msg(''); md.parentNode.querySelectorAll('.chip').forEach(c => { const on = c === md; c.classList.toggle('on', on); c.setAttribute('aria-checked', on); }); return; }
   const rm = e.target.closest('[data-rm]');
-  if (rm) { LN = LN.filter(L => String(L.k) !== rm.dataset.rm); if (!LN.length) LN = [nuevaLinea()]; else if (!abiertas().length) LN.push(nuevaLinea({ medio: LN[LN.length - 1].medio })); renderLineas(); return; }
+  if (rm) { LN = LN.filter(L => String(L.k) !== rm.dataset.rm); if (!LN.length) LN = [nuevaLinea()]; else if (!abiertas().length) LN.push(nuevaLinea()); renderLineas(); return; }
   const rs = e.target.closest('[data-reset]');
   if (rs) { const L = lineaPorK(rs.dataset.reset); L.precioTocado = false; L.precio = ''; sugerirPrecio(L); }
 });
@@ -1717,7 +1724,7 @@ $('lnAdd').onclick = () => {
   if (!abiertas().some(L => L.itemId) && abiertas().length) { msg('Elige el servicio y luego pulsa «+ Otro servicio».', 'err'); const s0 = $('it' + abiertas()[0].k); if (s0) s0.focus(); return; }
   const err = cerrarAbiertas(); if (err) { msg(err, 'err'); return; }
   const ult = LN[LN.length - 1];
-  LN.push(nuevaLinea({ medio: ult ? ult.medio : '' })); msg(''); renderLineas();
+  LN.push(nuevaLinea()); msg(''); renderLineas();
   const l = LN[LN.length - 1], s1 = $('it' + l.k); if (s1) { s1.scrollIntoView({ block: 'center', behavior: 'smooth' }); s1.focus({ preventScroll: true }); }
 };
 $('lineas').addEventListener('click', e => {
@@ -1753,7 +1760,7 @@ function renderCierres() {
     const ls = lineasDe(r.codigo), tot = ls.reduce((a, l) => a + l.monto, 0), n = (r.checkin && r.checkout) ? difDias(r.checkin, r.checkout) : 0;
     return '<div class="cie-row" data-c="' + esc(r.codigo) + '"><div class="cr-h"><div class="cr-t"><b>' + esc(r.huesped || 'Sin nombre') + '</b><span>' + esc(r.codigo) + ' · ' + esc(fechaCorta(r.checkin)) + ' → ' + esc(fechaCorta(r.checkout)) + (n ? ' · ' + n + (n === 1 ? ' noche' : ' noches') : '') + '</span>' +
       '<span class="cr-s' + (ls.length ? ' has' : '') + '">' + (ls.length ? 'Cobrado ' + money(tot) + ' · ' + ls.length + (ls.length === 1 ? ' servicio' : ' servicios') : 'Sin cobros adicionales') + '</span></div>' +
-      '<button type="button" class="btn btn-ghost btn-sm cr-ns" data-cr="ns">No-show</button></div>' +
+      '<button type="button" class="btn btn-sm cr-ns" data-cr="ns" aria-label="El huésped no llegó (No-show)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg><span class="nsl">No llegó · </span>No-show</button></div>' +
       '<div class="cr-b"><button type="button" class="btn btn-ghost btn-sm" data-cr="no">' + (ls.length ? 'Está completo' : 'No tuvo servicios') + '</button>' +
       '<button type="button" class="btn btn-acc btn-sm" data-cr="si">' + (ls.length ? 'Agregar más' : 'Sí tuvo') + '</button></div></div>';
   }).join('') + (p.length > cieVer ? '<button type="button" class="btn btn-ghost btn-sm" id="cieMas" style="width:100%;margin-top:8px">Ver todas (' + p.length + ')</button>' : '');
