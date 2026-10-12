@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v9 · varios servicios por reserva en una sola cuenta, catálogo unificado (8 rubros), descuento/cortesía integrado, techo semanal">
+<meta name="app-version" content="adicionales v12 · glow suave en botones, formulario limpio al guardar + resumen final, sistema visual nuevo (contraste AA), varios servicios por reserva, catálogo unificado (8 rubros), descuento/cortesía integrado, techo semanal">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,21 +13,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#edf2f4;--surface:#ffffff;--ink:#0a2233;--mut:#5f7080;--line:#dde5ea;
-  --hero1:#0a2233;--hero2:#123a52;--hero-mute:#9fc0d3;
-  --accent:#0f9d6e;--accent-ink:#ffffff;--accent-bg:rgba(15,157,110,.12);
-  --warn:#b45309;--warn-bg:rgba(180,83,9,.12);--info-bg:rgba(95,112,128,.12);
-  --ok:#0f9d6e;--bad:#dc2626;
-  --shadow:0 1px 2px rgba(10,34,51,.05),0 8px 20px -12px rgba(10,34,51,.2)
+  /* v10 · sistema visual: lienzo neutro, superficies blancas, un solo acento (verde pino profundo). Contrastes verificados AA. */
+  --bg:#F2F5F6;--surface:#FFFFFF;--ink:#0F1F28;--ink2:#2E4250;--mut:#51626E;--line:#E0E6EA;--ctl:#7A8B96;
+  --hero1:#0B2F36;--hero2:#0E4B4C;--hero-mute:#A9C9CC;
+  --accent:#0B6B58;--accent-ink:#FFFFFF;--accent-bg:#E3F2EE;--acc-tx:#07503F;
+  --warn:#8A5100;--warn-bg:#FFF2DC;--info-bg:#EAEFF2;
+  --ok:#127A4A;--bad:#B3261E;--bad-bg:#FCEBEA;
+  --shadow:0 1px 2px rgba(15,31,40,.05),0 6px 16px -8px rgba(15,31,40,.12);--glow:rgba(11,107,88,.38)
 }
 @media (prefers-color-scheme:dark){
   :root{
-    --bg:#071722;--surface:#0e2536;--ink:#eaf2f6;--mut:#8fa6b5;--line:#1a3649;
-    --hero1:#0f3550;--hero2:#14506b;--hero-mute:#9fc0d3;
-    --accent:#2fd49a;--accent-ink:#04231a;--accent-bg:rgba(47,212,154,.16);
-    --warn:#f59e0b;--warn-bg:rgba(245,158,11,.16);--info-bg:rgba(143,166,181,.14);
-    --ok:#2fd49a;--bad:#f87171;
-    --shadow:0 1px 2px rgba(0,0,0,.4)
+    --bg:#0B1419;--surface:#131F27;--ink:#EAF1F4;--ink2:#C6D4DB;--mut:#9DB0BB;--line:#223540;--ctl:#5F7684;
+    --hero1:#0F3A40;--hero2:#145A57;--hero-mute:#A9C9CC;
+    --accent:#43D9A6;--accent-ink:#04251C;--accent-bg:#143A33;--acc-tx:#7BE8C3;
+    --warn:#FFB454;--warn-bg:#3A2A10;--info-bg:#1B2B35;
+    --ok:#43D9A6;--bad:#FF8A80;--bad-bg:#3A1B1A;
+    --shadow:0 1px 2px rgba(0,0,0,.5);--glow:rgba(67,217,166,.42)
   }
 }
 *{box-sizing:border-box}
@@ -370,6 +371,117 @@ input[type=checkbox]{width:22px;height:22px;min-height:0;padding:0;flex:none;acc
 .cat-sep{margin:20px 4px 8px;font-size:12px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
 .chk{margin:8px 0 0;font-weight:700;line-height:1.45}
 @media (max-width:420px){.dsc .seg{grid-template-columns:1fr}}
+
+/* ===== v10: refinamiento visual (jerarquía, contraste, menos cajas anidadas) ===== */
+body{font-size:15px;line-height:1.45;padding-top:16px}
+.card{border-radius:20px;padding:20px 18px;box-shadow:var(--shadow)}
+.card h3{font-size:17px;letter-spacing:-.012em;margin-bottom:6px}
+.card .hint{font-size:13.5px;color:var(--mut);margin-bottom:16px}
+.field label,.lbl{font-size:13px;font-weight:700;color:var(--ink2);margin-bottom:6px}
+input,select,textarea{background:var(--surface);border:1.5px solid var(--ctl);border-radius:12px;min-height:50px;padding:12px 14px;color:var(--ink)}
+input::placeholder,textarea::placeholder{color:var(--mut);opacity:1}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:3px solid var(--accent-bg);outline-offset:0}
+input.bad,textarea.bad,select.bad{border-color:var(--bad);box-shadow:none;outline:3px solid var(--bad-bg)}
+input[readonly]{background:var(--info-bg);opacity:1;color:var(--ink2)}
+.btn{border-radius:14px;font-size:15px;min-height:50px}
+.btn-acc{background:var(--accent);color:var(--accent-ink);box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.btn-ghost{background:var(--surface);color:var(--ink2);border:1.5px solid var(--ctl)}
+.btn-sm{min-height:44px;font-size:14px}
+.btn-edit{background:var(--accent-bg);color:var(--acc-tx);border:1.5px solid var(--accent)}
+.msg.err{color:var(--bad)}.msg.ok{color:var(--ok)}
+.link{color:var(--acc-tx);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+.link.bad{color:var(--bad)}
+.small{color:var(--mut);font-size:12.5px}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+/* pestañas */
+.tabs{background:var(--info-bg);border:none;box-shadow:none;border-radius:16px;padding:4px}
+.tab{color:var(--ink2);font-weight:700}
+.tab.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(15,31,40,.14);font-weight:800}
+/* chips y segmentos */
+.chip{background:var(--surface);border:1.5px solid var(--ctl);color:var(--ink);font-weight:700}
+.chip.on{background:var(--accent-bg);border-color:var(--accent);color:var(--acc-tx);box-shadow:inset 0 0 0 1px var(--accent);font-weight:800}
+.chip small{color:var(--mut)}.chip.on small{color:var(--acc-tx)}
+.dot{border-color:var(--ctl)}
+.stp{border:1.5px solid var(--ctl)}
+/* reserva elegida: neutra con barra de acento (antes: verde sobre verde) */
+.ressel{background:var(--surface);border:1.5px solid var(--ctl);border-left:6px solid var(--accent);border-radius:14px;padding:14px 16px}
+.ressel b{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.ressel .rm{color:var(--ink2);opacity:1;font-size:13.5px;line-height:1.6;margin-top:6px}
+/* servicios: sin caja gris dentro de caja blanca; separadores finos */
+.ln,.tramo{background:transparent;border:0;border-top:1px solid var(--line);border-radius:0;padding:18px 0 6px;margin:0}
+.ln:first-child,.tramo:first-child{border-top:0;padding-top:4px}
+.ln-h{font-size:14px;color:var(--ink2)}
+.ln .pbadge{background:var(--info-bg);color:var(--ink2)}
+.ln .pbadge.man{background:var(--warn-bg);color:var(--warn)}
+.ln .pbadge.cat{background:var(--accent-bg);color:var(--acc-tx)}
+.monto{border:0;background:var(--info-bg);border-radius:14px;padding:12px 14px}
+.monto .mf{color:var(--ink2)}
+.monto .mv{font-size:24px;letter-spacing:-.015em}
+.dsc{border-top:1px solid var(--line)}
+.cort{border:1.5px solid var(--ctl)}
+.cort:has(input:checked){border-color:var(--accent);background:var(--accent-bg);color:var(--acc-tx)}
+.aviso{background:var(--info-bg);border:0;color:var(--ink2)}
+.aviso.on{background:var(--accent-bg);border:0;color:var(--acc-tx)}
+.codigo{background:var(--info-bg);border:0}
+/* filas resumen de servicios ya agregados */
+.sres{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px}
+.sres .sn i{width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:inline-grid;place-items:center;font-size:12px;font-weight:800;flex:none}
+.sres .sn{font-size:15px}
+.sres .sd{color:var(--ink2);font-size:13px}
+.sres .sm{font-size:18px;letter-spacing:-.01em}
+/* confirmación */
+.okbox{background:var(--accent-bg);border:0;border-left:6px solid var(--accent);border-radius:14px;color:var(--acc-tx);font-size:15px;font-weight:800}
+.okbox small{color:var(--ink2);font-size:13px}
+.okbox.warn{background:var(--warn-bg);border-left-color:var(--warn);color:var(--warn)}
+/* barra inferior: el total es lo más grande de la pantalla */
+.sticky{background:var(--surface);border:1.5px solid var(--line);border-radius:20px;padding:12px 14px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -6px 24px -8px rgba(15,31,40,.28),0 10px 28px -10px rgba(15,31,40,.3)}
+.sumbar{color:var(--ink2);font-size:13.5px;font-weight:700;align-items:center}
+.sumbar b{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.sticky .btn-acc{min-height:52px;font-size:15.5px;white-space:nowrap;padding-left:12px;padding-right:12px}
+.sticky #lnAdd{font-size:14.5px;padding-left:12px;padding-right:12px}
+.sticky .btn-ghost{min-height:52px}
+/* listas y tarjetas secundarias */
+.list-item{background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:14px 16px}
+.list-item .cmt{background:var(--info-bg);border:0}
+.tag{background:var(--accent-bg);color:var(--acc-tx)}
+.tag.m{background:var(--info-bg);color:var(--ink2)}
+.tag.w{background:var(--warn-bg);color:var(--warn)}
+.stat{background:var(--info-bg);border:0;border-radius:14px;padding:12px}
+.stat .k{color:var(--ink2)}
+.stat .v{font-size:21px;letter-spacing:-.015em}
+details.cat-i,.sim-i{border:1.5px solid var(--line)}
+.alerta{border:0;border-left:6px solid var(--warn);border-radius:14px}
+.alerta.info{border-left-color:var(--ctl)}
+.cat-sep{text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink2)}
+.drop{border:1.5px solid var(--ctl)}
+.drop-item:hover,.drop-item.act{background:var(--accent-bg)}
+/* calendario: texto sobre acento y ocupados con contraste */
+.rf-btn{background:var(--surface);border:1.5px solid var(--ctl)}
+.rf-s{background:var(--surface);border:1.5px solid var(--ctl)}
+.rf-n{background:var(--accent-bg);color:var(--acc-tx)}
+.rf-help{color:var(--acc-tx)}
+.rf-oc{color:var(--bad)}
+.rf-d.rf-oc::before{background:var(--bad-bg)}
+.rf-d.rf-oc.rf-mid{background:var(--bad-bg)}
+.rf-warn{background:var(--bad-bg);border:0;border-left:6px solid var(--bad)}
+.rf-sw-oc{background:var(--bad-bg);border:1.5px solid var(--bad)}
+.backbtn{border:1.5px solid var(--line)}
+.apphead .ttl b{font-size:16px;font-weight:800}
+.apphead .ttl span{color:var(--ink2)}
+
+/* v11: «+ Otro servicio» llama la atención; resumen final */
+.sticky #lnAdd{background:var(--accent-bg);color:var(--acc-tx);border:2px solid var(--accent);font-weight:800}
+.sticky #lnAdd.pulse{animation:lnpulse 1.1s ease-out 2}
+@keyframes lnpulse{0%{box-shadow:0 0 0 0 var(--accent)}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.ult-tot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:10px;padding-top:12px;border-top:1.5px solid var(--line);font-size:14px;font-weight:700;color:var(--ink2)}
+.ult-tot b{font-size:24px;color:var(--ink);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+#ultCard .li-row{padding:12px 0}
+#ultCard .li-row .lt{font-size:15px}
+@media (prefers-reduced-motion:reduce){.sticky #lnAdd.pulse{animation:none}}
+
+/* v12: glow suave fijo en «Guardar» y «+ Otro servicio» */
+.sticky #guardar:not([disabled]),.sticky #lnAdd{box-shadow:0 0 16px 1px var(--glow)}
+.sticky #guardar:not([disabled]):hover,.sticky #lnAdd:hover{box-shadow:0 0 22px 3px var(--glow)}
 </style>
 </head>
 <body>
@@ -460,6 +572,8 @@ input[type=checkbox]{width:22px;height:22px;min-height:0;padding:0;flex:none;acc
           </div>
         </div>
       </div>
+
+      <div class="card" id="ultCard" hidden style="margin-top:16px"></div>
 
       <div class="card" style="margin-top:16px" id="regCard">
         <h3>Cobros registrados <span class="tag" id="regCuenta">0</span></h3>
@@ -1427,10 +1541,11 @@ function actualizarLinea(L, tocarCampo) {
   const ch = document.querySelector('[data-ch="' + k + '"]'); if (ch) pintarChoque(L, ch);
   actualizarResumen();
 }
+function pulsoOtro() { const b = $('lnAdd'); if (!b || b.hidden || editId) return; const hay = LN.some(L => !L.cerrada && L.itemId); if (!hay) { b.classList.remove('pulse'); delete b.dataset.pk; } else if (!b.dataset.pk) { b.classList.add('pulse'); b.dataset.pk = '1'; } }
 function actualizarResumen() {
   const n = LN.filter(L => catItem(L.itemId)).length, tot = LN.reduce((a, L) => a + montoDe(L), 0);
   $('sumTxt').textContent = n ? n + (n === 1 ? ' servicio' : ' servicios') + (RES ? ' · ' + RES.codigo : '') : 'Sin servicios';
-  $('sumTot').textContent = money(tot);
+  $('sumTot').textContent = money(tot); pulsoOtro();
   $('guardar').textContent = editId ? 'Guardar cambios' : (n > 1 ? 'Guardar ' + n + ' servicios' : 'Guardar');
 }
 function defaultsFechas(L) {
@@ -1536,7 +1651,7 @@ function elegirReserva(r) {
   if (!RES.anuncio || !anuncioObj(RES.anuncio)) RES.anuncio = null;
   ocultarDrop(); $('rBuscar').value = '';
   $('resBuscaWrap').hidden = true; $('rManual').hidden = true;
-  pintarResSel(); $('lineasWrap').hidden = false;
+  pintarResSel(); $('lineasWrap').hidden = false; if (!editId) $('okBox').hidden = true;
   if (!editId) { LN = [nuevaLinea()]; }
   renderLineas(); msg('');
 }
@@ -1621,15 +1736,29 @@ $('guardar').onclick = async () => {
     if (fuera) regPer = 'todo';
     aplicar(j); setHint(true);
     const resumen = (eraEdicion ? 'Cambios guardados' : 'Guardado ✓') + ' · ' + n + (n === 1 ? ' servicio' : ' servicios') + ' · ' + money(tot) + ' · ' + cod;
-    const resG = RES, huG = RES && RES.huesped;
-    resetForm();
-    if (!eraEdicion && resG) { RES = resG; $('resBuscaWrap').hidden = true; pintarResSel(); $('lineasWrap').hidden = false; LN = [nuevaLinea()]; renderLineas(); okBox(resumen, '¿Otro servicio para ' + (huG || 'esta reserva') + '? Agrégalo abajo. Para otra reserva pulsa «Otra reserva».'); }
-    else okBox(resumen, (fuera ? 'Su check-in está fuera del periodo: ahora ves «Todo».' : ''));
-    msg('');
-    $('okBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const resG = Object.assign({}, RES), lin = LN.map(L => { const it = catItem(L.itemId); return { item: it ? it.item : '', det: resumenDet(L, it), monto: montoDe(L) }; });
+    resetForm(); msg('');
+    okBox(resumen, fuera ? 'Su check-in está fuera del periodo: ahora ves «Todo».' : '');
+    if (!eraEdicion) { ULT = { res: resG, lin: lin, tot: tot }; pintarUlt(); }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (e) { msg(String(e.message || e), 'err'); }
   guardando = false; $('guardar').disabled = false;
 };
+let ULT = null;
+function resumenDet(L, it) {
+  const d = []; if (!it) return '';
+  if (esDesc(it)) d.push('Ajuste · ' + (L.aplica || ''));
+  else { if (usaCant(it)) d.push(L.cant + ' × ' + money(numIn(L.precio) || 0)); if (usaFechas(it)) d.push(nochesDe(L) + (nochesDe(L) === 1 ? ' noche' : ' noches')); if (L.conDesc) d.push(L.cortesia ? 'Cortesía' : 'Con descuento'); }
+  d.push(medioN(L.medio)); return d.join(' · ');
+}
+function pintarUlt() {
+  const c = $('ultCard'); if (!ULT) { c.hidden = true; return; }
+  c.innerHTML = '<h3>Resumen de lo que acabas de guardar</h3><p class="hint">' + esc(ULT.res.huesped || 'Sin nombre') + ' · ' + esc(ULT.res.codigo) + '</p>' +
+    ULT.lin.map(l => '<div class="li-row"><div><div class="lt">' + esc(l.item) + '</div><div class="ls">' + esc(l.det) + '</div></div><div class="lm">' + money(l.monto) + '</div></div>').join('') +
+    '<div class="ult-tot"><span>Total · ' + ULT.lin.length + (ULT.lin.length === 1 ? ' servicio' : ' servicios') + '</span><b>' + money(ULT.tot) + '</b></div>' +
+    '<button type="button" class="btn btn-ghost" id="ultMas" style="width:100%;margin-top:12px">+ Agregar otro servicio a esta reserva</button>';
+  c.hidden = false;
+}
 function okBox(t, sub, warn) { const b = $('okBox'); b.className = 'okbox' + (warn ? ' warn' : ''); b.innerHTML = esc(t) + (sub ? '<small>' + esc(sub) + '</small>' : ''); b.hidden = false; }
 function abrirConError() { /* si la validación falló en una línea cerrada, la reabre */ }
 function resetForm() {
@@ -1639,6 +1768,11 @@ function resetForm() {
   renderLineas();
 }
 $('cancelar').onclick = () => { resetForm(); msg(''); };
+$('ultCard').addEventListener('click', e => {
+  if (!e.target.closest('#ultMas') || !ULT) return;
+  editId = null; elegirReserva(Object.assign({}, RES_POR_COD[ULT.res.codigo] || ULT.res)); $('okBox').hidden = true;
+  const s1 = $('it' + LN[0].k); window.scrollTo({ top: $('resCard').offsetTop - 10, behavior: 'smooth' });
+});
 
 /* ---- editar / borrar un cobro ya registrado ---- */
 function editarLinea(id) {
