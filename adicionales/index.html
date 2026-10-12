@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v12 · glow suave en botones, formulario limpio al guardar + resumen final, sistema visual nuevo (contraste AA), varios servicios por reserva, catálogo unificado (8 rubros), descuento/cortesía integrado, techo semanal">
+<meta name="app-version" content="adicionales v15 · aviso «Guardado» desaparece solo, sin tarjeta de resumen duplicada, «+ Agregar servicio» por reserva, filtros y medio de cobro en una fila, glow suave en botones, formulario limpio al guardar + resumen final, sistema visual nuevo (contraste AA), varios servicios por reserva, catálogo unificado (8 rubros), descuento/cortesía integrado, techo semanal">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -347,7 +347,7 @@ details.cat-i.off{opacity:.65}
 @media (min-width:900px){.wrap{max-width:820px}.stats.s4{grid-template-columns:repeat(4,1fr)}.sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.sim-grid .sim-i{margin-bottom:0}}
 .toast-undo{display:none}
 .seg>.chip{min-width:0;overflow-wrap:anywhere;padding-left:6px;padding-right:6px}
-@media (max-width:420px){.ln .seg{grid-template-columns:1fr}}
+
 
 .alerta.resol{margin-bottom:14px}
 .alerta.resol ul{list-style:none;margin:10px 0 0;padding:0}
@@ -370,7 +370,7 @@ input[type=checkbox]{width:22px;height:22px;min-height:0;padding:0;flex:none;acc
 .desg.bad{color:var(--bad)}
 .cat-sep{margin:20px 4px 8px;font-size:12px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
 .chk{margin:8px 0 0;font-weight:700;line-height:1.45}
-@media (max-width:420px){.dsc .seg{grid-template-columns:1fr}}
+
 
 /* ===== v10: refinamiento visual (jerarquía, contraste, menos cajas anidadas) ===== */
 body{font-size:15px;line-height:1.45;padding-top:16px}
@@ -475,13 +475,33 @@ details.cat-i,.sim-i{border:1.5px solid var(--line)}
 @keyframes lnpulse{0%{box-shadow:0 0 0 0 var(--accent)}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
 .ult-tot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:10px;padding-top:12px;border-top:1.5px solid var(--line);font-size:14px;font-weight:700;color:var(--ink2)}
 .ult-tot b{font-size:24px;color:var(--ink);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-#ultCard .li-row{padding:12px 0}
-#ultCard .li-row .lt{font-size:15px}
 @media (prefers-reduced-motion:reduce){.sticky #lnAdd.pulse{animation:none}}
 
 /* v12: glow suave fijo en «Guardar» y «+ Otro servicio» */
 .sticky #guardar:not([disabled]),.sticky #lnAdd{box-shadow:0 0 16px 1px var(--glow)}
 .sticky #guardar:not([disabled]):hover,.sticky #lnAdd:hover{box-shadow:0 0 22px 3px var(--glow)}
+
+/* v13: menos scroll: medio de cobro en una fila, cantidad+precio en una fila, filtros en una fila */
+.ln .seg{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.ln .seg .chip{min-height:46px;padding:6px 4px;font-size:12.5px;line-height:1.2;justify-content:center;text-align:center}
+.dsc .seg{grid-template-columns:1fr 1fr;gap:6px}
+.ln .seg>.chip{overflow-wrap:normal;word-break:normal}
+@media (max-width:400px){.ln .seg .chip{font-size:12px;padding-left:2px;padding-right:2px;letter-spacing:-.01em}}
+.row2.qp{gap:10px;align-items:start}
+.row2.qp .stepper{grid-template-columns:40px minmax(0,1fr) 40px;gap:4px}
+.row2.qp .stp{min-height:50px;font-size:20px;border-radius:10px}
+.row2.qp .stepper input{padding-left:4px;padding-right:4px}
+.row2.qp label{display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px}
+.field.pie{margin:-6px 0 14px}.field.pie .small{margin-top:0}
+.filtro{display:flex;gap:8px;margin:10px 0 12px}
+.filtro input{flex:1 1 auto;min-width:0}
+.filtro select{flex:0 0 auto;width:auto;max-width:48%;padding-right:8px}
+
+.gadd{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.gadd .btn{width:100%}
+.okbox{transition:opacity .4s ease,transform .4s ease}
+.okbox.fuera{opacity:0;transform:translateY(-6px)}
+@media (prefers-reduced-motion:reduce){.okbox{transition:none}}
 </style>
 </head>
 <body>
@@ -573,12 +593,9 @@ details.cat-i,.sim-i{border:1.5px solid var(--line)}
         </div>
       </div>
 
-      <div class="card" id="ultCard" hidden style="margin-top:16px"></div>
-
       <div class="card" style="margin-top:16px" id="regCard">
         <h3>Cobros registrados <span class="tag" id="regCuenta">0</span></h3>
-        <div class="field" style="margin:10px 0 10px"><input id="buscar" type="search" placeholder="Buscar por huésped, código o servicio" aria-label="Buscar cobro" autocomplete="off"></div>
-        <div class="seg yrs" id="regAnios" role="group" aria-label="Periodo de los cobros"></div>
+        <div class="filtro"><input id="buscar" type="search" placeholder="Buscar…" aria-label="Buscar cobro por huésped, código o servicio" autocomplete="off"><select id="regSel" aria-label="Periodo de los cobros"></select></div>
         <div class="row2" id="regRango" hidden style="margin-bottom:12px"><div class="field"><label for="rgD1">Desde</label><input type="date" id="rgD1"></div><div class="field"><label for="rgD2">Hasta</label><input type="date" id="rgD2"></div></div>
         <div class="small" id="regPer" style="margin:0 0 10px"></div>
         <div class="stats" id="regStats" aria-live="polite"></div>
@@ -1411,20 +1428,17 @@ function lineaHTML(L, i) {
     (it ? '<div class="small">' + esc(cobroDe(it.cobro).n) + ': ' + esc(cobroDe(it.cobro).d) + (it.nota && !it.techo ? ' ' + esc(it.nota) + '.' : '') + '</div>' : '') + '</div>';
   if (it && esDesc(it)) { return h + descHTML(L, it, k) + '</div>'; }
   if (it) {
-    if (usaCant(it)) {
-      h += '<div class="field"><label for="ct' + k + '">' + labCant(it) + '</label><div class="stepper"><button type="button" class="stp" data-st="-1" data-k="' + k + '" aria-label="Restar uno">−</button>' +
-        '<input type="number" inputmode="numeric" id="ct' + k + '" data-f="cant" min="1" max="99" step="1" value="' + esc(L.cant) + '"><button type="button" class="stp" data-st="1" data-k="' + k + '" aria-label="Sumar uno">+</button></div></div>';
-    }
-    if (usaFechas(it)) {
-      h += '<div class="field" style="margin-bottom:6px"><span class="lbl">' + (it.cobro === 'noche' ? 'Noches que se cobran' : 'Fechas del servicio') + '</span><div class="row2">' +
+    const fCant = usaCant(it) ? '<div class="field"><label for="ct' + k + '">' + labCant(it) + '</label><div class="stepper"><button type="button" class="stp" data-st="-1" data-k="' + k + '" aria-label="Restar uno">−</button>' +
+        '<input type="number" inputmode="numeric" id="ct' + k + '" data-f="cant" min="1" max="99" step="1" value="' + esc(L.cant) + '"><button type="button" class="stp" data-st="1" data-k="' + k + '" aria-label="Sumar uno">+</button></div></div>' : '';
+    const fPrecio = '<div class="field"><label for="pr' + k + '">Precio ($) <span data-bd="' + k + '">' + badgeDe(L) + '</span></label>' +
+      '<input type="number" inputmode="decimal" id="pr' + k + '" data-f="precio" min="0" step="0.01" placeholder="0,00" value="' + esc(L.precio) + '"></div>';
+    const pie = '<div class="field pie"><div class="small" data-ph="' + k + '"></div><button type="button" class="link" data-reset="' + k + '" data-rs="' + k + '" hidden>Usar el precio del catálogo</button></div>';
+    const fFechas = usaFechas(it) ? '<div class="field" style="margin-bottom:6px"><span class="lbl">' + (it.cobro === 'noche' ? 'Noches que se cobran' : 'Fechas del servicio') + '</span><div class="row2">' +
         '<div class="field"><label for="di' + k + '">Desde</label><input type="date" id="di' + k + '" data-f="ini" value="' + esc(L.ini) + '"></div>' +
         '<div class="field"><label for="df' + k + '">Hasta</label><input type="date" id="df' + k + '" data-f="fin" value="' + esc(L.fin) + '"></div></div>' +
-        '<div class="small" data-nn="' + k + '"></div>' + (it.cobro === 'noche' ? '<div class="chk" role="status" data-ch="' + k + '" hidden></div>' : '') + '</div>';
-    }
-    h += '<div class="field"><label for="pr' + k + '">Precio ($) <span data-bd="' + k + '">' + badgeDe(L) + '</span></label>' +
-      '<input type="number" inputmode="decimal" id="pr' + k + '" data-f="precio" min="0" step="0.01" placeholder="0,00" value="' + esc(L.precio) + '">' +
-      '<div class="small" data-ph="' + k + '"></div>' +
-      '<button type="button" class="link" data-reset="' + k + '" data-rs="' + k + '" hidden>Usar el precio del catálogo</button></div>';
+        '<div class="small" data-nn="' + k + '"></div>' + (it.cobro === 'noche' ? '<div class="chk" role="status" data-ch="' + k + '" hidden></div>' : '') + '</div>' : '';
+    if (fCant) h += '<div class="row2 qp">' + fCant + fPrecio + '</div>' + pie + fFechas;
+    else h += fFechas + fPrecio + pie;
     h += '<div class="aviso" role="status" data-tp="' + k + '" hidden></div>';
     if (exigeNota(it)) h += '<div class="field"><label for="cm' + k + '">Nota explicativa <span class="pbadge man">Obligatoria</span></label><textarea id="cm' + k + '" data-f="coment" maxlength="300" placeholder="Ej. se rompió un cuadro · se perdió un tenedor">' + esc(L.coment) + '</textarea><div class="small">Queda guardada en el cobro para poder rastrearlo.</div></div>';
     if (!sinDesc(it)) h += dscHTML(L, k);
@@ -1739,7 +1753,6 @@ $('guardar').onclick = async () => {
     const resG = Object.assign({}, RES), lin = LN.map(L => { const it = catItem(L.itemId); return { item: it ? it.item : '', det: resumenDet(L, it), monto: montoDe(L) }; });
     resetForm(); msg('');
     okBox(resumen, fuera ? 'Su check-in está fuera del periodo: ahora ves «Todo».' : '');
-    if (!eraEdicion) { ULT = { res: resG, lin: lin, tot: tot }; pintarUlt(); }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (e) { msg(String(e.message || e), 'err'); }
   guardando = false; $('guardar').disabled = false;
@@ -1751,15 +1764,8 @@ function resumenDet(L, it) {
   else { if (usaCant(it)) d.push(L.cant + ' × ' + money(numIn(L.precio) || 0)); if (usaFechas(it)) d.push(nochesDe(L) + (nochesDe(L) === 1 ? ' noche' : ' noches')); if (L.conDesc) d.push(L.cortesia ? 'Cortesía' : 'Con descuento'); }
   d.push(medioN(L.medio)); return d.join(' · ');
 }
-function pintarUlt() {
-  const c = $('ultCard'); if (!ULT) { c.hidden = true; return; }
-  c.innerHTML = '<h3>Resumen de lo que acabas de guardar</h3><p class="hint">' + esc(ULT.res.huesped || 'Sin nombre') + ' · ' + esc(ULT.res.codigo) + '</p>' +
-    ULT.lin.map(l => '<div class="li-row"><div><div class="lt">' + esc(l.item) + '</div><div class="ls">' + esc(l.det) + '</div></div><div class="lm">' + money(l.monto) + '</div></div>').join('') +
-    '<div class="ult-tot"><span>Total · ' + ULT.lin.length + (ULT.lin.length === 1 ? ' servicio' : ' servicios') + '</span><b>' + money(ULT.tot) + '</b></div>' +
-    '<button type="button" class="btn btn-ghost" id="ultMas" style="width:100%;margin-top:12px">+ Agregar otro servicio a esta reserva</button>';
-  c.hidden = false;
-}
-function okBox(t, sub, warn) { const b = $('okBox'); b.className = 'okbox' + (warn ? ' warn' : ''); b.innerHTML = esc(t) + (sub ? '<small>' + esc(sub) + '</small>' : ''); b.hidden = false; }
+let okT = null;
+function okBox(t, sub, warn) { const b = $('okBox'); clearTimeout(okT); b.className = 'okbox' + (warn ? ' warn' : ''); b.innerHTML = esc(t) + (sub ? '<small>' + esc(sub) + '</small>' : ''); b.hidden = false; okT = setTimeout(() => { b.classList.add('fuera'); setTimeout(() => { b.hidden = true; b.classList.remove('fuera'); }, 450); }, warn ? 10000 : 6000); }
 function abrirConError() { /* si la validación falló en una línea cerrada, la reabre */ }
 function resetForm() {
   $('okBox').hidden = true; editId = null; RES = null; LN = [];
@@ -1768,11 +1774,6 @@ function resetForm() {
   renderLineas();
 }
 $('cancelar').onclick = () => { resetForm(); msg(''); };
-$('ultCard').addEventListener('click', e => {
-  if (!e.target.closest('#ultMas') || !ULT) return;
-  editId = null; elegirReserva(Object.assign({}, RES_POR_COD[ULT.res.codigo] || ULT.res)); $('okBox').hidden = true;
-  const s1 = $('it' + LN[0].k); window.scrollTo({ top: $('resCard').offsetTop - 10, behavior: 'smooth' });
-});
 
 /* ---- editar / borrar un cobro ya registrado ---- */
 function editarLinea(id) {
@@ -1827,7 +1828,7 @@ function textoPer(p, r) {
 }
 function renderLista() {
   const q = $('buscar').value.trim().toLowerCase();
-  $('regAnios').innerHTML = PERS.map(p => { const on = p[0] === regPer && !q; return '<button type="button" class="chip' + (on ? ' on' : '') + '" data-p="' + p[0] + '" aria-pressed="' + on + '">' + p[1] + '</button>'; }).join('');
+  $('regSel').innerHTML = PERS.map(p => '<option value="' + p[0] + '"' + (p[0] === regPer ? ' selected' : '') + '>' + p[1] + '</option>').join('');
   $('regRango').hidden = regPer !== 'rango';
   const r = rangoPer(regPer);
   $('regPer').textContent = q ? 'Buscando en todos los periodos.' : textoPer(regPer, r);
@@ -1854,14 +1855,22 @@ function renderLista() {
         if (l.obs) partes.push(l.obs);
         return '<div class="li-row" data-l="' + esc(l.id) + '"><div><div class="lt">' + esc(l.item) + '</div><div class="ls">' + esc(l.concepto) + (partes.length ? ' · ' + esc(partes.join(' · ')) : '') + '<br>' + esc((MEDIOS.filter(m => m.v === l.medio)[0] || { n: l.medio }).n) + ' · ' + l.anio + (l.origen === 'Manual' ? ' · precio manual' : (l.origen === 'Descuento' ? ' · descuento' : (l.origen === 'Ajuste' ? ' · ajuste' : (l.precio == null ? ' · histórico' : '')))) + '</div></div>' +
           '<div class="lm">' + money(l.monto) + '</div><div class="lb"><button type="button" class="btn btn-edit btn-sm" data-ed="' + esc(l.id) + '">Editar</button><button type="button" class="btn btn-ghost btn-sm" data-del="' + esc(l.id) + '"><span>Borrar</span></button></div></div>';
-      }).join('') + '</div>';
+      }).join('') + '<div class="gadd"><button type="button" class="btn btn-ghost btn-sm" data-add="' + esc(gr.c) + '">+ Agregar servicio a esta reserva</button></div></div>';
   }).join('') + (grupos.length > regVer ? '<button type="button" class="btn btn-ghost" id="verMas" style="width:100%">Ver más (' + (grupos.length - regVer) + ')</button>' : '');
 }
 $('buscar').addEventListener('input', () => { regVer = 40; renderLista(); });
-$('regAnios').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (!b) return; regPer = b.dataset.p; regVer = 40; if (regPer !== 'rango' && $('buscar').value) $('buscar').value = ''; renderLista(); if (regPer === 'rango' && window.RangoFechas && !$('rgD1')._rf) { RangoFechas.montar({ ci: $('rgD1'), co: $('rgD2'), titulo: 'Periodo de los cobros' }); } });
+$('regSel').addEventListener('change', e => { regPer = e.target.value; regVer = 40; if (regPer !== 'rango' && $('buscar').value) $('buscar').value = ''; renderLista(); if (regPer === 'rango' && window.RangoFechas && !$('rgD1')._rf) { RangoFechas.montar({ ci: $('rgD1'), co: $('rgD2'), titulo: 'Periodo de los cobros' }); } });
 ['rgD1', 'rgD2'].forEach(id => $(id).addEventListener('change', () => { regD1 = $('rgD1').value || ''; regD2 = $('rgD2').value || ''; regVer = 40; renderLista(); }));
 $('lista').addEventListener('click', async e => {
   if (e.target.closest('#verMas')) { regVer += 40; renderLista(); return; }
+  const ad = e.target.closest('[data-add]');
+  if (ad) {
+    const cod = ad.dataset.add, ls = DATA.lineas.filter(x => x.codigo === cod), l0 = ls[0]; if (!l0) return;
+    let r = RES_POR_COD[cod];
+    if (!r) { r = { codigo: cod, huesped: l0.huesped, anuncio: l0.anuncio, checkin: l0.checkin, checkout: l0.checkout, origen: 'Hoja' };
+      const u = ls.filter(x => { const c = catDeLinea(x); return c && c.cobro === 'unidad'; })[0]; if (u) { r.checkin = u.checkin; r.checkout = u.checkout; } }
+    editId = null; irTab('reg'); elegirReserva(Object.assign({}, r)); window.scrollTo({ top: 0, behavior: 'smooth' }); return;
+  }
   const ed = e.target.closest('[data-ed]'); if (ed) { editarLinea(ed.dataset.ed); return; }
   const del = e.target.closest('[data-del]'); if (!del) return;
   if (del.dataset.armed !== '1') {
