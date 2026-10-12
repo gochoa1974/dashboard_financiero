@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v17 · cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
+<meta name="app-version" content="adicionales v18 · forma de pago obligatoria (sin valor por defecto) · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -511,6 +511,10 @@ details.cat-i,.sim-i{border:1.5px solid var(--line)}
 .ressel,#lineasWrap{transition:opacity .2s ease,transform .22s ease}
 .ressel.sale,#lineasWrap.sale{opacity:0;transform:translateX(28px)}
 
+/* v18: forma de pago obligatoria */
+.req{font-weight:700;font-size:11px;color:var(--mut);margin-left:6px;text-transform:uppercase;letter-spacing:.03em}
+.seg.bad{outline:2px solid var(--bad);outline-offset:3px;border-radius:14px}
+.seg.bad .chip{border-color:var(--bad)}
 /* v17 */
 .nch .nrow{display:flex;align-items:center;gap:12px}
 .nch .stepper{grid-template-columns:44px 72px 44px;gap:4px;flex:0 0 auto}
@@ -1333,7 +1337,7 @@ let guardando = false;
 let manualAn = ANUNCIOS[1].v;
 
 function nuevaLinea(extra) {
-  return Object.assign({ k: ++lnSeq, itemId: '', cant: 1, ini: '', fin: '', precio: '', precioTocado: false, valor: '', aplica: '', medio: 'TRANSFERENCIA', anio: '', anioTocado: false, coment: '', id: null, firma: '', origen: '', cargando: false, conDesc: false, pct: '', fijo: '', cortesia: false }, extra || {});
+  return Object.assign({ k: ++lnSeq, itemId: '', cant: 1, ini: '', fin: '', precio: '', precioTocado: false, valor: '', aplica: '', medio: '', anio: '', anioTocado: false, coment: '', id: null, firma: '', origen: '', cargando: false, conDesc: false, pct: '', fijo: '', cortesia: false }, extra || {});
 }
 function inicioDe(L) {
   const it = catItem(L.itemId); if (!it || !RES) return '';
@@ -1462,7 +1466,7 @@ function descHTML(L, it, k) {
     (c.a.length ? '<optgroup label="Cobrados en esta reserva">' + c.a.map(opt).join('') + '</optgroup>' : '') + (c.b.length ? '<optgroup label="Otros servicios">' + c.b.map(opt).join('') + '</optgroup>' : '') + '</select></div>';
   h += '<div class="field"><label for="vl' + k + '">Valor a restar ($)</label><input type="number" inputmode="decimal" id="vl' + k + '" data-f="valor" min="0" step="0.01" placeholder="0,00" value="' + esc(L.valor) + '"><div class="small">Escribe el valor en positivo: el panel lo resta.</div></div>';
   h += '<div class="monto" aria-live="polite"><span class="mf" data-mf="' + k + '"></span><span class="mv" data-mv="' + k + '">$0,00</span></div>';
-  h += '<div class="field"><span class="lbl" id="md' + k + '">Medio de cobro</span><div class="seg" role="radiogroup" aria-labelledby="md' + k + '">' +
+  h += '<div class="field"><span class="lbl" id="md' + k + '">Forma de pago <b class="req">obligatoria</b></span><div class="seg" id="sg' + k + '" role="radiogroup" aria-labelledby="md' + k + '">' +
     MEDIOS.map(m => '<button type="button" class="chip' + (m.v === L.medio ? ' on' : '') + '" role="radio" aria-checked="' + (m.v === L.medio) + '" data-md="' + esc(m.v) + '" data-k="' + k + '">' + esc(m.n) + '</button>').join('') + '</div></div>';
   h += '<details class="mas"><summary class="link" style="list-style:none;display:flex;align-items:center">Más opciones</summary>' +
     '<div class="field"><label for="an' + k + '">Año de ingreso</label><select id="an' + k + '" data-f="anio">' + anioOpts(L) + '</select></div>' +
@@ -1470,7 +1474,7 @@ function descHTML(L, it, k) {
   return h;
 }
 function medioHTML(L, k) {
-  return '<div class="field"><span class="lbl" id="md' + k + '">Medio de cobro</span><div class="seg" role="radiogroup" aria-labelledby="md' + k + '">' +
+  return '<div class="field"><span class="lbl" id="md' + k + '">Forma de pago <b class="req">obligatoria</b></span><div class="seg" id="sg' + k + '" role="radiogroup" aria-labelledby="md' + k + '">' +
     MEDIOS.map(m => '<button type="button" class="chip' + (m.v === L.medio ? ' on' : '') + '" role="radio" aria-checked="' + (m.v === L.medio) + '" data-md="' + esc(m.v) + '" data-k="' + k + '">' + esc(m.n) + '</button>').join('') + '</div></div>';
 }
 function dscHTML(L, k) {
@@ -1523,7 +1527,7 @@ function anioOpts(L) {
   if (sel && ys.indexOf(String(sel)) < 0) ys.push(String(sel));
   return ys.map(y => '<option value="' + y + '"' + (y === String(sel) ? ' selected' : '') + '>' + y + '</option>').join('');
 }
-function medioN(v) { const m = MEDIOS.filter(x => x.v === v)[0]; return m ? m.n : v; }
+function medioN(v) { const m = MEDIOS.filter(x => x.v === v)[0]; return m ? m.n : (v || 'Falta forma de pago'); }
 function resumenHTML(L, i) {
   const it = catItem(L.itemId); let d = [];
   if (it && esDesc(it)) d.push('Ajuste · ' + (L.aplica || ''));
@@ -1692,7 +1696,7 @@ $('lineas').addEventListener('click', e => {
   const dc = e.target.closest('[data-dsc]');
   if (dc) { const L = lineaPorK(dc.dataset.k); if (!L) return; L.conDesc = dc.dataset.dsc === '1'; if (!L.conDesc) { L.cortesia = false; L.pct = ''; L.fijo = ''; } renderLineas(); const f0 = L.conDesc ? ($('dpc' + L.k) || $('cx' + L.k)) : null; if (f0) f0.focus(); return; }
   const md = e.target.closest('[data-md]');
-  if (md) { const L = lineaPorK(md.dataset.k); L.medio = md.dataset.md; md.parentNode.querySelectorAll('.chip').forEach(c => { const on = c === md; c.classList.toggle('on', on); c.setAttribute('aria-checked', on); }); return; }
+  if (md) { const L = lineaPorK(md.dataset.k); L.medio = md.dataset.md; md.parentNode.classList.remove('bad'); msg(''); md.parentNode.querySelectorAll('.chip').forEach(c => { const on = c === md; c.classList.toggle('on', on); c.setAttribute('aria-checked', on); }); return; }
   const rm = e.target.closest('[data-rm]');
   if (rm) { LN = LN.filter(L => String(L.k) !== rm.dataset.rm); if (!LN.length) LN = [nuevaLinea()]; else if (!abiertas().length) LN.push(nuevaLinea({ medio: LN[LN.length - 1].medio })); renderLineas(); return; }
   const rs = e.target.closest('[data-reset]');
@@ -1713,7 +1717,7 @@ $('lnAdd').onclick = () => {
   if (!abiertas().some(L => L.itemId) && abiertas().length) { msg('Elige el servicio y luego pulsa «+ Otro servicio».', 'err'); const s0 = $('it' + abiertas()[0].k); if (s0) s0.focus(); return; }
   const err = cerrarAbiertas(); if (err) { msg(err, 'err'); return; }
   const ult = LN[LN.length - 1];
-  LN.push(nuevaLinea({ medio: ult ? ult.medio : 'TRANSFERENCIA' })); msg(''); renderLineas();
+  LN.push(nuevaLinea({ medio: ult ? ult.medio : '' })); msg(''); renderLineas();
   const l = LN[LN.length - 1], s1 = $('it' + l.k); if (s1) { s1.scrollIntoView({ block: 'center', behavior: 'smooth' }); s1.focus({ preventScroll: true }); }
 };
 $('lineas').addEventListener('click', e => {
@@ -1870,6 +1874,7 @@ function validarForm(subset) {
     const L = LN[i], it = catItem(L.itemId), n = LN.length > 1 ? ' (servicio ' + (i + 1) + ')' : '';
     if (subset && subset.indexOf(L) < 0) continue;
     if (!it) { const s = $('it' + L.k); if (s) { s.classList.add('bad'); s.focus(); } return 'Elige el servicio o producto' + n + '.'; }
+    if (!L.medio) { const sg = $('sg' + L.k); if (sg) { sg.classList.add('bad'); sg.scrollIntoView({ block: 'center', behavior: 'smooth' }); } return 'Elige la forma de pago (Efectivo, Transferencia…)' + n + '.'; }
     if (esDesc(it)) {
       if (!L.aplica) { const a = $('ap' + L.k); if (a) { a.classList.add('bad'); a.focus(); } return 'Elige a qué servicio se aplica' + n + '.'; }
       if (!(numIn(L.valor) > 0)) { const v = $('vl' + L.k); if (v) { v.classList.add('bad'); v.focus(); } return 'Escribe el valor a restar' + n + '.'; }
@@ -1894,7 +1899,7 @@ function validarForm(subset) {
 $('guardar').onclick = async () => {
   if (guardando) return;
   if (LN.some(L => L.itemId)) LN = LN.filter(L => L.itemId);
-  const err = validarForm(); if (err) { msg(err, 'err'); renderLineas(); abrirConError(); return; }
+  const err = validarForm(); if (err) { msg(err, 'err'); renderLineas(); abrirConError(); if (/forma de pago/i.test(err)) { const f0 = LN.filter(L => !L.medio)[0]; const sg0 = f0 && $('sg' + f0.k); if (sg0) { sg0.classList.add('bad'); sg0.scrollIntoView({ block: 'center', behavior: 'smooth' }); } } return; }
   const chq = LN.map(L => { const it = catItem(L.itemId); return it && it.cobro === 'noche' ? choqueDe(L) : null; }).filter(Boolean);
   if (chq.length && !confirm('Estas noches chocan con ' + chq[0].etq + ' (' + fechaCorta(chq[0].ini) + ' → ' + fechaCorta(chq[0].fin) + '). ¿Guardar igual?')) return;
   guardando = true; $('guardar').disabled = true; msg('Guardando...');
