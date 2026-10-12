@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v15 · aviso «Guardado» desaparece solo, sin tarjeta de resumen duplicada, «+ Agregar servicio» por reserva, filtros y medio de cobro en una fila, glow suave en botones, formulario limpio al guardar + resumen final, sistema visual nuevo (contraste AA), varios servicios por reserva, catálogo unificado (8 rubros), descuento/cortesía integrado, techo semanal">
+<meta name="app-version" content="adicionales v16 · botón Cancelar con efecto, aviso «Guardado» desaparece solo, sin tarjeta de resumen duplicada, «+ Agregar servicio» por reserva, filtros y medio de cobro en una fila, glow suave en botones, formulario limpio al guardar + resumen final, sistema visual nuevo (contraste AA), varios servicios por reserva, catálogo unificado (8 rubros), descuento/cortesía integrado, techo semanal">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -502,6 +502,14 @@ details.cat-i,.sim-i{border:1.5px solid var(--line)}
 .okbox{transition:opacity .4s ease,transform .4s ease}
 .okbox.fuera{opacity:0;transform:translateY(-6px)}
 @media (prefers-reduced-motion:reduce){.okbox{transition:none}}
+/* v16: botón Cancelar con efecto */
+.btn-cancel{background:var(--surface);color:var(--bad);border:1.5px solid var(--bad);gap:6px;transition:background .15s,transform .12s,box-shadow .15s}
+.btn-cancel:hover{background:var(--bad-bg);box-shadow:0 0 12px 1px var(--bad-bg)}
+.btn-cancel:active{background:var(--bad);color:#fff;transform:scale(.95)}
+.btn-cancel:active svg{transform:rotate(90deg)}
+.btn-cancel svg{transition:transform .2s}
+.ressel,#lineasWrap{transition:opacity .2s ease,transform .22s ease}
+.ressel.sale,#lineasWrap.sale{opacity:0;transform:translateX(28px)}
 </style>
 </head>
 <body>
@@ -1672,7 +1680,7 @@ function elegirReserva(r) {
 function pintarResSel() {
   const el = $('resSel'); el.hidden = !RES; if (!RES) return;
   const prev = DATA.lineas.filter(l => l.codigo === RES.codigo), tot = prev.reduce((a, l) => a + l.monto, 0);
-  el.innerHTML = '<div class="rt"><b>' + esc(RES.huesped || 'Sin nombre') + '</b>' + (editId ? '' : '<button type="button" class="btn btn-ghost btn-sm" id="resCambiar">Otra reserva</button>') + '</div>' +
+  el.innerHTML = '<div class="rt"><b>' + esc(RES.huesped || 'Sin nombre') + '</b>' + (editId ? '' : '<button type="button" class="btn btn-cancel btn-sm" id="resCambiar"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>Cancelar</button>') + '</div>' +
     '<div class="rm">' + esc(RES.codigo) + ' · ' + esc(RES.origen) + '<br>' + esc(fechaBonita(RES.checkin)) + ' → ' + esc(fechaBonita(RES.checkout)) + (RES.checkin && RES.checkout ? ' · ' + difDias(RES.checkin, RES.checkout) + ' noches' : '') +
     '<br>' + (prev.length ? 'Ya tiene ' + prev.length + (prev.length === 1 ? ' cobro' : ' cobros') + ' adicionales (' + money(tot) + ').' : 'Sin cobros adicionales todavía.') + '</div>' +
     (!RES.anuncio ? '<div class="small" style="margin-top:8px">No pude saber el anuncio. Elígelo:</div><div class="chips" role="radiogroup" aria-label="Anuncio" id="resAn"></div>' : '');
@@ -1680,8 +1688,10 @@ function pintarResSel() {
 }
 $('resSel').addEventListener('click', e => {
   if (e.target.closest('#resCambiar')) {
-    if (LN.some(L => L.itemId) && !confirm('Se perderán los servicios que no guardaste. ¿Cambiar de reserva?')) return;
-    RES = null; LN = []; $('resSel').hidden = true; $('lineasWrap').hidden = true; $('resBuscaWrap').hidden = false; $('rBuscar').focus(); return;
+    if (LN.some(L => L.itemId) && !confirm('Se perderán los servicios que no guardaste. ¿Cancelar este registro?')) return;
+    const el = $('resSel'), fin = () => { RES = null; LN = []; el.classList.remove('sale'); el.hidden = true; $('lineasWrap').hidden = true; $('resBuscaWrap').hidden = false; $('rBuscar').focus(); };
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches) { fin(); return; }
+    el.classList.add('sale'); $('lineasWrap').classList.add('sale'); setTimeout(() => { $('lineasWrap').classList.remove('sale'); fin(); }, 220); return;
   }
   const a = e.target.closest('[data-an]');
   if (a) { RES.anuncio = a.dataset.an; $('resAn').querySelectorAll('.chip').forEach(c => { const on = c === a; c.classList.toggle('on', on); c.setAttribute('aria-checked', on); }); }
