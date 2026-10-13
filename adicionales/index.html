@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
+<meta name="app-version" content="adicionales v22 · No-show automático con Deshacer y candado · v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -515,6 +515,9 @@ details.cat-i,.sim-i{border:1.5px solid var(--line)}
 .req{font-weight:700;font-size:11px;color:var(--mut);margin-left:6px;text-transform:uppercase;letter-spacing:.03em}
 .seg.bad{outline:2px solid var(--bad);outline-offset:3px;border-radius:14px}
 .seg.bad .chip{border-color:var(--bad)}
+/* v22 */
+.okrow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.okrow .btn{flex:0 0 auto;min-height:40px}
 /* v17 */
 .nch .nrow{display:flex;align-items:center;gap:12px}
 .nch .stepper{grid-template-columns:44px 72px 44px;gap:4px;flex:0 0 auto}
@@ -1052,7 +1055,8 @@ const ANUNCIOS = [
 const MEDIOS = [
   { v: 'TRANSFERENCIA', n: 'Transferencia' },
   { v: 'EFECTIVO', n: 'Efectivo' },
-  { v: 'CENTRO DE RESOLUCIONES', n: 'Centro de resoluciones' }
+  { v: 'CENTRO DE RESOLUCIONES', n: 'Centro de resoluciones' },
+  { v: 'SIN PAGO', n: 'Sin pago (ahorro de limpieza)', oculto: true }   // v22: solo lo usa el no-show; no sale como opción
 ];
 const COBROS = [
   { v: 'unidad', n: 'Por unidad', d: 'Cantidad × precio. Ej. 2 lavadas.' },
@@ -1473,15 +1477,16 @@ function descHTML(L, it, k) {
   h += '<div class="field"><label for="vl' + k + '">Valor a restar ($)</label><input type="number" inputmode="decimal" id="vl' + k + '" data-f="valor" min="0" step="0.01" placeholder="0,00" value="' + esc(L.valor) + '"><div class="small">Escribe el valor en positivo: el panel lo resta.</div></div>';
   h += '<div class="monto" aria-live="polite"><span class="mf" data-mf="' + k + '"></span><span class="mv" data-mv="' + k + '">$0,00</span></div>';
   h += '<div class="field"><span class="lbl" id="md' + k + '">Forma de pago <b class="req">obligatoria</b></span><div class="seg" id="sg' + k + '" role="radiogroup" aria-labelledby="md' + k + '">' +
-    MEDIOS.map(m => '<button type="button" class="chip' + (m.v === L.medio ? ' on' : '') + '" role="radio" aria-checked="' + (m.v === L.medio) + '" data-md="' + esc(m.v) + '" data-k="' + k + '">' + esc(m.n) + '</button>').join('') + '</div></div>';
+    MEDIOS.filter(m => !m.oculto).map(m => '<button type="button" class="chip' + (m.v === L.medio ? ' on' : '') + '" role="radio" aria-checked="' + (m.v === L.medio) + '" data-md="' + esc(m.v) + '" data-k="' + k + '">' + esc(m.n) + '</button>').join('') + '</div></div>';
   h += '<details class="mas"><summary class="link" style="list-style:none;display:flex;align-items:center">Más opciones</summary>' +
     '<div class="field"><label for="an' + k + '">Año de ingreso</label><select id="an' + k + '" data-f="anio">' + anioOpts(L) + '</select></div>' +
     '<div class="field"><label for="cm' + k + '">Comentario (opcional)</label><textarea id="cm' + k + '" data-f="coment" maxlength="300" placeholder="Ej. acuerdo al final de la estadía">' + esc(L.coment) + '</textarea></div></details>';
   return h;
 }
 function medioHTML(L, k) {
+  { const it0 = catItem(L.itemId); if (it0 && it0.ligado) return '<div class="small">Sin pago: es el ahorro de limpieza, no entra dinero.</div>'; }
   return '<div class="field"><span class="lbl" id="md' + k + '">Forma de pago <b class="req">obligatoria</b></span><div class="seg" id="sg' + k + '" role="radiogroup" aria-labelledby="md' + k + '">' +
-    MEDIOS.map(m => '<button type="button" class="chip' + (m.v === L.medio ? ' on' : '') + '" role="radio" aria-checked="' + (m.v === L.medio) + '" data-md="' + esc(m.v) + '" data-k="' + k + '">' + esc(m.n) + '</button>').join('') + '</div></div>';
+    MEDIOS.filter(m => !m.oculto).map(m => '<button type="button" class="chip' + (m.v === L.medio ? ' on' : '') + '" role="radio" aria-checked="' + (m.v === L.medio) + '" data-md="' + esc(m.v) + '" data-k="' + k + '">' + esc(m.n) + '</button>').join('') + '</div></div>';
 }
 function dscHTML(L, k) {
   const on = !!L.conDesc;
@@ -1777,14 +1782,31 @@ $('cieL').addEventListener('click', async e => {
     catch (err) { b.disabled = false; okBox('No se pudo cerrar', String(err.message || err), true); }
     return;
   }
+  if (a === 'ns' && r.anuncio) {   // v22: No-show automático (sin formulario ni confirmaciones; hay «Deshacer»)
+    const ns = DATA.catalogo.filter(c => c.ligado === 'costo_limpieza' && c.activo)[0];
+    if (!ns) { okBox('No se pudo registrar el no-show', 'No encuentro el ítem «No-show (limpieza)» en el catálogo.', true); return; }
+    b.disabled = true;
+    try {
+      if (lineasDe(cod).some(l => l.concepto === ns.concepto && l.item === ns.item)) {   // candado: ya tiene la línea; solo se cierra
+        const j0 = await call({ accion: 'cerrarEstadias', cierres: [cierrePayload(r, 'NO_SHOW')] }); aplicar(j0); setHint(true);
+        okBox('Ya tenía el no-show registrado · ' + nom, 'Se cerró sin crear otra línea.', true); return;
+      }
+      const v = await valorLigado(ns.ligado, r.checkin);
+      if (!v || !(v.valor > 0)) { b.disabled = false; okBox('No se registró el no-show', 'No pude leer el costo de limpieza de Parámetros. No se guardó nada: inténtalo de nuevo.', true); return; }
+      const j = await call({ accion: 'guardarLineas', cierre: 'NO_SHOW', reserva: { codigo: r.codigo, huesped: r.huesped || '', anuncio: r.anuncio, checkin: r.checkin, checkout: r.checkout },
+        lineas: [{ itemId: ns.id, cantidad: 1, precio: v.valor, medio: 'SIN PAGO' }] });
+      aplicar(j); setHint(true); okUndo('No-show registrado · ' + nom, money(v.valor) + ' de ahorro de limpieza (R6)', cod);
+    } catch (err) { b.disabled = false; okBox('No se pudo registrar el no-show', String(err.message || err), true); }
+    return;
+  }
   if (editId) resetForm();
   elegirReserva(Object.assign({}, r)); irTab('reg', true);
   if (a === 'si') { CIERRE_PEND = 'CON_SERVICIOS'; msg('Registra los servicios de ' + nom + ' y guarda: la estadía se cierra sola.', ''); }
   else {
     const ns = DATA.catalogo.filter(c => c.ligado === 'costo_limpieza' && c.activo)[0];
     if (!ns) { msg('No encuentro el ítem «No-show (limpieza)» en el catálogo.', 'err'); return; }
-    CIERRE_PEND = 'NO_SHOW'; LN = [nuevaLinea({ itemId: ns.id })]; defaultsFechas(LN[0]); renderLineas(); sugerirPrecio(LN[0]);
-    msg('No-show de ' + nom + ': se cobra la limpieza (R6). Revisa el monto y guarda.', '');
+    CIERRE_PEND = 'NO_SHOW'; LN = [nuevaLinea({ itemId: ns.id, medio: 'SIN PAGO' })]; defaultsFechas(LN[0]); renderLineas(); sugerirPrecio(LN[0]);
+    msg('No-show de ' + nom + ': elige el anuncio de la reserva y guarda (R6).', '');
   }
   $('resCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
@@ -1937,6 +1959,17 @@ function resumenDet(L, it) {
 }
 let okT = null;
 function okBox(t, sub, warn) { const b = $('okBox'); clearTimeout(okT); b.className = 'okbox' + (warn ? ' warn' : ''); b.innerHTML = esc(t) + (sub ? '<small>' + esc(sub) + '</small>' : ''); b.hidden = false; okT = setTimeout(() => { b.classList.add('fuera'); setTimeout(() => { b.hidden = true; b.classList.remove('fuera'); }, 450); }, warn ? 10000 : 6000); }
+function okUndo(t, sub, cod) {
+  const b = $('okBox'); clearTimeout(okT); b.className = 'okbox';
+  b.innerHTML = '<div class="okrow"><div>' + esc(t) + '<small>' + esc(sub) + '</small></div><button type="button" class="btn btn-ghost btn-sm" id="okUndo">Deshacer</button></div>';
+  b.hidden = false;
+  okT = setTimeout(() => { b.classList.add('fuera'); setTimeout(() => { b.hidden = true; b.classList.remove('fuera'); }, 450); }, 8000);
+  $('okUndo').onclick = async () => {
+    clearTimeout(okT); const u = $('okUndo'); u.disabled = true;
+    try { const j = await call({ accion: 'deshacerNoShow', codigo: cod }); aplicar(j); setHint(true); okBox('No-show deshecho', 'La estadía vuelve a «Pendientes por cerrar».'); }
+    catch (err) { okBox('No se pudo deshacer', String(err.message || err), true); }
+  };
+}
 function abrirConError() { /* si la validación falló en una línea cerrada, la reabre */ }
 function resetForm() {
   $('okBox').hidden = true; editId = null; RES = null; LN = []; CIERRE_PEND = null;
