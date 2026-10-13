@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v20 · botón No llegó · No-show en ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
+<meta name="app-version" content="adicionales v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -539,7 +539,6 @@ details.cat-i,.sim-i{border:1.5px solid var(--line)}
 @media (hover:hover){.btn.cr-ns:hover{box-shadow:0 0 18px 0 var(--ns-g2)}}
 .btn.cr-ns:focus-visible{outline:2px solid var(--ns-ln);outline-offset:2px;box-shadow:0 0 18px 0 var(--ns-g2)}
 .btn.cr-ns:active{transform:scale(.97);box-shadow:0 0 20px 1px var(--ns-g2)}
-@media (max-width:480px){.btn.cr-ns .nsl{display:none}}
 .cr-b{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .rl-b{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .list-item.cp{padding:10px 12px;margin-bottom:8px}
@@ -1760,7 +1759,7 @@ function renderCierres() {
     const ls = lineasDe(r.codigo), tot = ls.reduce((a, l) => a + l.monto, 0), n = (r.checkin && r.checkout) ? difDias(r.checkin, r.checkout) : 0;
     return '<div class="cie-row" data-c="' + esc(r.codigo) + '"><div class="cr-h"><div class="cr-t"><b>' + esc(r.huesped || 'Sin nombre') + '</b><span>' + esc(r.codigo) + ' · ' + esc(fechaCorta(r.checkin)) + ' → ' + esc(fechaCorta(r.checkout)) + (n ? ' · ' + n + (n === 1 ? ' noche' : ' noches') : '') + '</span>' +
       '<span class="cr-s' + (ls.length ? ' has' : '') + '">' + (ls.length ? 'Cobrado ' + money(tot) + ' · ' + ls.length + (ls.length === 1 ? ' servicio' : ' servicios') : 'Sin cobros adicionales') + '</span></div>' +
-      '<button type="button" class="btn btn-sm cr-ns" data-cr="ns" aria-label="El huésped no llegó (No-show)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg><span class="nsl">No llegó · </span>No-show</button></div>' +
+      '<button type="button" class="btn btn-sm cr-ns" data-cr="ns" aria-label="El huésped no llegó (No-show)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>No-show</button></div>' +
       '<div class="cr-b"><button type="button" class="btn btn-ghost btn-sm" data-cr="no">' + (ls.length ? 'Está completo' : 'No tuvo servicios') + '</button>' +
       '<button type="button" class="btn btn-acc btn-sm" data-cr="si">' + (ls.length ? 'Agregar más' : 'Sí tuvo') + '</button></div></div>';
   }).join('') + (p.length > cieVer ? '<button type="button" class="btn btn-ghost btn-sm" id="cieMas" style="width:100%;margin-top:8px">Ver todas (' + p.length + ')</button>' : '');
