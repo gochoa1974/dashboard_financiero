@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v24 · la línea No-show trae «Reabrir reserva» en vez de lápiz y papelera · v23 · fichas: Reservas, Con servicios adicionales, Total, Promedio por reserva · v22 · No-show automático con Deshacer y candado · v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
+<meta name="app-version" content="adicionales v25 · el Simulador usa las mismas reservas que las fichas y deja fijo el no-show · v24 · la línea No-show trae «Reabrir reserva» en vez de lápiz y papelera · v23 · fichas: Reservas, Con servicios adicionales, Total, Promedio por reserva · v22 · No-show automático con Deshacer y candado · v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2298,8 +2298,12 @@ function simDatos(anio) {
   const lin = DATA.lineas.filter(l => String(l.anio) === String(anio));
   const cods = {}; lin.forEach(l => { cods[l.codigo] = 1; });
   const desc = lin.filter(esNegLinea).reduce((a, l) => a + l.monto, 0);   // descuentos y ajustes: restan y no se simulan
-  const resAnio = RES_LIST.filter(r => (r.checkin || '').slice(0, 4) === String(anio) && r.estado !== 'Cancelada').length;
-  const N = Math.max(resAnio, Object.keys(cods).length);
+  // v25: mismas reservas que las fichas de «Cobros registrados»: ya iniciadas (check-in hasta hoy), sin canceladas, con o sin servicios
+  const lcS = libresCanc(), setN = {};
+  RES_LIST.forEach(r => { if (r.checkin && r.checkin <= HOY && r.checkin.slice(0, 4) === String(anio) && !esCancelada(r, lcS)) setN[r.codigo] = 1; });
+  (DATA.cierres || []).forEach(c => { if ((c.checkin || '').slice(0, 4) === String(anio)) setN[c.codigo] = 1; });
+  Object.keys(cods).forEach(c => { setN[c] = 1; });
+  const N = Object.keys(setN).length;
   const g = {};
   lin.filter(l => !esNegLinea(l)).forEach(l => {
     const k = l.concepto + '||' + l.item, x = g[k] = g[k] || { key: k, concepto: l.concepto, item: l.item, R0: 0, sumM: 0, cods: {} };
@@ -2313,6 +2317,7 @@ function simDatos(anio) {
   return { N: N, filas: filas, desc: desc, total: lin.reduce((a, l) => a + l.monto, 0), conAdic: Object.keys(cods).length };
 }
 function simEsc(f, dP, dA, N) {
+  if (f.ligado) return { p1: f.p0, a1: f.a0, R1: f.R0 };   // v25: el no-show sale de Parámetros; no es una decisión de venta
   const o = SIM.over[f.key] || {};
   const p1 = o.p != null ? o.p : f.p0 * (1 + dP / 100);
   const a1 = o.a != null ? o.a : Math.max(0, Math.min(N, f.a0 + N * dA / 100));
@@ -2335,6 +2340,7 @@ function renderSimLista(D) {
   const { dP, dA } = simGlobales();
   $('simLista').innerHTML = '<div class="sim-grid">' + D.filas.map((f, i) => {
     const s = simEsc(f, dP, dA, D.N), o = SIM.over[f.key] || {};
+    if (f.ligado) return '<div class="sim-i" data-sk="' + i + '"><div class="sh"><b>' + esc(f.item) + '</b><span class="gan"></span></div><div class="sd">' + esc(f.concepto) + ' · hoy ' + money(f.R0) + ' · ' + f.a0 + (f.a0 === 1 ? ' reserva' : ' reservas') + '</div><div class="small">Valor fijo: sale del costo de limpieza en Parámetros y no se simula.</div></div>';
     return '<div class="sim-i" data-sk="' + i + '"><div class="sh"><b>' + esc(f.item) + '</b><span class="gan" data-g="' + i + '"></span></div>' +
       '<div class="sd">' + esc(f.concepto) + ' · hoy ' + money(f.R0) + ' · ' + f.a0 + (f.a0 === 1 ? ' reserva' : ' reservas') + ' · ' + money(f.p0) + '</div>' +
       '<div class="row2"><div class="field"><label for="sp' + i + '">Precio ($)</label><input type="number" inputmode="decimal" step="0.01" min="0" id="sp' + i + '" data-sf="p" value="' + (Math.round(s.p1 * 100) / 100) + '"></div>' +
@@ -2346,6 +2352,7 @@ function renderSimLista(D) {
   D.filas.forEach((f, i) => pintarFilaSim(D, f, i));
 }
 function pintarFilaSim(D, f, i) {
+  if (f.ligado) return;
   const { dP, dA } = simGlobales(), s = simEsc(f, dP, dA, D.N), d = s.R1 - f.R0;
   const g = document.querySelector('[data-g="' + i + '"]'); if (g) { g.textContent = (d >= 0 ? '+' : '') + money(d); g.className = 'gan ' + (d > 0.005 ? 'pos' : (d < -0.005 ? 'neg' : '')); }
   const r = document.querySelector('[data-r="' + i + '"]'); if (r) r.textContent = 'Simulado: ' + money(s.R1) + ' (' + fnum(s.a1, 0) + ' × ' + (f.m > 1.05 ? fnum(f.m, 1) + ' × ' : '') + money(s.p1) + ')';
