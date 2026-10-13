@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v22 · No-show automático con Deshacer y candado · v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
+<meta name="app-version" content="adicionales v23 · fichas: Reservas, Con servicios adicionales, Total, Promedio por reserva · v22 · No-show automático con Deshacer y candado · v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -449,6 +449,7 @@ input[readonly]{background:var(--info-bg);opacity:1;color:var(--ink2)}
 .stat{background:var(--info-bg);border:0;border-radius:14px;padding:12px}
 .stat .k{color:var(--ink2)}
 .stat .v{font-size:21px;letter-spacing:-.015em}
+.stat .s{font-size:11px;color:var(--mut);margin-top:2px;line-height:1.3;overflow-wrap:anywhere}
 details.cat-i,.sim-i{border:1.5px solid var(--line)}
 .alerta{border:0;border-left:6px solid var(--warn);border-radius:14px}
 .alerta.info{border-left-color:var(--ctl)}
@@ -2046,8 +2047,18 @@ function renderLista() {
   const tot = lin.reduce((a, l) => a + l.monto, 0);
   $('regCuenta').textContent = lin.length;
   $('regStats').className = 'stats s4';
-  $('regStats').innerHTML = '<div class="stat"><div class="k">Cobros</div><div class="v">' + lin.length + '</div></div><div class="stat"><div class="k">Total</div><div class="v">' + money(tot) + '</div></div>' +
-    '<div class="stat"><div class="k">Reservas</div><div class="v">' + grupos.length + '</div></div><div class="stat"><div class="k">Por reserva</div><div class="v">' + (grupos.length ? money(tot / grupos.length) : '—') + '</div></div>';
+  const codsP = {};
+  todos.forEach(x => { codsP[x.c] = 1; });
+  if (!q) {   // v23: todas las reservas del periodo ya iniciadas (con o sin servicios), sin canceladas
+    const lcP = libresCanc();
+    RES_LIST.forEach(rs => { if (rs.checkin && rs.checkin <= HOY && !esCancelada(rs, lcP) && (regPer === 'todo' || (rs.checkin >= r[0] && rs.checkin <= r[1]))) codsP[rs.codigo] = 1; });
+  }
+  const nRes = Object.keys(codsP).length, conSrv = grupos.length;
+  $('regStats').innerHTML =
+    '<div class="stat"><div class="k">Reservas</div><div class="v">' + nRes + '</div><div class="s">' + (q ? 'en la búsqueda' : 'ya iniciadas') + '</div></div>' +
+    '<div class="stat"><div class="k">Con servicios adicionales</div><div class="v">' + conSrv + '</div><div class="s">' + (nRes ? 'de ' + nRes + (nRes === 1 ? ' reserva' : ' reservas') : '') + '</div></div>' +
+    '<div class="stat"><div class="k">Total</div><div class="v">' + money(tot) + '</div><div class="s">' + lin.length + (lin.length === 1 ? ' línea de cobro' : ' líneas de cobro') + '</div></div>' +
+    '<div class="stat"><div class="k">Promedio por reserva</div><div class="v">' + (nRes ? money(tot / nRes) : '—') + '</div><div class="s">' + (nRes ? money(tot) + ' ÷ ' + nRes + (nRes === 1 ? ' reserva' : ' reservas') : '') + '</div></div>';
   if (!todos.length) { $('lista').innerHTML = '<div class="empty">' + (!DATA.lineas.length && !cer.length ? 'Aún no hay cobros registrados.' : (q ? 'Sin resultados.' : 'No hay cobros en este periodo. Prueba «Mes anterior» o «Todo».')) + '</div>'; return; }
   const ico = {
     add: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
