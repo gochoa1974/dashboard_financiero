@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v25 · el Simulador usa las mismas reservas que las fichas y deja fijo el no-show · v24 · la línea No-show trae «Reabrir reserva» en vez de lápiz y papelera · v23 · fichas: Reservas, Con servicios adicionales, Total, Promedio por reserva · v22 · No-show automático con Deshacer y candado · v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
+<meta name="app-version" content="adicionales v26 · botón No-show también en la reserva elegida (sirve para reservas anteriores al 1 oct) · v25 · el Simulador usa las mismas reservas que las fichas y deja fijo el no-show · v24 · la línea No-show trae «Reabrir reserva» en vez de lápiz y papelera · v23 · fichas: Reservas, Con servicios adicionales, Total, Promedio por reserva · v22 · No-show automático con Deshacer y candado · v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -290,6 +290,7 @@ input[readonly]{opacity:.8;cursor:not-allowed}
 .ressel b{font-size:15px;overflow-wrap:anywhere}
 .ressel .rm{font-size:12.5px;color:var(--ink);font-weight:600;margin-top:4px;line-height:1.55;opacity:.85}
 .ressel .chips{margin-top:10px}
+.ressel .rns{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
 .ln{border:1px solid var(--line);border-radius:14px;padding:12px 14px 6px;margin-bottom:12px;background:var(--bg)}
 .ln input,.ln select{background:var(--surface)}
 .ln-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:13.5px;font-weight:800}
@@ -1782,6 +1783,27 @@ function renderCierres() {
   const sin = p.filter(r => !lineasDe(r.codigo).length);
   const bt = $('cieTodas'); bt.hidden = sin.length < 2; bt.className = 'btn btn-ghost btn-sm'; bt.textContent = 'Cerrar las ' + sin.length + ' sin servicios'; cieArmado = false;
 }
+/* v26 · No-show automático (R6): lo usan el botón de «Pendientes por cerrar» y el botón de la reserva elegida en el formulario. */
+async function noShowAuto(r, nom, b, desdeForm) {
+  const cod = r.codigo;
+  const ns = DATA.catalogo.filter(c => c.ligado === 'costo_limpieza' && c.activo)[0];
+  if (!ns) { okBox('No se pudo registrar el no-show', 'No encuentro el ítem «No-show (limpieza)» en el catálogo.', true); return; }
+  b.disabled = true;
+  try {
+    if (lineasDe(cod).some(l => l.concepto === ns.concepto && l.item === ns.item)) {   // candado: ya tiene la línea; solo se cierra
+      const j0 = await call({ accion: 'cerrarEstadias', cierres: [cierrePayload(r, 'NO_SHOW')] }); aplicar(j0); setHint(true);
+      if (desdeForm) resetForm();
+      okBox('Ya tenía el no-show registrado · ' + nom, 'Se cerró sin crear otra línea.', true); return;
+    }
+    const v = await valorLigado(ns.ligado, r.checkin);
+    if (!v || !(v.valor > 0)) { b.disabled = false; okBox('No se registró el no-show', 'No pude leer el costo de limpieza de Parámetros. No se guardó nada: inténtalo de nuevo.', true); return; }
+    const j = await call({ accion: 'guardarLineas', cierre: 'NO_SHOW', reserva: { codigo: r.codigo, huesped: r.huesped || '', anuncio: r.anuncio, checkin: r.checkin, checkout: r.checkout },
+      lineas: [{ itemId: ns.id, cantidad: 1, precio: v.valor, medio: 'SIN PAGO' }] });
+    aplicar(j); setHint(true);
+    if (desdeForm) resetForm();
+    okUndo('No-show registrado · ' + nom, money(v.valor) + ' de ahorro de limpieza (R6)', cod, !!(r.checkout && r.checkout < CIERRE_DESDE));
+  } catch (err) { b.disabled = false; okBox('No se pudo registrar el no-show', String(err.message || err), true); }
+}
 $('cieL').addEventListener('click', async e => {
   if (e.target.closest('#cieMas')) { cieVer = 999; renderCierres(); return; }
   const b = e.target.closest('[data-cr]'); if (!b) return;
@@ -1793,23 +1815,7 @@ $('cieL').addEventListener('click', async e => {
     catch (err) { b.disabled = false; okBox('No se pudo cerrar', String(err.message || err), true); }
     return;
   }
-  if (a === 'ns' && r.anuncio) {   // v22: No-show automático (sin formulario ni confirmaciones; hay «Deshacer»)
-    const ns = DATA.catalogo.filter(c => c.ligado === 'costo_limpieza' && c.activo)[0];
-    if (!ns) { okBox('No se pudo registrar el no-show', 'No encuentro el ítem «No-show (limpieza)» en el catálogo.', true); return; }
-    b.disabled = true;
-    try {
-      if (lineasDe(cod).some(l => l.concepto === ns.concepto && l.item === ns.item)) {   // candado: ya tiene la línea; solo se cierra
-        const j0 = await call({ accion: 'cerrarEstadias', cierres: [cierrePayload(r, 'NO_SHOW')] }); aplicar(j0); setHint(true);
-        okBox('Ya tenía el no-show registrado · ' + nom, 'Se cerró sin crear otra línea.', true); return;
-      }
-      const v = await valorLigado(ns.ligado, r.checkin);
-      if (!v || !(v.valor > 0)) { b.disabled = false; okBox('No se registró el no-show', 'No pude leer el costo de limpieza de Parámetros. No se guardó nada: inténtalo de nuevo.', true); return; }
-      const j = await call({ accion: 'guardarLineas', cierre: 'NO_SHOW', reserva: { codigo: r.codigo, huesped: r.huesped || '', anuncio: r.anuncio, checkin: r.checkin, checkout: r.checkout },
-        lineas: [{ itemId: ns.id, cantidad: 1, precio: v.valor, medio: 'SIN PAGO' }] });
-      aplicar(j); setHint(true); okUndo('No-show registrado · ' + nom, money(v.valor) + ' de ahorro de limpieza (R6)', cod);
-    } catch (err) { b.disabled = false; okBox('No se pudo registrar el no-show', String(err.message || err), true); }
-    return;
-  }
+  if (a === 'ns' && r.anuncio) { await noShowAuto(r, nom, b, false); return; }   // v22/v26: No-show automático (sin formulario ni confirmaciones; hay «Deshacer»)
   if (editId) resetForm();
   elegirReserva(Object.assign({}, r)); irTab('reg', true);
   if (a === 'si') { CIERRE_PEND = 'CON_SERVICIOS'; msg('Registra los servicios de ' + nom + ' y guarda: la estadía se cierra sola.', ''); }
@@ -1876,10 +1882,18 @@ function pintarResSel() {
   el.innerHTML = '<div class="rt"><b>' + esc(RES.huesped || 'Sin nombre') + '</b>' + (editId ? '' : '<button type="button" class="btn btn-cancel btn-sm" id="resCambiar"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>Cancelar</button>') + '</div>' +
     '<div class="rm">' + esc(RES.codigo) + ' · ' + esc(RES.origen) + '<br>' + esc(fechaBonita(RES.checkin)) + ' → ' + esc(fechaBonita(RES.checkout)) + (RES.checkin && RES.checkout ? ' · ' + difDias(RES.checkin, RES.checkout) + ' noches' : '') +
     (esCancelada(RES) ? '<br><b class="est-av">Esta reserva figura como cancelada. Revisa antes de registrar cobros.</b>' : '') + '<br>' + (prev.length ? 'Ya tiene ' + prev.length + (prev.length === 1 ? ' cobro' : ' cobros') + ' adicionales (' + money(tot) + ').' : 'Sin cobros adicionales todavía.') + '</div>' +
-    (!RES.anuncio ? '<div class="small" style="margin-top:8px">No pude saber el anuncio. Elígelo:</div><div class="chips" role="radiogroup" aria-label="Anuncio" id="resAn"></div>' : '');
+    (!RES.anuncio ? '<div class="small" style="margin-top:8px">No pude saber el anuncio. Elígelo:</div><div class="chips" role="radiogroup" aria-label="Anuncio" id="resAn"></div>' : '') +
+    (!editId && !esCancelada(RES) ? '<div class="rns"><button type="button" class="btn btn-sm cr-ns" id="resNS" aria-label="El huésped no llegó (No-show)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>No-show</button><span class="small">Si el huésped no llegó</span></div>' : '');
   if (!RES.anuncio) pintarChipsAnuncio($('resAn'), '', 'data-an');
 }
 $('resSel').addEventListener('click', e => {
+  const nsb = e.target.closest('#resNS');
+  if (nsb) {   // v26: No-show desde la reserva elegida (también para reservas anteriores al 1 oct)
+    if (!RES) return;
+    if (!RES.anuncio) { msg('Elige primero el anuncio de la reserva.', 'err'); return; }
+    if (LN.some(L => L.itemId) && !confirm('Se perderán los servicios que no guardaste. ¿Registrar el no-show de todos modos?')) return;
+    noShowAuto(Object.assign({}, RES), RES.huesped || RES.codigo, nsb, true); return;
+  }
   if (e.target.closest('#resCambiar')) {
     if (LN.some(L => L.itemId) && !confirm('Se perderán los servicios que no guardaste. ¿Cancelar este registro?')) return;
     const el = $('resSel'), fin = () => { RES = null; LN = []; el.classList.remove('sale'); el.hidden = true; $('lineasWrap').hidden = true; $('resBuscaWrap').hidden = false; CIERRE_PEND = null; };
@@ -1970,14 +1984,14 @@ function resumenDet(L, it) {
 }
 let okT = null;
 function okBox(t, sub, warn) { const b = $('okBox'); clearTimeout(okT); b.className = 'okbox' + (warn ? ' warn' : ''); b.innerHTML = esc(t) + (sub ? '<small>' + esc(sub) + '</small>' : ''); b.hidden = false; okT = setTimeout(() => { b.classList.add('fuera'); setTimeout(() => { b.hidden = true; b.classList.remove('fuera'); }, 450); }, warn ? 10000 : 6000); }
-function okUndo(t, sub, cod) {
+function okUndo(t, sub, cod, antes) {
   const b = $('okBox'); clearTimeout(okT); b.className = 'okbox';
   b.innerHTML = '<div class="okrow"><div>' + esc(t) + '<small>' + esc(sub) + '</small></div><button type="button" class="btn btn-ghost btn-sm" id="okUndo">Deshacer</button></div>';
   b.hidden = false;
   okT = setTimeout(() => { b.classList.add('fuera'); setTimeout(() => { b.hidden = true; b.classList.remove('fuera'); }, 450); }, 8000);
   $('okUndo').onclick = async () => {
     clearTimeout(okT); const u = $('okUndo'); u.disabled = true;
-    try { const j = await call({ accion: 'deshacerNoShow', codigo: cod }); aplicar(j); setHint(true); okBox('No-show deshecho', 'La estadía vuelve a «Pendientes por cerrar».'); }
+    try { const j = await call({ accion: 'deshacerNoShow', codigo: cod }); aplicar(j); setHint(true); okBox('No-show deshecho', antes ? 'La reserva queda sin no-show.' : 'La estadía vuelve a «Pendientes por cerrar».'); }
     catch (err) { okBox('No se pudo deshacer', String(err.message || err), true); }
   };
 }
