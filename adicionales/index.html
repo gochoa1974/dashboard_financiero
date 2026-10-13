@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v23 · fichas: Reservas, Con servicios adicionales, Total, Promedio por reserva · v22 · No-show automático con Deshacer y candado · v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
+<meta name="app-version" content="adicionales v24 · la línea No-show trae «Reabrir reserva» en vez de lápiz y papelera · v23 · fichas: Reservas, Con servicios adicionales, Total, Promedio por reserva · v22 · No-show automático con Deshacer y candado · v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -568,6 +568,16 @@ details.cat-i,.sim-i{border:1.5px solid var(--line)}
 .li-row.cp .lm{font-size:14px}
 .li-row.cp .lb{grid-column:auto;display:flex;gap:6px;flex-wrap:nowrap}
 @media (max-width:480px){.li-row.cp{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"lc lm" "lc lb"}.li-row.cp .lb{justify-content:flex-end;align-self:start}}
+.ibtn.reab{min-width:0;min-height:44px;padding:0 14px;gap:8px;font-size:13.5px;border:1.5px solid var(--accent);background:var(--accent-bg);color:var(--acc-tx);white-space:nowrap}
+.ibtn.reab svg{width:19px;height:19px}
+.ibtn.reab:hover{background:var(--accent);color:#fff}
+.nscf{margin:2px 0 8px;padding:10px 12px;border-radius:12px;background:var(--warn-bg);border:1px solid var(--warn)}
+.nscf p{margin:0 0 8px;font-size:13px;font-weight:700;color:var(--warn);line-height:1.4}
+.nscf .nsr{display:flex;gap:8px;flex-wrap:wrap}
+.nscf .nsr .ibtn{flex:1 1 0;min-height:44px;font-size:13.5px}
+.ibtn.nsok{border-color:var(--bad);background:var(--surface);color:var(--bad)}
+.ibtn.nsok:hover{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
+@media (max-width:480px){.li-row.cp.ns{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"lc lm" "lb lb"}.li-row.cp.ns .lb{justify-content:stretch;align-self:auto}.li-row.cp.ns .ibtn.reab{width:100%}}
 </style>
 </head>
 <body>
@@ -2082,8 +2092,12 @@ function renderLista() {
         if (l.precio != null && !esNegLinea(l)) partes.push(money(l.precio) + (it && it.cobro === 'unidad' ? ' c/u' : ''));
         if (l.subtotal != null && l.descTotal) partes.push('subtotal ' + money(l.subtotal) + ' − ' + money(l.descTotal));
         if (l.obs) partes.push(l.obs);
-        return '<div class="li-row cp" data-l="' + esc(l.id) + '"><div class="lc"><div class="lt">' + esc(l.item) + '</div><div class="ls">' + esc(l.concepto) + (partes.length ? ' · ' + esc(partes.join(' · ')) : '') + ' · ' + esc((MEDIOS.filter(m => m.v === l.medio)[0] || { n: l.medio }).n) + ' · ' + l.anio + (l.origen === 'Manual' ? ' · precio manual' : (l.origen === 'Descuento' ? ' · descuento' : (l.origen === 'Ajuste' ? ' · ajuste' : (l.precio == null ? ' · histórico' : '')))) + '</div></div>' +
-          '<div class="lm">' + money(l.monto) + '</div><div class="lb"><button type="button" class="ibtn ed" data-ed="' + esc(l.id) + '" aria-label="Editar ' + esc(l.item) + '" title="Editar">' + ico.ed + '</button><button type="button" class="ibtn del" data-del="' + esc(l.id) + '" aria-label="Borrar ' + esc(l.item) + '" title="Borrar">' + ico.del + '<span class="tx"></span></button></div></div>';
+        const ns = !!(it && it.ligado === 'costo_limpieza');
+        return '<div class="li-row cp' + (ns ? ' ns' : '') + '" data-l="' + esc(l.id) + '"><div class="lc"><div class="lt">' + esc(l.item) + '</div><div class="ls">' + esc(l.concepto) + (partes.length ? ' · ' + esc(partes.join(' · ')) : '') + ' · ' + esc((MEDIOS.filter(m => m.v === l.medio)[0] || { n: l.medio }).n) + ' · ' + l.anio + (l.origen === 'Manual' ? ' · precio manual' : (l.origen === 'Descuento' ? ' · descuento' : (l.origen === 'Ajuste' ? ' · ajuste' : (l.precio == null ? ' · histórico' : '')))) + '</div></div>' +
+          '<div class="lm">' + money(l.monto) + '</div><div class="lb">' + (ns
+          ? '<button type="button" class="ibtn reab" data-nsre="' + esc(l.codigo) + '" aria-label="Reabrir la reserva de ' + esc(h.huesped || 'este huésped') + ': se borra el no-show">' + ico.re + '<span>Reabrir reserva</span></button>'
+          : '<button type="button" class="ibtn ed" data-ed="' + esc(l.id) + '" aria-label="Editar ' + esc(l.item) + '" title="Editar">' + ico.ed + '</button><button type="button" class="ibtn del" data-del="' + esc(l.id) + '" aria-label="Borrar ' + esc(l.item) + '" title="Borrar">' + ico.del + '<span class="tx"></span></button>') + '</div></div>' +
+          (ns ? '<div class="nscf" data-nscf="' + esc(l.codigo) + '" hidden><p>¿Reabrir la reserva de ' + esc(h.huesped || 'este huésped') + '? Se borran los ' + money(l.monto) + ' del no-show y vuelve a «Pendientes por cerrar».</p><div class="nsr"><button type="button" class="ibtn nsok" data-nsok="' + esc(l.codigo) + '">' + ico.re + '<span>Sí, reabrir</span></button><button type="button" class="ibtn" data-nsno="' + esc(l.codigo) + '">Cancelar</button></div></div>' : '');
       }).join('') + '</div>';
   }).join('') + (todos.length > regVer ? '<button type="button" class="btn btn-ghost" id="verMas" style="width:100%">Ver más (' + (todos.length - regVer) + ')</button>' : '');
 }
@@ -2105,6 +2119,25 @@ $('lista').addEventListener('click', async e => {
     rb.disabled = true;
     try { const j = await call({ accion: 'reabrirEstadia', codigo: rb.dataset.reab }); aplicar(j); setHint(true); okBox('Estadía reabierta', 'Vuelve a «Pendientes por cerrar».'); }
     catch (err) { rb.disabled = false; okBox('No se pudo reabrir', String(err.message || err), true); }
+    return;
+  }
+  const nsRe = e.target.closest('[data-nsre]');
+  if (nsRe) {
+    const box = nsRe.closest('.list-item').querySelector('[data-nscf]');
+    if (box) { box.hidden = false; nsRe.hidden = true; const ok0 = box.querySelector('[data-nsok]'); if (ok0) ok0.focus(); }
+    return;
+  }
+  const nsNo = e.target.closest('[data-nsno]');
+  if (nsNo) {
+    const it0 = nsNo.closest('.list-item'), box0 = it0.querySelector('[data-nscf]'), b0 = it0.querySelector('[data-nsre]');
+    if (box0) box0.hidden = true; if (b0) { b0.hidden = false; b0.focus(); }
+    return;
+  }
+  const nsOk = e.target.closest('[data-nsok]');
+  if (nsOk) {
+    nsOk.disabled = true;
+    try { const j = await call({ accion: 'deshacerNoShow', codigo: nsOk.dataset.nsok }); aplicar(j); setHint(true); okBox('Reserva reabierta', 'Vuelve a «Pendientes por cerrar». Elige de nuevo: No-show, sin servicios o agregar servicios.'); }
+    catch (err) { nsOk.disabled = false; okBox('No se pudo reabrir', String(err.message || err), true); }
     return;
   }
   const ed = e.target.closest('[data-ed]'); if (ed) { editarLinea(ed.dataset.ed); return; }
