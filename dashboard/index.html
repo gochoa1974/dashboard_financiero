@@ -202,7 +202,7 @@ $('gateGo').onclick = async () => {
   $('gateGo').disabled = true; $('gateGo').textContent = 'Verificando...'; $('gateMsg').className = 'msg'; $('gateMsg').textContent = '';
   const v = await validar(k);
   $('gateGo').disabled = false; $('gateGo').textContent = 'Entrar';
-  if (v === 'mala') { $('gateMsg').className = 'msg err'; $('gateMsg').textContent = 'Clave incorrecta. Revisa e intenta de nuevo.'; return; }
+  if (v !== 'ok') { $('gateMsg').className = 'msg err'; $('gateMsg').textContent = v === 'mala' ? 'Clave incorrecta. Revisa e intenta de nuevo.' : 'No se pudo verificar la clave. Comprueba tu conexión e inténtalo otra vez.'; return; }
   setClave(k);
   // al entrar con la clave: ir a revisar/actualizar los datos de Airbnb y volver aquí
   location.href = '../ingresos/?auto=1';
@@ -213,8 +213,14 @@ $('outBtn').onclick = () => { clearClave(); showGate(''); };
 
 const K0 = getClave();
 if (K0) {
-  showMenu();
-  validar(K0).then(v => { if (v === 'mala') { clearClave(); showGate('La clave cambió. Escríbela de nuevo.'); } });
+  showGate('');
+  $('gateMsg').className = 'msg';
+  $('gateMsg').textContent = 'Verificando la clave guardada...';
+  validar(K0).then(v => {
+    if (v === 'ok') showMenu();
+    else if (v === 'mala') { clearClave(); showGate('La clave cambió. Escríbela de nuevo.'); }
+    else { showGate('No se pudo verificar la clave guardada. Comprueba tu conexión e inténtalo otra vez.'); }
+  });
 } else { showGate(''); }
 </script>
 </body>
