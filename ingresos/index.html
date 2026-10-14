@@ -109,7 +109,7 @@
   <header class="apphead">
     <a class="backbtn" href="../dashboard/" aria-label="Volver al dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     <img class="logo" src="../Cima-Blanca-logo.png" alt="Cima Blanca">
-    <div class="ttl"><b>Cima Blanca</b><span>Sincronización de ingresos</span></div>
+    <div class="ttl"><b>Cima Blanca</b><span>Sincronización de ingresos · v9</span></div>
   </header>
   <p class="note" style="margin:0 0 16px">Lee Airbnb, reservas directas e ingresos adicionales desde Google Drive y actualiza sola el archivo consolidado en PROCESADO.</p>
 
@@ -136,7 +136,8 @@
     </h2>
     <button class="btn" id="btnSync">Leer Drive y procesar</button>
     <div class="log" id="log"></div>
-    <div class="error hidden" id="errorBox"></div>
+    <div class="error hidden" id="errorBox" style="white-space:pre-line"></div>
+    <button class="btn secondary small hidden" id="btnRetry" type="button" style="margin-top:10px">Reintentar</button>
   </div>
 
   <div class="card hidden" id="resultCard">
@@ -185,7 +186,12 @@
   var AUTO = /[?&]auto=1/.test(location.search);   // modo automático: viene del dashboard
   var SYNC_KEY = "cimablanca_sync_info";            // { t: cuándo se sincronizó, csvMax: CSV más nuevo visto, n: reservas }
   var csvMaxMod = "";
-  var ING_VER = "8";            // v8: el resumen guarda también las resoluciones; si la versión guardada es otra, se vuelve a procesar una vez
+  var ING_VER = "9";            // v9 (CB-003): publicación todo o nada; si la versión guardada es otra, se vuelve a procesar una vez (v8: el resumen guarda también las resoluciones)
+  var SCHEMA_VERSION = "9";     // v9: el maestro lleva schema_version, huella y manifiesto de fuentes
+  var BACKUP_JSON_NAME = "MAESTRO_INGRESOS_CIMA_BLANCA_anterior.json";   // copia única del maestro previo
+  var srcInfo = {};             // v9: archivos y conteos leídos de cada fuente (manifiesto)
+  var lastManifest = null;      // v9
+  var lastHuella = "";          // v9: SHA-256 del contenido de datos
   var resolMap = {};            // v8: pagos y ajustes de resolución del CSV (se quitan duplicados entre archivos)
   var lastOk = false;
   var autoStarted = false;
@@ -197,6 +203,7 @@
     btnSync: document.getElementById("btnSync"),
     log: document.getElementById("log"),
     errorBox: document.getElementById("errorBox"),
+    btnRetry: document.getElementById("btnRetry"),
     resultCard: document.getElementById("resultCard"),
     statGrid: document.getElementById("statGrid"),
     drivePill: document.getElementById("drivePill"),
@@ -227,6 +234,15 @@
   function clearError() {
     els.errorBox.classList.add("hidden");
     els.errorBox.textContent = "";
+    els.btnRetry.classList.add("hidden");
+  }
+
+  // v9 (CB-003): estado "No publicable": el maestro anterior no se toca y se dice qué falló.
+  function showNoPublicable(msg) {
+    els.errorBox.textContent = "Estado: No publicable. El maestro anterior sigue intacto.\n" + msg;
+    els.errorBox.classList.remove("hidden");
+    els.btnRetry.classList.remove("hidden");
+    log("No publicable: " + msg.replace(/\n/g, " | "));
   }
 
   function initGoogle() {
@@ -480,13 +496,73 @@
     return byCode;
   }
 
-  function readFolderAsRecords(folderId) {
+  // v9 (CB-003): toda fuente obligatoria debe leerse completa; si una falla se aborta sin tocar el maestro.
+  function sha256Text(text) {
+    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)).then(function (buf) {
+      return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+    });
+  }
+
+  function leerFuente(nombre, tarea) {
+    return Promise.resolve().then(tarea).then(
+      function (v) { return { nombre: nombre, ok: true, valor: v }; },
+      function (e) { return { nombre: nombre, ok: false, error: (e && e.message) || String(e) }; }
+    );
+  }
+
+  function requireCols(file, cols, nombre) {
+    if (!file.rows || !file.rows.length) throw new Error(nombre + ": el archivo está vacío.");
+    var keys = Object.keys(file.rows[0]);
+    var faltan = cols.filter(function (c) { return keys.indexOf(c) < 0; });
+    if (faltan.length) throw new Error(nombre + ": faltan las columnas " + faltan.join(", ") + ".");
+  }
+
+  function leerDirectas(reservasFolderId) {
+    return findFileByNameContains(reservasFolderId, DIRECTAS_FILE_HINT).then(function (file) {
+      if (!file) throw new Error("Reservas directas: no encontré el archivo (nombre con \"" + DIRECTAS_FILE_HINT + "\").");
+      log("Leyendo " + file.name + "...");
+      return fetchTabularFile(file);
+    }).then(function (file) {
+      requireCols(file, ["ID de la Reserva", "Día del Check-In", "Día del Check-Out", "Número_de_Noches", "Monto ($)"], "Reservas directas");
+      var recs = buildDirectRecords(file);
+      var n = Object.keys(recs).length;
+      if (!n) throw new Error("Reservas directas: el archivo no tiene ninguna reserva válida.");
+      srcInfo["Reservas directas"] = { archivos: [file.fileName], registros: n };
+      return { records: recs };
+    });
+  }
+
+  function leerAdicionales(ingresosFolderId) {
+    return tryFindChildFolder(ingresosFolderId, SERVICIOS_ADICIONALES_FOLDER_HINT).then(function (folder) {
+      return findFileByNameContains(folder ? folder.id : ingresosFolderId, ADICIONALES_FILE_HINT);
+    }).then(function (file) {
+      if (!file) throw new Error("Ingresos adicionales: no encontré el archivo (nombre con \"" + ADICIONALES_FILE_HINT + "\").");
+      log("Leyendo " + file.name + "...");
+      return fetchTabularFile(file);
+    }).then(function (file) {
+      requireCols(file, ["ID de la Reserva", "Monto ($)"], "Ingresos adicionales");
+      var rows = buildAdicionalesRows(file);
+      if (!rows.length) throw new Error("Ingresos adicionales: no se leyó ninguna línea válida.");
+      srcInfo["Ingresos adicionales"] = { archivos: [file.fileName], registros: rows.length };
+      return { rows: rows };
+    });
+  }
+
+  function validarMaestro(master, adicionales) {
+    if (!master.length) throw new Error("Validación: no quedó ninguna reserva.");
+    var malas = master.filter(function (r) { return !r.codigo_confirmacion || !isFinite(r.monto) || !isFinite(r.ingresos_brutos); });
+    if (malas.length) throw new Error("Validación: " + malas.length + " reserva(s) con código vacío o montos no numéricos.");
+    var malasA = adicionales.filter(function (a) { return !isFinite(a.monto); });
+    if (malasA.length) throw new Error("Validación: " + malasA.length + " ingreso(s) adicional(es) con monto no numérico.");
+  }
+
+  function readFolderAsRecords(folderId, nombre) {
+    nombre = nombre || "Airbnb";
     return listFilesInFolder(folderId).then(function (files) {
       var csvFiles = files.filter(function (f) { return /\.csv$/i.test(f.name); });
       csvFiles.forEach(function (f) { if ((f.modifiedTime || "") > csvMaxMod) csvMaxMod = f.modifiedTime; });
       if (!csvFiles.length) {
-        log("No hay archivos .csv en esta carpeta.");
-        return {};
+        throw new Error(nombre + ": no hay archivos .csv en la carpeta.");
       }
       var chain = Promise.resolve();
       var rowsByFile = [];
@@ -495,12 +571,20 @@
           log("Leyendo " + f.name + "...");
           return downloadFileText(f.id).then(function (text) {
             var parsed = parseCsv(text);
+            if (!parsed.length) throw new Error(nombre + ": \"" + f.name + "\" está vacío o no se pudo leer.");
+            if (!("Tipo" in parsed[0]) || !("Código de confirmación" in parsed[0])) throw new Error(nombre + ": \"" + f.name + "\" no trae las columnas Tipo / Código de confirmación.");
             rowsByFile.push({ fileName: f.name, modifiedTime: f.modifiedTime, rows: parsed });
             collectResoluciones({ fileName: f.name, rows: parsed });
           });
         });
       });
-      return chain.then(function () { return buildKeyedRecords(rowsByFile); });
+      return chain.then(function () {
+        var recs = buildKeyedRecords(rowsByFile);
+        var n = Object.keys(recs).length;
+        if (!n) throw new Error(nombre + ": los CSV no contienen ninguna reservación.");
+        srcInfo[nombre] = { archivos: csvFiles.map(function (f) { return f.name; }), registros: n };
+        return recs;
+      });
     });
   }
 
@@ -614,7 +698,7 @@
   function runSync() {
     clearError();
     els.btnSync.disabled = true;
-    lastOk = false; csvMaxMod = ""; resolMap = {};
+    lastOk = false; csvMaxMod = ""; resolMap = {}; srcInfo = {}; lastManifest = null; lastHuella = "";
     els.resultCard.classList.add("hidden");
     log("Buscando carpeta raíz \"" + ROOT_FOLDER_NAME + "\"...");
 
@@ -653,71 +737,46 @@
       .then(function (results) {
         var pagadosFolder = results[0];
         var pendientesFolder = results[1];
-        log("Leyendo Airbnb (Pagados y Pendientes)...");
+        log("Paso 1 de 2 · Leyendo las 4 fuentes (todas deben leerse bien)...");
         return Promise.all([
-          readFolderAsRecords(pagadosFolder.id),
-          readFolderAsRecords(pendientesFolder.id)
+          leerFuente("Airbnb · Pagados", function () { return readFolderAsRecords(pagadosFolder.id, "Airbnb · Pagados"); }),
+          leerFuente("Airbnb · Pendientes", function () { return readFolderAsRecords(pendientesFolder.id, "Airbnb · Pendientes"); }),
+          leerFuente("Reservas directas", function () { return leerDirectas(reservasFolderId); }),
+          leerFuente("Ingresos adicionales", function () { return leerAdicionales(ingresosFolderId); })
         ]);
       })
-      .then(function (results) {
-        var pagados = results[0];
-        var pendientes = results[1];
-
-        log("Buscando reservas directas...");
-        var directasTask = findFileByNameContains(reservasFolderId, DIRECTAS_FILE_HINT)
-          .then(function (file) {
-            if (!file) {
-              log("No encontré el archivo de reservas directas, sigo sin ellas.");
-              return {};
-            }
-            log("Leyendo " + file.name + "...");
-            return fetchTabularFile(file).then(buildDirectRecords);
-          })
-          .catch(function (err) {
-            log("No pude leer reservas directas (" + err.message + "), sigo sin ellas.");
-            return {};
-          });
-
-        log("Buscando ingresos adicionales...");
-        var adicionalesTask = tryFindChildFolder(ingresosFolderId, SERVICIOS_ADICIONALES_FOLDER_HINT)
-          .then(function (folder) {
-            var searchFolderId = folder ? folder.id : ingresosFolderId;
-            return findFileByNameContains(searchFolderId, ADICIONALES_FILE_HINT);
-          })
-          .then(function (file) {
-            if (!file) {
-              log("No encontré el archivo de ingresos adicionales, sigo sin ellos.");
-              return [];
-            }
-            log("Leyendo " + file.name + "...");
-            return fetchTabularFile(file).then(buildAdicionalesRows);
-          })
-          .catch(function (err) {
-            log("No pude leer ingresos adicionales (" + err.message + "), sigo sin ellos.");
-            return [];
-          });
-
-        return Promise.all([directasTask, adicionalesTask]).then(function (extra) {
-          log("Cruzando información y deduplicando...");
-          master = buildMaster(pagados, pendientes, extra[0]);
-          adicionales = extra[1];
-          var huerfanos = attachAdicionales(master, adicionales);
-          if (huerfanos > 0) {
-            log("Aviso: " + huerfanos + " ingreso(s) adicional(es) no coinciden con ninguna reserva conocida.");
-          }
-        });
+      .then(function (fuentes) {
+        var fallas = fuentes.filter(function (f) { return !f.ok; });
+        if (fallas.length) {
+          var e = new Error("Falló la lectura de: " + fallas.map(function (f) { return f.nombre; }).join(", ") + ".\n" + fallas.map(function (f) { return "• " + f.nombre + ": " + f.error; }).join("\n"));
+          e.noPublicable = true;
+          throw e;
+        }
+        log("Paso 1 de 2 · Las 4 fuentes se leyeron ✓");
+        log("Paso 2 de 2 · Validando y publicando...");
+        master = buildMaster(fuentes[0].valor, fuentes[1].valor, fuentes[2].valor.records);
+        adicionales = fuentes[3].valor.rows;
+        var huerfanos = attachAdicionales(master, adicionales);
+        if (huerfanos > 0) {
+          log("Aviso: " + huerfanos + " ingreso(s) adicional(es) no coinciden con ninguna reserva conocida.");
+        }
+        try { validarMaestro(master, adicionales); } catch (ve) { ve.noPublicable = true; throw ve; }
       })
       .then(function () {
         var resumen = computeResumen(master, adicionales);
-        showResults(master, adicionales, resumen, procesadoFolder);
-        var guardado = (procesadoFolder && procesadoFolder.id) ? saveOutputsToDrive(procesadoFolder, master, adicionales, resumen) : null;
-        return Promise.resolve(guardado).then(function () {
+        var datos = { resumen: resumen, reservas: master, ingresos_adicionales: adicionales, resoluciones: buildPayload(master, adicionales, resumen).resoluciones };
+        lastManifest = Object.keys(srcInfo).map(function (k) { return { fuente: k, archivos: srcInfo[k].archivos, registros: srcInfo[k].registros }; });
+        return sha256Text(JSON.stringify(datos)).then(function (h) {
+          lastHuella = h;
+          showResults(master, adicionales, resumen, procesadoFolder);
+          return publicarMaestro(procesadoFolder, master, adicionales, resumen);
+        }).then(function () {
           lastOk = true;
           guardarInfoSync(master.length);
         });
       })
       .catch(function (err) {
-        showError(err.message || String(err));
+        if (err && err.noPublicable) showNoPublicable(err.message || String(err)); else showError(err.message || String(err));
       })
       .then(function () {
         els.btnSync.disabled = false;
@@ -833,7 +892,10 @@
 
   function buildPayload(master, adicionales, resumen) {
     return {
+      schema_version: SCHEMA_VERSION,
       generado: new Date().toISOString(),
+      huella_contenido_sha256: lastHuella,
+      fuentes: lastManifest || [],
       propiedad: "Cima Blanca",
       resumen: resumen,
       reservas: master,
@@ -974,33 +1036,54 @@
       });
   }
 
-  function saveOutputsToDrive(procesadoFolder, master, adicionales, resumen) {
+  // v9 (CB-003): publica el maestro solo después de validar. Orden: copia del maestro anterior -> escritura -> relectura y comparación.
+  // Cualquier fallo antes de escribir deja el maestro anterior intacto; el Excel es secundario y su fallo solo avisa.
+  function publicarMaestro(procesadoFolder, master, adicionales, resumen) {
     els.drivePill.textContent = "Guardando en Drive...";
     els.drivePill.className = "pill pending";
-    log("Guardando archivos en PROCESADO...");
+    var jsonText = JSON.stringify(buildPayload(master, adicionales, resumen), null, 2);
+    var enviado = "";
+    function fatal(msg) { var e = new Error(msg); e.noPublicable = true; els.drivePill.textContent = "No se publicó"; els.drivePill.className = "pill off"; return e; }
 
-    var jsonBlob = buildJsonBlob(master, adicionales, resumen);
-    var xlsxBlob = buildXlsxBlob(master, adicionales, resumen);
-
-    return Promise.all([
-      saveToDrive(procesadoFolder.id, OUTPUT_JSON_NAME, "application/json", jsonBlob),
-      saveToDrive(procesadoFolder.id, OUTPUT_XLSX_NAME, XLSX_MIME, xlsxBlob)
-    ]).then(function (results) {
+    return sha256Text(jsonText).then(function (h) {
+      enviado = h;
+      return findFileByExactName(procesadoFolder.id, OUTPUT_JSON_NAME);
+    }).then(function (previo) {
+      if (!previo) { log("No había maestro anterior: primera publicación."); return null; }
+      log("Guardando la copia del maestro anterior (" + BACKUP_JSON_NAME + ")...");
+      return downloadFileText(previo.id).then(function (text) {
+        if (!text || !text.trim()) { log("El maestro anterior estaba vacío; no se guarda copia."); return null; }
+        return saveToDrive(procesadoFolder.id, BACKUP_JSON_NAME, "application/json", new Blob([text], { type: "application/json" }));
+      }).catch(function (e) {
+        throw fatal("No pude guardar la copia del maestro anterior (" + ((e && e.message) || e) + "). No se publicó nada.");
+      });
+    }).then(function () {
+      log("Escribiendo el maestro nuevo...");
+      return saveToDrive(procesadoFolder.id, OUTPUT_JSON_NAME, "application/json", new Blob([jsonText], { type: "application/json" })).catch(function (e) {
+        throw fatal("No pude escribir el maestro en Drive (" + ((e && e.message) || e) + "). La copia del anterior está en " + BACKUP_JSON_NAME + ".");
+      });
+    }).then(function (res) {
+      return downloadFileText(res.id).then(sha256Text).then(function (h) {
+        if (h !== enviado) throw fatal("El maestro se escribió pero no coincide con lo enviado. Restaura el archivo " + BACKUP_JSON_NAME + " y reintenta.");
+        log("Maestro verificado en Drive (SHA-256 " + h.slice(0, 12) + "…, " + master.length + " reservas, " + adicionales.length + " adicionales).");
+      }, function (e) {
+        throw fatal("No pude releer el maestro para verificarlo (" + ((e && e.message) || e) + "). Revisa el archivo en PROCESADO.");
+      });
+    }).then(function () {
       els.drivePill.textContent = "Guardado en Drive ✓";
       els.drivePill.className = "pill ok";
-      log("Archivos guardados en PROCESADO.");
-      var dup = results.some(function (r) { return r.duplicado; });
-      if (dup) {
-        log("Nota: había una copia con el mismo nombre que no pude actualizar (seguramente una que arrastraste a mano antes); dejé una nueva ya enlazada para las próximas veces. Puedes borrar la vieja cuando quieras.");
-      }
-    }).catch(function (err) {
-      els.drivePill.textContent = "No se pudo guardar en Drive";
-      els.drivePill.className = "pill off";
-      showError("No pude guardar en Drive: " + (err.message || err));
+      return saveToDrive(procesadoFolder.id, OUTPUT_XLSX_NAME, XLSX_MIME, buildXlsxBlob(master, adicionales, resumen)).then(function (r) {
+        log("Maestro y Excel guardados en PROCESADO.");
+        if (r.duplicado) log("Nota: había una copia del Excel con el mismo nombre que no pude actualizar; dejé una nueva ya enlazada. Puedes borrar la vieja.");
+      }, function (e) {
+        log("Aviso: el maestro quedó publicado, pero no pude actualizar el Excel (" + ((e && e.message) || e) + ").");
+        els.drivePill.textContent = "Guardado (el Excel no se actualizó)";
+      });
     });
   }
 
   els.btnSync.addEventListener("click", runSync);
+  els.btnRetry.addEventListener("click", runSync);
 
   window.addEventListener("load", function () {
     if (window.google && google.accounts && google.accounts.oauth2) {
