@@ -187,7 +187,7 @@
   var SYNC_KEY = "cimablanca_sync_info";            // { t: cuándo se sincronizó, csvMax: CSV más nuevo visto, n: reservas }
   var csvMaxMod = "";
   var ING_VER = "10";            // v10 (CB-006): el concepto y el ítem de Adicionales se leen también de las columnas «Concepto» e «Ítem». v9 (CB-003): publicación todo o nada; si la versión guardada es otra, se vuelve a procesar una vez (v8: el resumen guarda también las resoluciones)
-  var SCHEMA_VERSION = "9";     // v9: el maestro lleva schema_version, huella y manifiesto de fuentes
+  var SCHEMA_VERSION = "11";    // v9: schema_version, huella y manifiesto; v11 (CB-007/008): resumen separa bruto, comisiones, neto, cobros y ahorro
   var BACKUP_JSON_NAME = "MAESTRO_INGRESOS_CIMA_BLANCA_anterior.json";   // copia única del maestro previo
   var srcInfo = {};             // v9: archivos y conteos leídos de cada fuente (manifiesto)
   var lastManifest = null;      // v9
@@ -684,18 +684,43 @@
     return huerfanos;
   }
 
+  function r2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+
+  // CB-007/008: cada cifra tiene su campo; nunca se suman en un solo KPI cosas de distinta naturaleza.
   function computeResumen(master, adicionales) {
     var liquidado = master.filter(function (r) { return r.estado === "Liquidado"; });
     var porLiquidar = master.filter(function (r) { return r.estado === "Por liquidar"; });
-    var ingresosHospedaje = master.reduce(function (s, r) { return s + r.ingresos_brutos; }, 0);
-    var ingresosAdicionales = adicionales.reduce(function (s, a) { return s + a.monto; }, 0);
+    var sum = function (arr, f) { return arr.reduce(function (s, x) { return s + (Number(f(x)) || 0); }, 0); };
+    var bruto = sum(master, function (r) { return r.ingresos_brutos; });
+    var neto = sum(master, function (r) { return r.monto; });
+    var netoLiq = sum(liquidado, function (r) { return r.monto; });
+    var netoPorLiq = sum(porLiquidar, function (r) { return r.monto; });
+    var sinPago = adicionales.filter(function (a) { return a.medio_cobro === "SIN PAGO"; });
+    var cobrados = adicionales.filter(function (a) { return a.medio_cobro !== "SIN PAGO"; });
+    var adicTotal = sum(adicionales, function (a) { return a.monto; });
+    var adicCobrados = sum(cobrados, function (a) { return a.monto; });
+    var ahorro = sum(sinPago, function (a) { return a.monto; });
+    var cobrosEfectivos = netoLiq + adicCobrados;
+    var ingresoNeto = neto + adicCobrados;
     return {
       reservas_totales: master.length,
       liquidadas: liquidado.length,
       por_liquidar: porLiquidar.length,
-      ingresos_hospedaje: ingresosHospedaje,
-      ingresos_adicionales: ingresosAdicionales,
-      ingresos_totales: ingresosHospedaje + ingresosAdicionales
+      // Hospedaje: cascada bruto -> comisiones -> neto
+      hospedaje_bruto: r2(bruto),
+      comisiones: r2(bruto - neto),
+      hospedaje_neto: r2(neto),
+      hospedaje_neto_liquidado: r2(netoLiq),
+      hospedaje_neto_por_liquidar: r2(netoPorLiq),
+      // Adicionales
+      adicionales_total: r2(adicTotal),
+      adicionales_cobrados: r2(adicCobrados),
+      ahorro_limpieza_no_show: r2(ahorro),
+      lineas_sin_pago: sinPago.length,
+      // Totales (cada uno con su definicion)
+      cobros_efectivos: r2(cobrosEfectivos),          // neto ya liquidado + adicionales cobrados (lo que ya entro)
+      ingreso_neto_devengado: r2(ingresoNeto),        // neto total (incl. por liquidar) + adicionales cobrados
+      impacto_economico_total: r2(ingresoNeto + ahorro) // devengado + ahorro de limpieza (no es caja)
     };
   }
 
@@ -845,9 +870,14 @@
     addStat(resumen.reservas_totales, "Reservas totales");
     addStat(resumen.liquidadas, "Liquidadas");
     addStat(resumen.por_liquidar, "Por liquidar");
-    addStat(money(resumen.ingresos_hospedaje), "Ingresos hospedaje");
-    addStat(money(resumen.ingresos_adicionales), "Ingresos adicionales");
-    addStat(money(resumen.ingresos_totales), "Ingresos totales");
+    addStat(money(resumen.hospedaje_bruto), "Hospedaje bruto");
+    addStat("-" + money(resumen.comisiones), "Comisiones");
+    addStat(money(resumen.hospedaje_neto), "Hospedaje neto (incl. por liquidar)");
+    addStat(money(resumen.adicionales_cobrados), "Adicionales cobrados");
+    addStat(money(resumen.cobros_efectivos), "Cobros efectivos (ya liquidado)");
+    addStat(money(resumen.ingreso_neto_devengado), "Ingreso neto devengado (incl. por liquidar)");
+    addStat(money(resumen.ahorro_limpieza_no_show), "Ahorro limpieza no-show (no es caja)");
+    addStat(money(resumen.impacto_economico_total), "Impacto económico total (incl. ahorro)");
 
     els.processedLinkWrap.innerHTML = "";
     if (procesadoFolder && procesadoFolder.id) {
@@ -947,9 +977,17 @@
       { "Indicador": "Reservas totales", "Valor": resumen.reservas_totales },
       { "Indicador": "Liquidadas", "Valor": resumen.liquidadas },
       { "Indicador": "Por liquidar", "Valor": resumen.por_liquidar },
-      { "Indicador": "Ingresos hospedaje", "Valor": resumen.ingresos_hospedaje },
-      { "Indicador": "Ingresos adicionales", "Valor": resumen.ingresos_adicionales },
-      { "Indicador": "Ingresos totales", "Valor": resumen.ingresos_totales }
+      { "Indicador": "Hospedaje bruto", "Valor": resumen.hospedaje_bruto },
+      { "Indicador": "Comisiones", "Valor": resumen.comisiones },
+      { "Indicador": "Hospedaje neto (incl. por liquidar)", "Valor": resumen.hospedaje_neto },
+      { "Indicador": "Hospedaje neto liquidado", "Valor": resumen.hospedaje_neto_liquidado },
+      { "Indicador": "Hospedaje neto por liquidar", "Valor": resumen.hospedaje_neto_por_liquidar },
+      { "Indicador": "Adicionales total", "Valor": resumen.adicionales_total },
+      { "Indicador": "Adicionales cobrados", "Valor": resumen.adicionales_cobrados },
+      { "Indicador": "Ahorro limpieza no-show (no es caja)", "Valor": resumen.ahorro_limpieza_no_show },
+      { "Indicador": "Cobros efectivos (ya liquidado)", "Valor": resumen.cobros_efectivos },
+      { "Indicador": "Ingreso neto devengado (incl. por liquidar)", "Valor": resumen.ingreso_neto_devengado },
+      { "Indicador": "Impacto económico total (incl. ahorro)", "Valor": resumen.impacto_economico_total }
     ];
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumenRows), "Resumen");
