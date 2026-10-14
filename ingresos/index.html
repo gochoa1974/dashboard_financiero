@@ -109,7 +109,7 @@
   <header class="apphead">
     <a class="backbtn" href="../dashboard/" aria-label="Volver al dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     <img class="logo" src="../Cima-Blanca-logo.png" alt="Cima Blanca">
-    <div class="ttl"><b>Cima Blanca</b><span>Sincronización de ingresos · v9</span></div>
+    <div class="ttl"><b>Cima Blanca</b><span>Sincronización de ingresos · v10</span></div>
   </header>
   <p class="note" style="margin:0 0 16px">Lee Airbnb, reservas directas e ingresos adicionales desde Google Drive y actualiza sola el archivo consolidado en PROCESADO.</p>
 
@@ -186,7 +186,7 @@
   var AUTO = /[?&]auto=1/.test(location.search);   // modo automático: viene del dashboard
   var SYNC_KEY = "cimablanca_sync_info";            // { t: cuándo se sincronizó, csvMax: CSV más nuevo visto, n: reservas }
   var csvMaxMod = "";
-  var ING_VER = "9";            // v9 (CB-003): publicación todo o nada; si la versión guardada es otra, se vuelve a procesar una vez (v8: el resumen guarda también las resoluciones)
+  var ING_VER = "10";            // v10 (CB-006): el concepto y el ítem de Adicionales se leen también de las columnas «Concepto» e «Ítem». v9 (CB-003): publicación todo o nada; si la versión guardada es otra, se vuelve a procesar una vez (v8: el resumen guarda también las resoluciones)
   var SCHEMA_VERSION = "9";     // v9: el maestro lleva schema_version, huella y manifiesto de fuentes
   var BACKUP_JSON_NAME = "MAESTRO_INGRESOS_CIMA_BLANCA_anterior.json";   // copia única del maestro previo
   var srcInfo = {};             // v9: archivos y conteos leídos de cada fuente (manifiesto)
@@ -554,6 +554,9 @@
     if (malas.length) throw new Error("Validación: " + malas.length + " reserva(s) con código vacío o montos no numéricos.");
     var malasA = adicionales.filter(function (a) { return !isFinite(a.monto); });
     if (malasA.length) throw new Error("Validación: " + malasA.length + " ingreso(s) adicional(es) con monto no numérico.");
+    // CB-006: ninguna línea de adicionales puede quedar sin concepto o sin ítem (señal de columnas no reconocidas)
+    var sinCI = adicionales.filter(function (a) { return !String(a.concepto || "").trim() || !String(a.item || "").trim(); });
+    if (sinCI.length) throw new Error("Validación: " + sinCI.length + " línea(s) de ingresos adicionales sin concepto o sin ítem (códigos: " + sinCI.slice(0, 5).map(function (a) { return a.codigo_confirmacion; }).join(", ") + (sinCI.length > 5 ? "…" : "") + "). Revisa las columnas «Concepto» e «Ítem» de la hoja.");
   }
 
   function readFolderAsRecords(folderId, nombre) {
@@ -628,8 +631,9 @@
       return {
         codigo_confirmacion: cleanCode(row["ID de la Reserva"]),
         huesped: row["Nombre Huesped"] || "",
-        concepto: row["Concepto Estandarizado"] || "",
-        item: row["Ítem / Subcategoría"] || "",
+        // CB-006: la hoja viva de Adicionales usa «Concepto» e «Ítem»; el Excel antiguo usa «Concepto Estandarizado» e «Ítem / Subcategoría»
+        concepto: row["Concepto Estandarizado"] || row["Concepto"] || "",
+        item: row["Ítem / Subcategoría"] || row["Ítem"] || row["Item"] || "",
         cantidad: row["Cantidad"] === "" ? null : toNumber(row["Cantidad"]),
         monto: toNumber(row["Monto ($)"]),
         medio_cobro: row["MEDIO DE COBRO"] || "",
