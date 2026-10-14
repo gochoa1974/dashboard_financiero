@@ -298,7 +298,7 @@ function render() {
     const excs = p.excepciones.map(x =>
       '<div class="it"><div class="t">' + fb(x.desde) + ' → ' + fb(x.hasta) + '<small>' + esc(x.nota || 'Sin nota') + '</small></div><div class="val">' + fmt(p, x.valor) + '</div>' +
       '<div class="btns"><button type="button" class="btn btn-edit btn-sm" data-edit="' + esc(x.id) + '" data-p="' + k + '">Editar</button>' +
-      '<button type="button" class="btn btn-ghost btn-sm" data-del="' + esc(x.id) + '">Borrar</button></div></div>').join('');
+      '<button type="button" class="btn btn-ghost btn-sm" data-del="' + esc(x.id) + '" data-firma="' + esc(x.firma || '') + '">Borrar</button></div></div>').join('');
     const hist = p.bases.slice().reverse().map(b => '<div class="it"><div class="t">Desde ' + fb(b.desde) + '<small>' + esc(b.nota || '') + '</small></div><div class="val">' + fmt(p, b.valor) + '</div></div>').join('');
     return '<div class="card" data-card="' + k + '"><h3>' + esc(p.nombre) + '</h3>' +
       '<p class="hint">La fecha que cuenta es: ' + esc(p.fechaDe) + '.</p>' +
@@ -319,7 +319,7 @@ $('cards').addEventListener('click', async e => {
   if (t.dataset.nueva) { abierto = { p: t.dataset.nueva, modo: 'exc' }; render(); const f = $('f_d'); if (f) f.focus(); return; }
   if (t.dataset.edit) {
     const x = DATA.parametros[k].excepciones.filter(z => z.id === t.dataset.edit)[0]; if (!x) return;
-    abierto = { p: k, modo: 'exc', id: x.id, d: x.desde, h: x.hasta, v: x.valor, n: x.nota }; render(); const f = $('f_v'); if (f) f.focus(); return;
+    abierto = { p: k, modo: 'exc', id: x.id, firma: x.firma, d: x.desde, h: x.hasta, v: x.valor, n: x.nota }; render(); const f = $('f_v'); if (f) f.focus(); return;
   }
   if (t.hasAttribute('data-cancel')) { abierto = null; render(); msg(''); return; }
   if (t.dataset.del) {
@@ -329,7 +329,7 @@ $('cards').addEventListener('click', async e => {
       return;
     }
     t.disabled = true; msg('Borrando...');
-    try { aplicar(await call({ accion: 'borrarExcepcion', id: t.dataset.del })); setHint(true); msg('Excepción borrada.', 'ok'); }
+    try { aplicar(await call({ accion: 'borrarExcepcion', parametro: k, id: t.dataset.del, firma: t.dataset.firma })); setHint(true); msg('Excepción borrada.', 'ok'); }
     catch (err) { t.disabled = false; msg(String(err.message || err), 'err'); }
     return;
   }
@@ -338,7 +338,7 @@ $('cards').addEventListener('click', async e => {
     t.disabled = true; msg('Guardando...');
     try {
       const body = t.dataset.ok === 'base' ? { accion: 'guardarBase', parametro: abierto.p, valor: v, desde: d } :
-        { accion: 'guardarExcepcion', parametro: abierto.p, id: abierto.id || '', valor: v, desde: d, hasta: $('f_h').value, nota: $('f_n').value };
+        { accion: 'guardarExcepcion', parametro: abierto.p, id: abierto.id || '', firma: abierto.firma || '', valor: v, desde: d, hasta: $('f_h').value, nota: $('f_n').value };
       aplicar(await call(body)); abierto = null; render(); setHint(true); msg('Guardado. Ya lo usan los demás módulos desde ahora.', 'ok');
     } catch (err) { t.disabled = false; msg(String(err.message || err), 'err'); }
   }
