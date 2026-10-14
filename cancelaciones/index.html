@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Cancelaciones y bloqueos · Cima Blanca</title>
-<!-- v10 (14 oct 2026, CB-014/CB-009): tipo 2 (No-show) retirado, avisos de tipo 1 y tipo 5 antes de guardar. -->
+<!-- v11 (14 oct 2026, CB-014/CB-009): tipo No-show retirado y tipos renumerados sin saltos: 1 compensación, 2 sin compensación, 3 devolución, 4 overbooking, 5 contracargo. -->
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -324,10 +324,10 @@ input[readonly]{opacity:.75;cursor:not-allowed}
         <div class="field"><label id="cTipoLbl">Tipo de caso</label>
           <div class="chips" role="radiogroup" aria-labelledby="cTipoLbl" id="cTipoChips">
             <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="1" aria-label="Tipo 1: Cancelación con compensación"><span class="num">1</span><span>Cancelación con compensación</span></button>
-            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="3" aria-label="Tipo 3: Cancelación sin compensación"><span class="num">3</span><span>Cancelación sin compensación</span></button>
-            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="4" aria-label="Tipo 4: Devolución al huésped"><span class="num">4</span><span>Devolución al huésped</span></button>
-            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="5" aria-label="Tipo 5: Overbooking con reubicación"><span class="num">5</span><span>Overbooking con reubicación</span></button>
-            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="6" aria-label="Tipo 6: Contracargo / disputa"><span class="num">6</span><span>Contracargo / disputa</span></button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="2" aria-label="Tipo 2: Cancelación sin compensación"><span class="num">2</span><span>Cancelación sin compensación</span></button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="3" aria-label="Tipo 3: Devolución al huésped"><span class="num">3</span><span>Devolución al huésped</span></button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="4" aria-label="Tipo 4: Overbooking con reubicación"><span class="num">4</span><span>Overbooking con reubicación</span></button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="5" aria-label="Tipo 5: Contracargo / disputa"><span class="num">5</span><span>Contracargo / disputa</span></button>
           </div>
           <input type="hidden" id="cTipo" value="">
           <div class="tipo-help" id="cTipoHelp" hidden></div>
@@ -781,7 +781,7 @@ try {
 
 let editC = null, editB = null;
 
-const TIPO_LABEL = { 1: 'Cancelación con compensación', 2: 'No-show (retirado: va en Ingresos Adicionales)', 3: 'Cancelación sin compensación', 4: 'Devolución al huésped', 5: 'Overbooking con reubicación', 6: 'Contracargo / disputa' };
+const TIPO_LABEL = { 1: 'Cancelación con compensación', 2: 'Cancelación sin compensación', 3: 'Devolución al huésped', 4: 'Overbooking con reubicación', 5: 'Contracargo / disputa' };
 
 function uid() { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
@@ -924,8 +924,8 @@ $('cGuardar').onclick = async () => {
   if (c.cue > c.P || c.pres > c.P) { toggleAcc(true); msg('Las noches no pueden superar las pagadas (' + c.P + ').', 'err'); return; }
   if (c.t === 1 && c.cue < 1) { toggleAcc(true); msg('Indica cuántas noches ocupó el huésped.', 'err'); return; }
   if (c.t === 1 && c.pres >= c.P) { toggleAcc(true); msg('Si ocupó todas las noches pagadas no es una cancelación. Revisa las noches (' + c.P + ' pagadas).', 'err'); return; }
-  if (c.t === 5 && c.gas <= 0) { toggleAcc(true); msg('Indica cuánto costó reubicar al huésped (gasto extra).', 'err'); return; }
-  if (c.t === 4 && c.dev <= 0) { toggleAcc(true); msg('Indica cuánto se devolvió.', 'err'); return; }
+  if (c.t === 4 && c.gas <= 0) { toggleAcc(true); msg('Indica cuánto costó reubicar al huésped (gasto extra).', 'err'); return; }
+  if (c.t === 3 && c.dev <= 0) { toggleAcc(true); msg('Indica cuánto se devolvió.', 'err'); return; }
   const abrirManual = () => { if ($('cManual').hidden) $('cManualBtn').click(); };
   const ci = $('cCheckin').value, co = $('cCheckout').value, canal = $('cCanal').value, bruto = num('cBruto'), netoV = num('cNeto');
   if (!ci || !co) { abrirManual(); msg('Faltan las fechas de check-in y check-out.', 'err'); return; }
@@ -934,7 +934,7 @@ $('cGuardar').onclick = async () => {
     if (!DIRECTAS.length) { abrirManual(); msg('No pude cargar las reservas directas. Revisa tu conexión y toca Actualizar.', 'err'); return; }
     if (!DIRECTAS.some(x => x.codigo === codigo)) { abrirManual(); marcar(['cCodigo']); msg('Ese código no existe en Reservas directas. Búscalo en el buscador y elígelo de la lista.', 'err'); return; }
   }
-  if (c.t >= 4 && canal !== 'Directa') { msg('Los tipos 4, 5 y 6 solo aplican a reservas directas.', 'err'); return; }
+  if (c.t >= 3 && canal !== 'Directa') { msg('Los tipos 3, 4 y 5 solo aplican a reservas directas.', 'err'); return; }
   if (netoV > bruto + 0.005) { abrirManual(); msg('El neto no puede ser mayor que el bruto.', 'err'); return; }
   if (canal === 'Directa' && Math.abs(netoV - bruto) > 0.005) { abrirManual(); msg('En reserva directa no hay comisión: el neto debe ser igual al bruto.', 'err'); return; }
   recalcular();
@@ -1342,10 +1342,10 @@ const MOTIVOS = ['Canceló por viaje', 'Canceló por trabajo', 'Imprevisto del h
 // f = campos visibles del acordeón "Detalles del caso"; limpieza = valor por defecto de "Hubo limpieza real"
 const TIPOS = {
   1: { f: ['presente'], limpieza: true, ayuda: 'Se recorta a las noches que el huésped ocupó. El dinero cobrado se mantiene.' },
-  3: { f: ['liberadas'], limpieza: false, ayuda: 'El dinero cobrado se mantiene. Ninguna noche cuenta como ocupada.' },
-  4: { f: ['cuentan', 'devuelto'], limpieza: true, ayuda: 'Solo reservas directas. Cuentan solo las noches ocupadas y lo devuelto sale del ingreso.' },
-  5: { f: ['presente', 'gasto'], limpieza: false, ayuda: 'Solo reservas directas. El dinero se mantiene, la reserva reubicada no cuenta noches y lo pagado por reubicar sale como gasto extra.' },
-  6: { f: ['presente', 'cuentan', 'liberadas', 'devuelto', 'gasto'], limpieza: true, ayuda: 'Solo reservas directas. En curso no resta nada; si el banco lo quita, sale del ingreso.' }
+  2: { f: ['liberadas'], limpieza: false, ayuda: 'El dinero cobrado se mantiene. Ninguna noche cuenta como ocupada.' },
+  3: { f: ['cuentan', 'devuelto'], limpieza: true, ayuda: 'Solo reservas directas. Cuentan solo las noches ocupadas y lo devuelto sale del ingreso.' },
+  4: { f: ['presente', 'gasto'], limpieza: false, ayuda: 'Solo reservas directas. El dinero se mantiene, la reserva reubicada no cuenta noches y lo pagado por reubicar sale como gasto extra.' },
+  5: { f: ['presente', 'cuentan', 'liberadas', 'devuelto', 'gasto'], limpieza: true, ayuda: 'Solo reservas directas. En curso no resta nada; si el banco lo quita, sale del ingreso.' }
 };
 let accTocado = false, motivoSel = '';
 
@@ -1374,14 +1374,13 @@ function calcular() {
   let pres = num('cNochesPresente'), cue = num('cNochesCuentan'), lib = num('cNochesLiberadas');
   const dev = vis.indexOf('devuelto') >= 0 ? num('cDevuelto') : 0;
   const gas = vis.indexOf('gasto') >= 0 ? num('cGastoExtra') : 0;
-  if (t === 2) { pres = P; cue = P; lib = 0; }
-  else if (t === 3) { pres = 0; cue = 0; }
+  if (t === 2) { pres = 0; cue = 0; }
   else if (t === 1) { cue = pres; lib = Math.max(P - pres, 0); }
-  else if (t === 5) { cue = 0; lib = Math.max(P - pres, 0); }
-  else if (t === 4) { pres = cue; lib = Math.max(P - cue, 0); }
+  else if (t === 4) { cue = 0; lib = Math.max(P - pres, 0); }
+  else if (t === 3) { pres = cue; lib = Math.max(P - cue, 0); }
   let nq = neto;
-  if (t === 4) nq = Math.max(neto - dev, 0);
-  if (t === 6 && $('cEstado').value !== 'En curso') nq = Math.max(neto - dev, 0);
+  if (t === 3) nq = Math.max(neto - dev, 0);
+  if (t === 5 && $('cEstado').value !== 'En curso') nq = Math.max(neto - dev, 0);
   return { t, P, neto, pres, cue, lib, dev, gas, nq };
 }
 
@@ -1399,7 +1398,7 @@ function recalcular() {
     $('sLib').textContent = c.lib;
     $('sIng').textContent = money(c.nq); $('sIngDe').textContent = 'de ' + money(c.neto) + ' neto';
   }
-  const pend = (c.t === 1 && c.cue === 0) || (c.t === 4 && c.dev === 0);
+  const pend = (c.t === 1 && c.cue === 0) || (c.t === 3 && c.dev === 0);
   $('cAccBtn').classList.toggle('falta', pend);
   $('cAccEstado').textContent = pend ? 'Falta completar' : (accTocado ? 'Editado' : 'Valores por defecto');
   return c;
@@ -1418,7 +1417,7 @@ function setTipo(t, reset) {
   if (!vis.length) toggleAcc(false);
   if (reset) {
     ['cNochesPresente', 'cNochesCuentan', 'cNochesLiberadas', 'cDevuelto', 'cGastoExtra'].forEach(id => $(id).value = 0);
-    if (t === 3) $('cNochesLiberadas').value = num('cNochesPagadas');
+    if (t === 2) $('cNochesLiberadas').value = num('cNochesPagadas');
     $('cLimpieza').checked = cfg ? cfg.limpieza : true;
     accTocado = false;
   }
@@ -1441,12 +1440,12 @@ function syncCanal() {
   $('cCodigo').placeholder = dir ? 'Elige la reserva directa en el buscador de arriba' : 'Ej. HMJWRMSPT4';
   if (dir && $('cCodigo').value && !DIRECTAS.some(x => x.codigo === $('cCodigo').value)) $('cCodigo').value = '';
   document.querySelectorAll('#cTipoChips .chip').forEach(b => {
-    const bl = Number(b.dataset.tipo) >= 4 && !dir;
+    const bl = Number(b.dataset.tipo) >= 3 && !dir;
     b.classList.toggle('bloq', bl); b.setAttribute('aria-disabled', String(bl)); b.title = bl ? 'Solo para reservas directas' : '';
   });
-  if ((Number($('cTipo').value) || 0) >= 4 && !dir) {
+  if ((Number($('cTipo').value) || 0) >= 3 && !dir) {
     setTipo(0, true);
-    $('cMsg').className = 'msg err'; $('cMsg').textContent = 'Los tipos 4, 5 y 6 solo aplican a reservas directas. Elige otro tipo o cambia el canal.';
+    $('cMsg').className = 'msg err'; $('cMsg').textContent = 'Los tipos 3, 4 y 5 solo aplican a reservas directas. Elige otro tipo o cambia el canal.';
   }
   pintarResumen(); recalcular();
 }
