@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Cancelaciones y bloqueos · Cima Blanca</title>
+<!-- v10 (14 oct 2026, CB-014/CB-009): tipo 2 (No-show) retirado, avisos de tipo 1 y tipo 5 antes de guardar. -->
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -96,6 +97,7 @@ button.tab{appearance:none;font-family:inherit}
 .resumen span{display:block;margin-top:2px;font-size:12.5px;color:var(--mut);font-weight:600}
 .resumen.vacio b{color:var(--mut)}
 .chips{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chips .chip:last-child:nth-child(odd){grid-column:1/-1}
 .chips-s{display:flex;flex-wrap:wrap;gap:8px}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .chip{appearance:none;font-family:inherit;font-weight:700;font-size:13px;line-height:1.25;text-align:left;min-height:48px;padding:10px 12px;
@@ -322,7 +324,6 @@ input[readonly]{opacity:.75;cursor:not-allowed}
         <div class="field"><label id="cTipoLbl">Tipo de caso</label>
           <div class="chips" role="radiogroup" aria-labelledby="cTipoLbl" id="cTipoChips">
             <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="1" aria-label="Tipo 1: Cancelación con compensación"><span class="num">1</span><span>Cancelación con compensación</span></button>
-            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="2" aria-label="Tipo 2: No-show sin cancelar"><span class="num">2</span><span>No-show sin cancelar</span></button>
             <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="3" aria-label="Tipo 3: Cancelación sin compensación"><span class="num">3</span><span>Cancelación sin compensación</span></button>
             <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="4" aria-label="Tipo 4: Devolución al huésped"><span class="num">4</span><span>Devolución al huésped</span></button>
             <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="5" aria-label="Tipo 5: Overbooking con reubicación"><span class="num">5</span><span>Overbooking con reubicación</span></button>
@@ -780,7 +781,7 @@ try {
 
 let editC = null, editB = null;
 
-const TIPO_LABEL = { 1: 'Cancelación con compensación', 2: 'No-show sin cancelar', 3: 'Cancelación sin compensación', 4: 'Devolución al huésped', 5: 'Overbooking con reubicación', 6: 'Contracargo / disputa' };
+const TIPO_LABEL = { 1: 'Cancelación con compensación', 2: 'No-show (retirado: va en Ingresos Adicionales)', 3: 'Cancelación sin compensación', 4: 'Devolución al huésped', 5: 'Overbooking con reubicación', 6: 'Contracargo / disputa' };
 
 function uid() { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
@@ -922,6 +923,8 @@ $('cGuardar').onclick = async () => {
   if (!c.t) { msg('Elige el tipo de caso.', 'err'); return; }
   if (c.cue > c.P || c.pres > c.P) { toggleAcc(true); msg('Las noches no pueden superar las pagadas (' + c.P + ').', 'err'); return; }
   if (c.t === 1 && c.cue < 1) { toggleAcc(true); msg('Indica cuántas noches ocupó el huésped.', 'err'); return; }
+  if (c.t === 1 && c.pres >= c.P) { toggleAcc(true); msg('Si ocupó todas las noches pagadas no es una cancelación. Revisa las noches (' + c.P + ' pagadas).', 'err'); return; }
+  if (c.t === 5 && c.gas <= 0) { toggleAcc(true); msg('Indica cuánto costó reubicar al huésped (gasto extra).', 'err'); return; }
   if (c.t === 4 && c.dev <= 0) { toggleAcc(true); msg('Indica cuánto se devolvió.', 'err'); return; }
   const abrirManual = () => { if ($('cManual').hidden) $('cManualBtn').click(); };
   const ci = $('cCheckin').value, co = $('cCheckout').value, canal = $('cCanal').value, bruto = num('cBruto'), netoV = num('cNeto');
@@ -1335,11 +1338,10 @@ window.addEventListener('load', () => {
 
 // ===== v2: formulario de cancelación simplificado =====
 const MESES_L = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-const MOTIVOS = ['Canceló por viaje', 'Canceló por trabajo', 'Imprevisto del huésped', 'Doble reserva', 'No se presentó', 'Problema de pago'];
+const MOTIVOS = ['Canceló por viaje', 'Canceló por trabajo', 'Imprevisto del huésped', 'Doble reserva', 'Se fue antes de lo previsto', 'Problema de pago'];
 // f = campos visibles del acordeón "Detalles del caso"; limpieza = valor por defecto de "Hubo limpieza real"
 const TIPOS = {
   1: { f: ['presente'], limpieza: true, ayuda: 'Se recorta a las noches que el huésped ocupó. El dinero cobrado se mantiene.' },
-  2: { f: [], limpieza: true, ayuda: 'No se toca nada: noches y dinero completos.' },
   3: { f: ['liberadas'], limpieza: false, ayuda: 'El dinero cobrado se mantiene. Ninguna noche cuenta como ocupada.' },
   4: { f: ['cuentan', 'devuelto'], limpieza: true, ayuda: 'Solo reservas directas. Cuentan solo las noches ocupadas y lo devuelto sale del ingreso.' },
   5: { f: ['presente', 'gasto'], limpieza: false, ayuda: 'Solo reservas directas. El dinero se mantiene, la reserva reubicada no cuenta noches y lo pagado por reubicar sale como gasto extra.' },
