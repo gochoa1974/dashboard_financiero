@@ -74,7 +74,7 @@ input,select{font-family:inherit;color:inherit}
 .hero-big{font-size:50px;line-height:1.05;font-weight:800;letter-spacing:-.035em;margin:8px 0 4px}
 .hero-big small{font-size:27px;font-weight:700;opacity:.65;margin-right:3px;letter-spacing:0}
 .hero-s{font-size:14px;color:var(--hero-mute);font-weight:600}
-.hero-s2{font-size:12.5px;color:var(--hero-mute);font-weight:600;margin-top:3px}
+.hero-s2{white-space:pre-line;font-size:12.5px;color:var(--hero-mute);font-weight:600;margin-top:3px}
 .hero-row{display:flex;align-items:center;gap:16px;margin-top:20px;padding-top:18px;border-top:1px solid rgba(255,255,255,.14)}
 .ring{position:relative;width:78px;height:78px;flex:0 0 auto}
 .ring svg{display:block;width:78px;height:78px;transform:rotate(-90deg);fill:none;stroke-width:8;stroke-linecap:round}
@@ -133,6 +133,18 @@ input,select{font-family:inherit;color:inherit}
 .legend{display:flex;gap:18px;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--mut);flex-wrap:wrap}
 .legend span{display:flex;align-items:center;gap:6px}
 .legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.brk{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.brk>div{display:flex;align-items:center;gap:11px}
+.brk i{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.brk .t{flex:1;min-width:0}
+.brk .t b{display:block;font-size:14px;font-weight:700}
+.brk .t span{display:block;font-size:12px;color:var(--mut);font-weight:600;margin-top:1px}
+.brk .n{text-align:right}
+.brk .n b{display:block;font-size:15px;font-weight:800;letter-spacing:-.02em}
+.brk .n span{display:block;font-size:12px;color:var(--mut);font-weight:600}
+.item.cap .tile::after{background:var(--warn)}
+.item.cap .tile{background:var(--warn-bg)}
+.tots small{display:block;font-size:12px;font-weight:600;color:var(--mut);margin-top:-2px}
 .tots{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--mut)}
 .tots div{display:flex;justify-content:space-between;gap:12px}
 .tots b{color:var(--ink);font-weight:800}
@@ -577,6 +589,8 @@ function nvPaint(){
 }
 function nvClear(){nvReset();$('nvCon').value='';$('nvMonto').value='';$('nvFecha').value=NV.fecha;nvPaint();}
 let SH=null,NR=null,REGF='all',JUSTCONN=false,tmr=null,shown=0,raf=0;
+const blkOf=e=>e.cuenta==='No'?'cap':(e.familia==='2. Financieros'?'deu':'ope');
+const BLK_NOM={ope:'Operativo',deu:'Deuda y banca',cap:'Pago de capital · no es gasto'};
 const SUMA=a=>a.reduce((t,e)=>t+(+e.monto||0),0);
 const fdia=iso=>{if(!iso||String(iso).length<10)return '—';const p=String(iso).split('-').map(Number);return pad(p[2])+' '+MESES[p[1]-1].slice(0,3);};
 const diasHasta=iso=>Math.round((new Date(iso+'T00:00:00')-new Date(todayISO()+'T00:00:00'))/86400000);
@@ -800,7 +814,7 @@ function regCard(e){
  const chip=e.estado==='Confirmado'?['ok','Confirmado']:e.estado==='Pendiente de pago'?['warn','Pendiente']:e.estado==='Por confirmar'?['warn','Por confirmar']:['off',e.estado||'—'];
  const det=e.detalle||e.etiqueta||'';
  const ex=(e.cuenta==='No'?(det?' · ':'')+'sale de caja':'')+(e.editado?((det||e.cuenta==='No')?' · ':'')+'corregido':'');
- return '<button type="button" class="item '+t+'" data-id="'+esc(e.id)+'"><div class="tile">'+iconX(e.concepto,e.familia)+'</div><div class="mid"><b>'+esc(e.concepto)+'</b><span><i class="dot '+t+'"></i>'+(rec?'Recurrente':'Eventual')+' · '+fdia(e.fecha)+'</span>'+((det||ex)?'<small>'+esc(det+ex)+'</small>':'')+'</div><div class="right"><span class="amt">'+f2(e.monto)+'</span><span class="chip '+chip[0]+'">'+esc(chip[1])+'</span></div></button>';
+ return '<button type="button" class="item '+t+(e.cuenta==='No'?' cap':'')+'" data-id="'+esc(e.id)+'"><div class="tile">'+iconX(e.concepto,e.familia)+'</div><div class="mid"><b>'+esc(e.concepto)+'</b><span><i class="dot '+t+'"></i>'+(rec?'Recurrente':'Eventual')+' · '+fdia(e.fecha)+'</span>'+((det||ex)?'<small>'+esc(det+ex)+'</small>':'')+'</div><div class="right"><span class="amt">'+f2(e.monto)+'</span><span class="chip '+chip[0]+'">'+esc(chip[1])+'</span></div></button>';
 }
 function renderEv(){
  const ev=dataset().filter(e=>e.mes===MES&&!isRecRow(e)).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
@@ -811,22 +825,26 @@ function renderEv(){
 function renderReg(){
  const mon=dataset().filter(e=>e.mes===MES),box=$('regBox');
  if(!mon.length){box.innerHTML='<div class="empty">Todavía no hay gastos anotados en '+esc(mLabel(MES))+'.</div>';return;}
- const tR=SUMA(mon.filter(isRecRow)),tE=SUMA(mon.filter(e=>!isRecRow(e))),tot=tR+tE;
+ const tot=SUMA(mon);
  let h='';
  if(tot>0){
-  const pr=Math.round(tR/tot*100);
-  h+='<div class="panel"><div class="panel-h"><b>Reparto del mes</b><span>'+f2(tot)+'</span></div><div class="split"><i style="background:var(--rec);flex-grow:'+tR+'"></i><i style="background:var(--ev);flex-grow:'+tE+'"></i></div><div class="legend"><span><i style="background:var(--rec)"></i>Recurrentes '+pr+' %</span><span><i style="background:var(--ev)"></i>Eventuales '+(100-pr)+' %</span></div></div>';
+  const BL=[['ope','Operativo','Define tu utilidad operativa','var(--rec)'],['deu','Deuda y banca','Interés y seguros del crédito','var(--ev)'],['cap','Pago de capital','Baja tu deuda · no es gasto','var(--warn)']];
+  const sm={};BL.forEach(x=>sm[x[0]]=SUMA(mon.filter(e=>blkOf(e)===x[0])));
+  const act=BL.filter(x=>sm[x[0]]>0);let rest=100;
+  const pc={};act.forEach((x,i)=>{pc[x[0]]=i===act.length-1?rest:Math.round(sm[x[0]]/tot*100);rest-=pc[x[0]];});
+  h+='<div class="panel"><div class="panel-h"><b>¿En qué se fue?</b><span>'+f2(tot)+'</span></div><div class="split">'+act.map(x=>'<i style="background:'+x[3]+';flex-grow:'+sm[x[0]]+'"></i>').join('')+'</div><div class="brk">'+act.map(x=>'<div><i style="background:'+x[3]+'"></i><div class="t"><b>'+x[1]+'</b><span>'+x[2]+'</span></div><div class="n"><b>'+f2(sm[x[0]])+'</b><span>'+pc[x[0]]+' %</span></div></div>').join('')+'</div></div>';
  }
  h+='<div class="seg" id="regSeg"><button type="button" data-f="all" class="'+(REGF==='all'?'on':'')+'">Todos</button><button type="button" data-f="rec" class="'+(REGF==='rec'?'on':'')+'">Recurrentes</button><button type="button" data-f="ev" class="'+(REGF==='ev'?'on':'')+'">Eventuales</button></div>';
  const list=mon.filter(e=>REGF==='all'||(REGF==='rec')===isRecRow(e)).sort(regSort);
  if(!list.length)h+='<div class="empty">No hay movimientos para mostrar.</div>';
  let cur=null;
  list.forEach((e,i)=>{
-  if(e.familia!==cur){cur=e.familia;h+='<div class="group">'+esc(String(cur).replace(/^\d\.\s*/,''))+'<span>'+f2(SUMA(list.filter(x=>x.familia===cur)))+'</span></div>';}
+  const bk=blkOf(e);
+  if(bk!==cur){cur=bk;h+='<div class="group">'+BLK_NOM[bk]+'<span>'+f2(SUMA(list.filter(x=>blkOf(x)===bk)))+'</span></div>';}
   h+=regCard(e);
  });
- const gasto=SUMA(mon.filter(e=>e.cuenta!=='No')),caja=SUMA(mon);
- h+='<div class="panel"><div class="tots"><div>Gasto del mes<b>'+f2(gasto)+'</b></div><div>Sale de tu caja (con capital de hipoteca)<b>'+f2(caja)+'</b></div></div></div>';
+ const gasto=SUMA(mon.filter(e=>e.cuenta!=='No')),caja=SUMA(mon),capi=caja-gasto;
+ h+='<div class="panel"><div class="tots"><div>'+(capi>0.005?'De eso, gasto del mes':'Gasto del mes')+'<b>'+f2(gasto)+'</b></div>'+(capi>0.005?'<small>'+f2(caja)+' de caja − '+f2(capi)+' de capital (no es gasto)</small>':'')+'</div></div>';
  box.innerHTML=h;
 }
 
@@ -855,10 +873,10 @@ function renderTotals(){
   const s=suggestion(r,DS);if(s&&s.monto!==undefined)pend+=s.monto;
  });
  const falta=rl.length-saved,pct=rl.length?saved/rl.length:0;
- $('hLabel').textContent=MES===todayISO().slice(0,7)?'Gastado este mes':'Gastado en '+mLabel(MES);
+ $('hLabel').textContent='Egreso caja - bancos';
  setTotal(tot);
  $('hMov').textContent=mon.length+(mon.length===1?' movimiento registrado':' movimientos registrados');
- $('hGasto').textContent=Math.abs(tot-gasto)>0.005?'Sin el capital de la hipoteca: '+f2(gasto):'';
+ $('hGasto').textContent=Math.abs(tot-gasto)>0.005?'De eso, gasto del mes: '+f2(gasto)+'\nCapital de la hipoteca (no es gasto): '+f2(tot-gasto):'';
  $('ringTxt').textContent=saved+'/'+rl.length;
  $('arc').style.strokeDashoffset=213.6*(1-pct);
  $('hTitle').textContent=falta?saved+' de '+rl.length+' recurrentes al día':'Recurrentes al día';
@@ -1007,7 +1025,9 @@ function undoLast(){
 }
 const FAM_ORDEN=['1. Fijos operativos','2. Financieros','3. Mantenimiento, reparaciones y reposición','4. Logística, viajes e imprevistos','5. Otros / varios'];
 const CON_ORDEN=['Expensas / alícuota','Agua potable (dentro de expensas)','Luz','Internet','Software y suscripciones','Hipoteca – interés','Hipoteca – seguros','Hipoteca – capital (amortización)','Hipoteca – mora y otros cargos','Comisión bancaria – pago de servicios','Comisión bancaria – transferencia a limpieza','Tarifa de retiro Airbnb'];
+const BLK_ORDEN={ope:0,deu:1,cap:2};
 function regSort(a,b){
+ const bi=BLK_ORDEN[blkOf(a)]-BLK_ORDEN[blkOf(b)]; if(bi)return bi;
  const fi=FAM_ORDEN.indexOf(a.familia)-FAM_ORDEN.indexOf(b.familia); if(fi)return fi;
  const ci=CON_ORDEN.indexOf(a.concepto),cj=CON_ORDEN.indexOf(b.concepto);
  const oi=ci<0?99:ci, oj=cj<0?99:cj; if(oi!==oj)return oi-oj;
