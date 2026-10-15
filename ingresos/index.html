@@ -175,6 +175,34 @@ details.ver li.bad b{color:var(--bad)}
   .view{max-width:520px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* v14 · evolución mensual (mismo componente que Adicionales) */
+.evo svg{display:block;max-width:100%;height:auto;overflow:visible}
+.evo .gl{stroke:var(--line);stroke-dasharray:3 4;stroke-width:1}
+.evo .gt{fill:var(--mut);font-size:9px;font-weight:600}
+.evo .bp{fill:var(--mut);opacity:.32}
+.evo .bc{fill:rgb(var(--air));opacity:.55;transition:opacity .15s}
+.evo .bh{fill:url(#evH)}
+.evo g.m{cursor:pointer;outline:none}
+.evo g.m.on .bc{opacity:1}
+.evo g.m:hover .bc{opacity:.8}
+.evo g.m.on:hover .bc{opacity:1}
+.evo g.m.off{cursor:default;pointer-events:none}
+.evo g.m:focus-visible .hit{stroke:rgb(var(--air));stroke-width:2;fill:rgba(var(--air),.08)}
+.evo .hit{fill:transparent;rx:6}
+.evo .ml{fill:var(--mut);font-size:10px;font-weight:700;text-anchor:middle}
+.evo g.on .ml{fill:var(--ink);font-weight:800}
+.evo .ul{fill:rgb(var(--air))}
+.evlg{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--mut);font-weight:700;margin:0 0 8px}
+.evlg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.evc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.evc>div{background:var(--bg);border-radius:12px;padding:10px 12px;min-width:0}
+.evc small{display:block;font-size:11.5px;color:var(--mut);font-weight:700}
+.evc b{display:block;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px}
+.evc em{display:block;font-style:normal;font-size:12px;font-weight:700;margin-top:3px;color:var(--mut);line-height:1.35}
+.evc em.up{color:var(--ok)}.evc em.dn{color:var(--bad)}
+@media (max-width:360px){.evc{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.evo .bc{transition:none}}
 </style>
 </head>
 <body>
@@ -391,6 +419,52 @@ function bar(segs,total){
   });
   return h+'</div>';
 }
+
+/* ===== v14: evolución mensual (neto generado) 2 años ===== */
+var EVC_ANIO="";
+function evMes(y,m){var o=calcMonth(y+"-"+pad(m));return {d:o.totD,p:o.totP,t:o.totD+o.totP};}
+function evoHTML(mk){
+  var y=+mk.slice(0,4),m0=+mk.slice(5),hoyM=HOY.slice(0,7),rg=monthRange();
+  var A=[],B=[],i;
+  for(i=1;i<=12;i++){A.push(evMes(y,i));B.push(evMes(y-1,i));}
+  var mx=0;for(i=0;i<12;i++){mx=Math.max(mx,A[i].t,B[i].t);}
+  var step=mx<=1500?500:1000,top=Math.max(step,Math.ceil(mx/step)*step);
+  var host=$("p-res"),cw=host&&host.clientWidth>0?host.clientWidth-30:330,W=Math.max(290,Math.min(cw,900)),H=W>600?180:(W>420?150:130),PL=28,bw=(W-PL-4)/12,g=bw*0.78,b=g/2-1,svg='<svg width="'+W+'" height="'+(H+34)+'" viewBox="0 0 '+W+' '+(H+34)+'" role="group" aria-label="Evolución mensual del neto, '+(y-1)+' contra '+y+'"><defs><pattern id="evH" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="rgba(var(--air),.28)"/><rect width="2" height="5" fill="rgb(var(--air))"/></pattern></defs><g transform="translate(0,8)">';
+  for(var gv=step;gv<=top;gv+=step){var gy=H-H*gv/top;svg+='<line class="gl" x1="'+PL+'" x2="'+W+'" y1="'+gy.toFixed(1)+'" y2="'+gy.toFixed(1)+'"/><text class="gt" x="0" y="'+(gy+3).toFixed(1)+'">$'+(gv>=1000?(gv/1000)+"k":gv)+'</text>';}
+  for(i=0;i<12;i++){
+    var mkk=y+"-"+pad(i+1),x=PL+2+i*bw+(bw-g)/2,on=mkk===mk,inR=mkk>=rg[0]&&mkk<=rg[1];
+    var hp=H*B[i].t/top,hd=H*A[i].d/top,hh=H*A[i].p/top;
+    svg+='<g class="m'+(on?' on':'')+(inR?'':' off')+'" data-m="'+mkk+'"'+(inR?' role="button" tabindex="0"':' aria-hidden="true"')+' aria-label="'+mLabel(mkk)+': '+money(A[i].d)+(A[i].p>0.004?' y '+money(A[i].p)+' por dormir':'')+'"'+(on?' aria-current="true"':'')+'>'+
+      '<rect class="hit" x="'+(x-3).toFixed(1)+'" y="0" width="'+(g+6).toFixed(1)+'" height="'+(H+24)+'"/>'+
+      '<rect class="bp" x="'+x.toFixed(1)+'" y="'+(H-hp).toFixed(1)+'" width="'+b.toFixed(1)+'" height="'+hp.toFixed(1)+'" rx="2"/>'+
+      '<rect class="bc" x="'+(x+b+2).toFixed(1)+'" y="'+(H-hd).toFixed(1)+'" width="'+b.toFixed(1)+'" height="'+hd.toFixed(1)+'" rx="2"/>'+
+      (hh>0?'<rect class="bh" x="'+(x+b+2).toFixed(1)+'" y="'+(H-hd-hh).toFixed(1)+'" width="'+b.toFixed(1)+'" height="'+hh.toFixed(1)+'" rx="2"/>':'')+
+      '<text class="ml" x="'+(x+g/2).toFixed(1)+'" y="'+(H+15)+'">'+MC[i].charAt(0).toUpperCase()+'</text>'+(on?'<rect class="ul" x="'+(x-1).toFixed(1)+'" y="'+(H+19)+'" width="'+(g+2).toFixed(1)+'" height="3" rx="1.5"/>':'')+'</g>';
+  }
+  svg+='</g></svg>';
+  // comparación del mes contra el mismo mes del año pasado
+  var cur=A[m0-1],pv=B[m0-1],enCurso=(mk===hoyM)||(mk>hoyM);
+  var c1='<div><small>'+(MESES[m0-1].charAt(0).toUpperCase()+MESES[m0-1].slice(1))+' '+y+(enCurso?' (en curso)':'')+'</small><b>'+money(cur.d)+'</b>';
+  if(pv.t>0.004){
+    var dp=pv.d>0?Math.round((cur.d-pv.d)/pv.d*100):null;
+    c1+='<em'+(!enCurso&&dp!==null?(dp>=0?' class="up"':' class="dn"'):'')+'>'+(!enCurso&&dp!==null?(dp>=0?'▲ ':'▼ ')+Math.abs(dp)+'% vs ':'')+MESES[m0-1].slice(0,3)+' '+(y-1)+(enCurso?' cerró en ':': ')+money(pv.d)+'</em>';
+  } else c1+='<em>Sin dato de '+(y-1)+'</em>';
+  c1+='</div>';
+  // acumulado del año hasta el último mes cerrado, con los mismos meses en los dos años
+  var fin=enCurso?(mk===hoyM?m0-1:+hoyM.slice(5)-1):m0; if(mk>hoyM&&y>+hoyM.slice(0,4))fin=0;
+  var ini=0;for(i=0;i<12;i++){if(B[i].t>0.004){ini=i+1;break;}}
+  var c2='';
+  if(ini&&fin>=ini){
+    var sa=0,sb=0;for(i=ini-1;i<fin;i++){sa+=A[i].d;sb+=B[i].d;}
+    var rngTxt=MC[ini-1]+(fin>ini?'–'+MC[fin-1]:'');
+    var d2=sb>0?Math.round((sa-sb)/sb*100):null;
+    c2='<div><small>'+rngTxt.charAt(0).toUpperCase()+rngTxt.slice(1)+' '+y+(enCurso?' (meses cerrados)':'')+'</small><b>'+money(sa)+'</b><em'+(d2!==null?(d2>=0?' class="up"':' class="dn"'):'')+'>'+(d2!==null?(d2>=0?'▲ ':'▼ ')+Math.abs(d2)+'% vs ':'')+money(sb)+' en '+rngTxt+' '+(y-1)+'</em></div>';
+  } else c2='<div><small>Acumulado '+y+'</small><b>'+money(A.reduce(function(a,x){return a+x.d;},0))+'</b><em>Sin año anterior para comparar</em></div>';
+  return '<div class="panel evo"><div class="panel-h"><b>Evolución del neto</b><span></span></div><div class="rmk">Por mes · '+(y-1)+' contra '+y+' · toca un mes para verlo</div>'+
+    '<div class="evlg"><span><i style="background:rgba(95,112,128,.4)"></i>'+(y-1)+'</span><span><i style="background:rgb(var(--air))"></i>'+y+'</span><span><i style="background:repeating-linear-gradient(45deg,rgb(var(--air)) 0 2px,rgba(var(--air),.28) 2px 5px)"></i>Por dormir</span></div>'+
+    svg+'<div class="evc">'+c1+c2+'</div></div>';
+}
+function evGo(el){var g=el.closest&&el.closest("g.m");if(!g||g.classList.contains("off"))return;curMonth=g.getAttribute("data-m");if(M)renderR();}
 function renderR(){
   var mk=curMonth,o=calcMonth(mk),rg=monthRange();
   $("mLbl").textContent=mLabel(mk);
@@ -414,7 +488,7 @@ function renderR(){
     {c:"var(--air)",v:o.air.bD},{c:"var(--air)",v:o.air.bP,h:1},
     {c:"var(--dir)",v:o.dir.bD},{c:"var(--dir)",v:o.dir.bP,h:1},
     {c:"var(--ext)",v:o.ext.cD},{c:"var(--ext)",v:o.ext.cP,h:1}];
-  var res='<div class="panel"><div class="panel-h"><b>¿De dónde viene?</b><span>'+money(tot)+'</span></div>';
+  var res=evoHTML(mk)+'<div class="panel"><div class="panel-h"><b>¿De dónde viene?</b><span>'+money(tot)+'</span></div>';
   if(tot>0.004){
     res+=bar(segs,tot);
     res+='<div class="rmk"><u></u>Ya durmió'+(o.totP>0?'<u class="h"></u>Por dormir':'')+'</div>';
@@ -518,6 +592,10 @@ function setView(v){
 }
 $("vR").addEventListener("click",function(){setView("R");});
 $("vL").addEventListener("click",function(){setView("L");});
+$("vR").addEventListener("click",function(){setTimeout(function(){if(M)renderR();},0);});
+var evRT=null;window.addEventListener("resize",function(){clearTimeout(evRT);evRT=setTimeout(function(){if(M)renderR();},180);});
+$("p-res").addEventListener("click",function(e){evGo(e.target);});
+$("p-res").addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){var g=e.target.closest&&e.target.closest("g.m");if(g){e.preventDefault();evGo(g);var again=document.querySelector('#p-res g.m.on');if(again)again.focus();}}});
 $("mPrev").addEventListener("click",function(){curMonth=shiftMonth(curMonth,-1);if(M)renderR();});
 $("mNext").addEventListener("click",function(){curMonth=shiftMonth(curMonth,1);if(M)renderR();});
 $("mHoy").addEventListener("click",function(){curMonth=HOY.slice(0,7);if(M)renderR();});
