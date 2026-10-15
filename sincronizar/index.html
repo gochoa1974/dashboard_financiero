@@ -1,1 +1,1155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cima Blanca · Sincronizar con Drive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a2233;
+    --navy-2: #1f2a44;
+    --azul: #2563eb;
+    --verde: #15803d;
+    --ambar: #d97706;
+    --gris: #6b7280;
+    --bg: #f7f8fa;
+    --card: #ffffff;
+    --text: #1a2233;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1420;
+      --card: #171e2e;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border: #2a3344;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Manrope', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    padding: 24px 16px 64px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  header { margin-bottom: 24px; }
+  header h1 { font-size: 22px; font-weight: 800; margin: 0 0 4px; }
+  header p { color: var(--text-muted); margin: 0; font-size: 14px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 { font-size: 15px; font-weight: 700; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--azul); color: #fff; border: none;
+    font-family: inherit; font-weight: 700; font-size: 14px;
+    padding: 12px 20px; border-radius: 10px; cursor: pointer;
+  }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn.secondary { background: transparent; color: var(--azul); border: 1px solid var(--azul); }
+  .btn.ok { background: var(--verde); }
+  .btn.small { padding: 8px 14px; font-size: 13px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+  }
+  .pill.ok { background: #dcfce7; color: var(--verde); }
+  .pill.pending { background: #fef3c7; color: var(--ambar); }
+  .pill.off { background: #f3f4f6; color: var(--gris); }
+  @media (prefers-color-scheme: dark) {
+    .pill.ok { background: #0f2a1a; }
+    .pill.pending { background: #2a2110; }
+    .pill.off { background: #20262f; }
+  }
+  .log {
+    font-size: 13px; color: var(--text-muted);
+    max-height: 220px; overflow-y: auto;
+    border-top: 1px solid var(--border); padding-top: 10px; margin-top: 10px;
+  }
+  .log div { padding: 3px 0; display: flex; gap: 8px; }
+  .log .ts { color: var(--gris); flex-shrink: 0; }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
+  .stat .num { font-size: 24px; font-weight: 800; }
+  .stat .label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .error { color: #dc2626; font-size: 13px; margin-top: 10px; }
+  svg { width: 18px; height: 18px; flex-shrink: 0; }
+  a.folder-link { color: var(--azul); font-size: 13px; text-decoration: none; }
+  a.folder-link:hover { text-decoration: underline; }
+  .hidden { display: none; }
+  .note { font-size: 13px; color: var(--text-muted); margin-top: 10px; }
+  #autoNote { font-weight: 700; font-size: 14px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); margin: 0 0 16px; }
+  #autoNote[hidden] { display: none; }
+  #autoNote.ok { color: #1c7a45; }
+  #autoNote.err { color: #c2303a; }
+  @media (prefers-color-scheme: dark) { #autoNote.ok { color: #5fd391; } #autoNote.err { color: #ff7b84; } }
+  .apphead{display:flex;align-items:center;gap:12px;padding:0 0 16px}
+  .backbtn{width:44px;height:44px;border-radius:14px;border:1px solid var(--border);background:var(--card);color:var(--text);display:grid;place-items:center;flex:0 0 auto;text-decoration:none}
+  .backbtn svg{width:20px;height:20px}
+  .backbtn:focus-visible{outline:3px solid var(--azul);outline-offset:2px}
+  .apphead .logo{width:40px;height:40px;border-radius:50%;object-fit:cover;display:block;flex:0 0 auto}
+  .apphead .ttl b{display:block;font-size:15px;font-weight:700}
+  .apphead .ttl span{display:block;font-size:12px;color:var(--text-muted);font-weight:600;margin-top:1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="apphead">
+    <a class="backbtn" href="../parametros/" aria-label="Volver a Configuración"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <img class="logo" src="../Cima-Blanca-logo.png" alt="Cima Blanca">
+    <div class="ttl"><b>Cima Blanca</b><span>Sincronizar con Drive · v10</span></div>
+  </header>
+  <p class="note" style="margin:0 0 16px">Lee Airbnb, reservas directas e ingresos adicionales desde Google Drive y actualiza sola el archivo consolidado en PROCESADO.</p>
 
+  <p class="note" id="autoNote" hidden role="status"></p>
+  <div class="card">
+    <h2>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a5 5 0 0 1 5 5v3a5 5 0 0 1-10 0V7a5 5 0 0 1 5-5Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg>
+      Cuenta de Google
+    </h2>
+    <div id="authStatus" class="row" style="margin-bottom:12px;">
+      <span class="pill off" id="authPill">Sin conectar</span>
+    </div>
+    <button class="btn" id="btnLogin">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+      Conectar con Google
+    </button>
+    <p class="note">Si Google pide permiso, acéptalo: solo lee tu Drive y crea o actualiza los dos archivos de PROCESADO. No toca nada más de tu Drive.</p>
+  </div>
+
+  <div class="card hidden" id="syncCard">
+    <h2>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+      Sincronización
+    </h2>
+    <button class="btn" id="btnSync">Leer Drive y procesar</button>
+    <div class="log" id="log"></div>
+    <div class="error hidden" id="errorBox" style="white-space:pre-line"></div>
+    <button class="btn secondary small hidden" id="btnRetry" type="button" style="margin-top:10px">Reintentar</button>
+  </div>
+
+  <div class="card hidden" id="resultCard">
+    <h2>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+      Resultado
+    </h2>
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="row" style="margin-top:18px;">
+      <span class="pill off" id="drivePill">Sin guardar en Drive</span>
+    </div>
+    <div style="margin-top:12px;" id="processedLinkWrap"></div>
+
+    <div class="row" style="margin-top:16px;">
+      <button class="btn secondary small" id="btnDownloadJson">Descargar copia local (JSON)</button>
+      <button class="btn secondary small" id="btnDownloadXlsx">Descargar copia local (Excel)</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var CLIENT_ID = "284452253474-nkn76cksdd6hu41f79t7kfnp47iag878.apps.googleusercontent.com";
+  var SCOPES = "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file";
+  var ROOT_FOLDER_NAME = "CIMA BLANCA";
+  var INGRESOS_FOLDER_NAME = "1. INGRESOS";
+  var RESERVAS_FOLDER_NAME = "1.1 Reservas";
+  var SERVICIOS_ADICIONALES_FOLDER_HINT = "Adicionales";
+  var RAW_FOLDER_NAME = "RAW_sin_procesar";
+  var PROCESADO_FOLDER_NAME = "PROCESADO";
+  var DIRECTAS_FILE_HINT = "DIRECTAS";
+  var ADICIONALES_FILE_HINT = "ADICIONALES";
+  var OUTPUT_JSON_NAME = "MAESTRO_INGRESOS_CIMA_BLANCA.json";
+  var OUTPUT_XLSX_NAME = "INGRESOS_CONSOLIDADO_CIMA_BLANCA.xlsx";
+  var XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  var STORAGE_PREFIX = "cimablanca_drive_id::";
+
+  var accessToken = null;
+  var tokenClient = null;
+  var AUTO = /[?&]auto=1/.test(location.search);
+  var VOLVER = ((location.search.match(/[?&]volver=([a-z]+)/) || [])[1]) || "";   // v2: a qué panel regresar (solo "ingresos"; cualquier otro valor vuelve al dashboard)
+  var SYNC_KEY = "cimablanca_sync_info";            // { t: cuándo se sincronizó, csvMax: CSV más nuevo visto, n: reservas }
+  var csvMaxMod = "";
+  var ING_VER = "10";            // v10 (CB-006): el concepto y el ítem de Adicionales se leen también de las columnas «Concepto» e «Ítem». v9 (CB-003): publicación todo o nada; si la versión guardada es otra, se vuelve a procesar una vez (v8: el resumen guarda también las resoluciones)
+  var SCHEMA_VERSION = "11";    // v9: schema_version, huella y manifiesto; v11 (CB-007/008): resumen separa bruto, comisiones, neto, cobros y ahorro
+  var BACKUP_JSON_NAME = "MAESTRO_INGRESOS_CIMA_BLANCA_anterior.json";   // copia única del maestro previo
+  var srcInfo = {};             // v9: archivos y conteos leídos de cada fuente (manifiesto)
+  var lastManifest = null;      // v9
+  var lastHuella = "";          // v9: SHA-256 del contenido de datos
+  var resolMap = {};            // v8: pagos y ajustes de resolución del CSV (se quitan duplicados entre archivos)
+  var lastOk = false;
+  var autoStarted = false;
+  var silentTry = false;
+
+  var els = {
+    authPill: document.getElementById("authPill"),
+    btnLogin: document.getElementById("btnLogin"),
+    syncCard: document.getElementById("syncCard"),
+    btnSync: document.getElementById("btnSync"),
+    log: document.getElementById("log"),
+    errorBox: document.getElementById("errorBox"),
+    btnRetry: document.getElementById("btnRetry"),
+    resultCard: document.getElementById("resultCard"),
+    statGrid: document.getElementById("statGrid"),
+    drivePill: document.getElementById("drivePill"),
+    btnDownloadJson: document.getElementById("btnDownloadJson"),
+    btnDownloadXlsx: document.getElementById("btnDownloadXlsx"),
+    processedLinkWrap: document.getElementById("processedLinkWrap")
+  };
+
+  function log(msg) {
+    var line = document.createElement("div");
+    var ts = document.createElement("span");
+    ts.className = "ts";
+    ts.textContent = new Date().toLocaleTimeString("es-EC", { hour12: false });
+    var txt = document.createElement("span");
+    txt.textContent = msg;
+    line.appendChild(ts);
+    line.appendChild(txt);
+    els.log.appendChild(line);
+    els.log.scrollTop = els.log.scrollHeight;
+  }
+
+  function showError(msg) {
+    els.errorBox.textContent = msg;
+    els.errorBox.classList.remove("hidden");
+    log("Error: " + msg);
+  }
+
+  function clearError() {
+    els.errorBox.classList.add("hidden");
+    els.errorBox.textContent = "";
+    els.btnRetry.classList.add("hidden");
+  }
+
+  // v9 (CB-003): estado "No publicable": el maestro anterior no se toca y se dice qué falló.
+  function showNoPublicable(msg) {
+    els.errorBox.textContent = "Estado: No publicable. El maestro anterior sigue intacto.\n" + msg;
+    els.errorBox.classList.remove("hidden");
+    els.btnRetry.classList.remove("hidden");
+    log("No publicable: " + msg.replace(/\n/g, " | "));
+  }
+
+  function initGoogle() {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: function (resp) {
+        if (resp.error) {
+          if (silentTry) { silentTry = false; return; }
+          showError("No se pudo iniciar sesión: " + resp.error);
+          return;
+        }
+        silentTry = false;
+        accessToken = resp.access_token;
+        els.authPill.textContent = "Conectado";
+        els.authPill.className = "pill ok";
+        els.syncCard.classList.remove("hidden");
+        log("Sesión de Google iniciada.");
+        if (AUTO && !autoStarted) { autoStarted = true; autoRevisar(); }
+      },
+      error_callback: function (e) {
+        if (AUTO) autoNota("Google necesita que lo confirmes: toca «Conectar con Google» y seguirá solo.", "err");
+      }
+    });
+    els.btnLogin.disabled = false;
+    if (AUTO) {
+      autoNota("Conectando con Google…");
+      try { tokenClient.requestAccessToken({ prompt: "" }); } catch (e) { autoNota("Toca «Conectar con Google» para continuar.", "err"); }
+    } else {
+      silentTry = true;
+      try { tokenClient.requestAccessToken({ prompt: "" }); } catch (e) { silentTry = false; }
+    }
+  }
+
+  els.btnLogin.addEventListener("click", function () {
+    if (!tokenClient) {
+      showError("Google todavía no cargó, espera un segundo y vuelve a intentar.");
+      return;
+    }
+    silentTry = false;
+    tokenClient.requestAccessToken();
+  });
+
+  function driveFetch(url) {
+    return fetch(url, { headers: { Authorization: "Bearer " + accessToken } }).then(function (r) {
+      if (!r.ok) {
+        return r.text().then(function (t) {
+          throw new Error("Drive respondió " + r.status + ": " + t.slice(0, 200));
+        });
+      }
+      return r.json();
+    });
+  }
+
+  function findChildFolder(parentId, nameContains) {
+    var q = "'" + parentId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false";
+    var url = "https://www.googleapis.com/drive/v3/files?q=" + encodeURIComponent(q) + "&fields=files(id,name)&pageSize=100";
+    return driveFetch(url).then(function (data) {
+      var needle = nameContains.toLowerCase();
+      var match = (data.files || []).find(function (f) { return f.name.toLowerCase().indexOf(needle) !== -1; });
+      if (!match) {
+        throw new Error("No encontré una carpeta que contenga \"" + nameContains + "\" dentro del padre indicado.");
+      }
+      return match;
+    });
+  }
+
+  function tryFindChildFolder(parentId, nameContains) {
+    return findChildFolder(parentId, nameContains).catch(function () { return null; });
+  }
+
+  function findRootFolder(name) {
+    var q = "name='" + name.replace(/'/g, "\\'") + "' and mimeType='application/vnd.google-apps.folder' and trashed=false";
+    var url = "https://www.googleapis.com/drive/v3/files?q=" + encodeURIComponent(q) + "&fields=files(id,name)&pageSize=10";
+    return driveFetch(url).then(function (data) {
+      if (!data.files || !data.files.length) {
+        throw new Error("No encontré la carpeta raíz \"" + name + "\" en tu Drive.");
+      }
+      return data.files[0];
+    });
+  }
+
+  function listFilesInFolder(folderId) {
+    var q = "'" + folderId + "' in parents and trashed=false and mimeType!='application/vnd.google-apps.folder'";
+    var url = "https://www.googleapis.com/drive/v3/files?q=" + encodeURIComponent(q) + "&fields=files(id,name,modifiedTime,mimeType)&pageSize=100&orderBy=modifiedTime";
+    return driveFetch(url).then(function (data) { return data.files || []; });
+  }
+
+  function findFileByNameContains(folderId, nameContains) {
+    return listFilesInFolder(folderId).then(function (files) {
+      var needle = nameContains.toLowerCase();
+      return files.find(function (f) { return f.name.toLowerCase().indexOf(needle) !== -1; }) || null;
+    });
+  }
+
+  function findFileByExactName(folderId, fileName) {
+    var q = "'" + folderId + "' in parents and trashed=false and name='" + fileName.replace(/'/g, "\\'") + "'";
+    var url = "https://www.googleapis.com/drive/v3/files?q=" + encodeURIComponent(q) + "&fields=files(id,name,modifiedTime)&pageSize=10";
+    return driveFetch(url).then(function (data) { return (data.files && data.files[0]) || null; });
+  }
+
+  function downloadFileText(fileId) {
+    var url = "https://www.googleapis.com/drive/v3/files/" + fileId + "?alt=media";
+    return fetch(url, { headers: { Authorization: "Bearer " + accessToken } }).then(function (r) {
+      if (!r.ok) throw new Error("No pude descargar el archivo " + fileId + " (" + r.status + ")");
+      return r.text();
+    });
+  }
+
+  function downloadFileArrayBuffer(fileId) {
+    var url = "https://www.googleapis.com/drive/v3/files/" + fileId + "?alt=media";
+    return fetch(url, { headers: { Authorization: "Bearer " + accessToken } }).then(function (r) {
+      if (!r.ok) throw new Error("No pude descargar el archivo " + fileId + " (" + r.status + ")");
+      return r.arrayBuffer();
+    });
+  }
+
+  function exportFileArrayBuffer(fileId, mimeType) {
+    var url = "https://www.googleapis.com/drive/v3/files/" + fileId + "/export?mimeType=" + encodeURIComponent(mimeType);
+    return fetch(url, { headers: { Authorization: "Bearer " + accessToken } }).then(function (r) {
+      if (!r.ok) throw new Error("No pude exportar el archivo " + fileId + " (" + r.status + ")");
+      return r.arrayBuffer();
+    });
+  }
+
+  function fetchTabularFile(file) {
+    var task = file.mimeType === "application/vnd.google-apps.spreadsheet"
+      ? exportFileArrayBuffer(file.id, XLSX_MIME)
+      : downloadFileArrayBuffer(file.id);
+    return task.then(function (buf) {
+      var wb = XLSX.read(buf, { type: "array", cellDates: true });
+      var sheetName = wb.SheetNames[0];
+      var ws = wb.Sheets[sheetName];
+      var rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      return { fileName: file.name, modifiedTime: file.modifiedTime, rows: rows };
+    });
+  }
+
+  function stripBom(text) {
+    return text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
+  }
+
+  function parseCsv(text) {
+    var result = Papa.parse(stripBom(text), { header: true, skipEmptyLines: true });
+    return result.data;
+  }
+
+  function cleanCode(c) {
+    return (c || "").toString().trim();
+  }
+
+  function toNumber(v) {
+    if (v === "" || v === null || v === undefined) return 0;
+    var n = parseFloat(v);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function toIsoDate(v) {
+    if (!v) return "";
+    if (v instanceof Date) {
+      if (isNaN(v.getTime())) return "";
+      return v.toISOString().slice(0, 10);
+    }
+    var s = String(v).trim();
+    var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (m) {
+      var mm = m[1].length < 2 ? "0" + m[1] : m[1];
+      var dd = m[2].length < 2 ? "0" + m[2] : m[2];
+      return m[3] + "-" + mm + "-" + dd;
+    }
+    return s;
+  }
+
+  // v8: "Pago de la resolución" y "Ajuste de la resolución" no son reservas (no entran en las cifras de ingresos); se guardan aparte para que el
+  // panel de Adicionales avise cuáles faltan por registrar. Pago = suma, Ajuste = resta (el CSV ya trae el monto con su signo).
+  function collectResoluciones(file) {
+    file.rows.forEach(function (row) {
+      var tipo = (row["Tipo"] || "").trim();
+      var t = tipo === "Pago de la resolución" ? "Pago" : (tipo === "Ajuste de la resolución" ? "Ajuste" : "");
+      if (!t) return;
+      var code = cleanCode(row["Código de confirmación"]);
+      if (!code) return;
+      var monto = toNumber(row["Monto"]);
+      var fecha = toIsoDate(row["Fecha"]);
+      var det = String(row["Detalles"] || "").trim();
+      var key = [t, code, fecha, monto.toFixed(2), det].join("|");
+      if (resolMap[key]) return;
+      resolMap[key] = {
+        codigo_confirmacion: code,
+        tipo: t,
+        fecha: fecha,
+        monto: Math.round(monto * 100) / 100,
+        huesped: row["Huésped"] || "",
+        anuncio: row["Anuncio"] || "",
+        fecha_inicio: toIsoDate(row["Fecha de inicio"]),
+        fecha_finalizacion: toIsoDate(row["Fecha de finalización"]),
+        noches: toNumber(row["Noches"]),
+        detalles: det,
+        archivo_origen: file.fileName
+      };
+    });
+  }
+
+  function buildRecordsForFile(file) {
+    var byCode = {};
+    file.rows.forEach(function (row) {
+      var tipo = (row["Tipo"] || "").trim();
+      if (tipo && tipo !== "Reservación") return;
+      var code = cleanCode(row["Código de confirmación"]);
+      if (!code) return;
+      if (!byCode[code]) {
+        byCode[code] = {
+          codigo_confirmacion: code,
+          huesped: row["Huésped"] || "",
+          anuncio: row["Anuncio"] || "",
+          fecha_inicio: toIsoDate(row["Fecha de inicio"]),
+          fecha_finalizacion: toIsoDate(row["Fecha de finalización"]),
+          noches: toNumber(row["Noches"]),
+          monto: 0,
+          ingresos_brutos: 0,
+          archivo_origen: file.fileName,
+          actualizado: file.modifiedTime
+        };
+      }
+      var rec = byCode[code];
+      rec.monto += toNumber(row["Monto"]);
+      rec.ingresos_brutos += toNumber(row["Ingresos brutos"]);
+    });
+    return byCode;
+  }
+
+  function fechaContenido(rows) {
+    var max = "";
+    (rows || []).forEach(function (r) {
+      if (String(r["Tipo"] || "").trim() !== "Reservación") return;
+      var d = toIsoDate(r["Fecha de la reservación"]);
+      if (d && d > max) max = d;
+    });
+    return max;
+  }
+
+  function buildKeyedRecords(rowsByFile) {
+    // Orden por CONTENIDO: gana el archivo con la reserva más reciente dentro (fecha de la reservación).
+    // Así un CSV viejo que se vuelva a guardar en Drive no pisa a uno nuevo. Empate: fecha de Drive.
+    var sorted = rowsByFile.slice().map(function (f) { f.contenido = fechaContenido(f.rows); return f; }).sort(function (a, b) {
+      var c = (a.contenido || "").localeCompare(b.contenido || "");
+      return c !== 0 ? c : (a.modifiedTime || "").localeCompare(b.modifiedTime || "");
+    });
+    sorted.forEach(function (f) { log("Orden: " + f.fileName + " (última reserva dentro: " + (f.contenido || "sin fecha") + ")"); });
+    var byCode = {};
+    sorted.forEach(function (file) {
+      var fileRecords = buildRecordsForFile(file);
+      Object.keys(fileRecords).forEach(function (code) {
+        byCode[code] = fileRecords[code];
+      });
+    });
+    return byCode;
+  }
+
+  // v9 (CB-003): toda fuente obligatoria debe leerse completa; si una falla se aborta sin tocar el maestro.
+  function sha256Text(text) {
+    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)).then(function (buf) {
+      return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+    });
+  }
+
+  function leerFuente(nombre, tarea) {
+    return Promise.resolve().then(tarea).then(
+      function (v) { return { nombre: nombre, ok: true, valor: v }; },
+      function (e) { return { nombre: nombre, ok: false, error: (e && e.message) || String(e) }; }
+    );
+  }
+
+  function requireCols(file, cols, nombre) {
+    if (!file.rows || !file.rows.length) throw new Error(nombre + ": el archivo está vacío.");
+    var keys = Object.keys(file.rows[0]);
+    var faltan = cols.filter(function (c) { return keys.indexOf(c) < 0; });
+    if (faltan.length) throw new Error(nombre + ": faltan las columnas " + faltan.join(", ") + ".");
+  }
+
+  function leerDirectas(reservasFolderId) {
+    return findFileByNameContains(reservasFolderId, DIRECTAS_FILE_HINT).then(function (file) {
+      if (!file) throw new Error("Reservas directas: no encontré el archivo (nombre con \"" + DIRECTAS_FILE_HINT + "\").");
+      log("Leyendo " + file.name + "...");
+      return fetchTabularFile(file);
+    }).then(function (file) {
+      requireCols(file, ["ID de la Reserva", "Día del Check-In", "Día del Check-Out", "Número_de_Noches", "Monto ($)"], "Reservas directas");
+      var recs = buildDirectRecords(file);
+      var n = Object.keys(recs).length;
+      if (!n) throw new Error("Reservas directas: el archivo no tiene ninguna reserva válida.");
+      srcInfo["Reservas directas"] = { archivos: [file.fileName], registros: n };
+      return { records: recs };
+    });
+  }
+
+  function leerAdicionales(ingresosFolderId) {
+    return tryFindChildFolder(ingresosFolderId, SERVICIOS_ADICIONALES_FOLDER_HINT).then(function (folder) {
+      return findFileByNameContains(folder ? folder.id : ingresosFolderId, ADICIONALES_FILE_HINT);
+    }).then(function (file) {
+      if (!file) throw new Error("Ingresos adicionales: no encontré el archivo (nombre con \"" + ADICIONALES_FILE_HINT + "\").");
+      log("Leyendo " + file.name + "...");
+      return fetchTabularFile(file);
+    }).then(function (file) {
+      requireCols(file, ["ID de la Reserva", "Monto ($)"], "Ingresos adicionales");
+      var rows = buildAdicionalesRows(file);
+      if (!rows.length) throw new Error("Ingresos adicionales: no se leyó ninguna línea válida.");
+      srcInfo["Ingresos adicionales"] = { archivos: [file.fileName], registros: rows.length };
+      return { rows: rows };
+    });
+  }
+
+  function validarMaestro(master, adicionales) {
+    if (!master.length) throw new Error("Validación: no quedó ninguna reserva.");
+    var malas = master.filter(function (r) { return !r.codigo_confirmacion || !isFinite(r.monto) || !isFinite(r.ingresos_brutos); });
+    if (malas.length) throw new Error("Validación: " + malas.length + " reserva(s) con código vacío o montos no numéricos.");
+    var malasA = adicionales.filter(function (a) { return !isFinite(a.monto); });
+    if (malasA.length) throw new Error("Validación: " + malasA.length + " ingreso(s) adicional(es) con monto no numérico.");
+    // CB-006: ninguna línea de adicionales puede quedar sin concepto o sin ítem (señal de columnas no reconocidas)
+    var sinCI = adicionales.filter(function (a) { return !String(a.concepto || "").trim() || !String(a.item || "").trim(); });
+    if (sinCI.length) throw new Error("Validación: " + sinCI.length + " línea(s) de ingresos adicionales sin concepto o sin ítem (códigos: " + sinCI.slice(0, 5).map(function (a) { return a.codigo_confirmacion; }).join(", ") + (sinCI.length > 5 ? "…" : "") + "). Revisa las columnas «Concepto» e «Ítem» de la hoja.");
+  }
+
+  function readFolderAsRecords(folderId, nombre) {
+    nombre = nombre || "Airbnb";
+    return listFilesInFolder(folderId).then(function (files) {
+      var csvFiles = files.filter(function (f) { return /\.csv$/i.test(f.name); });
+      csvFiles.forEach(function (f) { if ((f.modifiedTime || "") > csvMaxMod) csvMaxMod = f.modifiedTime; });
+      if (!csvFiles.length) {
+        throw new Error(nombre + ": no hay archivos .csv en la carpeta.");
+      }
+      var chain = Promise.resolve();
+      var rowsByFile = [];
+      csvFiles.forEach(function (f) {
+        chain = chain.then(function () {
+          log("Leyendo " + f.name + "...");
+          return downloadFileText(f.id).then(function (text) {
+            var parsed = parseCsv(text);
+            if (!parsed.length) throw new Error(nombre + ": \"" + f.name + "\" está vacío o no se pudo leer.");
+            if (!("Tipo" in parsed[0]) || !("Código de confirmación" in parsed[0])) throw new Error(nombre + ": \"" + f.name + "\" no trae las columnas Tipo / Código de confirmación.");
+            rowsByFile.push({ fileName: f.name, modifiedTime: f.modifiedTime, rows: parsed });
+            collectResoluciones({ fileName: f.name, rows: parsed });
+          });
+        });
+      });
+      return chain.then(function () {
+        var recs = buildKeyedRecords(rowsByFile);
+        var n = Object.keys(recs).length;
+        if (!n) throw new Error(nombre + ": los CSV no contienen ninguna reservación.");
+        srcInfo[nombre] = { archivos: csvFiles.map(function (f) { return f.name; }), registros: n };
+        return recs;
+      });
+    });
+  }
+
+  function buildDirectRecords(file) {
+    var byCode = {};
+    file.rows.forEach(function (row) {
+      var code = cleanCode(row["ID de la Reserva"]);
+      if (!code) return;
+      var checkin = toIsoDate(row["Día del Check-In"]);
+      var checkout = toIsoDate(row["Día del Check-Out"]);
+      var noches = toNumber(row["Número_de_Noches"]);
+      var monto = toNumber(row["Monto ($)"]);
+      if (!byCode[code]) {
+        byCode[code] = {
+          codigo_confirmacion: code,
+          huesped: row["Nombre Huesped"] || "",
+          anuncio: row["Nombre de Listado"] || "",
+          fecha_inicio: checkin,
+          fecha_finalizacion: checkout,
+          noches: 0,
+          monto: 0,
+          ingresos_brutos: 0,
+          estado: "Liquidado",
+          origen: "Reserva directa",
+          archivo_origen: file.fileName,
+          actualizado: file.modifiedTime
+        };
+      }
+      var rec = byCode[code];
+      rec.noches += noches;
+      rec.monto += monto;
+      rec.ingresos_brutos += monto;
+      if (checkin && (!rec.fecha_inicio || checkin < rec.fecha_inicio)) rec.fecha_inicio = checkin;
+      if (checkout && (!rec.fecha_finalizacion || checkout > rec.fecha_finalizacion)) rec.fecha_finalizacion = checkout;
+    });
+    return byCode;
+  }
+
+  function buildAdicionalesRows(file) {
+    return file.rows.map(function (row) {
+      return {
+        codigo_confirmacion: cleanCode(row["ID de la Reserva"]),
+        huesped: row["Nombre Huesped"] || "",
+        // CB-006: la hoja viva de Adicionales usa «Concepto» e «Ítem»; el Excel antiguo usa «Concepto Estandarizado» e «Ítem / Subcategoría»
+        concepto: row["Concepto Estandarizado"] || row["Concepto"] || "",
+        item: row["Ítem / Subcategoría"] || row["Ítem"] || row["Item"] || "",
+        cantidad: row["Cantidad"] === "" ? null : toNumber(row["Cantidad"]),
+        monto: toNumber(row["Monto ($)"]),
+        medio_cobro: row["MEDIO DE COBRO"] || "",
+        archivo_origen: file.fileName,
+        actualizado: file.modifiedTime
+      };
+    }).filter(function (r) { return r.codigo_confirmacion; });
+  }
+
+  function buildMaster(pagados, pendientes, directas) {
+    var master = [];
+    Object.keys(pagados).forEach(function (code) {
+      var rec = pagados[code];
+      rec.estado = "Liquidado";
+      rec.origen = "Airbnb";
+      master.push(rec);
+    });
+    Object.keys(pendientes).forEach(function (code) {
+      if (pagados[code]) return;
+      var rec = pendientes[code];
+      rec.estado = "Por liquidar";
+      rec.origen = "Airbnb";
+      master.push(rec);
+    });
+    Object.keys(directas).forEach(function (code) {
+      master.push(directas[code]);
+    });
+    master.sort(function (a, b) { return (a.fecha_inicio || "").localeCompare(b.fecha_inicio || ""); });
+    return master;
+  }
+
+  function attachAdicionales(master, adicionales) {
+    var byCode = {};
+    master.forEach(function (r) {
+      byCode[r.codigo_confirmacion] = r;
+      r.adicionales_total = 0;
+    });
+    var huerfanos = 0;
+    adicionales.forEach(function (item) {
+      var reserva = byCode[item.codigo_confirmacion];
+      item.reserva_asociada = !!reserva;
+      if (reserva) {
+        reserva.adicionales_total += item.monto;
+      } else {
+        huerfanos++;
+      }
+    });
+    return huerfanos;
+  }
+
+  function r2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+
+  // CB-007/008: cada cifra tiene su campo; nunca se suman en un solo KPI cosas de distinta naturaleza.
+  function computeResumen(master, adicionales) {
+    var liquidado = master.filter(function (r) { return r.estado === "Liquidado"; });
+    var porLiquidar = master.filter(function (r) { return r.estado === "Por liquidar"; });
+    var sum = function (arr, f) { return arr.reduce(function (s, x) { return s + (Number(f(x)) || 0); }, 0); };
+    var bruto = sum(master, function (r) { return r.ingresos_brutos; });
+    var neto = sum(master, function (r) { return r.monto; });
+    var netoLiq = sum(liquidado, function (r) { return r.monto; });
+    var netoPorLiq = sum(porLiquidar, function (r) { return r.monto; });
+    var sinPago = adicionales.filter(function (a) { return a.medio_cobro === "SIN PAGO"; });
+    var cobrados = adicionales.filter(function (a) { return a.medio_cobro !== "SIN PAGO"; });
+    var adicTotal = sum(adicionales, function (a) { return a.monto; });
+    var adicCobrados = sum(cobrados, function (a) { return a.monto; });
+    var ahorro = sum(sinPago, function (a) { return a.monto; });
+    var cobrosEfectivos = netoLiq + adicCobrados;
+    var ingresoNeto = neto + adicCobrados;
+    return {
+      reservas_totales: master.length,
+      liquidadas: liquidado.length,
+      por_liquidar: porLiquidar.length,
+      // Hospedaje: cascada bruto -> comisiones -> neto
+      hospedaje_bruto: r2(bruto),
+      comisiones: r2(bruto - neto),
+      hospedaje_neto: r2(neto),
+      hospedaje_neto_liquidado: r2(netoLiq),
+      hospedaje_neto_por_liquidar: r2(netoPorLiq),
+      // Adicionales
+      adicionales_total: r2(adicTotal),
+      adicionales_cobrados: r2(adicCobrados),
+      ahorro_limpieza_no_show: r2(ahorro),
+      lineas_sin_pago: sinPago.length,
+      // Totales (cada uno con su definicion)
+      cobros_efectivos: r2(cobrosEfectivos),          // neto ya liquidado + adicionales cobrados (lo que ya entro)
+      ingreso_neto_devengado: r2(ingresoNeto),        // neto total (incl. por liquidar) + adicionales cobrados
+      impacto_economico_total: r2(ingresoNeto + ahorro) // devengado + ahorro de limpieza (no es caja)
+    };
+  }
+
+  function runSync() {
+    clearError();
+    els.btnSync.disabled = true;
+    lastOk = false; csvMaxMod = ""; resolMap = {}; srcInfo = {}; lastManifest = null; lastHuella = "";
+    els.resultCard.classList.add("hidden");
+    log("Buscando carpeta raíz \"" + ROOT_FOLDER_NAME + "\"...");
+
+    var ingresosFolderId = null;
+    var reservasFolderId = null;
+    var procesadoFolder = null;
+    var master = null;
+    var adicionales = [];
+
+    return findRootFolder(ROOT_FOLDER_NAME)
+      .then(function (root) {
+        log("Raíz encontrada. Buscando \"" + INGRESOS_FOLDER_NAME + "\"...");
+        return findChildFolder(root.id, INGRESOS_FOLDER_NAME);
+      })
+      .then(function (ingresos) {
+        ingresosFolderId = ingresos.id;
+        log("Buscando \"" + RESERVAS_FOLDER_NAME + "\"...");
+        return findChildFolder(ingresosFolderId, RESERVAS_FOLDER_NAME);
+      })
+      .then(function (reservas) {
+        reservasFolderId = reservas.id;
+        log("Carpeta de reservas encontrada. Buscando " + RAW_FOLDER_NAME + " y " + PROCESADO_FOLDER_NAME + "...");
+        return Promise.all([
+          findChildFolder(reservasFolderId, RAW_FOLDER_NAME),
+          findChildFolder(reservasFolderId, PROCESADO_FOLDER_NAME)
+        ]);
+      })
+      .then(function (results) {
+        var rawFolderId = results[0].id;
+        procesadoFolder = results[1];
+        return Promise.all([
+          findChildFolder(rawFolderId, "Pagados"),
+          findChildFolder(rawFolderId, "Pendientes")
+        ]);
+      })
+      .then(function (results) {
+        var pagadosFolder = results[0];
+        var pendientesFolder = results[1];
+        log("Paso 1 de 2 · Leyendo las 4 fuentes (todas deben leerse bien)...");
+        return Promise.all([
+          leerFuente("Airbnb · Pagados", function () { return readFolderAsRecords(pagadosFolder.id, "Airbnb · Pagados"); }),
+          leerFuente("Airbnb · Pendientes", function () { return readFolderAsRecords(pendientesFolder.id, "Airbnb · Pendientes"); }),
+          leerFuente("Reservas directas", function () { return leerDirectas(reservasFolderId); }),
+          leerFuente("Ingresos adicionales", function () { return leerAdicionales(ingresosFolderId); })
+        ]);
+      })
+      .then(function (fuentes) {
+        var fallas = fuentes.filter(function (f) { return !f.ok; });
+        if (fallas.length) {
+          var e = new Error("Falló la lectura de: " + fallas.map(function (f) { return f.nombre; }).join(", ") + ".\n" + fallas.map(function (f) { return "• " + f.nombre + ": " + f.error; }).join("\n"));
+          e.noPublicable = true;
+          throw e;
+        }
+        log("Paso 1 de 2 · Las 4 fuentes se leyeron ✓");
+        log("Paso 2 de 2 · Validando y publicando...");
+        master = buildMaster(fuentes[0].valor, fuentes[1].valor, fuentes[2].valor.records);
+        adicionales = fuentes[3].valor.rows;
+        var huerfanos = attachAdicionales(master, adicionales);
+        if (huerfanos > 0) {
+          log("Aviso: " + huerfanos + " ingreso(s) adicional(es) no coinciden con ninguna reserva conocida.");
+        }
+        try { validarMaestro(master, adicionales); } catch (ve) { ve.noPublicable = true; throw ve; }
+      })
+      .then(function () {
+        var resumen = computeResumen(master, adicionales);
+        var datos = { resumen: resumen, reservas: master, ingresos_adicionales: adicionales, resoluciones: buildPayload(master, adicionales, resumen).resoluciones };
+        lastManifest = Object.keys(srcInfo).map(function (k) { return { fuente: k, archivos: srcInfo[k].archivos, registros: srcInfo[k].registros }; });
+        return sha256Text(JSON.stringify(datos)).then(function (h) {
+          lastHuella = h;
+          showResults(master, adicionales, resumen, procesadoFolder);
+          return publicarMaestro(procesadoFolder, master, adicionales, resumen);
+        }).then(function () {
+          lastOk = true;
+          guardarInfoSync(master.length);
+        });
+      })
+      .catch(function (err) {
+        if (err && err.noPublicable) showNoPublicable(err.message || String(err)); else showError(err.message || String(err));
+      })
+      .then(function () {
+        els.btnSync.disabled = false;
+        return lastOk;
+      });
+  }
+
+  function guardarInfoSync(n) {
+    try { localStorage.setItem(SYNC_KEY, JSON.stringify({ t: new Date().toISOString(), csvMax: csvMaxMod, n: n })); localStorage.setItem("cimablanca_ing_ver", ING_VER); } catch (e) {}
+  }
+  function leerInfoSync() {
+    try { return JSON.parse(localStorage.getItem(SYNC_KEY) || "null"); } catch (e) { return null; }
+  }
+  function autoNota(txt, tipo) {
+    var el = document.getElementById("autoNote");
+    if (!el) return;
+    el.hidden = false; el.textContent = txt; el.className = "note" + (tipo ? " " + tipo : "");
+  }
+  function volverAlDashboard(estado) {
+    var adonde = VOLVER === "ingresos" ? "al panel de ingresos" : "al dashboard";
+    autoNota(estado === "ok" ? "Listo: datos de Airbnb actualizados. Volviendo " + adonde + "…" : "Los datos de Airbnb ya estaban al día. Volviendo " + adonde + "…", "ok");
+    var destino = VOLVER === "ingresos" ? "../ingresos/" : "../dashboard/";
+    setTimeout(function () { location.href = destino + "?sync=" + estado; }, 1300);
+  }
+  // B: antes de sincronizar, compara SOLO fechas en Drive: ¿hay algún CSV guardado después de la última vez que se escribió el resumen (MAESTRO) en PROCESADO?
+  // No depende de lo guardado en el navegador: si borras los datos de navegación, igual sabe si hay algo nuevo.
+  function autoRevisar() {
+    autoNota("Revisando si hay archivos nuevos de Airbnb…");
+    log("Modo automático: comparando CSV con el último resumen…");
+    var mx = "";
+    var maestro = null;
+    return findRootFolder(ROOT_FOLDER_NAME)
+      .then(function (root) { return findChildFolder(root.id, INGRESOS_FOLDER_NAME); })
+      .then(function (ing) { return findChildFolder(ing.id, RESERVAS_FOLDER_NAME); })
+      .then(function (res) { return Promise.all([findChildFolder(res.id, RAW_FOLDER_NAME), findChildFolder(res.id, PROCESADO_FOLDER_NAME)]); })
+      .then(function (fo) {
+        return Promise.all([findChildFolder(fo[0].id, "Pagados"), findChildFolder(fo[0].id, "Pendientes"), findFileByExactName(fo[1].id, OUTPUT_JSON_NAME)]);
+      })
+      .then(function (r) { maestro = r[2]; return Promise.all([listFilesInFolder(r[0].id), listFilesInFolder(r[1].id)]); })
+      .then(function (ls) {
+        ls[0].concat(ls[1]).forEach(function (f) { if (/\.csv$/i.test(f.name) && (f.modifiedTime || "") > mx) mx = f.modifiedTime; });
+        var verOk = false; try { verOk = localStorage.getItem("cimablanca_ing_ver") === ING_VER; } catch (e) {}
+        if (verOk && maestro && maestro.modifiedTime && mx && mx <= maestro.modifiedTime) {
+          log("Sin CSV nuevos: el resumen (" + maestro.modifiedTime + ") es posterior al CSV más nuevo (" + mx + ").");
+          try { localStorage.setItem(SYNC_KEY, JSON.stringify({ t: maestro.modifiedTime, csvMax: mx })); } catch (e) {}
+          volverAlDashboard("al_dia"); return;
+        }
+        autoNota("Hay archivos nuevos. Actualizando datos de Airbnb…");
+        return runSync().then(function (ok) { if (ok) volverAlDashboard("ok"); else autoNota("No se pudo terminar. Revisa el aviso rojo o toca «Leer Drive y procesar».", "err"); });
+      })
+      .catch(function (err) { showError(err.message || String(err)); autoNota("No se pudo revisar. Toca «Leer Drive y procesar» para intentarlo a mano.", "err"); });
+  }
+
+  function money(n) {
+    n = Number(n) || 0;
+    var p = Math.abs(n).toFixed(2).split(".");
+    return (n < 0 ? "-" : "") + "$" + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "," + p[1];
+  }
+
+  function showResults(master, adicionales, resumen, procesadoFolder) {
+    log("Listo: " + master.length + " reservas procesadas.");
+
+    els.statGrid.innerHTML = "";
+    addStat(resumen.reservas_totales, "Reservas totales");
+    addStat(resumen.liquidadas, "Liquidadas");
+    addStat(resumen.por_liquidar, "Por liquidar");
+    addStat(money(resumen.hospedaje_bruto), "Hospedaje bruto");
+    addStat("-" + money(resumen.comisiones), "Comisiones");
+    addStat(money(resumen.hospedaje_neto), "Hospedaje neto (incl. por liquidar)");
+    addStat(money(resumen.adicionales_cobrados), "Adicionales cobrados");
+    addStat(money(resumen.cobros_efectivos), "Cobros efectivos (ya liquidado)");
+    addStat(money(resumen.ingreso_neto_devengado), "Ingreso neto devengado (incl. por liquidar)");
+    addStat(money(resumen.ahorro_limpieza_no_show), "Ahorro limpieza no-show (no es caja)");
+    addStat(money(resumen.impacto_economico_total), "Impacto económico total (incl. ahorro)");
+
+    els.processedLinkWrap.innerHTML = "";
+    if (procesadoFolder && procesadoFolder.id) {
+      var a = document.createElement("a");
+      a.className = "folder-link";
+      a.href = "https://drive.google.com/drive/folders/" + procesadoFolder.id;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = "Abrir carpeta PROCESADO en Drive ↗";
+      els.processedLinkWrap.appendChild(a);
+    }
+
+    els.drivePill.textContent = "Sin guardar en Drive";
+    els.drivePill.className = "pill off";
+
+    els.btnDownloadJson.onclick = function () { downloadJson(master, adicionales, resumen); };
+    els.btnDownloadXlsx.onclick = function () { downloadXlsx(master, adicionales, resumen); };
+
+    els.resultCard.classList.remove("hidden");
+  }
+
+  function addStat(value, label) {
+    var div = document.createElement("div");
+    div.className = "stat";
+    var num = document.createElement("div");
+    num.className = "num";
+    num.textContent = value;
+    var lab = document.createElement("div");
+    lab.className = "label";
+    lab.textContent = label;
+    div.appendChild(num);
+    div.appendChild(lab);
+    els.statGrid.appendChild(div);
+  }
+
+  function triggerDownload(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function buildPayload(master, adicionales, resumen) {
+    return {
+      schema_version: SCHEMA_VERSION,
+      generado: new Date().toISOString(),
+      huella_contenido_sha256: lastHuella,
+      fuentes: lastManifest || [],
+      propiedad: "Cima Blanca",
+      resumen: resumen,
+      reservas: master,
+      ingresos_adicionales: adicionales,
+      resoluciones: Object.keys(resolMap).map(function (k) { return resolMap[k]; }).sort(function (a, b) { return (a.fecha || "").localeCompare(b.fecha || "") || a.codigo_confirmacion.localeCompare(b.codigo_confirmacion); })
+    };
+  }
+
+  function buildJsonBlob(master, adicionales, resumen) {
+    return new Blob([JSON.stringify(buildPayload(master, adicionales, resumen), null, 2)], { type: "application/json" });
+  }
+
+  function buildWorkbook(master, adicionales, resumen) {
+    var reservaRows = master.map(function (r) {
+      return {
+        "Código": r.codigo_confirmacion,
+        "Origen": r.origen,
+        "Huésped": r.huesped,
+        "Anuncio": r.anuncio,
+        "Check-in": r.fecha_inicio,
+        "Check-out": r.fecha_finalizacion,
+        "Noches": r.noches,
+        "Monto": r.monto,
+        "Ingresos brutos": r.ingresos_brutos,
+        "Adicionales": r.adicionales_total || 0,
+        "Estado": r.estado,
+        "Archivo origen": r.archivo_origen,
+        "Actualizado": r.actualizado
+      };
+    });
+    var adicionalRows = adicionales.map(function (a) {
+      return {
+        "Código": a.codigo_confirmacion,
+        "Asociada a reserva": a.reserva_asociada ? "Sí" : "No",
+        "Huésped": a.huesped,
+        "Concepto": a.concepto,
+        "Ítem": a.item,
+        "Cantidad": a.cantidad,
+        "Monto": a.monto,
+        "Medio de cobro": a.medio_cobro,
+        "Archivo origen": a.archivo_origen
+      };
+    });
+    var resumenRows = [
+      { "Indicador": "Reservas totales", "Valor": resumen.reservas_totales },
+      { "Indicador": "Liquidadas", "Valor": resumen.liquidadas },
+      { "Indicador": "Por liquidar", "Valor": resumen.por_liquidar },
+      { "Indicador": "Hospedaje bruto", "Valor": resumen.hospedaje_bruto },
+      { "Indicador": "Comisiones", "Valor": resumen.comisiones },
+      { "Indicador": "Hospedaje neto (incl. por liquidar)", "Valor": resumen.hospedaje_neto },
+      { "Indicador": "Hospedaje neto liquidado", "Valor": resumen.hospedaje_neto_liquidado },
+      { "Indicador": "Hospedaje neto por liquidar", "Valor": resumen.hospedaje_neto_por_liquidar },
+      { "Indicador": "Adicionales total", "Valor": resumen.adicionales_total },
+      { "Indicador": "Adicionales cobrados", "Valor": resumen.adicionales_cobrados },
+      { "Indicador": "Ahorro limpieza no-show (no es caja)", "Valor": resumen.ahorro_limpieza_no_show },
+      { "Indicador": "Cobros efectivos (ya liquidado)", "Valor": resumen.cobros_efectivos },
+      { "Indicador": "Ingreso neto devengado (incl. por liquidar)", "Valor": resumen.ingreso_neto_devengado },
+      { "Indicador": "Impacto económico total (incl. ahorro)", "Valor": resumen.impacto_economico_total }
+    ];
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumenRows), "Resumen");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(reservaRows), "Reservas");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(adicionalRows), "Ingresos Adicionales");
+    return wb;
+  }
+
+  function buildXlsxBlob(master, adicionales, resumen) {
+    var wb = buildWorkbook(master, adicionales, resumen);
+    var out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    return new Blob([out], { type: XLSX_MIME });
+  }
+
+  function downloadJson(master, adicionales, resumen) {
+    triggerDownload(buildJsonBlob(master, adicionales, resumen), OUTPUT_JSON_NAME);
+    log("Descargado " + OUTPUT_JSON_NAME);
+  }
+
+  function downloadXlsx(master, adicionales, resumen) {
+    triggerDownload(buildXlsxBlob(master, adicionales, resumen), OUTPUT_XLSX_NAME);
+    log("Descargado " + OUTPUT_XLSX_NAME);
+  }
+
+  function getStoredFileId(name) {
+    try { return window.localStorage.getItem(STORAGE_PREFIX + name); } catch (e) { return null; }
+  }
+
+  function setStoredFileId(name, id) {
+    try { window.localStorage.setItem(STORAGE_PREFIX + name, id); } catch (e) {}
+  }
+
+  function updateDriveFileContent(fileId, mimeType, blob) {
+    return fetch("https://www.googleapis.com/upload/drive/v3/files/" + fileId + "?uploadType=media&fields=id,name", {
+      method: "PATCH",
+      headers: { Authorization: "Bearer " + accessToken, "Content-Type": mimeType },
+      body: blob
+    }).then(function (r) {
+      if (!r.ok) return r.text().then(function (t) { throw new Error("Drive respondió " + r.status + " al actualizar: " + t.slice(0, 200)); });
+      return r.json();
+    });
+  }
+
+  function createDriveFile(folderId, fileName, mimeType, blob) {
+    var boundary = "cimablanca" + Date.now();
+    var metadata = { name: fileName, parents: [folderId], mimeType: mimeType };
+    var head = new Blob(["--" + boundary + "\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n" + JSON.stringify(metadata) + "\r\n--" + boundary + "\r\nContent-Type: " + mimeType + "\r\n\r\n"]);
+    var tail = new Blob(["\r\n--" + boundary + "--"]);
+    var body = new Blob([head, blob, tail]);
+    return fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + accessToken, "Content-Type": "multipart/related; boundary=" + boundary },
+      body: body
+    }).then(function (r) {
+      if (!r.ok) return r.text().then(function (t) { throw new Error("Drive respondió " + r.status + " al crear: " + t.slice(0, 200)); });
+      return r.json();
+    });
+  }
+
+  function saveToDrive(folderId, fileName, mimeType, blob) {
+    var storedId = getStoredFileId(fileName);
+    var tryUpdate = storedId
+      ? updateDriveFileContent(storedId, mimeType, blob)
+      : Promise.reject(new Error("sin id guardado"));
+
+    return tryUpdate
+      .then(function () { return { id: storedId, creado: false, duplicado: false }; })
+      .catch(function () {
+        return findFileByExactName(folderId, fileName).then(function (existing) {
+          if (!existing) {
+            return createDriveFile(folderId, fileName, mimeType, blob).then(function (f) {
+              setStoredFileId(fileName, f.id);
+              return { id: f.id, creado: true, duplicado: false };
+            });
+          }
+          return updateDriveFileContent(existing.id, mimeType, blob)
+            .then(function () {
+              setStoredFileId(fileName, existing.id);
+              return { id: existing.id, creado: false, duplicado: false };
+            })
+            .catch(function () {
+              return createDriveFile(folderId, fileName, mimeType, blob).then(function (f) {
+                setStoredFileId(fileName, f.id);
+                return { id: f.id, creado: true, duplicado: true };
+              });
+            });
+        });
+      });
+  }
+
+  // v9 (CB-003): publica el maestro solo después de validar. Orden: copia del maestro anterior -> escritura -> relectura y comparación.
+  // Cualquier fallo antes de escribir deja el maestro anterior intacto; el Excel es secundario y su fallo solo avisa.
+  function publicarMaestro(procesadoFolder, master, adicionales, resumen) {
+    els.drivePill.textContent = "Guardando en Drive...";
+    els.drivePill.className = "pill pending";
+    var jsonText = JSON.stringify(buildPayload(master, adicionales, resumen), null, 2);
+    var enviado = "";
+    function fatal(msg) { var e = new Error(msg); e.noPublicable = true; els.drivePill.textContent = "No se publicó"; els.drivePill.className = "pill off"; return e; }
+
+    return sha256Text(jsonText).then(function (h) {
+      enviado = h;
+      return findFileByExactName(procesadoFolder.id, OUTPUT_JSON_NAME);
+    }).then(function (previo) {
+      if (!previo) { log("No había maestro anterior: primera publicación."); return null; }
+      log("Guardando la copia del maestro anterior (" + BACKUP_JSON_NAME + ")...");
+      return downloadFileText(previo.id).then(function (text) {
+        if (!text || !text.trim()) { log("El maestro anterior estaba vacío; no se guarda copia."); return null; }
+        return saveToDrive(procesadoFolder.id, BACKUP_JSON_NAME, "application/json", new Blob([text], { type: "application/json" }));
+      }).catch(function (e) {
+        throw fatal("No pude guardar la copia del maestro anterior (" + ((e && e.message) || e) + "). No se publicó nada.");
+      });
+    }).then(function () {
+      log("Escribiendo el maestro nuevo...");
+      return saveToDrive(procesadoFolder.id, OUTPUT_JSON_NAME, "application/json", new Blob([jsonText], { type: "application/json" })).catch(function (e) {
+        throw fatal("No pude escribir el maestro en Drive (" + ((e && e.message) || e) + "). La copia del anterior está en " + BACKUP_JSON_NAME + ".");
+      });
+    }).then(function (res) {
+      return downloadFileText(res.id).then(sha256Text).then(function (h) {
+        if (h !== enviado) throw fatal("El maestro se escribió pero no coincide con lo enviado. Restaura el archivo " + BACKUP_JSON_NAME + " y reintenta.");
+        log("Maestro verificado en Drive (SHA-256 " + h.slice(0, 12) + "…, " + master.length + " reservas, " + adicionales.length + " adicionales).");
+      }, function (e) {
+        throw fatal("No pude releer el maestro para verificarlo (" + ((e && e.message) || e) + "). Revisa el archivo en PROCESADO.");
+      });
+    }).then(function () {
+      els.drivePill.textContent = "Guardado en Drive ✓";
+      els.drivePill.className = "pill ok";
+      return saveToDrive(procesadoFolder.id, OUTPUT_XLSX_NAME, XLSX_MIME, buildXlsxBlob(master, adicionales, resumen)).then(function (r) {
+        log("Maestro y Excel guardados en PROCESADO.");
+        if (r.duplicado) log("Nota: había una copia del Excel con el mismo nombre que no pude actualizar; dejé una nueva ya enlazada. Puedes borrar la vieja.");
+      }, function (e) {
+        log("Aviso: el maestro quedó publicado, pero no pude actualizar el Excel (" + ((e && e.message) || e) + ").");
+        els.drivePill.textContent = "Guardado (el Excel no se actualizó)";
+      });
+    });
+  }
+
+  els.btnSync.addEventListener("click", runSync);
+  els.btnRetry.addEventListener("click", runSync);
+
+  window.addEventListener("load", function () {
+    if (window.google && google.accounts && google.accounts.oauth2) {
+      initGoogle();
+    } else {
+      var check = setInterval(function () {
+        if (window.google && google.accounts && google.accounts.oauth2) {
+          clearInterval(check);
+          initGoogle();
+        }
+      }, 200);
+    }
+  });
+})();
+</script>
+</body>
+</html>
