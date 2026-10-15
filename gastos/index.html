@@ -299,9 +299,58 @@ input,select{font-family:inherit;color:inherit}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 .backbtn{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;flex:0 0 auto;text-decoration:none;box-shadow:var(--shadow)}
 .backbtn:active{transform:scale(.94)}
+
+/* v9 · reforma: Resumen limpio + Pendientes */
+.kpis,.hero-row{display:none!important}
+body:not([data-tab="reg"]) .dash{display:none}
+.dash{grid-template-columns:minmax(0,1fr)}
+.tabs{gap:2px}.tabs button{font-size:12px;padding:0 2px;gap:3px;min-width:0;white-space:nowrap}
+.prow .tile::after{display:none}
+.tabs em{min-width:20px;height:20px;padding:0 5px;font-size:11px}
+#nReg,#nRec,#nEv{display:none}
+.tabs button.on em.alert{background:var(--warn);color:#fff}
+.tabs em.ok{background:var(--ok-bg);color:var(--ok)}
+.pcol{grid-column:1/-1;max-width:680px;width:100%}
+.lgw{grid-column:1/-1;max-width:680px;width:100%}
+.kcard{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:14px;box-shadow:var(--shadow)}
+.kcard small{display:block;font-size:11.5px;font-weight:800;letter-spacing:.07em;color:var(--mut)}
+.kcard b{display:block;font-size:32px;font-weight:800;letter-spacing:-.03em;margin:4px 0}
+.kcard span{font-size:12.5px;color:var(--mut);font-weight:600}
+.rcard{grid-column:1/-1;max-width:680px;width:100%;display:flex;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;margin-top:14px;box-shadow:var(--shadow)}
+.rcard b{display:block;font-size:15px}.rcard span{font-size:12.5px;color:var(--mut);font-weight:600}
+.ringm{width:56px;height:56px;border-radius:50%;background:conic-gradient(var(--rec) calc(var(--p)*1%),var(--line) 0);display:grid;place-items:center;flex:none}
+.ringm i{width:42px;height:42px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-style:normal;font-weight:800;font-size:14px}
+.rsc{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:18px;padding:14px;margin-top:14px}
+.rsc .rh{display:flex;justify-content:space-between;font-size:14px;font-weight:800;color:var(--warn)}
+.rsc .rr{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:transparent;border:0;border-top:1px solid var(--warn-line);padding:11px 0;min-height:56px}
+.rsc .rr:first-of-type{border-top:0}
+.rsc .ic{width:34px;height:34px;border-radius:11px;background:#fff;display:grid;place-items:center;font-weight:800;color:var(--warn);flex:none}
+.rsc .rt{flex:1;min-width:0}.rsc .rt b{display:block;font-size:13.5px}.rsc .rt small{display:block;font-size:11.5px;color:var(--warn);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rsc .go{width:100%;margin-top:6px;min-height:46px;border-radius:13px;border:0;background:var(--warn);color:#fff;font-size:14px;font-weight:800}
+.group.w{color:var(--warn)}
+.hint{font-size:12px;color:var(--mut);margin:-4px 2px 9px;font-weight:600;line-height:1.4}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:2px 14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.prow{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--line);min-height:56px}
+.prow:first-child{border-top:0}
+.prow .tile{width:36px;height:36px;border-radius:11px;background:var(--off-bg);display:grid;place-items:center;flex:none;font-size:16px}
+.prow .pt{flex:1;min-width:0;cursor:pointer}.prow .pt b{display:block;font-size:13.5px}.prow .pt small{display:block;font-size:11.5px;color:var(--mut);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .pa{font-weight:800;font-size:14px;white-space:nowrap}
+.pbtn{min-height:38px;padding:0 12px;border-radius:11px;border:1px solid var(--line);background:var(--surface);font-size:12.5px;font-weight:800;color:var(--ink);white-space:nowrap}
+.pbig{width:100%;min-height:48px;border-radius:14px;border:0;background:var(--accent);color:#fff;font-size:14px;font-weight:800;margin:4px 0 12px}
+.pbig.alt{background:var(--surface);color:var(--ink);border:1px solid var(--line);margin:0 0 10px}
+.prow.dashed{border:1.5px dashed #b7c6cf;border-radius:14px;padding:9px 12px;margin-bottom:8px;background:rgba(255,255,255,.55)}
+.prow.dashed+.prow.dashed{border-top:1.5px dashed #b7c6cf}
+.lact{display:flex;gap:8px;margin:2px 0 6px}
+.lact button{flex:1;min-height:44px;border-radius:13px;border:1px solid var(--line);background:var(--surface);font-size:13.5px;font-weight:800}
+.lact button.pri{background:var(--accent);color:#fff;border-color:transparent}.lact button:disabled{opacity:.4}
+.lgw .lre{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:4px 0 10px;font-size:12.5px;color:var(--mut);font-weight:600}
+.lgw .lre.warn{color:var(--warn)}
+.lgw .lre button{min-height:36px;padding:0 12px;border-radius:11px;border:1px solid var(--line);background:transparent;font-size:12.5px;font-weight:800;color:var(--ink);white-space:nowrap}
+@media(max-width:400px){.tabs button{font-size:11.5px}}
+@media(min-width:700px){.tabs{max-width:720px}.tabs button{font-size:14px}}
 </style>
 </head>
-<body>
+<body data-tab="reg">
 <div class="app">
   <div class="top">
     <div class="head">
@@ -344,13 +393,15 @@ input,select{font-family:inherit;color:inherit}
     <div class="tabs" role="tablist">
       <button type="button" class="on" data-t="reg" role="tab">Resumen<em id="nReg"></em></button>
       <button type="button" data-t="rec" role="tab">Recurrentes<em id="nRec"></em></button>
-      <button type="button" data-t="ev" role="tab">Eventuales<em id="nEv"></em></button>
+      <button type="button" data-t="ev" role="tab">No recurrentes<em id="nEv"></em></button>
+      <button type="button" data-t="pen" role="tab">Pendientes<em id="nPen"></em></button>
     </div>
   </div>
 
   <div class="pane" id="recRows"></div>
   <div class="pane" id="evBox"></div>
   <div class="pane on" id="regBox"></div>
+  <div class="pane" id="penBox"></div>
 </div>
 <button type="button" class="fab" id="fab">+ Nuevo gasto</button>
 
@@ -699,11 +750,14 @@ function renderRec(){
  const DS=dataset();
  const xs=REC().map(r=>{const ex=existing(r,DS),sug=suggestion(r,DS);return {r,ex,sug,st:ex.length?'reg':((sug&&sug.monto!==undefined)?'sug':'pen')};});
  const por=xs.filter(x=>x.st!=='reg'),ya=xs.filter(x=>x.st==='reg'),sg=xs.filter(x=>x.st==='sug');
- let h='';
- if(sg.length)h+='<button type="button" class="confirm" id="accAll">✓ Confirmar '+sg.length+(sg.length===1?' sugerido':' sugeridos')+'</button>';
- if(!por.length)h+='<div class="alldone">✓ Todos los recurrentes de '+esc(mLabel(MES))+' están registrados</div>';
- if(por.length)h+='<div class="group">Por confirmar<span>'+por.length+'</span></div>'+por.map(recCard).join('');
- if(ya.length)h+='<div class="group">Ya registrados<span>'+f2(SUMA(ya.flatMap(x=>x.ex)))+'</span></div>'+ya.map(recCard).join('');
+ const tya=SUMA(ya.flatMap(x=>x.ex)),pct=xs.length?Math.round(ya.length/xs.length*100):0;
+ let h='<div class="rcard"><div class="ringm" style="--p:'+pct+'"><i>'+ya.length+'/'+xs.length+'</i></div><div><b>'+(por.length?ya.length+' de '+xs.length+' al día':'Recurrentes al día')+'</b><span>'+(por.length?'Faltan '+por.length+' por registrar · ':'Todo registrado · ')+'ya llevas '+f2(tya)+' este mes</span></div></div>';
+ if(ya.length)h+='<div class="group">Registrados<span>'+f2(tya)+'</span></div>'+ya.map(recCard).join('');
+ if(por.length){
+  h+='<div class="group w">Por registrar<span>'+por.length+'</span></div>';
+  if(sg.length)h+='<button type="button" class="confirm" id="accAll">✓ Confirmar '+sg.length+(sg.length===1?' sugerido':' sugeridos')+'</button>';
+  h+=por.map(recCard).join('');
+ }
  h+='<button type="button" class="addrec" id="addRecBtn">+ Nuevo recurrente</button>';
  $('recRows').innerHTML=h;
 }
@@ -867,7 +921,7 @@ function regCard(e){
  const chip=e.estado==='Confirmado'?['ok','Confirmado']:e.estado==='Pendiente de pago'?['warn','Pendiente']:e.estado==='Por confirmar'?['warn','Por confirmar']:['off',e.estado||'—'];
  const det=e.detalle||e.etiqueta||'';
  const ex=(e.cuenta==='No'?(det?' · ':'')+'sale de caja':'')+(e.editado?((det||e.cuenta==='No')?' · ':'')+'corregido':'');
- return '<button type="button" class="item '+t+(e.cuenta==='No'?' cap':'')+'" data-id="'+esc(e.id)+'"><div class="tile">'+iconX(e.concepto,e.familia)+'</div><div class="mid"><b>'+esc(e.concepto)+'</b><span><i class="dot '+t+'"></i>'+(rec?'Recurrente':'Eventual')+' · '+fdia(e.fecha)+'</span>'+((det||ex)?'<small>'+esc(det+ex)+'</small>':'')+'</div><div class="right"><span class="amt">'+f2(e.monto)+'</span><span class="chip '+chip[0]+'">'+esc(chip[1])+'</span></div></button>';
+ return '<button type="button" class="item '+t+(e.cuenta==='No'?' cap':'')+'" data-id="'+esc(e.id)+'"><div class="tile">'+iconX(e.concepto,e.familia)+'</div><div class="mid"><b>'+esc(e.concepto)+'</b><span><i class="dot '+t+'"></i>'+(rec?'Recurrente':'No recurrente')+' · '+fdia(e.fecha)+'</span>'+((det||ex)?'<small>'+esc(det+ex)+'</small>':'')+'</div><div class="right"><span class="amt">'+f2(e.monto)+'</span><span class="chip '+chip[0]+'">'+esc(chip[1])+'</span></div></button>';
 }
 let LOPEN={};
 function limGroup(rows){
@@ -881,11 +935,16 @@ function limGroup(rows){
  else h+='<div style="height:9px"></div>';
  return h;
 }
+function limSection(lim){
+ const DS=dataset(),pp=DS.filter(e=>isPorPagar(e)&&e.mes<=MES);
+ return '<div class="lgw">'+(lim.length?limGroup(lim):'<div class="empty" style="margin:10px 0">Sin limpiezas en '+esc(mLabel(MES))+'.</div>')+'<div class="lact"><button type="button" id="limNew">+ Limpieza</button><button type="button" class="pri" id="limPay"'+(pp.length?'':' disabled')+'>Pagar</button></div>'+limStat()+'</div>';
+}
 function renderEv(){
  const ev=dataset().filter(e=>e.mes===MES&&!isRecRow(e)).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
- $('evBox').innerHTML=ev.length
-  ?'<div class="group">Este mes<span>'+f2(SUMA(ev))+'</span></div>'+(()=>{let g=false;return ev.map(e=>{if(!isLimp(e))return regCard(e);if(g)return '';g=true;return limGroup(ev.filter(isLimp));}).join('');})()
-  :'<div class="empty">Aún no hay gastos eventuales en '+esc(mLabel(MES))+'.<br>Toca «+ Nuevo gasto» para agregar uno.</div>';
+ const lim=ev.filter(isLimp),otros=ev.filter(e=>!isLimp(e));
+ $('evBox').innerHTML='<div class="pcol"><div class="kcard"><small>NO RECURRENTES · '+esc(mLabel(MES).toUpperCase())+'</small><b>'+f2(SUMA(ev))+'</b><span>Gastos que no se repiten cada mes</span></div></div>'+limSection(lim)+
+  '<div class="group">Otros no recurrentes<span>'+f2(SUMA(otros))+'</span></div>'+
+  (otros.length?otros.map(regCard).join(''):'<div class="empty">Reparaciones, compras o imprevistos aparecen aquí.<br>Toca «+ Nuevo gasto» para agregar uno.</div>');
 }
 function pendByBlock(DS){
  const m={ope:0,deu:0,cap:0},v={};
@@ -898,33 +957,71 @@ function pendByBlock(DS){
  });
  return {m,v};
 }
+function pendItems(){
+ const DS=dataset(),cur=todayISO().slice(0,7);
+ const pagar=DS.filter(e=>isPorPagar(e)&&e.mes<=MES).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+ let reg=[];
+ if(MES<=cur){const ms=monthState(MES,DS);reg=esPasado(MES)?(ms.miss||[]):REC().filter(r=>!existing(r,DS).length);}
+ const isExc=e=>/^Excepci[oó]n:/i.test(e.detalle||'');
+ const conf=DS.filter(e=>e.mes===MES&&e.estado!=='Confirmado'&&!isPorPagar(e)&&!isExc(e));
+ return {DS,pagar,reg,conf,n:pagar.length+reg.length+conf.length};
+}
+function pendRecInfo(r,DS){
+ if(r.multi){const c=cuotaFor(MES);return c?{m:c.row[1]+c.row[2]+c.row[3]+c.row[4],f:c.row[0]}:{};}
+ const sg=suggestion(r,DS);return (sg&&sg.monto!==undefined)?{m:sg.monto,f:sg.fecha}:{};
+}
+const plu=(n,a,b)=>n+' '+(n===1?a:b);
 function renderReg(){
- const mon=dataset().filter(e=>e.mes===MES),box=$('regBox');
- const tot=SUMA(mon);
- let h=limCard();
+ const DS=dataset(),mon=DS.filter(e=>e.mes===MES),box=$('regBox'),tot=SUMA(mon),P=pendItems();
+ let h='<div class="pcol">';
+ if(P.n){
+  const rows=[];
+  if(P.pagar.length){const dias=Math.floor((new Date(todayISO())-new Date(P.pagar[0].fecha))/86400000);rows.push(['$',plu(P.pagar.length,'limpieza por pagar','limpiezas por pagar'),f2(SUMA(P.pagar))+(dias>0?' · la más antigua hace '+plu(dias,'día','días'):'')]);}
+  if(P.reg.length)rows.push(['+',plu(P.reg.length,'gasto por registrar','gastos por registrar'),P.reg.slice(0,3).map(r=>esc(rname(r))).join(', ')+(P.reg.length>3?' y '+(P.reg.length-3)+' más':'')]);
+  if(P.conf.length)rows.push(['✓',plu(P.conf.length,'por confirmar','por confirmar'),P.conf.slice(0,2).map(e=>esc(e.concepto)).join(', ')+(P.conf.length>2?' y '+(P.conf.length-2)+' más':'')]);
+  h+='<div class="rsc"><div class="rh"><span>Por resolver</span><span>'+plu(P.n,'cosa','cosas')+'</span></div>'+rows.map(x=>'<button type="button" class="rr" data-go="pen"><span class="ic">'+x[0]+'</span><span class="rt"><b>'+x[1]+'</b><small>'+x[2]+'</small></span><span class="chev">›</span></button>').join('')+'<button type="button" class="go" data-go="pen">Ver todo en Pendientes</button></div>';
+ }else h+='<div class="alldone" style="margin-top:14px">✓ Todo al día en '+esc(mLabel(MES))+'</div>';
  {
-  const DSx=dataset(),pb=pendByBlock(DSx);
+  const pb=pendByBlock(DS);
   const BL=[['ope','Operativo','Define tu utilidad operativa','var(--rec)'],['deu','Deuda y banca','Interés y seguros del crédito','var(--ev)'],['cap','Pago de capital','Baja tu deuda · no es gasto','var(--warn)']];
   const sm={};BL.forEach(x=>sm[x[0]]=SUMA(mon.filter(e=>blkOf(e)===x[0])));
   const act=BL.filter(x=>sm[x[0]]>0);let rest=100;
   const pc={};act.forEach((x,i)=>{pc[x[0]]=i===act.length-1?rest:Math.round(sm[x[0]]/tot*100);rest-=pc[x[0]];});
   h+='<div class="panel"><div class="panel-h"><b>¿En qué se fue?</b><span>'+f2(tot)+'</span></div><div class="split">'+(act.length?act.map(x=>'<i style="background:'+x[3]+';flex-grow:'+sm[x[0]]+'"></i>').join(''):'<i style="background:var(--line);flex-grow:1"></i>')+'</div><div class="brk">'+BL.map(x=>{const k=x[0],pen=pb.m[k]>0.004;return '<div><i style="background:'+x[3]+'"></i><div class="t"><b>'+x[1]+'</b><span>'+x[2]+'</span>'+(pen?'<span class="pe">Por registrar ≈ '+f2(pb.m[k])+(pb.v[k]?' · vence '+fdia(pb.v[k]):'')+'</span>':'')+'</div><div class="n"><b>'+f2(sm[k])+'</b><span>'+(sm[k]>0?pc[k]+' %':'—')+'</span></div></div>';}).join('')+'</div></div>';
  }
- if(!mon.length){box.innerHTML=h+'<div class="empty">Todavía no hay gastos anotados en '+esc(mLabel(MES))+'.</div>';return;}
- h+='<div class="seg" id="regSeg"><button type="button" data-f="all" class="'+(REGF==='all'?'on':'')+'">Todos</button><button type="button" data-f="rec" class="'+(REGF==='rec'?'on':'')+'">Recurrentes</button><button type="button" data-f="ev" class="'+(REGF==='ev'?'on':'')+'">Eventuales</button></div>';
- const list=mon.filter(e=>REGF==='all'||(REGF==='rec')===isRecRow(e)).sort(regSort);
- if(!list.length)h+='<div class="empty">No hay movimientos para mostrar.</div>';
- let cur=null,limDone=false;
- list.forEach((e,i)=>{
-  const bk=blkOf(e);
-  if(bk!==cur){cur=bk;h+='<div class="group">'+BLK_NOM[bk]+'<span>'+f2(SUMA(list.filter(x=>blkOf(x)===bk)))+'</span></div>';}
-  if(isLimp(e)){if(!limDone){limDone=true;h+=limGroup(list.filter(isLimp));}}else h+=regCard(e);
- });
- {const gasto=SUMA(mon.filter(e=>e.cuenta!=='No')),capi=SUMA(mon.filter(e=>e.cuenta==='No')),efe=SUMA(mon.filter(e=>e.medio==='Efectivo'&&!isPorPagar(e))),ppag=SUMA(mon.filter(isPorPagar)),egr=SUMA(mon.filter(e=>e.medio!=='Efectivo'&&!isPorPagar(e)));
- let eq=f2(gasto)+' gasto';if(capi>0.005)eq+=' + '+f2(capi)+' capital';if(efe>0.005)eq+=' − '+f2(efe)+' efectivo';if(ppag>0.005)eq+=' − '+f2(ppag)+' por pagar';
- h+='<div class="panel"><div class="tots"><div>Gasto del mes<b>'+f2(gasto)+'</b></div>'+((capi>0.005||efe>0.005||ppag>0.005)?'<small>Egreso caja - bancos '+f2(egr)+' = '+eq+'</small>':'')+'</div></div>';}
+ h+='</div>';
  box.innerHTML=h;
 }
+function renderPen(){
+ const P=pendItems(),DS=P.DS,box=$('penBox'),nb=$('nPen');
+ nb.textContent=P.n?P.n:'✓';nb.className=P.n?'alert':'ok';
+ let h='<div class="pcol">';
+ if(!P.n)h+='<div class="alldone" style="margin-top:14px">✓ Todo al día en '+esc(mLabel(MES))+'<br><small style="font-weight:600">No hay nada por pagar, registrar ni confirmar.</small></div>';
+ if(P.pagar.length){
+  h+='<div class="group w">Por pagar<span>'+f2(SUMA(P.pagar))+'</span></div><div class="hint">Ya ocurrió, todavía no sale de tu cuenta.</div><div class="pcard">'+P.pagar.map(e=>'<div class="prow"><div class="tile">🧹</div><div class="pt" data-id="'+esc(e.id)+'"><b>Limpieza · '+esc(String(e.detalle||'').replace(/^Check-out\s*·\s*/,'').replace(/^[A-Za-z0-9_]+\s*·\s*/,''))+'</b><small>Check-out '+esc(fdia(e.fecha))+'</small></div><div class="pa">'+f2(e.monto)+'</div></div>').join('')+'</div><button type="button" class="pbig" id="penPay">Pagar '+plu(P.pagar.length,'limpieza','limpiezas')+' · '+f2(SUMA(P.pagar))+'</button>';
+ }
+ if(P.reg.length){
+  const info=P.reg.map(r=>pendRecInfo(r,DS)),nsug=info.filter(x=>x.m!==undefined).length;
+  h+='<div class="group w">Por registrar<span>'+P.reg.length+'</span></div><div class="hint">'+(esPasado(MES)?'Lo registraste en meses anteriores y falta en este mes.':'Se espera este mes y todavía no lo anotas.')+'</div>';
+  if(nsug&&!esPasado(MES))h+='<button type="button" class="pbig alt" id="penAcc">✓ Confirmar '+plu(nsug,'sugerido','sugeridos')+'</button>';
+  h+=P.reg.map((r,i)=>{const x=info[i];return '<div class="prow dashed"><div class="tile">'+iconX(r.multi?'Hipoteca – interés':(r.con||rname(r)),r.fam)+'</div><div class="pt" data-k="'+esc(r.key)+'"><b>'+esc(rname(r))+'</b><small>'+(x.f?'vence ≈ '+esc(fdia(x.f)):'sin valor habitual')+'</small></div><div class="pa">'+(x.m!==undefined?'≈ '+f2(x.m):'')+'</div><button type="button" class="pbtn" data-act="reg" data-k="'+esc(r.key)+'">Registrar</button></div>';}).join('');
+ }
+ if(P.conf.length){
+  h+='<div class="group w">Por confirmar<span>'+P.conf.length+'</span></div><div class="hint">Anotado, falta validarlo con la factura o el banco.</div>'+(P.conf.length>1?'<button type="button" class="pbig alt" id="penConfAll">Confirmar los '+P.conf.length+'</button>':'')+'<div class="pcard">'+P.conf.map(e=>'<div class="prow"><div class="tile">'+iconX(e.concepto,e.familia)+'</div><div class="pt" data-id="'+esc(e.id)+'"><b>'+esc(e.concepto)+'</b><small>'+esc((e.detalle||'')+(e.detalle?' · ':'')+fdia(e.fecha))+'</small></div><div class="pa">'+f2(e.monto)+'</div><button type="button" class="pbtn" data-act="conf" data-id="'+esc(e.id)+'">Confirmar</button></div>').join('')+'</div>';
+ }
+ box.innerHTML=h+'</div>';
+}
+function confirmOne(id){
+ const e=dataset().find(x=>x.id===id);if(!e)return;
+ OPS.push({b:bid(),k:'edit',id,ch:{estado:'Confirmado'},nm:'Confirmar '+e.concepto+' '+f2(e.monto)});persist();UI={};renderAll();toast('Confirmado: '+e.concepto+' '+f2(e.monto),true);
+}
+function confirmAllConf(){
+ const P=pendItems();if(!P.conf.length)return;
+ if(!confirm('¿Confirmar '+plu(P.conf.length,'gasto','gastos')+' de '+mLabel(MES)+'?\n\nQuedan como Confirmado. Después lo puedes corregir.'))return;
+ const b=bid();P.conf.forEach(e=>OPS.push({b,k:'edit',id:e.id,ch:{estado:'Confirmado'},nm:'Confirmar '+e.concepto+' '+f2(e.monto)}));
+ persist();UI={};renderAll();toast(plu(P.conf.length,'gasto confirmado','gastos confirmados'),true);
+}
+function gotoTab(t){const b=document.querySelector('.tabs [data-t='+t+']');if(b)b.click();}
 
 function setTotal(v){
  cancelAnimationFrame(raf);
@@ -974,13 +1071,7 @@ function limCard(){
 }
 const LIM_MAX_PEND=3,LIM_MAX_DIAS=7;
 const pendMeses=pp=>{const m=[...new Set(pp.map(e=>e.mes))].sort();return m.map(x=>mLabel(x).split(' ')[0].toLowerCase()).join(', ');};
-function renderLimAlert(){
- const box=$('limBox'),pp=dataset().filter(e=>isPorPagar(e)&&e.mes<=MES).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
- box.innerHTML='';if(!pp.length)return;
- const dias=Math.floor((new Date(todayISO())-new Date(pp[0].fecha))/86400000);
- if(pp.length<LIM_MAX_PEND&&dias<LIM_MAX_DIAS)return;
- box.innerHTML='<div class="limalert"><div><b>Le debes a limpieza '+f2(SUMA(pp))+'</b><span>'+pp.length+(pp.length===1?' limpieza sin pagar':' limpiezas sin pagar')+' de '+esc(pendMeses(pp))+(dias>0?' · la más antigua hace '+dias+(dias===1?' día':' días'):'')+'</span></div><button type="button" id="limAlertPay">Pagar</button></div>';
-}
+function renderLimAlert(){$('limBox').innerHTML='';}
 const LMP='LMP-',LSKIP='cb_lmp_skip';
 let LRUN=false,LLAST=0,LSTAT=null,LMISS={};
 const lskip=()=>{try{return JSON.parse(localStorage.getItem(LSKIP)||'[]');}catch(e){return [];}};
@@ -1137,7 +1228,7 @@ function closeExc(){
 function renderAll(){
  $('mLbl').textContent=mLabel(MES);
  $('mHoy').style.display=MES===todayISO().slice(0,7)?'none':'';
- renderRec();renderEv();renderReg();renderTotals();renderClose();renderLimAlert();
+ renderRec();renderEv();renderReg();renderPen();renderTotals();renderClose();renderLimAlert();
 }
 
 function toast(msg,withUndo){
@@ -1431,21 +1522,29 @@ document.querySelector('.tabs').addEventListener('click',e=>{
  document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));
  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('on'));
  b.classList.add('on');
- $(b.dataset.t==='rec'?'recRows':b.dataset.t==='ev'?'evBox':'regBox').classList.add('on');
+ $({rec:'recRows',ev:'evBox',pen:'penBox',reg:'regBox'}[b.dataset.t]).classList.add('on');document.body.dataset.tab=b.dataset.t;
 });
 $('closeBox').addEventListener('click',e=>{
  if(e.target.closest('#clsAll')){closeAll();return;}
  if(e.target.closest('#clsExc')){closeExc();return;}
 
  if(e.target.closest('#clsLim')){autoLimpiezas(true);return;}
- if(e.target.closest('#clsGo')){document.querySelector('.tabs [data-t=rec]').click();}
+ if(e.target.closest('#clsGo')){gotoTab('rec');}
 });
 $('regBox').addEventListener('click',e=>{
  if(e.target.closest('#limNew')){openLimNew();return;}
  if(e.target.closest('#limPay')){openLimPay();return;}
  if(e.target.closest('#limRe')){autoLimpiezas(true);}
 });
-$('limBox').addEventListener('click',e=>{if(e.target.closest('#limAlertPay'))openLimPay();});
+$('penBox').addEventListener('click',e=>{
+ if(e.target.closest('#penPay')){openLimPay();return;}
+ if(e.target.closest('#penAcc')){confirmSug();return;}
+ if(e.target.closest('#penConfAll')){confirmAllConf();return;}
+ const bt=e.target.closest('.pbtn');
+ if(bt){if(bt.dataset.act==='conf')confirmOne(bt.dataset.id);else openRec(bt.dataset.k);return;}
+ const pt=e.target.closest('.pt');
+ if(pt){if(pt.dataset.k)openRec(pt.dataset.k);else if(pt.dataset.id)openReg(pt.dataset.id);}
+});
 $('mSeal').addEventListener('click',()=>toast('Para reabrir el mes, corrige cualquier gasto de este mes',false));
 $('recRows').addEventListener('click',e=>{
  if(e.target.closest('#accAll')){confirmSug();return;}
@@ -1453,10 +1552,14 @@ $('recRows').addEventListener('click',e=>{
  const it=e.target.closest('.item[data-k]');if(it)openRec(it.dataset.k);
 });
 $('evBox').addEventListener('click',e=>{
- if(e.target.closest('[data-lg]')){LOPEN[MES]=!LOPEN[MES];renderEv();renderReg();return;}
+ if(e.target.closest('[data-lg]')){LOPEN[MES]=!LOPEN[MES];renderEv();return;}
+ if(e.target.closest('#limNew')){openLimNew();return;}
+ if(e.target.closest('#limPay')){openLimPay();return;}
+ if(e.target.closest('#limRe')){autoLimpiezas(true);return;}
  const it=e.target.closest('.item[data-id],.lrow[data-id]');if(it)openReg(it.dataset.id);});
 $('regBox').addEventListener('click',e=>{
- if(e.target.closest('[data-lg]')){LOPEN[MES]=!LOPEN[MES];renderReg();renderEv();return;}
+ if(e.target.closest('[data-go]')){gotoTab(e.target.closest('[data-go]').dataset.go);window.scrollTo({top:0,behavior:'smooth'});return;}
+ if(e.target.closest('[data-lg]')){LOPEN[MES]=!LOPEN[MES];renderEv();return;}
  const lr=e.target.closest('.lrow[data-id]');if(lr){openReg(lr.dataset.id);return;}
  const sg=e.target.closest('#regSeg button');
  if(sg){REGF=sg.dataset.f;renderReg();return;}
