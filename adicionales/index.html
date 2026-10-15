@@ -1454,7 +1454,7 @@ function badgeDe(L) {
   const it = catItem(L.itemId); if (!it || esDesc(it)) return '';
   if (L.cargando) return '<span class="pbadge">Consultando…</span>';
   const p = numIn(L.precio);
-  if (it.ligado) return '<span class="pbadge cat">Según Parámetros</span>';
+  if (it.ligado) return '<span class="pbadge cat">Según Configuración</span>';
   const pv = precioVigente(it, inicioDe(L));
   if (!pv) {
     if (it.sugerido != null && p > 0) return Math.abs(it.sugerido - p) < 0.005 ? '<span class="pbadge">Sugerido</span>' : '<span class="pbadge man">Precio manual</span>';
@@ -1465,7 +1465,7 @@ function badgeDe(L) {
 }
 function hintPrecio(L) {
   const it = catItem(L.itemId); if (!it || esDesc(it)) return '';
-  if (it.ligado) return 'Costo de limpieza vigente en Parámetros para esa fecha (regla del no-show).';
+  if (it.ligado) return 'Costo de limpieza vigente en Configuración para esa fecha (regla del no-show).';
   const pv = precioVigente(it, inicioDe(L));
   if (!pv) return it.sugerido != null ? 'Sugerido ' + money(it.sugerido) + ' (editable). Escribe el precio de ese día.' : 'Este servicio no tiene precio fijo: escríbelo cada vez.';
   return 'Catálogo: ' + money(pv.precio) + ' (rige desde ' + fechaBonita(pv.desde) + ').';
@@ -1796,7 +1796,7 @@ async function noShowAuto(r, nom, b, desdeForm) {
       okBox('Ya tenía el no-show registrado · ' + nom, 'Se cerró sin crear otra línea.', true); return;
     }
     const v = await valorLigado(ns.ligado, r.checkin);
-    if (!v || !(v.valor > 0)) { b.disabled = false; okBox('No se registró el no-show', 'No pude leer el costo de limpieza de Parámetros. No se guardó nada: inténtalo de nuevo.', true); return; }
+    if (!v || !(v.valor > 0)) { b.disabled = false; okBox('No se registró el no-show', 'No pude leer el costo de limpieza de Configuración. No se guardó nada: inténtalo de nuevo.', true); return; }
     const j = await call({ accion: 'guardarLineas', cierre: 'NO_SHOW', reserva: { codigo: r.codigo, huesped: r.huesped || '', anuncio: r.anuncio, checkin: r.checkin, checkout: r.checkout },
       lineas: [{ itemId: ns.id, cantidad: 1, precio: v.valor, medio: 'SIN PAGO' }] });
     aplicar(j); setHint(true);
@@ -2211,7 +2211,7 @@ function renderCat() {
 }
 function precioActualTxt(c) {
   if (c.cobro === 'descuento') return 'Valor libre';
-  if (c.ligado) return 'Según Parámetros';
+  if (c.ligado) return 'Según Configuración';
   const p = precioVigente(c, HOY);
   if (p) return money(p.precio);
   return c.precios && c.precios.length ? 'Desde ' + fechaCorta(c.precios[0].desde) : (c.sugerido != null ? 'Sugerido ' + money(c.sugerido) : 'Precio libre');
@@ -2223,7 +2223,7 @@ function itemCatHTML(c) {
   if (c.cobro === 'descuento') {
     h += '<p class="small" style="margin-top:12px">Resta un valor a otro servicio. El valor y el servicio al que se aplica los eliges al registrar el cobro. No tiene precio fijo.</p>';
   } else if (c.ligado) {
-    h += '<p class="small" style="margin-top:12px">Este precio no se edita aquí: viene de Parámetros (' + esc(c.ligado) + '), según la fecha del check-in.</p>';
+    h += '<p class="small" style="margin-top:12px">Este precio no se edita aquí: viene de Configuración (' + esc(c.ligado) + '), según la fecha del check-in.</p>';
   } else {
     h += '<h5>Historial de precios</h5>';
     if (!hist.length) h += '<p class="small">Sin precio fijo: se escribe cada vez que se cobra.</p>';
