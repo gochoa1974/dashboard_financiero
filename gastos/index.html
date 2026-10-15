@@ -380,6 +380,12 @@ body:not([data-tab="reg"]) .dash{display:none}
 .qchip{flex:none;white-space:nowrap;min-height:40px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13.5px;font-weight:700}
 .qchip:active{background:var(--off-bg)}
 .pane>#admVarBtn{grid-column:1/-1;max-width:460px}
+
+.lrow{padding:10px 14px;min-height:56px}
+.lrow .lt2{flex:1;min-width:0;display:block;text-align:left}
+.lrow .lt2 b{display:block;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .lt2 small{display:block;font-size:11.5px;color:var(--mut);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .lr{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
 </style>
 </head>
 <body data-tab="reg">
@@ -1067,8 +1073,8 @@ function limGroup(rows){
  const chip=pp?['warn',pp+' por pagar']:['ok','Confirmado'];
  let h='<button type="button" class="item ev lg" data-lg="1" aria-expanded="'+open+'"><div class="tile">'+iconX(LIMP,'1. Fijos operativos')+'</div><div class="mid"><b>Limpieza de estadía</b><span><i class="dot ev"></i>'+n+(n===1?' check-out':' check-outs')+' · '+(open?'ocultar':'ver detalle')+'</span></div><div class="right"><span class="amt">'+f2(tot)+'</span><span class="chip '+chip[0]+'">'+esc(chip[1])+'</span></div></button>';
  if(open)h+='<div class="lgl">'+rows.slice().sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(e=>{
-  const d=String(e.detalle||'').replace(/^Check-out\s*·\s*/,''),por=isPorPagar(e);
-  return '<button type="button" class="lrow" data-id="'+esc(e.id)+'"><span class="ld">'+esc(fdia(e.fecha))+'</span><span class="lt">'+esc(d)+(e.medio==='Efectivo'?' · efectivo':'')+'</span><span class="la2">'+f2(e.monto)+'</span><span class="lp'+(por?'':' ok')+'">'+(por?'Por pagar':'Pagada')+'</span></button>';
+  const d=String(e.detalle||'').replace(/^Check-out\s*·\s*/,''),por=isPorPagar(e),pt=d.split(' · '),cod=pt.length>1?pt[0]:'',nom=pt.length>1?pt.slice(1).join(' · '):d;
+  return '<button type="button" class="lrow" data-id="'+esc(e.id)+'"><span class="lt2"><b>'+esc(nom)+'</b><small>'+esc(fdia(e.fecha))+(cod?' · '+esc(cod):'')+(e.medio==='Efectivo'?' · efectivo':'')+'</small></span><span class="lr"><span class="la2">'+f2(e.monto)+'</span><span class="lp'+(por?'':' ok')+'">'+(por?'Por pagar':'Pagada')+'</span></span></button>';
  }).join('')+'</div>';
  else h+='<div style="height:9px"></div>';
  return h;
