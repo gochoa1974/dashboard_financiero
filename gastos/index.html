@@ -1399,7 +1399,7 @@ function limStat(){
  if(!connected()||!LSTAT)return '';
  let t='';
  if(LSTAT.err)t='No pude revisar tus reservas: '+LSTAT.err;
- else if(LSTAT.errores.length)t='Falta el costo de limpieza de '+plu(LSTAT.errores.length,'reserva','reservas')+' (revisa Parámetros).';
+ else if(LSTAT.errores.length)t='Falta el costo de limpieza de '+plu(LSTAT.errores.length,'reserva','reservas')+' (revisa Configuración).';
  if(!t)return '';
  return '<div class="lre warn"><span>'+esc(t)+'</span><button type="button" id="limRe"'+(LRUN?' disabled':'')+'>'+(LRUN?'Revisando…':'Reintentar')+'</button></div>';
 }
@@ -1443,13 +1443,13 @@ function openLimNew(){
  let manual=false;$('lnM').addEventListener('input',()=>{manual=true;});
  const load=async()=>{
   const my=++LREQ;if(!CFG.clave){$('lnH').textContent='Sin conexión: escribe el costo a mano.';return;}
-  $('lnH').textContent='Leyendo el costo en Parámetros…';
+  $('lnH').textContent='Leyendo el costo en Configuración…';
   try{
    const r=await fetch(PARAM_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({clave:CFG.clave,accion:'valorEn',parametro:'costo_limpieza',fecha:$('lnF').value})});
    const j=await r.json();if(my!==LREQ||manual||!SH||SH.t!=='limn')return;
    if(!j.ok)throw new Error(j.error||'error');
-   $('lnM').value=fnum(+j.resultado.valor,2);$('lnH').textContent='Según Parámetros'+(j.resultado.origen==='excepcion'?' (renegociado)':'')+'. Puedes cambiarlo en esta limpieza.';
-  }catch(e){if(my===LREQ&&SH&&SH.t==='limn')$('lnH').textContent='No pude leer Parámetros: escribe el costo a mano.';}
+   $('lnM').value=fnum(+j.resultado.valor,2);$('lnH').textContent='Según Configuración'+(j.resultado.origen==='excepcion'?' (renegociado)':'')+'. Puedes cambiarlo en esta limpieza.';
+  }catch(e){if(my===LREQ&&SH&&SH.t==='limn')$('lnH').textContent='No pude leer Configuración: escribe el costo a mano.';}
  };
  $('lnF').onchange=()=>{manual=false;load();};load();
  $('lnGo').onclick=()=>{
