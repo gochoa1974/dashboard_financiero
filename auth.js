@@ -4,7 +4,8 @@
 (function () {
   'use strict';
   var CB_ACCESO_URL = 'https://script.google.com/macros/s/AKfycbxWGwFUlEbsokdfn79n8RDCKFVu-jv2DKdJp4Bq7D_cjrO_NNoDPQdXpW6aTlpxGA/exec';   // URL /exec del Apps Script ACCESO (la pone Luna al recibirla)
-  var K_SES = 'cb_sesion', K_CLAVE = 'cimablanca_clave';
+  var K_SES = 'cb_sesion', K_CLAVE = 'cimablanca_clave', K_LOCK = 'cb_lock', K_ACT = 'cb_lock_t', K_NOLOCK = 'cb_lock_no';
+  var IDLE = 120000;   // tras 2 min fuera de la app vuelve a pedir Face ID
   var me = document.currentScript, BASE = me && me.src ? me.src.replace(/[^\/]*$/, '') : '';
   var metaM = document.querySelector('meta[name="cb-modulo"]');
   var MODULO = metaM ? metaM.content : '';
@@ -37,6 +38,9 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
 .cbbtn .cbspin{width:20px;height:20px;border-width:3px;margin:0;border-color:rgba(128,128,128,.35);border-top-color:currentColor}\
 .cbmsg{margin-top:16px;font-size:14px;font-weight:700;color:var(--cbmut)}\
 .cblink{display:inline-block;margin-top:14px;font-weight:800;color:var(--cbink)}\
+.cbbtn svg{width:22px;height:22px;flex:none}\
+.cbtxt{margin:0 0 18px;font-size:14px;font-weight:600;line-height:1.5;color:var(--cbmut)}\
+.cbl2{display:block;margin:12px auto 0;background:none;border:0;font:inherit;font-size:14px;font-weight:800;color:var(--cbink);min-height:44px;padding:8px 12px;cursor:pointer;text-decoration:underline}\
 @keyframes cbr{to{transform:rotate(360deg)}}\
 @media (prefers-reduced-motion:reduce){.cbspin{animation-duration:2.4s}}';
   var st = document.createElement('style'); st.textContent = css; (document.head || document.documentElement).appendChild(st);
@@ -64,7 +68,9 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
     f.addEventListener('submit', function (ev) {
       ev.preventDefault(); e.textContent = ''; b.disabled = true; b.innerHTML = '<span class="cbspin"></span> Entrando…';
       llamarSin('login', { usuario: document.getElementById('cbu').value, clave: document.getElementById('cbp').value }).then(function (r) {
-        guardar(r); aplicar(r); ocultar(); if (CB.alEntrar) CB.alEntrar(r); else resolver(r);
+        guardar(r); aplicar(r); marcar();
+        var fin = function () { ocultar(); if (CB.alEntrar) CB.alEntrar(r); else resolver(r); };
+        if (CB.bloqueado) fin(); else ofrecerSi(fin);
       }).catch(function (er) { b.disabled = false; b.textContent = 'Entrar'; e.textContent = er.message || 'No pude entrar. Revisa tu conexión.'; document.getElementById('cbp').value = ''; document.getElementById('cbp').focus(); });
     });
   }
@@ -72,6 +78,77 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
     pintar('<img class="cblogo" src="' + logo() + '" alt=""><h1>Sin acceso a este módulo</h1><p class="cbsub">Tu perfil (' + (p.rolEtiqueta || p.rol) + ') no incluye esta sección.</p><a class="cblink" href="' + BASE + '">Volver al inicio</a>');
     document.documentElement.classList.remove('cb-pend');
   }
+
+  /* ---------- bloqueo con Face ID / huella (WebAuthn local) ---------- */
+  var lockVisible = false;
+  var BIO = (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) ? 'Face ID' : 'huella o rostro';
+  var SOPORTA = !!(window.PublicKeyCredential && navigator.credentials && window.isSecureContext);
+  var ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1.5M15 10v1.5M12 10v4h-1M9 16c.8.8 1.8 1.2 3 1.2s2.2-.4 3-1.2"/></svg>';
+  function rnd(n) { var a = new Uint8Array(n); crypto.getRandomValues(a); return a; }
+  function b64(buf) { var s = ''; new Uint8Array(buf).forEach(function (c) { s += String.fromCharCode(c); }); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function unb64(t) { t = t.replace(/-/g, '+').replace(/_/g, '/'); while (t.length % 4) t += '='; var s = atob(t), a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a.buffer; }
+  function esc(x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function lockCfg() { try { var c = JSON.parse(ls(K_LOCK) || 'null'); return c && c.id && c.usuario ? c : null; } catch (e) { return null; } }
+  function lockActivo() { var c = lockCfg(), s = leerSes(); return !!(SOPORTA && c && s && s.perfil && s.perfil.usuario === c.usuario); }
+  function marcar() { ls(K_ACT, String(Date.now())); }
+  function necesitaBloqueo() { return lockActivo() && (Date.now() - (+ls(K_ACT) || 0) > IDLE); }
+  function lockDisponible() {
+    if (!SOPORTA || !PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) return Promise.resolve(false);
+    return PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(function () { return false; });
+  }
+  function lockActivar() {
+    var s = leerSes(); if (!s) return Promise.reject(new Error('Sin sesión'));
+    return navigator.credentials.create({ publicKey: {
+      rp: { name: 'Cima Blanca' }, user: { id: rnd(16), name: s.perfil.usuario, displayName: s.perfil.nombre || s.perfil.usuario },
+      challenge: rnd(32), pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' }, timeout: 60000, attestation: 'none'
+    } }).then(function (c) { ls(K_LOCK, JSON.stringify({ id: b64(c.rawId), usuario: s.perfil.usuario })); ls(K_NOLOCK, null); marcar(); return true; });
+  }
+  function lockDesactivar() { ls(K_LOCK, null); return true; }
+  function lockPedir() {
+    var c = lockCfg(); if (!c) return Promise.reject(new Error('Sin bloqueo'));
+    return navigator.credentials.get({ publicKey: { challenge: rnd(32), allowCredentials: [{ type: 'public-key', id: unb64(c.id), transports: ['internal'] }], userVerification: 'required', timeout: 60000 } })
+      .then(function () { marcar(); return true; });
+  }
+  function vistaOferta(cont) {
+    pintar('<img class="cblogo" src="' + logo() + '" alt=""><h1>¿Entrar con ' + BIO + '?</h1><p class="cbtxt">Así nadie abre la app en tu teléfono sin tu verificación. Puedes quitarlo cuando quieras desde el inicio.</p>' +
+      '<button class="cbbtn" id="cbo" type="button">' + ICO + ' Activar ' + BIO + '</button><div class="cberr" id="cbe" role="alert"></div><button class="cbl2" id="cbn" type="button">Ahora no</button>');
+    var b = document.getElementById('cbo'), e = document.getElementById('cbe');
+    b.onclick = function () {
+      b.disabled = true; e.textContent = '';
+      lockActivar().then(function () { cont(); }).catch(function () { b.disabled = false; e.textContent = 'No se pudo activar. Intenta de nuevo o toca “Ahora no”.'; });
+    };
+    document.getElementById('cbn').onclick = function () { ls(K_NOLOCK, '1'); cont(); };
+  }
+  function ofrecerSi(cont) {
+    if (!SOPORTA || lockActivo() || ls(K_NOLOCK)) { cont(); return; }
+    lockDisponible().then(function (ok) { if (ok) vistaOferta(cont); else cont(); }).catch(function () { cont(); });
+  }
+  function vistaBloqueo(cont, enPagina) {
+    lockVisible = true; document.documentElement.classList.add('cb-pend');
+    var s = leerSes(), nom = (s && s.perfil && s.perfil.nombre) || '';
+    pintar('<img class="cblogo" src="' + logo() + '" alt=""><h1>Cima Blanca</h1><p class="cbsub">' + (nom ? 'Hola, ' + esc(nom) + '. ' : '') + 'Desbloquea para entrar</p>' +
+      '<button class="cbbtn" id="cbd" type="button">' + ICO + ' Desbloquear con ' + BIO + '</button><div class="cberr" id="cbe" role="alert"></div><button class="cbl2" id="cbx" type="button">Entrar con usuario y clave</button>');
+    var b = document.getElementById('cbd'), e = document.getElementById('cbe');
+    function intentar(auto) {
+      b.disabled = true; e.textContent = '';
+      lockPedir().then(function () { lockVisible = false; cont(); }).catch(function () { b.disabled = false; if (!auto) e.textContent = 'No se pudo verificar. Toca para intentar de nuevo.'; });
+    }
+    b.onclick = function () { intentar(false); };
+    document.getElementById('cbx').onclick = function () {
+      ls(K_SES, null); ls(K_CLAVE, null); ls(K_LOCK, null); lockVisible = false;
+      CB.alEntrar = enPagina ? function () { location.reload(); } : null; vistaLogin();
+    };
+    setTimeout(function () { intentar(true); }, 250);
+  }
+  CB.lock = { soportado: SOPORTA, bio: BIO, activo: lockActivo, disponible: lockDisponible, activar: lockActivar, desactivar: lockDesactivar,
+    ofrecer: function () { ofrecerSi(function () { ocultar(); }); } };
+  setInterval(function () { if (!lockVisible && document.visibilityState === 'visible' && lockActivo()) marcar(); }, 15000);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') { if (!lockVisible && lockActivo()) marcar(); return; }
+    if (!lockVisible && CB.perfil && necesitaBloqueo()) vistaBloqueo(function () { if (CB.bloqueado) vistaSinAcceso(CB.perfil); else ocultar(); }, true);
+  });
+  window.addEventListener('pagehide', function () { if (!lockVisible && lockActivo()) marcar(); });
 
   /* ---------- llamadas ---------- */
   function llamarSin(accion, datos) {
@@ -86,7 +163,7 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
   };
   CB.puede = function (m) { return !!(CB.perfil && CB.perfil.modulos.indexOf(m) !== -1); };
   CB.loader = function (on, msg) { if (on) vistaCarga(msg); else ocultar(); };
-  CB.salir = function () { ls(K_SES, null); ls(K_CLAVE, null); location.href = BASE; };
+  CB.salir = function () { ls(K_SES, null); ls(K_CLAVE, null); ls(K_LOCK, null); ls(K_NOLOCK, null); location.href = BASE; };
 
   function guardar(r) { ls(K_SES, JSON.stringify({ token: r.token, expira: r.expira, perfil: pf(r) })); }
   function pf(r) { return { usuario: r.usuario, nombre: r.nombre, rol: r.rol, rolEtiqueta: r.rolEtiqueta, modulos: r.modulos, puedeBorrar: r.puedeBorrar, esAdmin: r.esAdmin }; }
@@ -109,16 +186,21 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
     mk();
     var s = leerSes();
     if (!s) { vistaLogin(); return; }
+    if (necesitaBloqueo()) { vistaBloqueo(function () { seguir(s); }, false); return; }
+    seguir(s);
+  }
+  function seguir(s) {
     aplicar({ token: s.token, expira: s.expira, claveModulos: ls(K_CLAVE), usuario: s.perfil.usuario, nombre: s.perfil.nombre, rol: s.perfil.rol, rolEtiqueta: s.perfil.rolEtiqueta, modulos: s.perfil.modulos, puedeBorrar: s.perfil.puedeBorrar, esAdmin: s.perfil.esAdmin });
     if (!CB.bloqueado) document.documentElement.classList.remove('cb-pend');
-    resolver(CB.perfil);
+    ocultar(); if (CB.bloqueado) vistaSinAcceso(CB.perfil);
+    marcar(); resolver(CB.perfil);
     // revalida por detrás: si la sesión ya no sirve, pide entrar de nuevo; si no hay red, sigue con lo guardado
     llamarSin('sesion', { token: s.token }).then(function (r) {
       var ses = leerSes(); if (ses) { r.token = ses.token; r.expira = ses.expira; guardar(r); }
       var cambio = JSON.stringify(r.modulos) !== JSON.stringify(s.perfil.modulos);
       aplicar(r); if (cambio && !CB.bloqueado) ocultar();
     }).catch(function (er) {
-      if (er.servidor) { ls(K_SES, null); ls(K_CLAVE, null); vistaLogin('Tu sesión terminó. Entra de nuevo.'); CB.alEntrar = function () { location.reload(); }; }
+      if (er.servidor) { ls(K_SES, null); ls(K_CLAVE, null); ls(K_LOCK, null); vistaLogin('Tu sesión terminó. Entra de nuevo.'); CB.alEntrar = function () { location.reload(); }; }
     });
   }
   if (document.body) arrancar(); else document.addEventListener('DOMContentLoaded', arrancar);
