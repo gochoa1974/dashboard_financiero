@@ -81,7 +81,8 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
 
   /* ---------- bloqueo con Face ID / huella (WebAuthn local) ---------- */
   var lockVisible = false;
-  var BIO = (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) ? 'Face ID' : 'huella o rostro';
+  var ES_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var BIO = ES_IOS ? 'Face ID' : 'huella o rostro';
   var SOPORTA = !!(window.PublicKeyCredential && navigator.credentials && window.isSecureContext);
   var ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1.5M15 10v1.5M12 10v4h-1M9 16c.8.8 1.8 1.2 3 1.2s2.2-.4 3-1.2"/></svg>';
   function rnd(n) { var a = new Uint8Array(n); crypto.getRandomValues(a); return a; }
@@ -134,12 +135,9 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
     var b = document.getElementById('cbd'), e = document.getElementById('cbe');
     function intentar(auto) {
       b.disabled = true; e.textContent = '';
-      lockPedir(false).catch(function (e1) {
-        if (auto) throw e1;
-        return lockPedir(true).catch(function (e2) { e2.prev = e1; throw e2; });
-      }).then(function () { lockVisible = false; cont(); }).catch(function (er) {
+      lockPedir(false).then(function () { lockVisible = false; cont(); }).catch(function (er) {
         b.disabled = false;
-        if (!auto) e.innerHTML = 'No se pudo verificar. Toca para intentar de nuevo.<br><small style="font-weight:600;opacity:.8">' + esc(dx(er.prev || er)) + (er.prev ? ' · ' + esc(dx(er)) : '') + '</small>';
+        if (!auto) e.innerHTML = 'No se pudo verificar. Toca para intentar de nuevo.<br><small style="font-weight:600;opacity:.8">' + esc(dx(er)) + '</small>';
       });
     }
     b.onclick = function () { intentar(false); };
@@ -147,7 +145,7 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
       ls(K_SES, null); ls(K_CLAVE, null); ls(K_LOCK, null); lockVisible = false;
       CB.alEntrar = enPagina ? function () { location.reload(); } : null; vistaLogin();
     };
-    setTimeout(function () { intentar(true); }, 250);
+    if (!ES_IOS) setTimeout(function () { intentar(true); }, 250);
   }
   CB.lock = { soportado: SOPORTA, bio: BIO, activo: lockActivo, disponible: lockDisponible, activar: lockActivar, desactivar: lockDesactivar,
     ofrecer: function () { ofrecerSi(function () { ocultar(); }); } };
