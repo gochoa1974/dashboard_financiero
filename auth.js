@@ -105,11 +105,13 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
     } }).then(function (c) { ls(K_LOCK, JSON.stringify({ id: b64(c.rawId), usuario: s.perfil.usuario })); ls(K_NOLOCK, null); marcar(); return true; });
   }
   function lockDesactivar() { ls(K_LOCK, null); return true; }
-  function lockPedir() {
+  function lockPedir(sinLista) {
     var c = lockCfg(); if (!c) return Promise.reject(new Error('Sin bloqueo'));
-    return navigator.credentials.get({ publicKey: { challenge: rnd(32), allowCredentials: [{ type: 'public-key', id: unb64(c.id), transports: ['internal'] }], userVerification: 'required', timeout: 60000 } })
-      .then(function () { marcar(); return true; });
+    var pk = { challenge: rnd(32), userVerification: 'required', timeout: 60000 };
+    if (!sinLista) pk.allowCredentials = [{ type: 'public-key', id: unb64(c.id) }];
+    return navigator.credentials.get({ publicKey: pk }).then(function () { marcar(); return true; });
   }
+  function dx(er) { return er ? ((er.name || 'Error') + (er.message ? ': ' + String(er.message).slice(0, 80) : '')) : ''; }
   function vistaOferta(cont) {
     pintar('<img class="cblogo" src="' + logo() + '" alt=""><h1>¿Entrar con ' + BIO + '?</h1><p class="cbtxt">Así nadie abre la app en tu teléfono sin tu verificación. Puedes quitarlo cuando quieras desde el inicio.</p>' +
       '<button class="cbbtn" id="cbo" type="button">' + ICO + ' Activar ' + BIO + '</button><div class="cberr" id="cbe" role="alert"></div><button class="cbl2" id="cbn" type="button">Ahora no</button>');
@@ -132,7 +134,13 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
     var b = document.getElementById('cbd'), e = document.getElementById('cbe');
     function intentar(auto) {
       b.disabled = true; e.textContent = '';
-      lockPedir().then(function () { lockVisible = false; cont(); }).catch(function () { b.disabled = false; if (!auto) e.textContent = 'No se pudo verificar. Toca para intentar de nuevo.'; });
+      lockPedir(false).catch(function (e1) {
+        if (auto) throw e1;
+        return lockPedir(true).catch(function (e2) { e2.prev = e1; throw e2; });
+      }).then(function () { lockVisible = false; cont(); }).catch(function (er) {
+        b.disabled = false;
+        if (!auto) e.innerHTML = 'No se pudo verificar. Toca para intentar de nuevo.<br><small style="font-weight:600;opacity:.8">' + esc(dx(er.prev || er)) + (er.prev ? ' · ' + esc(dx(er)) : '') + '</small>';
+      });
     }
     b.onclick = function () { intentar(false); };
     document.getElementById('cbx').onclick = function () {
