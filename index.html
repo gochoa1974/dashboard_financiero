@@ -1,12 +1,20 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<meta name="cb-modulo" content="inicio">
+<script src="auth.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Cima Blanca</title>
 <link rel="icon" type="image/png" href="Cima-Blanca-logo.png">
-<link rel="apple-touch-icon" href="Cima-Blanca-logo.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a2233">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cima Blanca">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -62,6 +70,7 @@ body{
   box-shadow:var(--shadow);
   transition:transform .12s
 }
+.card[hidden]{display:none}
 .card:active{transform:scale(.98)}
 .tile{
   width:46px;height:46px;border-radius:13px;display:grid;place-items:center;flex:0 0 auto;
@@ -69,12 +78,19 @@ body{
 .tile svg{width:22px;height:22px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .card.c1 .tile{background:rgba(29,78,216,.12)}
 .card.c1 .tile svg{stroke:#1d4ed8}
+.card.c3 .tile{background:rgba(5,150,105,.12)}
+.card.c3 .tile svg{stroke:#059669}
+.card.c4 .tile{background:rgba(124,58,237,.12)}
+.card.c4 .tile svg{stroke:#7c3aed}
 .card.c2 .tile{background:rgba(219,39,119,.12)}
 .card.c2 .tile svg{stroke:#db2777}
 .txt{flex:1;min-width:0}
 .txt b{display:block;font-size:15.5px;font-weight:800;letter-spacing:-.005em}
 .txt span{display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin-top:2px}
 .arr{flex:0 0 auto;color:var(--mut)}
+.who{display:none;text-align:center;margin-top:18px;font-size:13px;font-weight:700;color:var(--mut)}
+.who.on{display:block}
+.who button{font:inherit;font-weight:800;color:var(--ink);background:none;border:0;padding:10px 6px;min-height:44px;cursor:pointer;text-decoration:underline}
 .foot{text-align:center;margin-top:auto;padding-top:24px;font-size:10.5px;letter-spacing:.05em;color:var(--mut);font-weight:700;text-transform:uppercase;opacity:.8}
 </style>
 </head>
@@ -88,23 +104,51 @@ body{
   </div>
   <div class="content">
     <div class="menu">
-      <a class="card c1" href="dashboard/">
+      <a class="card c1" href="dashboard/" data-mod="dashboard">
         <div class="tile">
           <svg viewBox="0 0 24 24"><path d="M4 19V10M10 19V5M16 19V13M22 19H2"/></svg>
         </div>
         <div class="txt"><b>Dashboard</b><span>Gastos e ingresos</span></div>
         <div class="arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       </a>
-      <a class="card c2" href="https://gochoa1974.github.io/Cima-Blanca/admin.html">
+      <a class="card c3" href="gastos/" data-mod="gastos">
+        <div class="tile">
+          <svg viewBox="0 0 24 24"><path d="M3 7h15a3 3 0 013 3v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7zm0 0l12-3v3M17 14h2"/></svg>
+        </div>
+        <div class="txt"><b>Gastos</b><span>Registrar y pagar</span></div>
+        <div class="arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </a>
+      <a class="card c2" href="https://gochoa1974.github.io/Cima-Blanca/admin.html" data-mod="dashboard">
         <div class="tile">
           <svg viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/></svg>
         </div>
         <div class="txt"><b>Panel de Anfitrión</b><span>Generar enlace para huésped</span></div>
         <div class="arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       </a>
+<a class="card c4" href="actividad/" data-mod="actividad">
+        <div class="tile">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/></svg>
+        </div>
+        <div class="txt"><b>Actividad y accesos</b><span>Quién hizo qué</span></div>
+        <div class="arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </a>
     </div>
+    <div class="who" id="who"><span id="whoTxt"></span> · <button type="button" id="salir">Salir</button></div>
     <div class="foot">Panel privado del propietario</div>
   </div>
 </div>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
+<script>
+(function(){
+  function pintar(p){
+    if(!p)return;
+    document.querySelectorAll('.card[data-mod]').forEach(function(a){a.hidden=!CB.puede(a.getAttribute('data-mod'));});
+    document.getElementById('whoTxt').textContent=p.nombre+' · '+p.rolEtiqueta;
+    document.getElementById('who').classList.add('on');
+  }
+  if(window.CB&&CB.ready){CB.ready.then(pintar);}
+  document.getElementById('salir').addEventListener('click',function(){if(window.CB)CB.salir();});
+})();
+</script>
 </body>
 </html>

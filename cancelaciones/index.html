@@ -2,6 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="cb-modulo" content="cancelaciones">
+<script src="../auth.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Cancelaciones y bloqueos · Cima Blanca</title>
@@ -426,7 +428,6 @@ input[readonly]{opacity:.75;cursor:not-allowed}
   </div>
 </div>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 /* ===== Calendario de rango (estilo Airbnb) · componente compartido v1 ===== */
 (function () {
@@ -1087,7 +1088,6 @@ const DRIVE_ROOT = 'CIMA BLANCA', DRIVE_INGRESOS = '1. INGRESOS', DRIVE_RESERVAS
 const DRIVE_JSON_NAME = 'MAESTRO_INGRESOS_CIMA_BLANCA.json';
 const RESKEY = 'cimablanca_canc_reservas_cache';
 
-let driveToken = null, driveTokenClient = null;
 let GENERADO = ''; try { GENERADO = localStorage.getItem('cimablanca_canc_generado') || ''; } catch (e) {}
 
 try {
@@ -1115,50 +1115,12 @@ function pintarDriveMsg0(estado, extra) {
   else if (estado === 'error') { el.className = 'msg err'; el.textContent = 'No se pudo actualizar (' + extra + '). ' + (RESERVAS.length ? 'Se muestran las ' + RESERVAS.length + ' reservas de la última vez.' : 'Puedes seguir escribiendo el código a mano abajo.'); $('cDriveBtn').style.display = 'inline-block'; $('cDriveBtn').textContent = 'Reintentar'; }
 }
 
-function driveFetch(url) {
-  return fetch(url, { headers: { Authorization: 'Bearer ' + driveToken } }).then(r => {
-    if (!r.ok) return r.text().then(t => { throw new Error('Drive respondió ' + r.status); });
-    return r.json();
-  });
-}
-function driveFindRoot(name) {
-  const q = "name='" + name.replace(/'/g, "\\'") + "' and mimeType='application/vnd.google-apps.folder' and trashed=false";
-  return driveFetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)&pageSize=10')
-    .then(d => { if (!d.files || !d.files.length) throw new Error('no encontré la carpeta "' + name + '"'); return d.files[0]; });
-}
-function driveFindChild(parentId, nameContains) {
-  const q = "'" + parentId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false";
-  return driveFetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)&pageSize=100')
-    .then(d => {
-      const needle = nameContains.toLowerCase();
-      const m = (d.files || []).find(f => f.name.toLowerCase().indexOf(needle) !== -1);
-      if (!m) throw new Error('no encontré "' + nameContains + '"');
-      return m;
-    });
-}
-function driveFindFileExact(folderId, fileName) {
-  const q = "'" + folderId + "' in parents and trashed=false and name='" + fileName.replace(/'/g, "\\'") + "'";
-  return driveFetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name,modifiedTime)&pageSize=5')
-    .then(d => (d.files && d.files[0]) || null);
-}
-function driveDownloadText(fileId) {
-  return fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media', { headers: { Authorization: 'Bearer ' + driveToken } })
-    .then(r => { if (!r.ok) throw new Error('no pude descargar el archivo'); return r.text(); });
-}
-
+function reintentoBtn(on) { const b = $('cDriveBtn'); b.style.display = on ? 'inline-block' : 'none'; if (on) b.textContent = 'Reintentar'; }
 function cargarReservasDesdeDrive() {
-  pintarDriveMsg('leyendo');
-  return driveFindRoot(DRIVE_ROOT)
-    .then(root => driveFindChild(root.id, DRIVE_INGRESOS))
-    .then(ing => driveFindChild(ing.id, DRIVE_RESERVAS))
-    .then(res => driveFindChild(res.id, DRIVE_PROCESADO))
-    .then(proc => driveFindFileExact(proc.id, DRIVE_JSON_NAME))
-    .then(file => {
-      if (!file) throw new Error('todavía no existe ' + DRIVE_JSON_NAME + ' (sincroniza primero el módulo de Ingresos una vez)');
-      return driveDownloadText(file.id);
-    })
-    .then(text => {
-      const payload = JSON.parse(text);
+  pintarDriveMsg('leyendo'); reintentoBtn(false);
+  return CB.llamar('maestro', {})
+    .then(r => {
+      const payload = r.data || {};
       RESERVAS = payload.reservas || [];
       GENERADO = payload.generado || '';
       try { localStorage.setItem('cimablanca_canc_generado', GENERADO); } catch (e) {}
@@ -1166,7 +1128,7 @@ function cargarReservasDesdeDrive() {
       try { localStorage.setItem(RESKEY, JSON.stringify({ reservas: RESERVAS, t: Date.now() })); } catch (e) {}
       pintarDriveMsg('ok');
     })
-    .catch(e => pintarDriveMsg('error', e.message || e));
+    .catch(e => { pintarDriveMsg('error', e.message || e); reintentoBtn(true); });
 }
 
 function indexarReservas() {
@@ -1292,48 +1254,9 @@ document.addEventListener('click', (e) => {
   if (e.target !== $('cBuscarReserva') && !$('cReservaDropdown').contains(e.target)) ocultarDropdown();
 });
 
-let driveIntentoSilencioso = true;
-
-function initDriveAuth() {
-  let yaRespondio = false;
-  driveTokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: DRIVE_CLIENT_ID,
-    scope: DRIVE_SCOPES,
-    callback: resp => {
-      yaRespondio = true;
-      if (resp.error) {
-        if (driveIntentoSilencioso) { driveIntentoSilencioso = false; pintarDriveMsg('primeravez'); }
-        else pintarDriveMsg('error', resp.error);
-        return;
-      }
-      driveToken = resp.access_token;
-      cargarReservasDesdeDrive();
-    }
-  });
-  // Intento automático y silencioso al abrir la página: si ya diste el permiso antes (aunque haya
-  // sido desde el módulo de Ingresos), esto actualiza las reservas solo, sin pedirte nada.
-  driveTokenClient.requestAccessToken({ prompt: '' });
-  // La primera vez que se usa este formulario en un navegador, el intento silencioso no puede
-  // abrir ventana (el navegador la bloquea por no venir de un clic) y a veces ni siquiera llega
-  // a llamar al callback de arriba. Por eso, si en 2.5s no hay respuesta, mostramos el botón para
-  // que el único clic manual (una sola vez) lo dé la persona.
-  setTimeout(() => {
-    if (!yaRespondio && driveIntentoSilencioso) { driveIntentoSilencioso = false; pintarDriveMsg('primeravez'); }
-  }, 2500);
-}
-$('cDriveBtn').onclick = () => {
-  driveIntentoSilencioso = false;
-  pintarDriveMsg('conectando');
-  if (!driveTokenClient) { pintarDriveMsg('error', 'Google aún no cargó, intenta de nuevo en un segundo'); return; }
-  driveTokenClient.requestAccessToken({});
-};
+$('cDriveBtn').onclick = () => { pintarDriveMsg('conectando'); cargarReservasDesdeDrive(); };
 window.addEventListener('load', () => {
-  if (window.google && google.accounts && google.accounts.oauth2) initDriveAuth();
-  else {
-    const chk = setInterval(() => {
-      if (window.google && google.accounts && google.accounts.oauth2) { clearInterval(chk); initDriveAuth(); }
-    }, 200);
-  }
+  CB.ready.then(p => { if (p && !CB.bloqueado) cargarReservasDesdeDrive(); else if (!p) CB.alEntrar = () => cargarReservasDesdeDrive(); });
 });
 
 // ===== v2: formulario de cancelación simplificado =====

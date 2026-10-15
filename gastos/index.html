@@ -2,6 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<meta name="cb-modulo" content="gastos">
+<script src="../auth.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#0a2233">
@@ -528,6 +530,7 @@ body:not([data-tab="reg"]) .dash{display:none}
  body[data-tab="reg"] #regBox .pcol>*:first-child{margin-top:0}
  body[data-tab="reg"] .sticky{padding-left:0;padding-right:0}
 }
+html.cb-sin-borrar #rDel{display:none}
 </style>
 </head>
 <body data-tab="reg">
@@ -1183,6 +1186,7 @@ function openReg(id,editing){
  const rec=isRecRow(e);
  const rr=rec?REC().find(x=>!x.multi&&matchRow(x,e)):null;
  const delFn=()=>{
+  if(window.CB&&CB.perfil&&!CB.perfil.puedeBorrar){toast('Tu perfil no puede quitar gastos. Pídeselo al administrador.');return;}
   if(!confirm('¿Quitar "'+e.concepto+'" de '+f2(e.monto)+'? Después lo puedes recuperar con Deshacer.'))return;
   closeSheet();
   if(String(id).startsWith(LMP))lskipAdd(String(id).slice(LMP.length));

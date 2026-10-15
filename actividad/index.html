@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="cb-modulo" content="actividad">
+<script src="../auth.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Actividad · Cima Blanca</title>
+<link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
+<link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#edf2f4;--surface:#fff;--ink:#0a2233;--mut:#5f7080;--line:#dde5ea;--acc:#0a2233;--ok:#0f7a56;--okbg:rgba(15,157,110,.12);--warn:#b45309;--warnbg:rgba(180,83,9,.12);--bad:#b42318;--badbg:rgba(220,38,38,.1);--info:rgba(95,112,128,.12);--shadow:0 1px 2px rgba(10,34,51,.05),0 8px 20px -12px rgba(10,34,51,.2)}
+@media (prefers-color-scheme:dark){:root{--bg:#071722;--surface:#0e2536;--ink:#eaf2f6;--mut:#8fa6b5;--line:#1a3649;--acc:#eaf2f6;--ok:#2fd49a;--okbg:rgba(47,212,154,.16);--warn:#f59e0b;--warnbg:rgba(245,158,11,.16);--bad:#ff8a80;--badbg:rgba(248,113,113,.16);--info:rgba(143,166,181,.14);--shadow:0 1px 2px rgba(0,0,0,.4)}}
+*{box-sizing:border-box}html{background:var(--bg)}
+body{margin:0;min-height:100vh;padding:16px 16px 48px;font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.wrap{width:100%;max-width:760px;margin:0 auto}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.back{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);color:var(--ink);text-decoration:none;box-shadow:var(--shadow)}
+.top h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.01em}.top p{margin:2px 0 0;font-size:12.5px;font-weight:600;color:var(--mut)}
+.tabs{display:flex;gap:6px;background:var(--info);padding:4px;border-radius:14px;margin-bottom:14px}
+.tabs button{flex:1;min-height:44px;border:0;border-radius:11px;background:transparent;color:var(--mut);font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--acc);color:var(--bg);border-color:var(--acc)}
+.day{margin:14px 2px 8px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--mut)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.row{display:flex;gap:12px;align-items:center;padding:13px 15px;border-top:1px solid var(--line)}.row:first-child{border-top:0}
+.dot{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto;font-size:15px;font-weight:800;background:var(--info);color:var(--mut)}
+.dot.ok{background:var(--okbg);color:var(--ok)}.dot.warn{background:var(--warnbg);color:var(--warn)}.dot.bad{background:var(--badbg);color:var(--bad)}
+.tx{flex:1;min-width:0}.tx b{display:block;font-size:14.5px;font-weight:800}.tx span{display:block;font-size:12.5px;font-weight:600;color:var(--mut);margin-top:2px;overflow-wrap:anywhere}
+.hr{font-size:12.5px;font-weight:700;color:var(--mut);flex:0 0 auto}
+.pill{font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px;background:var(--info);color:var(--mut);flex:0 0 auto}
+.pill.ok{background:var(--okbg);color:var(--ok)}.pill.bad{background:var(--badbg);color:var(--bad)}
+.vacio{padding:34px 16px;text-align:center;font-weight:700;color:var(--mut)}
+.nota{margin:14px 2px 0;font-size:12.5px;font-weight:600;color:var(--mut);line-height:1.5}
+.btn{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:800;font-size:14px;cursor:pointer;margin-top:12px}
+.sp{width:34px;height:34px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--acc);animation:r .9s linear infinite;margin:34px auto}
+@keyframes r{to{transform:rotate(360deg)}}
+@media (min-width:1000px){body{padding-top:28px}.wrap{max-width:860px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a class="back" href="../" aria-label="Volver al inicio"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <div><h1>Actividad</h1><p id="sub">Quién hizo qué, y quién tiene acceso</p></div>
+  </div>
+  <div class="tabs" role="tablist"><button role="tab" id="tA" aria-selected="true">Actividad</button><button role="tab" id="tU" aria-selected="false">Accesos</button></div>
+  <div id="pA"><div class="chips" id="chips" aria-label="Filtrar por persona"></div><div id="lista"><div class="sp" role="status" aria-label="Cargando"></div></div></div>
+  <div id="pU" hidden><div id="usr"><div class="sp" role="status" aria-label="Cargando"></div></div>
+    <p class="nota">Para crear una persona, cambiar una clave o desactivar a alguien, usa el menú «Cima Blanca» del Sheet ACCESOS_CIMA_BLANCA. Una persona desactivada pierde la sesión de inmediato.</p></div>
+</div>
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var FILAS=[],USU=[],filtro='';
+  var ET={login:['Entró','ok','→'],login_fallido:['Intento fallido de entrada','bad','!'],abrir:['Abrió el módulo','','▢'],usuario_creado:['Se creó un usuario','ok','+'],usuario_actualizado:['Se cambió un usuario','warn','✎'],usuario_desactivado:['Se desactivó un usuario','bad','×']};
+  var MOD={dashboard:'Dashboard',ingresos:'Ingresos',gastos:'Gastos',adicionales:'Adicionales',directas:'Directas',cancelaciones:'Cancelaciones',parametros:'Configuración',sincronizar:'Sincronizar',accesos:'Accesos',actividad:'Actividad'};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  var MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  function fechaTxt(d){var p=String(d).slice(0,10).split('-');return p.length<3?String(d):(+p[2])+' '+MES[+p[1]-1]+' '+p[0]}
+  function pintarLista(){
+    var fs=FILAS.filter(function(f){return !filtro||String(f[1]).toLowerCase()===filtro});
+    if(!fs.length){$('lista').innerHTML='<div class="card"><div class="vacio">Todavía no hay actividad para mostrar.</div></div>';return}
+    var h='',dia='';
+    fs.forEach(function(f){
+      var d=String(f[0]).slice(0,10);
+      if(d!==dia){if(dia)h+='</div>';dia=d;h+='<div class="day">'+esc(fechaTxt(d))+'</div><div class="card">'}
+      var e=ET[f[3]]||[String(f[3]),'','•'],det=[];
+      if(f[4])det.push(MOD[f[4]]||f[4]);if(f[5])det.push(f[5]);
+      h+='<div class="row"><div class="dot '+e[1]+'" aria-hidden="true">'+e[2]+'</div><div class="tx"><b>'+esc(f[1]||'—')+' · '+esc(e[0])+'</b><span>'+esc(det.join(' · ')||(f[2]?'Rol: '+f[2]:''))+'</span></div><div class="hr">'+esc(String(f[0]).slice(11,16))+'</div></div>';
+    });
+    $('lista').innerHTML=h+'</div>';
+  }
+  function pintarChips(){
+    var nombres=[];FILAS.forEach(function(f){var u=String(f[1]||'').toLowerCase();if(u&&nombres.indexOf(u)<0)nombres.push(u)});
+    $('chips').innerHTML=['']. concat(nombres).map(function(n){return '<button type="button" class="chip" data-u="'+esc(n)+'" aria-pressed="'+(n===filtro)+'">'+(n?esc(n):'Todos')+'</button>'}).join('');
+  }
+  $('chips').addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;filtro=b.getAttribute('data-u');pintarChips();pintarLista()});
+  function pintarUsuarios(){
+    if(!USU.length){$('usr').innerHTML='<div class="card"><div class="vacio">Aún no hay personas registradas.</div></div>';return}
+    var RE={admin:'Administrador',completo:'Completo',pagos:'Pagos'};
+    $('usr').innerHTML='<div class="card">'+USU.map(function(u){
+      return '<div class="row"><div class="dot '+(u.activo?'ok':'bad')+'" aria-hidden="true">'+esc(String(u.nombre||u.usuario).charAt(0).toUpperCase())+'</div><div class="tx"><b>'+esc(u.nombre||u.usuario)+'</b><span>'+esc(u.usuario)+' · '+esc(RE[u.rol]||u.rol)+' · '+(u.ultimo?'Último acceso '+esc(fechaTxt(u.ultimo))+' '+esc(String(u.ultimo).slice(11,16)):'Aún no ha entrado')+'</span></div><span class="pill '+(u.activo?'ok':'bad')+'">'+(u.activo?'Activo':'Desactivado')+'</span></div>';
+    }).join('')+'</div>';
+  }
+  function err(id,e){$(id).innerHTML='<div class="card"><div class="vacio">No pude cargar ('+esc(e.message||e)+').<br><button class="btn" type="button" data-r="'+id+'">Reintentar</button></div></div>'}
+  function cargar(){
+    CB.llamar('actividad',{limite:300}).then(function(r){FILAS=r.filas||[];pintarChips();pintarLista()}).catch(function(e){err('lista',e)});
+    CB.llamar('usuarios',{}).then(function(r){USU=r.usuarios||[];pintarUsuarios()}).catch(function(e){err('usr',e)});
+  }
+  document.addEventListener('click',function(e){var b=e.target.closest('[data-r]');if(!b)return;$('lista').innerHTML='<div class="sp"></div>';$('usr').innerHTML='<div class="sp"></div>';cargar()});
+  function tab(a){$('pA').hidden=!a;$('pU').hidden=a;$('tA').setAttribute('aria-selected',a);$('tU').setAttribute('aria-selected',!a)}
+  $('tA').onclick=function(){tab(true)};$('tU').onclick=function(){tab(false)};
+  CB.ready.then(function(){if(!CB.bloqueado)cargar()});
+})();
+</script>
+</body>
+</html>

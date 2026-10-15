@@ -2,6 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="cb-modulo" content="adicionales">
+<script src="../auth.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
@@ -817,7 +819,6 @@ details.cat-i,.sim-i{border:1.5px solid var(--line)}
   </div>
 </div>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 /* ===== Calendario de rango (estilo Airbnb) · componente compartido v1 ===== */
 (function () {
@@ -1330,7 +1331,7 @@ const DRIVE_CLIENT_ID = '284452253474-nkn76cksdd6hu41f79t7kfnp47iag878.apps.goog
 const DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
 const DRIVE_ROOT = 'CIMA BLANCA', DRIVE_INGRESOS = '1. INGRESOS', DRIVE_RESERVAS = '1.1 Reservas', DRIVE_PROCESADO = 'PROCESADO';
 const DRIVE_JSON_NAME = 'MAESTRO_INGRESOS_CIMA_BLANCA.json';
-let driveToken = null, driveTokenClient = null, driveIntentoSilencioso = true, driveIniciado = false;
+let driveIniciado = false;
 
 function pintarDriveMsg(estado, extra) {
   const el = $('rDriveMsg'), btn = $('rDriveBtn');
@@ -1341,49 +1342,12 @@ function pintarDriveMsg(estado, extra) {
   else if (estado === 'primeravez') { el.className = 'msg err'; el.textContent = 'Primera vez: pulsa "Permitir acceso" una sola vez. Después se actualiza solo.'; btn.style.display = 'inline-flex'; btn.textContent = 'Permitir acceso'; }
   else if (estado === 'error') { el.className = 'msg err'; el.textContent = 'No se pudo actualizar (' + extra + '). ' + (RES_LIST.length ? 'Se muestran las ' + RES_LIST.length + ' reservas de la última vez.' : 'Puedes escribir la reserva a mano.'); btn.style.display = 'inline-flex'; btn.textContent = 'Reintentar'; }
 }
-function driveFetch(url) {
-  return fetch(url, { headers: { Authorization: 'Bearer ' + driveToken } }).then(r => {
-    if (!r.ok) throw new Error('Drive respondió ' + r.status);
-    return r.json();
-  });
-}
-function driveFindRoot(name) {
-  const q = "name='" + name.replace(/'/g, "\\'") + "' and mimeType='application/vnd.google-apps.folder' and trashed=false";
-  return driveFetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)&pageSize=10')
-    .then(d => { if (!d.files || !d.files.length) throw new Error('no encontré la carpeta "' + name + '"'); return d.files[0]; });
-}
-function driveFindChild(parentId, nameContains) {
-  const q = "'" + parentId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false";
-  return driveFetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)&pageSize=100')
-    .then(d => {
-      const needle = nameContains.toLowerCase();
-      const m = (d.files || []).find(f => f.name.toLowerCase().indexOf(needle) !== -1);
-      if (!m) throw new Error('no encontré "' + nameContains + '"');
-      return m;
-    });
-}
-function driveFindFileExact(folderId, fileName) {
-  const q = "'" + folderId + "' in parents and trashed=false and name='" + fileName.replace(/'/g, "\\'") + "'";
-  return driveFetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name,modifiedTime)&pageSize=5')
-    .then(d => (d.files && d.files[0]) || null);
-}
-function driveDownloadText(fileId) {
-  return fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media', { headers: { Authorization: 'Bearer ' + driveToken } })
-    .then(r => { if (!r.ok) throw new Error('no pude descargar el archivo'); return r.text(); });
-}
+function reintentoBtn(on) { const b = $('rDriveBtn'); b.style.display = on ? 'inline-flex' : 'none'; if (on) b.textContent = 'Reintentar'; }
 function cargarReservasDesdeDrive() {
-  pintarDriveMsg('leyendo');
-  return driveFindRoot(DRIVE_ROOT)
-    .then(root => driveFindChild(root.id, DRIVE_INGRESOS))
-    .then(ing => driveFindChild(ing.id, DRIVE_RESERVAS))
-    .then(res => driveFindChild(res.id, DRIVE_PROCESADO))
-    .then(proc => driveFindFileExact(proc.id, DRIVE_JSON_NAME))
-    .then(file => {
-      if (!file) throw new Error('todavía no existe ' + DRIVE_JSON_NAME + ' (sincroniza primero el módulo de Ingresos una vez)');
-      return driveDownloadText(file.id);
-    })
-    .then(text => {
-      const payload = JSON.parse(text);
+  pintarDriveMsg('leyendo'); reintentoBtn(false);
+  return CB.llamar('maestro', {})
+    .then(r => {
+      const payload = r.data || {};
       RESERVAS = payload.reservas || [];
       RESOL = Array.isArray(payload.resoluciones) ? payload.resoluciones : null;
       try { if (RESOL) localStorage.setItem(RESOLKEY, JSON.stringify({ resoluciones: RESOL, t: Date.now() })); } catch (e) {}
@@ -1392,43 +1356,15 @@ function cargarReservasDesdeDrive() {
       try { localStorage.setItem(RESKEY, JSON.stringify({ reservas: RESERVAS, t: Date.now() })); } catch (e) {}
       construirReservas(); pintarDriveMsg('ok'); renderSim(); renderResol(); renderCierres();
     })
-    .catch(e => pintarDriveMsg('error', e.message || e));
-}
-function initDriveAuth() {
-  let yaRespondio = false;
-  driveTokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: DRIVE_CLIENT_ID, scope: DRIVE_SCOPES,
-    callback: resp => {
-      yaRespondio = true;
-      if (resp.error) {
-        if (driveIntentoSilencioso) { driveIntentoSilencioso = false; pintarDriveMsg('primeravez'); }
-        else pintarDriveMsg('error', resp.error);
-        return;
-      }
-      driveToken = resp.access_token; cargarReservasDesdeDrive();
-    }
-  });
-  driveTokenClient.requestAccessToken({ prompt: '' });
-  setTimeout(() => { if (!yaRespondio && driveIntentoSilencioso) { driveIntentoSilencioso = false; pintarDriveMsg('primeravez'); } }, 2500);
+    .catch(e => { pintarDriveMsg('error', e.message || e); reintentoBtn(true); });
 }
 function iniciarDrive() {
   if (driveIniciado) return; driveIniciado = true;
   construirReservas();
   if (RES_LIST.length && RESERVAS.length) pintarDriveMsg('cache');
-  if (window.google && google.accounts && google.accounts.oauth2) initDriveAuth();
-  else {
-    let n = 0;
-    const chk = setInterval(() => {
-      if (window.google && google.accounts && google.accounts.oauth2) { clearInterval(chk); initDriveAuth(); }
-      else if (++n > 25) { clearInterval(chk); if (!RESERVAS.length) pintarDriveMsg('error', 'Google no cargó'); }
-    }, 200);
-  }
+  CB.ready.then(p => { if (p && !CB.bloqueado) cargarReservasDesdeDrive(); else if (!p) CB.alEntrar = () => cargarReservasDesdeDrive(); });
 }
-$('rDriveBtn').onclick = () => {
-  driveIntentoSilencioso = false; pintarDriveMsg('conectando');
-  if (!driveTokenClient) { pintarDriveMsg('error', 'Google aún no cargó, intenta de nuevo en un segundo'); return; }
-  driveTokenClient.requestAccessToken({});
-};
+$('rDriveBtn').onclick = () => { pintarDriveMsg('conectando'); cargarReservasDesdeDrive(); };
 
 
 /* ================= REGISTRAR ================= */

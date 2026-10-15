@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<meta name="cb-modulo" content="ingresos">
+<script src="../auth.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
@@ -218,9 +220,9 @@ details.ver li.bad b{color:var(--bad)}
   <div class="note" id="note" hidden><span id="noteTxt"></span><button class="x" type="button" id="noteX" aria-label="Cerrar">×</button></div>
 
   <div id="gate" class="gate" hidden>
-    <h2>Conecta tus datos</h2>
-    <p>Para ver tus ingresos, Luna necesita leer el resumen más reciente desde tu Drive.</p>
-    <button type="button" class="btn" id="gateBtn">Conectar con Google</button>
+    <h2>No pude cargar tus datos</h2>
+    <p id="gateTxt">Revisa tu conexión y vuelve a intentar.</p>
+    <button type="button" class="btn" id="gateBtn">Reintentar</button>
   </div>
 
   <div id="main" hidden>
@@ -289,7 +291,6 @@ details.ver li.bad b{color:var(--bad)}
   </div>
 </div>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 (function(){
 "use strict";
@@ -326,7 +327,7 @@ var modTime="";        // modifiedTime del archivo maestro en Drive
 var HOY=todayStr();
 var curMonth=HOY.slice(0,7);
 var view="R",tab="res";
-var token=null,tokenClient=null,estado="off",verBad=false;
+var estado="off",verBad=false;
 
 /* ---------- estado de frescura ---------- */
 function setState(st,txt,meta){
@@ -612,96 +613,44 @@ $("tForm").addEventListener("submit",function(e){
 });
 $("tReset").addEventListener("click",function(){lsSet(K_TOPE,String(TOPE_DEF));$("tForm").classList.remove("on");if(M)renderL();});
 
-/* ---------- Drive: leer, verificar frescura, actualizar ---------- */
-function dfetch(url){return fetch(url,{headers:{Authorization:"Bearer "+token}}).then(function(r){
-  if(!r.ok)throw new Error("Drive respondió "+r.status);return r;});}
-function djson(url){return dfetch(url).then(function(r){return r.json();});}
-function listQ(q,fields){return djson("https://www.googleapis.com/drive/v3/files?q="+encodeURIComponent(q)+"&fields=files("+fields+")&pageSize=100").then(function(d){return d.files||[];});}
-function childFolder(pid,needle){return listQ("'"+pid+"' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false","id,name").then(function(fs){
-  var m=fs.filter(function(f){return f.name.toLowerCase().indexOf(needle.toLowerCase())!==-1;})[0];if(!m)throw new Error("No encontré la carpeta «"+needle+"».");return m;});}
-function filesIn(pid){return listQ("'"+pid+"' in parents and trashed=false and mimeType!='application/vnd.google-apps.folder'","id,name,modifiedTime");}
-
+/* ---------- Datos: el lector de Apps Script entrega el resumen (sin pantalla de Google) ---------- */
 function revisar(){
   setState("busy","Revisando datos…","");
-  var maxSrc="",maestro=null;
-  return listQ("name='"+F_ROOT+"' and mimeType='application/vnd.google-apps.folder' and trashed=false","id,name").then(function(rs){
-    if(!rs.length)throw new Error("No encontré la carpeta «"+F_ROOT+"».");return childFolder(rs[0].id,F_ING);
-  }).then(function(ing){
-    return Promise.all([childFolder(ing.id,F_RES),childFolder(ing.id,"Adicionales").catch(function(){return null;}),Promise.resolve(ing)]);
-  }).then(function(a){
-    var res=a[0],adF=a[1],ing=a[2];
-    return Promise.all([childFolder(res.id,F_RAW),childFolder(res.id,F_PROC),filesIn(res.id),filesIn(adF?adF.id:ing.id)]);
-  }).then(function(b){
-    var raw=b[0],proc=b[1],resFiles=b[2],adFiles=b[3];
-    resFiles.concat(adFiles).forEach(function(f){if(/directas|adicionales/i.test(f.name)&&!/\.csv$/i.test(f.name)&&f.modifiedTime>maxSrc)maxSrc=f.modifiedTime;});
-    return Promise.all([childFolder(raw.id,"Pagados"),childFolder(raw.id,"Pendientes"),filesIn(proc.id)]);
-  }).then(function(c){
-    maestro=c[2].filter(function(f){return f.name===MAESTRO_NAME;})[0];
-    if(!maestro)throw new Error("No encontré el resumen de ingresos en PROCESADO. Corre «Sincronizar con Drive».");
-    return Promise.all([filesIn(c[0].id),filesIn(c[1].id)]);
-  }).then(function(d){
-    d[0].concat(d[1]).forEach(function(f){if(/\.csv$/i.test(f.name)&&f.modifiedTime>maxSrc)maxSrc=f.modifiedTime;});
-    var stale=maxSrc&&maxSrc>maestro.modifiedTime;
+  var cached=null;try{cached=JSON.parse(lsGet(K_CACHE)||"null");}catch(e){}
+  var mod=cached&&typeof cached.mod==="number"?cached.mod:0;
+  return CB.llamar("maestro",{modificado:mod}).then(function(r){
+    var admin=CB.perfil&&CB.perfil.esAdmin;
     var verOk=lsGet(K_VER)===ING_VER;
-    if((stale||!verOk)){
+    var stale=r.desactualizado||(admin&&!verOk);
+    if(stale&&admin){
       var g=parseInt(ssGet(K_GUARD)||"0",10);
       if(!g||Date.now()-g>10*60*1000){
         ssSet(K_GUARD,String(Date.now()));
         setState("busy","Actualizando…","hay archivos nuevos");
         showNote("Hay archivos nuevos en Drive. Actualizando tus ingresos…","info");
         setTimeout(function(){location.href="../sincronizar/?auto=1&volver=ingresos";},900);
-        return "redirect";
+        return;
       }
-      return cargarMaestro(maestro).then(function(){
-        setState("stale","Desactualizado",fmtStamp(M.generado));
-        showNote("Hay archivos nuevos que no se pudieron procesar. Toca el estado para volver a intentarlo.");
-      });
-    }
-    ssDel(K_GUARD);
-    return cargarMaestro(maestro).then(function(){
+    } else if(!stale){ssDel(K_GUARD);}
+    if(!r.igual&&r.data){M=r.data;modTime=r.modificado;lsSet(K_CACHE,JSON.stringify({mod:r.modificado,data:r.data}));renderAll();}
+    else if(r.igual&&M){modTime=r.modificado;}
+    $("gate").hidden=true;$("main").hidden=false;
+    if(stale){
+      setState("stale","Desactualizado",fmtStamp(M.generado));
+      showNote(admin?"Hay archivos nuevos que no se pudieron procesar. Toca el estado para volver a intentarlo.":"Hay archivos nuevos en Drive. Pídele al administrador que sincronice.");
+    } else {
       setState("ok","Al día",fmtStamp(M.generado));
       if(verBad)showNote("Algunas cifras no cuadran con el resumen. Abre «Cómo se verificó» al final.");
-    });
+    }
   });
 }
-function cargarMaestro(f){
-  var cached=null;try{cached=JSON.parse(lsGet(K_CACHE)||"null");}catch(e){}
-  if(cached&&cached.mod===f.modifiedTime&&cached.data&&M&&M.generado===cached.data.generado){modTime=f.modifiedTime;return Promise.resolve();}
-  return dfetch("https://www.googleapis.com/drive/v3/files/"+f.id+"?alt=media").then(function(r){return r.text();}).then(function(t){
-    var data=JSON.parse(t);M=data;modTime=f.modifiedTime;
-    lsSet(K_CACHE,JSON.stringify({mod:f.modifiedTime,data:data}));
-    renderAll();
-  });
+function falloRevisar(e){
+  if(M){setState("off","Sin conexión",fmtStamp(M.generado));showNote("No pude revisar los datos ("+(e.message||e)+"). Muestro los últimos guardados.");}
+  else{$("gate").hidden=false;$("main").hidden=true;$("gateTxt").textContent=(e.message||"Revisa tu conexión")+". Vuelve a intentar.";setState("off","Sin datos","");}
 }
-function conectar(){
-  if(!tokenClient){showNote("Google todavía no cargó. Espera un segundo y reintenta.");return;}
-  tokenClient.requestAccessToken({});
-}
-function initGoogle(){
-  tokenClient=google.accounts.oauth2.initTokenClient({
-    client_id:CLIENT_ID,scope:SCOPES,
-    callback:function(resp){
-      if(resp.error){sinSesion();return;}
-      token=resp.access_token;
-      revisar().catch(function(e){
-        if(M){setState("off","Sin conexión",fmtStamp(M.generado));showNote("No pude revisar Drive ("+(e.message||e)+"). Muestro los últimos datos guardados.");}
-        else{$("gate").hidden=false;$("main").hidden=true;setState("off","Sin datos","");showNote("No pude leer Drive: "+(e.message||e));}
-      });
-    },
-    error_callback:function(){sinSesion();}
-  });
-  try{tokenClient.requestAccessToken({prompt:""});}catch(e){sinSesion();}
-}
-function sinSesion(){
-  if(M){setState("off","Sin conectar",fmtStamp(M.generado));}
-  else{setState("off","Sin conectar","");$("gate").hidden=false;}
-}
-$("gateBtn").addEventListener("click",conectar);
-$("syncPill").addEventListener("click",function(){
-  if(!token){conectar();return;}
-  ssDel(K_GUARD);
-  revisar().catch(function(e){setState("off","Sin conexión",M?fmtStamp(M.generado):"");showNote("No pude revisar Drive: "+(e.message||e));});
-});
+function cargar(){var sin=!M;if(sin)CB.loader(true,"Cargando tus ingresos…");revisar().then(function(){if(sin)CB.loader(false);}).catch(function(e){if(sin)CB.loader(false);falloRevisar(e);});}
+$("gateBtn").addEventListener("click",function(){setState("busy","Revisando datos…","");cargar();});
+$("syncPill").addEventListener("click",function(){ssDel(K_GUARD);cargar();});
 
 /* ---------- arranque ---------- */
 (function boot(){
@@ -712,14 +661,10 @@ $("syncPill").addEventListener("click",function(){
     showNote(q[1]==="ok"?"Listo: tus ingresos se actualizaron con los archivos nuevos.":"Tus ingresos ya estaban al día.","ok");
     try{history.replaceState(null,"",location.pathname);}catch(e){}
   }
-  var tries=0;
-  (function wait(){
-    if(window.google&&google.accounts&&google.accounts.oauth2){initGoogle();return;}
-    if(++tries>80){ if(!M){$("gate").hidden=false;} setState("off",M?"Sin conexión":"Sin conectar",M?fmtStamp(M.generado):"");return;}
-    setTimeout(wait,150);
-  })();
+  if(!M){$("main").hidden=true;}
+  CB.ready.then(function(p){ if(p&&!CB.bloqueado)cargar(); else if(!p){CB.alEntrar=function(){cargar();};} });
 })();
-window.addEventListener("online",function(){if(token){revisar().catch(function(){});}});
+window.addEventListener("online",function(){if(CB.perfil&&!CB.bloqueado)cargar();});
 })();
 </script>
 </body>
