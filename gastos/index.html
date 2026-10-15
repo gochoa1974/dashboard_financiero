@@ -472,6 +472,62 @@ body:not([data-tab="reg"]) .dash{display:none}
 @media (min-width:1200px){
 .pane.on{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:16px}
 }
+
+/* v14 · homologación con Ingresos y Adicionales */
+.hstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.14)}
+.hstats b{display:block;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.hstats span{display:block;font-size:11.5px;color:var(--hero-mute);font-weight:600;margin-top:2px}
+.rch{cursor:default}.rkey{display:none}
+.porres{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:18px;padding:14px 16px;margin-top:14px}
+.porres b{display:block;font-size:15px;font-weight:800;color:var(--warn)}
+.porres small{display:block;font-size:12.5px;font-weight:600;color:var(--warn);margin:2px 0 8px}
+.porres .pr{display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;min-height:44px;border:0;border-top:1px solid var(--warn-line);background:transparent;color:var(--ink);font-family:inherit;font-size:13.5px;font-weight:600;text-align:left;cursor:pointer}
+.porres .pr i{font-style:normal;font-weight:800;color:var(--warn);font-size:13px;white-space:nowrap}
+.evo{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-top:12px;box-shadow:var(--shadow)}
+.evo h3{margin:0;font-size:15px;font-weight:800}
+.evo .evs{margin:2px 0 10px;font-size:12.5px;color:var(--mut);font-weight:600}
+.evo svg{display:block;max-width:100%;height:auto;overflow:visible}
+.evo .gl{stroke:var(--line);stroke-dasharray:3 4;stroke-width:1}
+.evo .gt{fill:var(--mut);font-size:9px;font-weight:600}
+.evo .bp{fill:var(--mut);opacity:.32}
+.evo .bc{fill:rgb(var(--crec));opacity:.55;transition:opacity .15s}
+.evo .bh{fill:url(#evH)}
+.evo g.m{cursor:pointer;outline:none}
+.evo g.m.on .bc{opacity:1}
+.evo g.m:hover .bc{opacity:.8}
+.evo g.m.on:hover .bc{opacity:1}
+.evo g.m.off{cursor:default;pointer-events:none}.evo g.m.off .bc{opacity:.12}
+.evo g.m:focus-visible .hit{stroke:rgb(var(--crec));stroke-width:2;fill:rgba(var(--crec),.08)}
+.evo .hit{fill:transparent;rx:6}
+.evo .ml{fill:var(--mut);font-size:10px;font-weight:700;text-anchor:middle}
+.evo g.on .ml{fill:var(--ink);font-weight:800}
+.evo .ul{fill:rgb(var(--crec))}
+.evlg{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--mut);font-weight:700;margin:0 0 8px}
+.evlg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.evc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.evc>div{background:var(--bg);border-radius:12px;padding:10px 12px;min-width:0}
+.evc small{display:block;font-size:11.5px;color:var(--mut);font-weight:700}
+.evc b{display:block;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px}
+.evc em{display:block;font-style:normal;font-size:12px;font-weight:700;margin-top:3px;color:var(--mut);line-height:1.35}
+.evc em.up{color:var(--warn)}.evc em.dn{color:var(--ok)}
+@media (max-width:360px){.evc{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.evo .bc{transition:none}}
+@media (min-width:1000px){
+ /* laptop: número grande a la izquierda (fijo) y el resto a la derecha, como Ingresos y Adicionales */
+ body[data-tab="reg"] .app{display:grid;grid-template-columns:minmax(380px,450px) minmax(0,1fr);column-gap:24px;align-items:start}
+ body[data-tab="reg"] .app>*{grid-column:2}
+ body[data-tab="reg"] .top{display:contents}
+ body[data-tab="reg"] .top>.head,body[data-tab="reg"] .top>.stalebar,body[data-tab="reg"] .top>.month{grid-column:1/-1;margin-left:24px;margin-right:24px}
+ body[data-tab="reg"] .top>.head{margin-top:calc(22px + env(safe-area-inset-top,0px))}
+ body[data-tab="reg"] .top>.dash{grid-column:1;grid-row:4/span 12;position:sticky;top:12px;margin-left:24px;display:block}
+ body[data-tab="reg"] .hero{display:block;padding:26px 28px}
+ body[data-tab="reg"] .hero .hero-s{padding-top:0}
+ body[data-tab="reg"] .hero-big{font-size:58px}
+ body[data-tab="reg"] #regBox.pane.on .pcol{display:block;max-width:none}
+ body[data-tab="reg"] #regBox .pcol>*{margin-top:12px}
+ body[data-tab="reg"] #regBox .pcol>*:first-child{margin-top:0}
+ body[data-tab="reg"] .sticky{padding-left:0;padding-right:0}
+}
 </style>
 </head>
 <body data-tab="reg">
@@ -492,19 +548,12 @@ body:not([data-tab="reg"]) .dash{display:none}
       <div class="hero-big" id="total"></div>
       <div class="hero-s" id="hMov"></div>
       <div class="hero-s2" id="hGasto"></div>
-      <div class="hero-row">
-        <div class="ring">
-          <svg viewBox="0 0 80 80"><circle class="tr" cx="40" cy="40" r="34"/><circle class="fg" id="arc" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="213.6"/></svg>
-          <span id="ringTxt"></span>
-        </div>
-        <div class="hero-txt"><b id="hTitle"></b><span id="hSub"></span></div>
+      <div class="hstats">
+        <div><b id="kRec"></b><span>Recurrentes</span></div>
+        <div><b id="kEv"></b><span>Variables</span></div>
+        <div><b id="kPen"></b><span>Por pagar</span></div>
       </div>
     </section>
-    <div class="kpis">
-      <div class="kpi"><small><i style="background:var(--rec)"></i>Recurrentes</small><b id="kRec"></b></div>
-      <div class="kpi"><small><i style="background:var(--ev)"></i>Variables</small><b id="kEv"></b></div>
-      <div class="kpi pen"><small><i style="background:var(--pen)"></i>Pendiente</small><b id="kPen"></b></div>
-    </div>
     </div>
   </div>
 
@@ -1255,8 +1304,8 @@ let RCOPEN={};try{RCOPEN=JSON.parse(localStorage.getItem(RCKEY)||'{}')||{};}catc
 function pcts(vals){const t=vals.reduce((a,b)=>a+b,0);if(t<=0.004)return vals.map(()=>0);const raw=vals.map(v=>Math.max(0,v)/t*100),fl=raw.map(Math.floor);let rem=100-fl.reduce((a,b)=>a+b,0);const ord=raw.map((r,i)=>[r-fl[i],i]).filter(x=>raw[x[1]]>0).sort((a,b)=>b[0]-a[0]);for(let k=0;k<rem&&ord.length;k++)fl[ord[k%ord.length][1]]++;return fl;}
 const RSEG=(v,c,h,t,st)=>v>0.004?'<i class="sg'+(h?' h':'')+(st?' cs':'')+'" style="flex-grow:'+v+';--c:var(--'+c+')">'+(t?'<span>'+t+'</span>':'')+'</i>':'';
 function rcCard(key,title,hoy,cierre,pas,segs,keys,rows,note,proj){
- const open=!!RCOPEN[key];
- return '<div class="rcx"><button type="button" class="rch" data-rc="'+key+'" aria-expanded="'+open+'"><span>'+esc(title)+'</span><i class="rcv">'+(open?'⌃':'⌄')+'</i></button>'+
+ const open=true;
+ return '<div class="rcx"><div class="rch"><span>'+esc(title)+'</span></div>'+
   '<div class="rcs">'+(pas?'<span>Total del mes <b>'+f2(cierre)+'</b></span>':'<span>Ya pagado <b>'+f2(hoy)+'</b></span><span>Cierre del mes <b>'+f2(cierre)+'</b></span>')+'</div>'+
   '<div class="rbar">'+(segs||'<i class="sg" style="flex-grow:1;--c:var(--cvar);opacity:.15"></i>')+'</div>'+
   '<div class="rkey">'+keys+'</div>'+
@@ -1294,20 +1343,67 @@ function resPanels(mon,DS){
    [capC>0.004?'Incluye capital '+f2(capC)+' (baja tu deuda, no es gasto).':'',cuotasNota(MES)].filter(Boolean).join('<br>'),gp+pm.cap+ppAll>0.004);
  return h;
 }
+
+/* ===== v14: Por resolver + Evolución (mismo sistema que Ingresos y Adicionales) ===== */
+function resolverCard(P,mon){
+ if(!P)return '<div class="alldone" style="margin:0 0 12px">✓ Todo al día en '+esc(mLabel(MES))+'</div>';
+ const rows=[];
+ if(P.pagar.length)rows.push([P.pagar.length+(P.pagar.length===1?' por pagar':' por pagar')+' · '+f2(SUMA(P.pagar)),'Pagar']);
+ P.reg.slice(0,3).forEach(r=>rows.push([(esPasado(MES)?'Falta registrar: ':'Esperado: ')+rname(r),'Registrar']));
+ if(P.reg.length>3)rows.push(['y '+(P.reg.length-3)+' esperados más','Ver']);
+ if(P.conf.length)rows.push([P.conf.length+(P.conf.length===1?' por confirmar':' por confirmar'),'Confirmar']);
+ return '<div class="porres"><b>Por resolver · '+P.n+(P.n===1?' cosa':' cosas')+'</b><small>Para cerrar '+esc(MESES[+MES.slice(5)-1])+'</small>'+rows.map(r=>'<button type="button" class="pr" data-go="pen"><span>'+esc(r[0])+'</span><i>'+r[1]+' ›</i></button>').join('')+'</div>';
+}
+function evoCard(){
+ const DS=dataset(),y=+MES.slice(0,4),m0=+MES.slice(5),cur=todayISO().slice(0,7);
+ const gm=(yy,i)=>{const k=yy+'-'+pad(i),ls=DS.filter(e=>e.mes===k&&e.cuenta!=='No');const pp=SUMA(ls.filter(isPorPagar));return {t:SUMA(ls),p:pp,has:ls.length>0};};
+ const A=[],B=[];for(let i=1;i<=12;i++){A.push(gm(y,i));B.push(gm(y-1,i));}
+ let mx=0;A.concat(B).forEach(x=>{mx=Math.max(mx,x.t);});
+ const step=mx<=1500?500:1000,top=Math.max(step,Math.ceil(mx/step)*step);
+ const host=document.getElementById('regBox'),cw=host&&host.clientWidth>0?host.clientWidth-60:300,W=Math.max(280,Math.min(cw,900)),H=W>600?180:(W>420?150:130),PL=28,bw=(W-PL-4)/12,g=bw*0.78,b=g/2-1;
+ let svg='<svg width="'+W+'" height="'+(H+34)+'" viewBox="0 0 '+W+' '+(H+34)+'" role="group" aria-label="Evolución mensual del gasto, '+(y-1)+' contra '+y+'"><defs><pattern id="evH" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="rgba(var(--crec),.3)"/><rect width="2" height="5" fill="rgb(var(--crec))"/></pattern></defs><g transform="translate(0,8)">';
+ for(let gv=step;gv<=top;gv+=step){const gy=H-H*gv/top;svg+='<line class="gl" x1="'+PL+'" x2="'+W+'" y1="'+gy.toFixed(1)+'" y2="'+gy.toFixed(1)+'"/><text class="gt" x="0" y="'+(gy+3).toFixed(1)+'">$'+(gv>=1000?(gv/1000)+'k':gv)+'</text>';}
+ for(let i=0;i<12;i++){
+  const k=y+'-'+pad(i+1),x=PL+2+i*bw+(bw-g)/2,on=k===MES,inR=A[i].has||B[i].has||k<=cur;
+  const hp=H*B[i].t/top,hd=H*(A[i].t-A[i].p)/top,hh=H*A[i].p/top;
+  svg+='<g class="m'+(on?' on':'')+(k>cur&&!A[i].has?' off':'')+'" data-m="'+k+'"'+(k>cur&&!A[i].has?' aria-hidden="true"':' role="button" tabindex="0"')+' aria-label="'+mLabel(k)+': '+f2(A[i].t)+(A[i].p>0.004?' (por pagar '+f2(A[i].p)+')':'')+'"'+(on?' aria-current="true"':'')+'>'+
+   '<rect class="hit" x="'+(x-3).toFixed(1)+'" y="0" width="'+(g+6).toFixed(1)+'" height="'+(H+24)+'"/>'+
+   '<rect class="bp" x="'+x.toFixed(1)+'" y="'+(H-hp).toFixed(1)+'" width="'+b.toFixed(1)+'" height="'+hp.toFixed(1)+'" rx="2"/>'+
+   '<rect class="bc" x="'+(x+b+2).toFixed(1)+'" y="'+(H-hd-hh).toFixed(1)+'" width="'+b.toFixed(1)+'" height="'+hd.toFixed(1)+'" rx="2"/>'+
+   (hh>0?'<rect class="bh" x="'+(x+b+2).toFixed(1)+'" y="'+(H-hh).toFixed(1)+'" width="'+b.toFixed(1)+'" height="'+hh.toFixed(1)+'" rx="2"/>':'')+
+   '<text class="ml" x="'+(x+g/2).toFixed(1)+'" y="'+(H+15)+'">'+MESES[i].charAt(0).toUpperCase()+'</text>'+(on?'<rect class="ul" x="'+(x-1).toFixed(1)+'" y="'+(H+19)+'" width="'+(g+2).toFixed(1)+'" height="3" rx="1.5"/>':'')+'</g>';
+ }
+ svg+='</g></svg>';
+ const enCurso=MES>=cur,c=A[m0-1],pv=B[m0-1],nm=MESES[m0-1];
+ let c1='<div><small>'+nm.charAt(0).toUpperCase()+nm.slice(1)+' '+y+(enCurso?' (en curso)':'')+'</small><b>'+f2(c.t)+'</b>';
+ if(pv.has){const dp=pv.t>0?Math.round((c.t-pv.t)/pv.t*100):null;
+  c1+='<em'+(!enCurso&&dp!==null?(dp>0?' class="up"':' class="dn"'):'')+'>'+(!enCurso&&dp!==null&&dp!==0?(dp>0?'▲ '+dp+'% más que ':'▼ '+Math.abs(dp)+'% menos que '):'')+nm.slice(0,3)+' '+(y-1)+(enCurso?' cerró en ':': ')+f2(pv.t)+'</em>';
+ }else c1+='<em>Sin dato de '+(y-1)+'</em>';
+ c1+='</div>';
+ let fin=enCurso?(MES===cur?m0-1:+cur.slice(5)-1):m0;if(MES>cur&&y>+cur.slice(0,4))fin=0;
+ let ini=0;for(let i=0;i<12;i++){if(B[i].has){ini=i+1;break;}}
+ const AB=(a,bb)=>MESES[a-1].slice(0,3)+(bb>a?'–'+MESES[bb-1].slice(0,3):'');
+ let c2;
+ if(ini&&fin>=ini){let sa=0,sb=0;for(let i=ini-1;i<fin;i++){sa+=A[i].t;sb+=B[i].t;}
+  const d2=sb>0?Math.round((sa-sb)/sb*100):null,rt=AB(ini,fin);
+  c2='<div><small>'+rt.charAt(0).toUpperCase()+rt.slice(1)+' '+y+(enCurso?' (meses cerrados)':'')+'</small><b>'+f2(sa)+'</b><em'+(d2!==null?(d2>0?' class="up"':' class="dn"'):'')+'>'+(d2!==null&&d2!==0?(d2>0?'▲ '+d2+'% más que ':'▼ '+Math.abs(d2)+'% menos que '):'')+f2(sb)+' en '+rt+' '+(y-1)+'</em></div>';
+ }else c2='<div><small>Acumulado '+y+'</small><b>'+f2(A.reduce((t,x)=>t+x.t,0))+'</b><em>Sin año anterior para comparar</em></div>';
+ return '<div class="evo"><h3>Evolución del gasto</h3><p class="evs">Por mes · '+(y-1)+' contra '+y+' · toca un mes para verlo</p><div class="evlg"><span><i style="background:rgba(95,112,128,.4)"></i>'+(y-1)+'</span><span><i style="background:rgb(var(--crec))"></i>'+y+'</span><span><i style="background:repeating-linear-gradient(45deg,rgb(var(--crec)) 0 2px,rgba(var(--crec),.3) 2px 5px)"></i>Por pagar</span></div>'+svg+'<div class="evc">'+c1+c2+'</div></div>';
+}
 function renderReg(){
  const DS=dataset(),mon=DS.filter(e=>e.mes===MES),box=$('regBox'),tot=SUMA(mon),P=pendItems();
- let h='<div class="pcol">';
- h+=resPanels(mon,DS);
+ let h='<div class="pcol">',porRes=null;
  if(P.n){
   const pt=[];
   if(P.pagar.length)pt.push(P.pagar.length+' por pagar');
   if(P.reg.length)pt.push(P.reg.length+' esperados este mes');
   if(P.conf.length)pt.push(P.conf.length+' por confirmar');
-  h+='<button type="button" class="rsl" data-go="pen"><span class="rt"><b>Por resolver · '+P.n+'</b><small>'+pt.join(' · ')+'</small></span><span class="go2">Ver</span></button>';
- }else h+='<div class="alldone" style="margin-top:14px">✓ Todo al día en '+esc(mLabel(MES))+'</div>';
+  porRes=P;
+ }
+ h=h+resolverCard(porRes,mon)+resPanels(mon,DS)+evoCard();
  h+='</div>';
  box.innerHTML=h;
- box.querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{const k=b.dataset.rc;RCOPEN[k]=!RCOPEN[k];try{localStorage.setItem(RCKEY,JSON.stringify(RCOPEN));}catch(e){}renderReg();});
+ box.querySelectorAll('.evo g.m[data-m]').forEach(g=>{const go=()=>{if(!g.classList.contains('off'))goMonth(g.dataset.m);};g.onclick=go;g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
 }
 function renderPen(){
  const P=pendItems(),DS=P.DS,box=$('penBox'),nb=$('nPen');
@@ -1371,13 +1467,9 @@ function renderTotals(){
  setTotal(tot);
  $('hMov').textContent=mon.length+(mon.length===1?' movimiento registrado':' movimientos registrados');
  {const L=['Gasto del mes: '+f2(gasto)];if(capi>0.005)L.push('+ Capital de la hipoteca (no es gasto): '+f2(capi));if(efe>0.005)L.push('− Pagado en efectivo (no sale del banco): '+f2(efe));if(ppag>0.005)L.push('− Por pagar (aún no sale): '+f2(ppag));$('hGasto').textContent=L.length>1?L.join('\n'):'';}
- $('ringTxt').textContent=saved+'/'+rl.length;
- $('arc').style.strokeDashoffset=213.6*(1-pct);
- $('hTitle').textContent=falta?saved+' de '+rl.length+' recurrentes al día':'Recurrentes al día';
- $('hSub').textContent=falta?'Faltan '+falta+' por registrar':'No hay pagos por registrar';
  $('kRec').textContent=f2(tRec);
  $('kEv').textContent=f2(tEv);
- $('kPen').textContent=f2(pend);
+ $('kPen').textContent=f2(ppag);
  $('nRec').textContent=falta?falta:rl.length;$('nRec').classList.toggle('alert',falta>0);
  $('nEv').textContent=mon.filter(e=>!isRecRow(e)).length;
  $('nReg').textContent=mon.length;
