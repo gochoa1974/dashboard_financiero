@@ -133,6 +133,15 @@ input,select{font-family:inherit;color:inherit}
 .legend{display:flex;gap:18px;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--mut);flex-wrap:wrap}
 .legend span{display:flex;align-items:center;gap:6px}
 .legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.seal{display:inline-block;margin-top:3px;background:var(--ok-bg);color:var(--ok);font-size:12px;font-weight:700;border-radius:99px;padding:5px 12px;min-height:28px}
+.clsbar{margin:12px 16px 0;padding:14px;border-radius:16px;background:var(--bad-bg);color:var(--bad);display:flex;flex-direction:column;gap:8px}
+.clsbar b{font-size:14.5px;font-weight:800}
+.clsbar span{font-size:13px;font-weight:600;line-height:1.4}
+.clsact{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+.clsact button{min-height:44px;border:0;border-radius:12px;padding:0 14px;font-size:13.5px;font-weight:800;background:var(--bad);color:#fff}
+.clsact button.alt{background:transparent;color:var(--bad);box-shadow:inset 0 0 0 1.5px var(--bad)}
+.tabs em.alert{background:var(--warn-bg);color:var(--warn)}
+.tabs button.on em.alert{background:var(--warn);color:var(--surface)}
 .brk{display:flex;flex-direction:column;gap:12px;margin-top:12px}
 .brk>div{display:flex;align-items:center;gap:11px}
 .brk i{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
@@ -265,7 +274,7 @@ input,select{font-family:inherit;color:inherit}
     <div class="stalebar" id="staleBar"><i></i><span id="staleTxt"></span></div>
     <div class="month">
       <button type="button" class="nav" id="mPrev" aria-label="Mes anterior">◀</button>
-      <div class="mid-m"><b id="mLbl"></b><button type="button" class="hoy" id="mHoy" style="display:none">Ir a este mes</button></div>
+      <div class="mid-m"><b id="mLbl"></b><button type="button" class="hoy" id="mHoy" style="display:none">Ir a este mes</button><span class="seal" id="mSeal" style="display:none"></span></div>
       <button type="button" class="nav" id="mNext" aria-label="Mes siguiente">▶</button>
     </div>
     <div class="dash">
@@ -290,19 +299,20 @@ input,select{font-family:inherit;color:inherit}
     </div>
   </div>
 
+  <div id="closeBox"></div>
   <div class="banner" id="stHint" style="display:none"></div>
 
   <div class="sticky">
     <div class="tabs" role="tablist">
-      <button type="button" class="on" data-t="rec" role="tab">Recurrentes<em id="nRec"></em></button>
+      <button type="button" class="on" data-t="reg" role="tab">Resumen<em id="nReg"></em></button>
+      <button type="button" data-t="rec" role="tab">Recurrentes<em id="nRec"></em></button>
       <button type="button" data-t="ev" role="tab">Eventuales<em id="nEv"></em></button>
-      <button type="button" data-t="reg" role="tab">Registro<em id="nReg"></em></button>
     </div>
   </div>
 
-  <div class="pane on" id="recRows"></div>
+  <div class="pane" id="recRows"></div>
   <div class="pane" id="evBox"></div>
-  <div class="pane" id="regBox"></div>
+  <div class="pane on" id="regBox"></div>
 </div>
 <button type="button" class="fab" id="fab">+ Nuevo gasto</button>
 
@@ -897,14 +907,53 @@ function renderTotals(){
  $('kRec').textContent=f2(tRec);
  $('kEv').textContent=f2(tEv);
  $('kPen').textContent=f2(pend);
- $('nRec').textContent=rl.length;
+ $('nRec').textContent=falta?falta:rl.length;$('nRec').classList.toggle('alert',falta>0);
  $('nEv').textContent=mon.filter(e=>!isRecRow(e)).length;
  $('nReg').textContent=mon.length;
+}
+function monthState(ym,DS){
+ const cur=todayISO().slice(0,7),first=DS.reduce((a,e)=>(!a||e.mes<a)?e.mes:a,'');
+ if(ym>=cur||!first||ym<first)return {st:'na'};
+ const mon=DS.filter(e=>e.mes===ym),isExc=e=>/^Excepci[oó]n:/i.test(e.detalle||'');
+ const open=mon.filter(e=>e.estado!=='Confirmado'&&!isExc(e)),exc=mon.filter(e=>e.estado!=='Confirmado'&&isExc(e));
+ const miss=REC().filter(r=>!existing(r,DS).length&&DS.some(e=>e.mes<ym&&matchRow(r,e)));
+ return {st:(open.length||miss.length)?'open':'closed',open,exc,miss};
+}
+function renderClose(){
+ const ms=monthState(MES,dataset()),seal=$('mSeal'),box=$('closeBox');
+ seal.style.display='none';box.innerHTML='';
+ if(ms.st==='closed'){seal.style.display='';seal.textContent='✓ Mes cerrado'+(ms.exc.length?' · '+ms.exc.length+(ms.exc.length===1?' excepción':' excepciones'):'');return;}
+ if(ms.st!=='open')return;
+ const nm=a=>a.slice(0,3).map(x=>esc(x.concepto||rname(x))).join(', ')+(a.length>3?' y '+(a.length-3)+' más':'');
+ let h='<div class="clsbar"><b>Este mes no está cerrado</b>';
+ if(ms.open.length)h+='<span>'+ms.open.length+(ms.open.length===1?' gasto sin confirmar: ':' gastos sin confirmar: ')+nm(ms.open)+'.</span>';
+ if(ms.miss.length)h+='<span>Falta registrar: '+ms.miss.map(r=>esc(rname(r))).join(', ')+'. Si no aplica este mes, regístralo en $0 con el motivo.</span>';
+ h+='<div class="clsact">';
+ if(ms.open.length)h+='<button type="button" id="clsAll">Confirmar '+ms.open.length+(ms.open.length===1?' gasto':' gastos')+'</button><button type="button" class="alt" id="clsExc">Dejar abierto con motivo</button>';
+ if(ms.miss.length)h+='<button type="button" class="alt" id="clsGo">Ir a Recurrentes</button>';
+ box.innerHTML=h+'</div></div>';
+}
+function closeAll(){
+ const ms=monthState(MES,dataset());if(ms.st!=='open'||!ms.open.length)return;
+ if(!confirm('¿Confirmar '+ms.open.length+(ms.open.length===1?' gasto':' gastos')+' de '+mLabel(MES)+'?\n\nQuedan como Confirmado y se anota en la bitácora. Después lo puedes corregir.'))return;
+ const b=bid();
+ ms.open.forEach(e=>OPS.push({b,k:'edit',id:e.id,ch:{estado:'Confirmado'},nm:'Cierre de '+mLabel(MES)+': '+e.concepto+' '+f2(e.monto)}));
+ persist();UI={};renderAll();
+ toast(ms.miss.length?'Confirmados. Falta registrar lo pendiente para cerrar el mes':'Mes cerrado: '+mLabel(MES),true);
+}
+function closeExc(){
+ const ms=monthState(MES,dataset());if(ms.st!=='open'||!ms.open.length)return;
+ const mo=prompt('Motivo para dejar '+ms.open.length+(ms.open.length===1?' gasto':' gastos')+' sin confirmar en '+mLabel(MES)+':');
+ if(mo===null)return;const t=mo.trim();
+ if(t.length<5){toast('Escribe un motivo claro (mínimo 5 letras)',false);return;}
+ const b=bid();
+ ms.open.forEach(e=>{const d=('Excepción: '+t.slice(0,120)+(e.detalle?' · '+e.detalle:'')).slice(0,200);OPS.push({b,k:'edit',id:e.id,ch:{detalle:d},nm:'Excepción de cierre: '+e.concepto+' '+f2(e.monto)});});
+ persist();UI={};renderAll();toast('Anotado como excepción',true);
 }
 function renderAll(){
  $('mLbl').textContent=mLabel(MES);
  $('mHoy').style.display=MES===todayISO().slice(0,7)?'none':'';
- renderRec();renderEv();renderReg();renderTotals();
+ renderRec();renderEv();renderReg();renderTotals();renderClose();
 }
 
 function toast(msg,withUndo){
@@ -1199,6 +1248,12 @@ document.querySelector('.tabs').addEventListener('click',e=>{
  b.classList.add('on');
  $(b.dataset.t==='rec'?'recRows':b.dataset.t==='ev'?'evBox':'regBox').classList.add('on');
 });
+$('closeBox').addEventListener('click',e=>{
+ if(e.target.closest('#clsAll')){closeAll();return;}
+ if(e.target.closest('#clsExc')){closeExc();return;}
+ if(e.target.closest('#clsGo')){document.querySelector('.tabs [data-t=rec]').click();}
+});
+$('mSeal').addEventListener('click',()=>toast('Para reabrir el mes, corrige cualquier gasto de este mes',false));
 $('recRows').addEventListener('click',e=>{
  if(e.target.closest('#accAll')){confirmSug();return;}
  if(e.target.closest('#addRecBtn')){openNewRec();return;}
