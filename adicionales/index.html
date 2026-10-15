@@ -579,6 +579,73 @@ details.cat-i,.sim-i{border:1.5px solid var(--line)}
 .ibtn.nsok{border-color:var(--bad);background:var(--surface);color:var(--bad)}
 .ibtn.nsok:hover{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
 @media (max-width:480px){.li-row.cp.ns{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"lc lm" "lb lb"}.li-row.cp.ns .lb{justify-content:stretch;align-self:auto}.li-row.cp.ns .ibtn.reab{width:100%}}
+
+/* ===== v28 · RESUMEN (misma lógica que Gastos: primero el resumen, luego el registro) ===== */
+.tabs{grid-template-columns:repeat(4,1fr)}
+@media (max-width:420px){.tab{font-size:12.5px;padding-left:2px;padding-right:2px;letter-spacing:-.01em}}
+.rs-vt{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:2px 2px 12px}
+.rs-vt h2{margin:0;font-size:21px;letter-spacing:-.02em}
+.rs-vt small{display:block;color:var(--mut);font-weight:600;font-size:13px;margin-top:2px}
+.rs-mes{display:flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:2px;box-shadow:var(--shadow);flex:0 0 auto}
+.rs-mes button{appearance:none;border:none;background:transparent;color:var(--ink);width:36px;height:36px;border-radius:50%;cursor:pointer;display:grid;place-items:center;font-family:inherit}
+.rs-mes button:disabled{opacity:.3;cursor:default}
+.rs-mes button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.rs-mes span{font-weight:800;font-size:13.5px;min-width:78px;text-align:center;font-variant-numeric:tabular-nums}
+.rs-hero{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--hero1),var(--hero2));color:#fff;border-radius:24px;padding:20px 20px 18px;box-shadow:0 18px 34px -16px rgba(10,34,51,.7);margin-bottom:12px}
+.rs-hero::after{content:"";position:absolute;right:-70px;top:-70px;width:200px;height:200px;border-radius:50%;box-shadow:0 0 0 30px rgba(255,255,255,.035),0 0 0 62px rgba(255,255,255,.022)}
+.rs-hero>*{position:relative;z-index:1}
+.rs-hl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--hero-mute);font-weight:700}
+.rs-big{font-size:46px;line-height:1.05;font-weight:800;letter-spacing:-.035em;margin:8px 0 4px;font-variant-numeric:tabular-nums}
+.rs-big small{font-size:25px;font-weight:700;opacity:.65;margin-right:3px;letter-spacing:0}
+.rs-hs{font-size:13.5px;color:var(--hero-mute);font-weight:600;line-height:1.4}
+.rs-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.14)}
+.rs-row b{display:block;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.rs-row span{display:block;font-size:11.5px;color:var(--hero-mute);font-weight:600;margin-top:2px;line-height:1.3}
+.rs-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 18px;box-shadow:var(--shadow);margin-bottom:12px}
+.rs-card h3{margin:0;font-size:15px;font-weight:800}
+.rs-card .rs-sub{margin:2px 0 12px;font-size:12.5px;color:var(--mut);font-weight:600}
+.rs-por{background:var(--warn-bg);border-color:var(--warn)}
+.rs-por h3{color:var(--warn)}
+.rs-por .rs-sub{color:var(--warn)}
+.rs-ok{display:flex;align-items:center;gap:10px;color:var(--ok);font-weight:800;font-size:14px}
+.rs-pr{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid rgba(138,81,0,.25);font-size:13.5px;cursor:pointer;background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left;font-family:inherit;color:var(--ink)}
+.rs-pr b{font-weight:800}
+.rs-pr span{color:var(--mut);font-weight:600;font-size:12.5px}
+.rs-pr i{font-style:normal;color:var(--warn);font-weight:800;font-size:13px;white-space:nowrap}
+.rs-bar{display:flex;height:18px;border-radius:9px;overflow:hidden;background:var(--info-bg);gap:2px}
+.rs-bar i{display:block;height:100%;transition:flex-basis .5s cubic-bezier(.2,.8,.2,1)}
+.rs-lg{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
+.rs-lg:first-of-type{margin-top:10px}
+.rs-lg .n{display:flex;align-items:center;gap:8px;min-width:0;font-weight:700}
+.rs-lg .n em{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rs-lg .d{width:10px;height:10px;border-radius:3px;flex:0 0 auto}
+.rs-lg b{font-variant-numeric:tabular-nums;font-weight:800;white-space:nowrap}
+.rs-lg b small{color:var(--mut);font-weight:700;font-size:12px;margin-left:6px}
+.rs-s0{background:#0B6B58}.rs-s1{background:#1B8FA6}.rs-s2{background:#8A9A1F}.rs-s3{background:#B06A9C}.rs-s4{background:#7A8B96}
+@media (prefers-color-scheme:dark){.rs-s0{background:#43D9A6}.rs-s1{background:#5BC4DA}.rs-s2{background:#C2D45A}.rs-s3{background:#D890C6}.rs-s4{background:#9DB0BB}}
+.rs-neg{font-size:12.5px;color:var(--mut);font-weight:700;margin-top:8px}
+.rs-ev{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;align-items:end;height:112px}
+.rs-ev button{appearance:none;border:none;background:none;padding:0;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;height:100%;font-family:inherit;color:var(--mut)}
+.rs-ev .b{display:block;border-radius:5px 5px 2px 2px;background:var(--accent);opacity:.38;min-height:3px;transition:height .5s cubic-bezier(.2,.8,.2,1),opacity .2s}
+.rs-ev button.on .b{opacity:1}
+.rs-ev button:hover .b{opacity:.7}
+.rs-ev button.on:hover .b{opacity:1}
+.rs-ev button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.rs-ev u{text-decoration:none;font-size:10.5px;font-weight:700;text-align:center;margin-top:5px}
+.rs-ev button.on u{color:var(--ink);font-weight:800}
+.rs-cta{position:sticky;bottom:12px;z-index:6;margin-top:6px;padding-bottom:env(safe-area-inset-bottom,0)}
+.rs-cta .btn{width:100%;min-height:52px;font-size:15.5px;box-shadow:0 12px 24px -10px var(--glow)}
+.rs-grid{display:flex;flex-direction:column}
+.rs-c{display:contents}
+.rs-empty{text-align:center;color:var(--mut);font-weight:600;font-size:13.5px;padding:26px 10px}
+@media (min-width:1000px){
+  body[data-tab="res"] .wrap{max-width:1120px}
+  .rs-grid{flex-direction:row;gap:16px;align-items:flex-start}
+  .rs-c{display:flex;flex-direction:column;flex:1 1 0;min-width:0}
+  .rs-c>div{order:0!important}
+  .rs-big{font-size:56px}
+}
+@media (prefers-reduced-motion:reduce){.rs-bar i,.rs-ev .b{transition:none}}
 </style>
 </head>
 <body>
@@ -612,13 +679,26 @@ details.cat-i,.sim-i{border:1.5px solid var(--line)}
     </div>
 
     <div class="tabs" role="tablist" aria-label="Secciones">
-      <button type="button" class="tab on" role="tab" id="tab-reg" aria-selected="true" aria-controls="p-reg" data-t="reg">Registrar</button>
+      <button type="button" class="tab on" role="tab" id="tab-res" aria-selected="true" aria-controls="p-res" data-t="res">Resumen</button>
+      <button type="button" class="tab" role="tab" id="tab-reg" aria-selected="false" aria-controls="p-reg" data-t="reg" tabindex="-1">Registrar</button>
       <button type="button" class="tab" role="tab" id="tab-cat" aria-selected="false" aria-controls="p-cat" data-t="cat" tabindex="-1">Catálogo</button>
       <button type="button" class="tab" role="tab" id="tab-sim" aria-selected="false" aria-controls="p-sim" data-t="sim" tabindex="-1">Simulador</button>
     </div>
 
+    <!-- ======== RESUMEN (v28) ======== -->
+    <section id="p-res" role="tabpanel" aria-labelledby="tab-res">
+      <div class="rs-vt"><div><h2>Resumen de adicionales</h2><small>Qué se vendió y cómo se cobró</small></div>
+        <div class="rs-mes" role="group" aria-label="Mes">
+          <button type="button" id="rsPrev" aria-label="Mes anterior"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+          <span id="rsMes" aria-live="polite"></span>
+          <button type="button" id="rsNext" aria-label="Mes siguiente"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+        </div></div>
+      <div id="rsBody"></div>
+      <div class="rs-cta"><button type="button" class="btn btn-acc" id="rsNuevo">+ Registrar adicional</button></div>
+    </section>
+
     <!-- ======== REGISTRAR ======== -->
-    <section id="p-reg" role="tabpanel" aria-labelledby="tab-reg">
+    <section id="p-reg" role="tabpanel" aria-labelledby="tab-reg" hidden>
       <div class="alerta resol" id="resolAlerta" role="status" hidden>
         <b><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.01" stroke-linecap="round"/></svg><span id="resolT">Faltan resoluciones</span></b>
         <div class="small" id="resolS"></div>
@@ -2169,15 +2249,17 @@ $('lista').addEventListener('click', async e => {
 
 
 /* ================= TABS ================= */
-const TABS = ['reg', 'cat', 'sim'];
+const TABS = ['res', 'reg', 'cat', 'sim'];
 function irTab(t, noFoco) {
-  if (TABS.indexOf(t) < 0) t = 'reg';
+  if (TABS.indexOf(t) < 0) t = 'res';
   TABS.forEach(x => {
     const on = x === t, b = $('tab-' + x);
     b.classList.toggle('on', on); b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1;
     $('p-' + x).hidden = !on;
   });
   try { localStorage.setItem(TABKEY, t); } catch (e) {}
+  document.body.setAttribute('data-tab', t);
+  if (t === 'res') renderResumen();
   if (t === 'sim') renderSim();
   if (!noFoco) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -2480,17 +2562,97 @@ function renderSD() {
 $('sdL').addEventListener('click', e => { const b = e.target.closest('[data-sd]'); if (b) editarLinea(b.dataset.sd); });
 
 /* ================= TODO ================= */
+
+/* ================= v28: RESUMEN ================= */
+let resMes = '';
+const MESES_L = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+const MESES_I = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+const mesLbl = mk => MESES_L[+mk.slice(5, 7) - 1] + ' ' + mk.slice(0, 4);
+const mesCort = mk => MESES[+mk.slice(5, 7) - 1].replace(/^./, c => c.toUpperCase()) + ' ' + mk.slice(0, 4);
+function mesMover(mk, d) { let y = +mk.slice(0, 4), m = +mk.slice(5, 7) + d; while (m < 1) { m += 12; y--; } while (m > 12) { m -= 12; y++; } return y + '-' + String(m).padStart(2, '0'); }
+const sumL = ls => ls.reduce((a, l) => a + (Number(l.monto) || 0), 0);
+const esSinPago = l => l.medio === 'SIN PAGO';
+function mesesConDatos() { const k = {}; DATA.lineas.forEach(l => { if (l.checkin) k[l.checkin.slice(0, 7)] = 1; }); return Object.keys(k).sort(); }
+function renderResumen() {
+  const box = $('rsBody'); if (!box) return;
+  const hoyM = HOY.slice(0, 7);
+  if (!resMes || resMes > hoyM) resMes = hoyM;
+  const mk = resMes, md = mesesConDatos(), minM = md.length ? md[0] : hoyM;
+  $('rsMes').textContent = mesCort(mk);
+  $('rsPrev').disabled = mk <= minM; $('rsNext').disabled = mk >= hoyM;
+  if (!DATA.lineas.length) { box.innerHTML = '<div class="rs-card"><div class="rs-empty">Aún no hay cobros registrados.<br>Cuando registres el primero aparecerá aquí.</div></div>'; return; }
+  const lc = libresCanc();
+  const delMes = m => DATA.lineas.filter(l => l.checkin && l.checkin.slice(0, 7) === m);
+  const ls = delMes(mk), cob = ls.filter(l => !esSinPago(l)), tot = sumL(cob), sin = sumL(ls.filter(esSinPago));
+  const prevK = mesMover(mk, -1), totPrev = sumL(delMes(prevK).filter(l => !esSinPago(l)));
+  const anio = mk.slice(0, 4), totAnio = sumL(DATA.lineas.filter(l => l.checkin && l.checkin.slice(0, 4) === anio && !esSinPago(l)));
+  const resMesL = RES_LIST.filter(r => r.checkin && r.checkin.slice(0, 7) === mk && r.checkin <= HOY && !esCancelada(r, lc));
+  const porRes = {}; cob.forEach(l => { porRes[l.codigo] = (porRes[l.codigo] || 0) + l.monto; });
+  const conExtras = Object.keys(porRes).filter(c => porRes[c] > 0).length;
+  const nRes = Math.max(resMesL.length, conExtras);
+  const enCurso = mk === hoyM;
+  const partes = fnum(tot, 2).split(',');
+  let hHero = '<div class="rs-hero"><div class="rs-hl">Adicionales de ' + esc(MESES_L[+mk.slice(5, 7) - 1].toLowerCase()) + '</div>' +
+    '<div class="rs-big"><small>$</small>' + partes[0] + ',' + partes[1] + '</div>' +
+    '<div class="rs-hs">' + (enCurso ? 'Mes en curso' : 'Mes cerrado') + ' · ' + (prevK < minM && !totPrev ? 'sin mes anterior para comparar' : mesLbl(prevK) + ' ' + (enCurso ? 'cerró en ' : 'fue ') + money(totPrev)) + '</div>' +
+    '<div class="rs-row"><div><b>' + conExtras + (nRes ? ' de ' + nRes : '') + '</b><span>reservas con extras</span></div>' +
+    '<div><b>' + money(sin) + '</b><span>sin cobrar (no-show)</span></div>' +
+    '<div><b>' + money(totAnio) + '</b><span>en ' + esc(anio) + '</span></div></div></div>';
+  let h = '';
+  // Por resolver
+  let hRes = '';
+  const pend = pendientesCierre();
+  if (pend.length) {
+    hRes += '<div class="rs-card rs-por"><h3>Por resolver · ' + pend.length + (pend.length === 1 ? ' cosa' : ' cosas') + '</h3><p class="rs-sub">Estadías terminadas sin confirmar servicios</p>' +
+      pend.slice(0, 3).map(r => '<button type="button" class="rs-pr" data-rs="cie"><div><b>' + esc(r.huesped || 'Sin nombre') + '</b><br><span>' + esc(fechaCorta(r.checkin)) + ' → ' + esc(fechaCorta(r.checkout)) + '</span></div><i>Confirmar ›</i></button>').join('') +
+      (pend.length > 3 ? '<button type="button" class="rs-pr" data-rs="cie"><b>Ver las ' + pend.length + '</b><i>›</i></button>' : '') + '</div>';
+  } else {
+    hRes += '<div class="rs-card"><div class="rs-ok"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg>Todo al día · no hay estadías por cerrar</div></div>';
+  }
+  // Por servicio
+  const pos = cob.filter(l => l.monto > 0 && !esNegLinea(l)), neg = sumL(cob.filter(l => l.monto < 0 || esNegLinea(l)));
+  const g = {}; pos.forEach(l => { g[l.item] = (g[l.item] || 0) + l.monto; });
+  let items = Object.keys(g).map(k => ({ n: k, v: g[k] })).sort((a, b) => b.v - a.v);
+  const totPos = items.reduce((a, x) => a + x.v, 0);
+  if (items.length > 5) { const resto = items.slice(4).reduce((a, x) => a + x.v, 0); items = items.slice(0, 4).concat([{ n: 'Otros', v: resto }]); }
+  let hSrv = '<div class="rs-card"><h3>Por servicio</h3><p class="rs-sub">' + esc(mesLbl(mk)) + ' · ' + money(tot) + '</p>';
+  if (!items.length) hSrv += '<div class="rs-empty" style="padding:8px 0">Sin servicios cobrados este mes.</div>';
+  else {
+    hSrv += '<div class="rs-bar" role="img" aria-label="Reparto por servicio">' + items.map((x, i) => '<i class="rs-s' + i + '" style="flex:' + x.v + ' 1 0"></i>').join('') + '</div>' +
+      items.map((x, i) => '<div class="rs-lg"><span class="n"><i class="d rs-s' + i + '"></i><em>' + esc(x.n) + '</em></span><b>' + money(x.v) + '<small>' + Math.round(100 * x.v / totPos) + '%</small></b></div>').join('');
+    if (neg) hSrv += '<div class="rs-neg">Descuentos y ajustes: ' + money(neg) + ' (ya restados del total)</div>';
+  }
+  hSrv += '</div>';
+  // Cómo se cobró
+  const gm = {}; cob.forEach(l => { const k = l.medio || ''; gm[k] = (gm[k] || 0) + l.monto; });
+  const meds = Object.keys(gm).filter(k => Math.abs(gm[k]) > 0.004).sort((a, b) => gm[b] - gm[a]);
+  const hPay = '<div class="rs-card"><h3>Cómo se cobró</h3><p class="rs-sub">Forma de pago de lo cobrado en ' + esc(mesLbl(mk).toLowerCase()) + '</p>' +
+    (meds.length ? meds.map(k => '<div class="rs-lg"><span class="n"><em>' + esc(medioN(k)) + '</em></span><b>' + money(gm[k]) + (tot ? '<small>' + Math.round(100 * gm[k] / tot) + '%</small>' : '') + '</b></div>').join('') : '<div class="rs-empty" style="padding:8px 0">Nada cobrado este mes.</div>') + '</div>';
+  // Evolución del año
+  const vals = []; for (let m = 1; m <= 12; m++) { const k = anio + '-' + String(m).padStart(2, '0'); vals.push({ k: k, v: k > hoyM ? 0 : sumL(delMes(k).filter(l => !esSinPago(l))), fut: k > hoyM }); }
+  const mx = Math.max.apply(null, vals.map(x => x.v).concat([1]));
+  const hEvo = '<div class="rs-card"><h3>Evolución ' + esc(anio) + '</h3><p class="rs-sub">Por mes de check-in · toca un mes para verlo</p><div class="rs-ev">' +
+    vals.map((x, i) => '<button type="button" data-m="' + x.k + '" class="' + (x.k === mk ? 'on' : '') + '"' + (x.fut ? ' disabled style="opacity:.35;cursor:default"' : '') + ' aria-label="' + esc(mesLbl(x.k)) + ': ' + money(x.v) + '"' + (x.k === mk ? ' aria-current="true"' : '') + '><i class="b" style="height:' + (x.fut ? 3 : Math.max(3, Math.round(86 * x.v / mx))) + 'px"></i><u>' + MESES_I[i] + '</u></button>').join('') + '</div></div>';
+  box.innerHTML = '<div class="rs-grid"><div class="rs-c rs-c1"><div style="order:1">' + hHero + '</div><div style="order:3">' + hSrv + '</div><div style="order:4">' + hPay + '</div></div><div class="rs-c rs-c2"><div style="order:2">' + hRes + '</div><div style="order:5">' + hEvo + '</div></div></div>';
+}
+$('rsPrev').onclick = () => { resMes = mesMover(resMes || HOY.slice(0, 7), -1); renderResumen(); };
+$('rsNext').onclick = () => { resMes = mesMover(resMes || HOY.slice(0, 7), 1); renderResumen(); };
+$('rsBody').addEventListener('click', e => {
+  const m = e.target.closest('.rs-ev button[data-m]'); if (m && !m.disabled) { resMes = m.dataset.m; renderResumen(); return; }
+  if (e.target.closest('[data-rs="cie"]')) { irTab('reg', true); const c = $('cieCard'); if (c && !c.hidden) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); else window.scrollTo({ top: 0 }); }
+});
+$('rsNuevo').onclick = () => { irTab('reg', true); $('resCard').scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => { try { $('rBuscar').focus({ preventScroll: true }); } catch (e) {} }, 350); };
+
 function renderTodo() {
   construirReservas();
-  renderAlertas(); renderResol(); renderSD(); renderCierres(); renderLista(); renderCat();
+  renderAlertas(); renderResol(); renderSD(); renderCierres(); renderLista(); renderCat(); renderResumen();
   if (RES) pintarResSel();
   if (!$('p-sim').hidden) renderSim();
 }
 
 /* ================= ARRANQUE ================= */
 (function boot() {
-  let t = 'reg'; try { t = localStorage.getItem(TABKEY) || 'reg'; } catch (e) {}
-  irTab(t, true);
+  irTab('res', true);   // v28: siempre abre en Resumen
   if (CFG.clave && CFG.url) {
     showApp(); renderTodo(); setHint(false);
     call({ accion: 'listar' }).then(j => { aplicar(j); setHint(true); cargarDirectas(); iniciarDrive(); })
