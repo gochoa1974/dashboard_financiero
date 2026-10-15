@@ -1074,8 +1074,7 @@ function limGroup(rows){
  return h;
 }
 function limSection(lim){
- const pp=lim.filter(isPorPagar);
- return '<div class="lgw">'+(lim.length?limGroup(lim):'<div class="empty" style="margin:10px 0">Sin check-outs en '+esc(mLabel(MES))+'.</div>')+(pp.length?'<button type="button" class="pbig" id="limPay">Pagar '+plu(pp.length,'limpieza','limpiezas')+' · '+f2(SUMA(pp))+'</button>':'')+limStat()+'</div>';
+ return '<div class="lgw">'+(lim.length?limGroup(lim):'<div class="empty" style="margin:10px 0">Sin check-outs en '+esc(mLabel(MES))+'.</div>')+limStat()+'</div>';
 }
 function renderEv(){
  const ev=dataset().filter(e=>e.mes===MES&&!isRecRow(e)).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
