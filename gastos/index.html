@@ -370,6 +370,16 @@ body:not([data-tab="reg"]) .dash{display:none}
 .field select{width:100%}
 .prow.admr{width:100%;text-align:left;background:transparent;border:0}
 .pane>.addrec.sec{grid-column:1/-1;max-width:460px}
+
+.vrow{display:flex;align-items:center;gap:10px;min-height:56px;border-top:1px solid var(--line)}
+.vrow:first-child{border-top:0}
+.vchk{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:8px 0;cursor:pointer}
+.vchk input{width:24px;height:24px;flex:none;accent-color:var(--accent)}
+.vchk .pt{flex:1;min-width:0}.vchk .pt b{display:block;font-size:14px}.vchk .pt small{display:block;font-size:12px;color:var(--mut);font-weight:600;margin-top:1px}
+.qchips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin:0 -2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}.qchips::-webkit-scrollbar{display:none}
+.qchip{flex:none;white-space:nowrap;min-height:40px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13.5px;font-weight:700}
+.qchip:active{background:var(--off-bg)}
+.pane>#admVarBtn{grid-column:1/-1;max-width:460px}
 </style>
 </head>
 <body data-tab="reg">
@@ -523,6 +533,16 @@ const FAMILIAS={
  '4. Logística, viajes e imprevistos':['Transporte (gasolina, peajes)','Alimentación en desplazamientos','Imprevistos y otros'],
  '5. Otros / varios':['Imprevistos y otros'],
 };
+const VARXKEY='cb_gastos_varx_v1',VARHKEY='cb_gastos_varh_v1';
+let VARX=[],VARH=[];try{VARX=JSON.parse(localStorage.getItem(VARXKEY)||'[]')||[];{const h=localStorage.getItem(VARHKEY);VARH=h===null?['Hipoteca – mora y otros cargos','Comisión bancaria – pago de servicios','Comisión bancaria – transferencia a limpieza','Tarifa de retiro Airbnb']:(JSON.parse(h)||[]);}}catch(e){}
+const saveVAR=()=>{try{localStorage.setItem(VARXKEY,JSON.stringify(VARX));localStorage.setItem(VARHKEY,JSON.stringify(VARH));}catch(e){}};
+VARX.forEach(v=>{(FAMILIAS[v.fam]=FAMILIAS[v.fam]||[]);if(!FAMILIAS[v.fam].includes(v.con))FAMILIAS[v.fam].push(v.con);});
+const famNom=f=>String(f).replace(/^\d\.\s*/,'');
+function varTypes(){
+ const seen=new Set(),out=[];
+ Object.keys(FAMILIAS).sort().forEach(f=>FAMILIAS[f].forEach(c=>{if(seen.has(c))return;seen.add(c);out.push({con:c,fam:f,custom:VARX.some(v=>v.con===c),hid:VARH.includes(c)});}));
+ return out;
+}
 const KEYWORDS={
  '1. Fijos operativos':['predial','impuesto','guardiania','guardianía','vigilancia','parqueo','parqueadero'],
  '2. Financieros':['mora','comision','comisión','transferencia','retiro','airbnb','banco','banca','interes','interés'],
@@ -916,9 +936,16 @@ function openRecAdm(){
  all.forEach(r=>{(grp[r.um||'Otros']=grp[r.um||'Otros']||[]).push(r);});
  const order=UM_ORDER.concat(Object.keys(grp).filter(u=>!UM_ORDER.includes(u)));
  let h='';
- order.filter(u=>grp[u]).forEach(u=>{h+='<div class="group">'+esc(u)+'</div><div class="pcard">'+grp[u].map(r=>'<button type="button" class="prow admr" data-ek="'+esc(r.key)+'"><div class="pt"><b>'+esc(rname(r))+'</b><small>'+esc(recStatus(r))+'</small></div><span class="pbtn">Editar</span></button>').join('')+'</div>';});
- openSheet('Administrar recurrentes',h+'<div class="shnote" style="margin-top:12px">La hipoteca se maneja desde su tabla del banco.</div>');
+ order.filter(u=>grp[u]).forEach(u=>{h+='<div class="group">'+esc(u)+'</div><div class="pcard">'+grp[u].map(r=>'<div class="vrow"><label class="vchk"><input type="checkbox" data-vk="'+esc(r.key)+'"'+(activeIn(r,MES)?' checked':'')+' aria-label="Ver '+esc(rname(r))+'"><span class="pt"><b>'+esc(rname(r))+'</b><small>'+esc(recStatus(r))+'</small></span></label><button type="button" class="pbtn" data-ek="'+esc(r.key)+'">Editar</button></div>').join('')+'</div>';});
+ const sc=($('sheet')||{}).scrollTop||0;
+ openSheet('Administrar recurrentes','<div class="shnote">Con visto = aparece en Recurrentes. Sin visto = oculto, ya no se exige ni se muestra desde este mes (lo registrado antes se conserva).</div>'+h+'<div class="shnote" style="margin-top:12px">La hipoteca se maneja desde su tabla del banco.</div>');
+ $('sheet').scrollTop=sc;
  document.querySelectorAll('#shBody [data-ek]').forEach(b=>b.onclick=()=>{const k=b.dataset.ek;closeSheet();openRecEdit(k);});
+ document.querySelectorAll('#shBody [data-vk]').forEach(c=>c.onchange=()=>{
+  const k=c.dataset.vk,r=REC_ALL().find(x=>x.key===k);if(!r)return;
+  RECOV[k]=Object.assign({},RECOV[k]||{},c.checked?{desde:(r.desde&&r.desde>MES)?r.desde:MES,hasta:null}:{hasta:addM(MES,-1)});
+  saveRECOV();renderAll();toast(c.checked?'Visible: '+rname(r):'Oculto desde '+mLabel(MES)+': '+rname(r),false);openRecAdm();
+ });
 }
 function openRecEdit(key){
  const r=REC_ALL().find(x=>x.key===key);if(!r)return;
@@ -953,10 +980,30 @@ function initNv(){
  };
  nvPaint();
 }
+function openVarAdm(){
+ SH={t:'vadm'};
+ const ts=varTypes(),grp={};ts.forEach(t=>{(grp[t.fam]=grp[t.fam]||[]).push(t);});
+ const sc=($('sheet')||{}).scrollTop||0;
+ let h='<div class="shnote">Con visto = aparece como atajo en «+ Nuevo gasto». Sin visto = oculto (lo ya registrado se conserva).</div>';
+ Object.keys(grp).sort().forEach(f=>{h+='<div class="group">'+esc(famNom(f))+'</div><div class="pcard">'+grp[f].map(t=>'<div class="vrow"><label class="vchk"><input type="checkbox" data-vn="'+esc(t.con)+'"'+(t.hid?'':' checked')+' aria-label="Ver '+esc(t.con)+'"><span class="pt"><b>'+esc(t.con)+'</b>'+(t.custom?'<small>Creado por ti</small>':'')+'</span></label></div>').join('')+'</div>';});
+ h+='<div class="group">Nuevo tipo de variable</div><div class="field"><label for="vaNom">Nombre</label><input type="text" id="vaNom" placeholder="Ej. Fumigación, Piscina, Notaría…" autocomplete="off"></div><div class="field"><label for="vaFam">Paraguas</label><select id="vaFam">'+FAM_ORDEN.filter(f=>f!=='2. Financieros').map(f=>'<option value="'+esc(f)+'"'+(f==='3. Mantenimiento, reparaciones y reposición'?' selected':'')+'>'+esc(famNom(f))+'</option>').join('')+'</select></div><button type="button" class="save" id="vaGo" disabled>Crear tipo de variable</button>';
+ openSheet('Administrar variables',h);
+ $('sheet').scrollTop=sc;
+ document.querySelectorAll('#shBody [data-vn]').forEach(c=>c.onchange=()=>{
+  const n=c.dataset.vn;VARH=VARH.filter(x=>x!==n);if(!c.checked)VARH.push(n);saveVAR();toast(c.checked?'Visible: '+n:'Oculto: '+n,false);
+ });
+ $('vaNom').oninput=e=>{$('vaGo').disabled=!e.target.value.trim();};
+ $('vaGo').onclick=()=>{
+  const n=$('vaNom').value.trim();if(!n)return;
+  if(varTypes().some(t=>normTxt(t.con)===normTxt(n))){const ex=varTypes().find(t=>normTxt(t.con)===normTxt(n));VARH=VARH.filter(x=>x!==ex.con);saveVAR();toast('Ya existía: ahora está visible · '+ex.con,false);openVarAdm();return;}
+  const f=$('vaFam').value;VARX.push({con:n,fam:f});(FAMILIAS[f]=FAMILIAS[f]||[]).push(n);saveVAR();toast('Creado: '+n,false);openVarAdm();
+ };
+}
 function openNv(){
  SH={t:'nv'};
  openSheet('Nuevo gasto',
   '<div class="money"><span id="nvMon"></span><input id="nvMonto" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" aria-label="Monto"></div>'+
+  '<div class="field" id="nvChipsW"><label>Atajos</label><div class="qchips" id="nvChips"></div></div>'+
   '<div class="field"><label for="nvCon">¿Qué gasto es?</label><input type="text" id="nvCon" placeholder="Ej. predial, lavadora, doctor, aire acondicionado…" autocomplete="off"></div>'+
   '<div id="nvSpell" class="ask" style="display:none"></div>'+
   '<div id="nvTipo" class="ask" style="display:none"></div>'+
@@ -965,6 +1012,8 @@ function openNv(){
   '<div id="nvGrp" class="ask" style="display:none"></div>'+
   '<button type="button" class="save" id="nvGo" disabled>Guardar gasto</button>');
  initNv();
+ {const vt=varTypes().filter(t=>!t.hid);$('nvChips').innerHTML=vt.map(t=>'<button type="button" class="qchip" data-c="'+esc(t.con)+'">'+esc(t.con)+'</button>').join('')||'<span class="hint">Sin atajos visibles · actívalos en «Administrar variables».</span>';
+  $('nvChips').onclick=e=>{const b=e.target.closest('.qchip');if(!b)return;$('nvCon').value=b.dataset.c;$('nvCon').dispatchEvent(new Event('input'));$('nvMonto').focus();};}
  setTimeout(()=>{if(SH&&SH.t==='nv')$('nvMonto').focus();},340);
 }
 
@@ -1031,7 +1080,7 @@ function renderEv(){
  const lim=ev.filter(isLimp),otros=ev.filter(e=>!isLimp(e));
  $('evBox').innerHTML='<div class="pcol"><div class="kcard"><small>VARIABLES · '+esc(mLabel(MES).toUpperCase())+'</small><b>'+f2(SUMA(ev))+'</b><span>Dependen de estadías o imprevistos</span></div></div>'+limSection(lim)+
   '<div class="group">Otros variables<span>'+f2(SUMA(otros))+'</span></div>'+
-  (otros.length?otros.map(regCard).join(''):(esPasado(MES)?'<div class="empty">No hubo otros gastos variables en '+esc(mLabel(MES))+'.</div>':'<div class="empty">Reparaciones, compras o imprevistos aparecen aquí.<br>Toca «+ Nuevo gasto» para agregar uno.</div>'));
+  (otros.length?otros.map(regCard).join(''):(esPasado(MES)?'<div class="empty">No hubo otros gastos variables en '+esc(mLabel(MES))+'.</div>':'<div class="empty">Reparaciones, compras o imprevistos aparecen aquí.<br>Toca «+ Nuevo gasto» para agregar uno.</div>'))+'<button type="button" class="addrec sec" id="admVarBtn">⚙ Administrar variables</button>';
 }
 function pendByBlock(DS){
  const m={ope:0,deu:0,cap:0},v={};
@@ -1644,6 +1693,7 @@ $('recRows').addEventListener('click',e=>{
  const it=e.target.closest('.item[data-k]');if(it)openRec(it.dataset.k);
 });
 $('evBox').addEventListener('click',e=>{
+ if(e.target.closest('#admVarBtn')){openVarAdm();return;}
  if(e.target.closest('[data-lg]')){LOPEN[MES]=!LOPEN[MES];renderEv();return;}
  if(e.target.closest('#limNew')){openLimNew();return;}
  if(e.target.closest('#limPay')){openLimPay();return;}
