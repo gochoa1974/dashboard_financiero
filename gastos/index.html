@@ -1019,6 +1019,7 @@ function openNv(){
 
 function openReg(id){
  const e=dataset().find(x=>x.id===id);if(!e)return;
+ if(isPorPagar(e)){openLimPay(id);return;}
  SH={t:'reg',id};
  const hip=String(e.concepto).startsWith('Hipoteca');
  openSheet('Corregir gasto',
@@ -1073,7 +1074,8 @@ function limGroup(rows){
  return h;
 }
 function limSection(lim){
- return '<div class="lgw">'+(lim.length?limGroup(lim):'<div class="empty" style="margin:10px 0">Sin check-outs en '+esc(mLabel(MES))+'.</div>')+limStat()+'</div>';
+ const pp=lim.filter(isPorPagar);
+ return '<div class="lgw">'+(lim.length?limGroup(lim):'<div class="empty" style="margin:10px 0">Sin check-outs en '+esc(mLabel(MES))+'.</div>')+(pp.length?'<button type="button" class="pbig" id="limPay">Pagar '+plu(pp.length,'limpieza','limpiezas')+' · '+f2(SUMA(pp))+'</button>':'')+limStat()+'</div>';
 }
 function renderEv(){
  const ev=dataset().filter(e=>e.mes===MES&&!isRecRow(e)).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
@@ -1284,13 +1286,13 @@ function openLimNew(){
   closeSheet();persist();UI={};renderAll();toast('Limpieza registrada: '+f2(m)+' por pagar',true);
  };
 }
-function openLimPay(){
+function openLimPay(pre){
  const pp=dataset().filter(isPorPagar).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
  if(!pp.length){toast('No hay limpiezas por pagar',false);return;}
  SH={t:'limp'};
  let com=''; try{com=localStorage.getItem('cb_lim_com')||'0,45';}catch(e){com='0,45';}
  openSheet('Pagar limpieza',
-  '<div id="lpL">'+pp.map(e=>'<label class="pk"><input type="checkbox" data-id="'+esc(e.id)+'" checked><span>'+esc(fdia(e.fecha))+' · '+esc(e.anuncio||'')+'<small>'+esc(e.detalle||'')+'</small></span><em>'+f2(e.monto)+'</em></label>').join('')+'</div>'+
+  '<div id="lpL">'+pp.map(e=>'<label class="pk"><input type="checkbox" data-id="'+esc(e.id)+'"'+((!pre||pre===e.id)?' checked':'')+'><span>'+esc(fdia(e.fecha))+' · '+esc(e.anuncio||'')+'<small>'+esc(e.detalle||'')+'</small></span><em>'+f2(e.monto)+'</em></label>').join('')+'</div>'+
   '<div class="sumln" style="margin-top:10px"><span>Total a pagar</span><b id="lpT"></b></div>'+
   '<div class="field" style="margin-top:12px"><label for="lpE">Efectivo (lo que ya le dieron en mano)</label><input type="text" id="lpE" inputmode="decimal" autocomplete="off" placeholder="0,00"></div>'+
   '<div class="sumln"><span>Por transferencia</span><b id="lpB"></b></div>'+
