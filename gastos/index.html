@@ -450,7 +450,7 @@ body:not([data-tab="reg"]) .dash{display:none}
 .lsug{border:0;background:transparent;color:var(--accent);font-weight:800;font-size:12.5px;padding:6px 0;min-height:32px}
 
 /* v13 */
-.rbar{height:22px;gap:2px;margin:10px 0 4px}
+.rbar{height:22px;gap:0;margin:10px 0 4px}.rbar .sg.cs{border-left:2px solid var(--surface)}
 .rbar .sg{display:flex;align-items:center;justify-content:center;overflow:hidden;min-width:0}
 .rbar .sg span{font-size:11px;font-weight:800;color:#fff;background:rgba(0,0,0,.34);border-radius:99px;padding:1px 7px;line-height:1.35;white-space:nowrap}
 .item.lg .lgs{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-size:12.5px;font-weight:800;white-space:nowrap}
@@ -1253,7 +1253,7 @@ const plu=(n,a,b)=>n+' '+(n===1?a:b);
 const RCKEY='cb_gastos_resopen_v1';
 let RCOPEN={};try{RCOPEN=JSON.parse(localStorage.getItem(RCKEY)||'{}')||{};}catch(e){}
 function pcts(vals){const t=vals.reduce((a,b)=>a+b,0);if(t<=0.004)return vals.map(()=>0);const raw=vals.map(v=>Math.max(0,v)/t*100),fl=raw.map(Math.floor);let rem=100-fl.reduce((a,b)=>a+b,0);const ord=raw.map((r,i)=>[r-fl[i],i]).filter(x=>raw[x[1]]>0).sort((a,b)=>b[0]-a[0]);for(let k=0;k<rem&&ord.length;k++)fl[ord[k%ord.length][1]]++;return fl;}
-const RSEG=(v,c,h,t)=>v>0.004?'<i class="sg'+(h?' h':'')+'" style="flex-grow:'+v+';--c:var(--'+c+')">'+(t?'<span>'+t+'</span>':'')+'</i>':'';
+const RSEG=(v,c,h,t,st)=>v>0.004?'<i class="sg'+(h?' h':'')+(st?' cs':'')+'" style="flex-grow:'+v+';--c:var(--'+c+')">'+(t?'<span>'+t+'</span>':'')+'</i>':'';
 function rcCard(key,title,hoy,cierre,pas,segs,keys,rows,note,proj){
  const open=!!RCOPEN[key];
  return '<div class="rcx"><button type="button" class="rch" data-rc="'+key+'" aria-expanded="'+open+'"><span>'+esc(title)+'</span><i class="rcv">'+(open?'⌃':'⌄')+'</i></button>'+
@@ -1276,7 +1276,7 @@ function resPanels(mon,DS){
  const p1=pcts([rcC,tv]);
  let h='';
  h+=rcCard('rv','Recurrentes y variables',td,cierre1,pas,
-   RSEG(tr,'crec',0,gp>0.004?'':LB(p1[0],rcC,cierre1))+RSEG(tv,'cvar',0,LB(p1[1],tv,cierre1))+RSEG(gp,'crec',1,LB(p1[0],rcC,cierre1)),
+   RSEG(tr,'crec',0,gp>0.004?'':LB(p1[0],rcC,cierre1),0)+RSEG(gp,'crec',1,LB(p1[0],rcC,cierre1),0)+RSEG(tv,'cvar',0,LB(p1[1],tv,cierre1),1),
    '<span style="--c:var(--crec)"><u></u>Recurrentes '+p1[0]+' %</span><span style="--c:var(--cvar)"><u></u>Variables '+p1[1]+' %</span>',
    rcRow('Recurrentes','crec',tr,rcC,p1[0],pas)+rcRow('Variables','cvar',tv,tv,p1[1],pas),'',gp>0.004);
  const BL=[['ope','Operativo','cope'],['deu','Deuda y banca','cdeu'],['cap','Pago de capital','ccap']];
@@ -1285,7 +1285,7 @@ function resPanels(mon,DS){
  const p2=pcts(BL.map(x=>sm[x[0]]+pm[x[0]]));
  const capC=sm.cap+pm.cap;
  h+=rcCard('qf','¿En qué se fue?',tot,cierre2,pas,
-   BL.map((x,i)=>RSEG(sm[x[0]],x[2],0,pm[x[0]]>0.004?'':LB(p2[i],sm[x[0]]+pm[x[0]],cierre2))).join('')+BL.map((x,i)=>RSEG(pm[x[0]],x[2],1,LB(p2[i],sm[x[0]]+pm[x[0]],cierre2))).join(''),
+   BL.map((x,i)=>RSEG(sm[x[0]],x[2],0,pm[x[0]]>0.004?'':LB(p2[i],sm[x[0]]+pm[x[0]],cierre2),i>0)+RSEG(pm[x[0]],x[2],1,LB(p2[i],sm[x[0]]+pm[x[0]],cierre2),i>0&&sm[x[0]]<=0.004)).join(''),
    BL.map((x,i)=>'<span style="--c:var(--'+x[2]+')"><u></u>'+(x[0]==='cap'?'Capital':x[1])+' '+p2[i]+' %</span>').join(''),
    BL.map((x,i)=>rcRow(x[1],x[2],sm[x[0]],sm[x[0]]+pm[x[0]],p2[i],pas)).join(''),
    capC>0.004?'Incluye capital '+f2(capC)+' (baja tu deuda, no es gasto).':'',gp+pm.cap>0.004);
