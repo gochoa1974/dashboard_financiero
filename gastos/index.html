@@ -1221,7 +1221,7 @@ function limSection(lim){
 function renderEv(){
  const ev=dataset().filter(e=>e.mes===MES&&!isRecRow(e)).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
  const lim=ev.filter(isLimp),otros=ev.filter(e=>!isLimp(e));
- $('evBox').innerHTML='<div class="pcol"><div class="kcard"><small>VARIABLES · '+esc(mLabel(MES).toUpperCase())+'</small><b>'+f2(SUMA(ev))+'</b><span>Dependen de estadías o imprevistos</span></div></div>'+limSection(lim)+
+ $('evBox').innerHTML='<div class="pcol"><div class="kcard"><small>VARIABLES PAGADOS · '+esc(mLabel(MES).toUpperCase())+'</small><b>'+f2(SUMA(ev)-SUMA(ev.filter(isPorPagar)))+'</b><span>'+(ev.some(isPorPagar)?'Ya pagado · por pagar '+f2(SUMA(ev.filter(isPorPagar)))+' · total del mes '+f2(SUMA(ev)):'Ya pagado · dependen de estadías o imprevistos')+'</span></div></div>'+limSection(lim)+
   '<div class="group">Otros variables<span>'+f2(SUMA(otros))+'</span></div>'+
   (otros.length?otros.map(regCard).join(''):(esPasado(MES)?'<div class="empty">No hubo otros gastos variables en '+esc(mLabel(MES))+'.</div>':'<div class="empty">Reparaciones, compras o imprevistos aparecen aquí.<br>Toca «+ Nuevo gasto» para agregar uno.</div>'))+'<button type="button" class="addrec sec" id="admVarBtn">⚙ Administrar variables</button>';
 }
@@ -1257,7 +1257,7 @@ const RSEG=(v,c,h,t,st)=>v>0.004?'<i class="sg'+(h?' h':'')+(st?' cs':'')+'" sty
 function rcCard(key,title,hoy,cierre,pas,segs,keys,rows,note,proj){
  const open=!!RCOPEN[key];
  return '<div class="rcx"><button type="button" class="rch" data-rc="'+key+'" aria-expanded="'+open+'"><span>'+esc(title)+'</span><i class="rcv">'+(open?'⌃':'⌄')+'</i></button>'+
-  '<div class="rcs">'+(pas?'<span>Total del mes <b>'+f2(cierre)+'</b></span>':'<span>Hoy <b>'+f2(hoy)+'</b></span><span>Cierre del mes <b>'+f2(cierre)+'</b></span>')+'</div>'+
+  '<div class="rcs">'+(pas?'<span>Total del mes <b>'+f2(cierre)+'</b></span>':'<span>Ya pagado <b>'+f2(hoy)+'</b></span><span>Cierre del mes <b>'+f2(cierre)+'</b></span>')+'</div>'+
   '<div class="rbar">'+(segs||'<i class="sg" style="flex-grow:1;--c:var(--cvar);opacity:.15"></i>')+'</div>'+
   '<div class="rkey">'+keys+'</div>'+
   (proj?'<div class="rmk"><span><u></u>Sólido = ya salió</span><span><u class="h"></u>Rayado = por venir</span></div>':'')+
@@ -1273,23 +1273,25 @@ function resPanels(mon,DS){
  const pas=esPasado(MES),PB=pas?{m:{ope:0,deu:0,cap:0}}:pendByBlock(DS),pm=PB.m;
  const dev=mon.filter(e=>e.cuenta!=='No'),tr=SUMA(dev.filter(isRecRow)),td=SUMA(dev),tv=td-tr;
  const gp=pm.ope+pm.deu;
+ const PP=mon.filter(isPorPagar),ppT=SUMA(PP.filter(e=>e.cuenta!=='No')),ppV=SUMA(PP.filter(e=>e.cuenta!=='No'&&!isRecRow(e))),ppR=ppT-ppV,ppAll=SUMA(PP);
+ const ppB={ope:0,deu:0,cap:0};PP.forEach(e=>{ppB[blkOf(e)]+=(+e.monto||0);});
  const rcC=tr+gp,cierre1=td+gp;
  const p1=pcts([rcC,tv]);
  let h='';
- h+=rcCard('rv','Recurrentes y variables',td,cierre1,pas,
-   RSEG(tr,'crec',0,gp>0.004?'':LB(p1[0],rcC,cierre1),0)+RSEG(gp,'crec',1,LB(p1[0],rcC,cierre1),0)+RSEG(tv,'cvar',0,LB(p1[1],tv,cierre1),1),
+ h+=rcCard('rv','Recurrentes y variables',td-ppT,cierre1,pas,
+   RSEG(tr-ppR,'crec',0,(gp+ppR)>0.004?'':LB(p1[0],rcC,cierre1),0)+RSEG(gp+ppR,'crec',1,LB(p1[0],rcC,cierre1),0)+RSEG(tv-ppV,'cvar',0,ppV>0.004?'':LB(p1[1],tv,cierre1),1)+RSEG(ppV,'cvar',1,LB(p1[1],tv,cierre1),0),
    '<span style="--c:var(--crec)"><u></u>Recurrentes '+p1[0]+' %</span><span style="--c:var(--cvar)"><u></u>Variables '+p1[1]+' %</span>',
-   rcRow('Recurrentes','crec',tr,rcC,p1[0],pas)+rcRow('Variables','cvar',tv,tv,p1[1],pas),'',gp>0.004);
+   rcRow('Recurrentes','crec',tr-ppR,rcC,p1[0],pas)+rcRow('Variables','cvar',tv-ppV,tv,p1[1],pas),'',gp+ppT>0.004);
  const BL=[['ope','Operativo','cope'],['deu','Deuda y banca','cdeu'],['cap','Pago de capital','ccap']];
  const sm={};BL.forEach(x=>sm[x[0]]=SUMA(mon.filter(e=>blkOf(e)===x[0])));
  const tot=SUMA(mon),cierre2=tot+pm.ope+pm.deu+pm.cap;
  const p2=pcts(BL.map(x=>sm[x[0]]+pm[x[0]]));
  const capC=sm.cap+pm.cap;
- h+=rcCard('qf','¿En qué se fue?',tot,cierre2,pas,
-   BL.map((x,i)=>RSEG(sm[x[0]],x[2],0,pm[x[0]]>0.004?'':LB(p2[i],sm[x[0]]+pm[x[0]],cierre2),i>0)+RSEG(pm[x[0]],x[2],1,LB(p2[i],sm[x[0]]+pm[x[0]],cierre2),i>0&&sm[x[0]]<=0.004)).join(''),
+ h+=rcCard('qf','¿En qué se fue?',tot-ppAll,cierre2,pas,
+   BL.map((x,i)=>RSEG(sm[x[0]]-ppB[x[0]],x[2],0,(pm[x[0]]+ppB[x[0]])>0.004?'':LB(p2[i],sm[x[0]]+pm[x[0]],cierre2),i>0)+RSEG(pm[x[0]]+ppB[x[0]],x[2],1,LB(p2[i],sm[x[0]]+pm[x[0]],cierre2),i>0&&(sm[x[0]]-ppB[x[0]])<=0.004)).join(''),
    BL.map((x,i)=>'<span style="--c:var(--'+x[2]+')"><u></u>'+(x[0]==='cap'?'Capital':x[1])+' '+p2[i]+' %</span>').join(''),
-   BL.map((x,i)=>rcRow(x[1],x[2],sm[x[0]],sm[x[0]]+pm[x[0]],p2[i],pas)).join(''),
-   [capC>0.004?'Incluye capital '+f2(capC)+' (baja tu deuda, no es gasto).':'',cuotasNota(MES)].filter(Boolean).join('<br>'),gp+pm.cap>0.004);
+   BL.map((x,i)=>rcRow(x[1],x[2],sm[x[0]]-ppB[x[0]],sm[x[0]]+pm[x[0]],p2[i],pas)).join(''),
+   [capC>0.004?'Incluye capital '+f2(capC)+' (baja tu deuda, no es gasto).':'',cuotasNota(MES)].filter(Boolean).join('<br>'),gp+pm.cap+ppAll>0.004);
  return h;
 }
 function renderReg(){
@@ -1365,10 +1367,10 @@ function renderTotals(){
   const s=suggestion(r,DS);if(s&&s.monto!==undefined)pend+=s.monto;
  });
  const falta=rl.length-saved,pct=rl.length?saved/rl.length:0;
- $('hLabel').textContent='Egreso caja - bancos';
+ $('hLabel').textContent='Salió del banco';
  setTotal(tot);
  $('hMov').textContent=mon.length+(mon.length===1?' movimiento registrado':' movimientos registrados');
- {const L=['Gasto del mes: '+f2(gasto)];if(capi>0.005)L.push('Capital de la hipoteca (no es gasto): '+f2(capi));if(efe>0.005)L.push('Pagado en efectivo (no sale del banco): '+f2(efe));if(ppag>0.005)L.push('Por pagar (aún no sale): '+f2(ppag));$('hGasto').textContent=L.length>1?L.join('\n'):'';}
+ {const L=['Gasto del mes: '+f2(gasto)];if(capi>0.005)L.push('+ Capital de la hipoteca (no es gasto): '+f2(capi));if(efe>0.005)L.push('− Pagado en efectivo (no sale del banco): '+f2(efe));if(ppag>0.005)L.push('− Por pagar (aún no sale): '+f2(ppag));$('hGasto').textContent=L.length>1?L.join('\n'):'';}
  $('ringTxt').textContent=saved+'/'+rl.length;
  $('arc').style.strokeDashoffset=213.6*(1-pct);
  $('hTitle').textContent=falta?saved+' de '+rl.length+' recurrentes al día':'Recurrentes al día';
