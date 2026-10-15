@@ -386,6 +386,10 @@ body:not([data-tab="reg"]) .dash{display:none}
 .lrow .lt2 b{display:block;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lrow .lt2 small{display:block;font-size:11.5px;color:var(--mut);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lrow .lr{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+
+.hidrow{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;margin:-2px 0 10px;padding:10px 14px;min-height:44px;border:1px dashed var(--line);background:transparent;border-radius:14px;color:var(--mut);font-size:12.5px;font-weight:600}
+.hidrow b{color:var(--ink);font-size:13.5px;flex:none}
+.pane>.hidrow{grid-column:1/-1}
 </style>
 </head>
 <body data-tab="reg">
@@ -531,7 +535,7 @@ const saveRECOV=()=>{try{localStorage.setItem(RECOVKEY,JSON.stringify(RECOV));}c
 const UM_ORDER=['Servicios básicos','Software','Hipoteca','Mantenimiento'];
 const REC_ALL=()=>REC_BASE.concat(RECX.map(x=>({key:x.key,con:x.con,det:x.det,fam:x.fam,um:x.um||'Otros',desde:x.desde,hasta:x.hasta,monto0:x.monto,dia0:x.dia,sub:x.dia?'Cobra el día '+x.dia:'Agregado por ti · edítalo si cambia',src:'habitual',custom:true}))).map(r=>{const o=RECOV[r.key];if(!o)return r;const m=Object.assign({},r,o);if(r.custom&&m.dia0)m.sub='Cobra el día '+m.dia0;return m;});
 const activeIn=(r,ym)=>(!r.desde||ym>=r.desde)&&(!r.hasta||ym<=r.hasta);
-const REC=()=>{const DS=dataset();return REC_ALL().filter(r=>activeIn(r,MES)||existing(r,DS).some(e=>(+e.monto||0)>0));};
+const REC=()=>REC_ALL().filter(r=>activeIn(r,MES));
 const FAMILIAS={
  '1. Fijos operativos':['Impuesto predial','Guardianía / vigilancia','Parqueo (pagado por el anfitrión)'],
  '2. Financieros':['Hipoteca – mora y otros cargos','Comisión bancaria – pago de servicios','Comisión bancaria – transferencia a limpieza','Tarifa de retiro Airbnb'],
@@ -810,11 +814,13 @@ function renderRec(){
  const tya=SUMA(ya.flatMap(x=>x.ex)),pct=xs.length?Math.round(ya.length/xs.length*100):0;
  let h='<div class="rcard"><div class="ringm" style="--p:'+pct+'"><i>'+ya.length+'/'+xs.length+'</i></div><div><b>'+(por.length?ya.length+' de '+xs.length+' al día':'Recurrentes al día')+'</b><span>'+(por.length?'Faltan '+por.length+' por registrar · ':'Todo registrado · ')+'ya llevas '+f2(tya)+' este mes</span></div></div>';
  if(sg.length)h+='<button type="button" class="confirm" id="accAll">✓ Confirmar '+sg.length+(sg.length===1?' sugerido':' sugeridos')+'</button>';
- const grp={};xs.forEach(x=>{const u=x.r.um||'Otros';(grp[u]=grp[u]||[]).push(x);});
+ const grp={},hid={};xs.forEach(x=>{const u=x.r.um||'Otros';(grp[u]=grp[u]||[]).push(x);});
+ REC_ALL().filter(r=>!activeIn(r,MES)).forEach(r=>{const ex=existing(r,DS);if(SUMA(ex)<=0)return;const u=r.um||'Otros';(hid[u]=hid[u]||[]).push({r,ex});if(!grp[u])grp[u]=[];});
  const order=UM_ORDER.concat(Object.keys(grp).filter(u=>!UM_ORDER.includes(u)));
  order.filter(u=>grp[u]).forEach(u=>{
-  const a=grp[u],ok=a.filter(x=>x.st==='reg').length;
-  h+='<div class="group'+(ok<a.length?' w':'')+'">'+esc(u)+'<span>'+ok+' de '+a.length+' · '+f2(SUMA(a.flatMap(x=>x.ex)))+'</span></div>'+a.map(recCard).join('');
+  const a=grp[u],ok=a.filter(x=>x.st==='reg').length,hh=hid[u]||[],th=SUMA(hh.flatMap(x=>x.ex));
+  h+='<div class="group'+(ok<a.length?' w':'')+'">'+esc(u)+'<span>'+(a.length?ok+' de '+a.length+' · ':'')+f2(SUMA(a.flatMap(x=>x.ex))+th)+'</span></div>'+a.map(recCard).join('');
+  if(hh.length)h+='<button type="button" class="hidrow" id="hid_'+esc(u)+'" data-hid="1"><span>Ocultos ('+hh.map(x=>esc(rname(x.r))).join(', ')+') · ya incluidos en el total</span><b>'+f2(th)+'</b></button>';
  });
  if(!xs.length)h+='<div class="empty">No hay recurrentes activos este mes.</div>';
  h+='<button type="button" class="addrec" id="addRecBtn">+ Nuevo recurrente</button><button type="button" class="addrec sec" id="admRecBtn">⚙ Administrar recurrentes</button>';
@@ -930,10 +936,18 @@ function openNewRec(){
  };
  setTimeout(()=>{if(SH&&SH.t==='newrec')$('nrCon').focus();},340);
 }
+function hideRec(r){
+ const real=SUMA(existing(r,dataset())),u=r.um||'su paraguas';
+ RECOV[r.key]=Object.assign({},RECOV[r.key]||{},{hasta:addM(MES,-1)});saveRECOV();
+ return 'Oculto: '+rname(r)+(real>0?' · sus '+f2(real)+' de '+mLabel(MES)+' siguen sumando en '+u:' · lo ya registrado sigue sumando en '+u);
+}
+function showRec(r){
+ RECOV[r.key]=Object.assign({},RECOV[r.key]||{},{hasta:null,desde:activeIn(r,MES)?r.desde:MES});saveRECOV();
+}
 function recStatus(r){
  if(r.desde&&MES<r.desde)return 'Empieza en '+mShort(r.desde);
  if(r.hasta&&MES>r.hasta)return 'Dado de baja desde '+mShort(addM(r.hasta,1));
- if(r.hasta)return 'Activo hasta '+mShort(r.hasta);
+ if(r.hasta)return 'Se oculta desde '+mShort(addM(r.hasta,1));
  return 'Activo'+(r.dia0?' · cobra el día '+r.dia0:'');
 }
 function openRecAdm(){
@@ -942,15 +956,15 @@ function openRecAdm(){
  all.forEach(r=>{(grp[r.um||'Otros']=grp[r.um||'Otros']||[]).push(r);});
  const order=UM_ORDER.concat(Object.keys(grp).filter(u=>!UM_ORDER.includes(u)));
  let h='';
- order.filter(u=>grp[u]).forEach(u=>{h+='<div class="group">'+esc(u)+'</div><div class="pcard">'+grp[u].map(r=>'<div class="vrow"><label class="vchk"><input type="checkbox" data-vk="'+esc(r.key)+'"'+(activeIn(r,MES)?' checked':'')+' aria-label="Ver '+esc(rname(r))+'"><span class="pt"><b>'+esc(rname(r))+'</b><small>'+esc(recStatus(r))+'</small></span></label><button type="button" class="pbtn" data-ek="'+esc(r.key)+'">Editar</button></div>').join('')+'</div>';});
+ order.filter(u=>grp[u]).forEach(u=>{h+='<div class="group">'+esc(u)+'</div><div class="pcard">'+grp[u].map(r=>'<div class="vrow"><label class="vchk"><input type="checkbox" data-vk="'+esc(r.key)+'"'+(r.hasta?'':' checked')+' aria-label="Ver '+esc(rname(r))+'"><span class="pt"><b>'+esc(rname(r))+'</b><small>'+esc(recStatus(r))+'</small></span></label><button type="button" class="pbtn" data-ek="'+esc(r.key)+'">Editar</button></div>').join('')+'</div>';});
  const sc=($('sheet')||{}).scrollTop||0;
  openSheet('Administrar recurrentes','<div class="shnote">Con visto = aparece en Recurrentes. Sin visto = oculto, ya no se exige ni se muestra desde este mes (lo registrado antes se conserva).</div>'+h+'<div class="shnote" style="margin-top:12px">La hipoteca se maneja desde su tabla del banco.</div>');
  $('sheet').scrollTop=sc;
  document.querySelectorAll('#shBody [data-ek]').forEach(b=>b.onclick=()=>{const k=b.dataset.ek;closeSheet();openRecEdit(k);});
  document.querySelectorAll('#shBody [data-vk]').forEach(c=>c.onchange=()=>{
   const k=c.dataset.vk,r=REC_ALL().find(x=>x.key===k);if(!r)return;
-  RECOV[k]=Object.assign({},RECOV[k]||{},c.checked?{desde:(r.desde&&r.desde>MES)?r.desde:MES,hasta:null}:{hasta:addM(MES,-1)});
-  saveRECOV();renderAll();toast(c.checked?'Visible: '+rname(r):'Oculto desde '+mLabel(MES)+': '+rname(r),false);openRecAdm();
+  let msg;if(c.checked){showRec(r);msg='Visible: '+rname(r);}else msg=hideRec(r);
+  renderAll();toast(msg,false);openRecAdm();
  });
 }
 function openRecEdit(key){
@@ -962,12 +976,12 @@ function openRecEdit(key){
   '<div class="field"><label for="reDesde">Desde</label><select id="reDesde">'+mOpts(-24,12,r.desde||'','Desde siempre')+'</select></div>'+
   '<div class="field"><label for="reHasta">Hasta (baja)</label><select id="reHasta">'+mOpts(-24,12,r.hasta||'','Sin fecha de baja')+'</select></div>'+
   '<button type="button" class="save" id="reGo">Guardar</button>'+
-  (act?'<button type="button" class="ghost2" id="reOff">Dar de baja desde '+esc(mLabel(MES))+'</button>':'<button type="button" class="ghost2" id="reOn">Reactivar desde '+esc(mLabel(MES))+'</button>'));
+  ((act&&!r.hasta)?'<button type="button" class="ghost2" id="reOff">Dar de baja desde '+esc(mLabel(MES))+'</button>':'<button type="button" class="ghost2" id="reOn">Reactivar desde '+esc(mLabel(MES))+'</button>'));
  $('reMonto').value=(r.monto0!==undefined&&r.monto0!==null&&r.monto0!=='')?fe(r.monto0):'';
  const put=o=>{RECOV[key]=Object.assign({},RECOV[key]||{},o);saveRECOV();closeSheet();renderAll();};
  $('reGo').onclick=()=>{const mv=$('reMonto').value.trim();put({monto0:(mv!==''&&!isNaN(pn(mv)))?pn(mv):undefined,dia0:+$('reDia').value,desde:$('reDesde').value||undefined,hasta:$('reHasta').value||null});toast('Guardado: '+rname(r),false);};
- const off=$('reOff');if(off)off.onclick=()=>{put({hasta:addM(MES,-1)});toast('Dado de baja desde '+mLabel(MES),false);};
- const on=$('reOn');if(on)on.onclick=()=>{put({desde:MES,hasta:null});toast('Reactivado desde '+mLabel(MES),false);};
+ const off=$('reOff');if(off)off.onclick=()=>{const m=hideRec(r);closeSheet();renderAll();toast(m,false);};
+ const on=$('reOn');if(on)on.onclick=()=>{showRec(r);closeSheet();renderAll();toast('Reactivado desde '+mLabel(MES),false);};
 }
 
 function initNv(){
@@ -1696,7 +1710,7 @@ $('mSeal').addEventListener('click',()=>toast('Para reabrir el mes, corrige cual
 $('recRows').addEventListener('click',e=>{
  if(e.target.closest('#accAll')){confirmSug();return;}
  if(e.target.closest('#addRecBtn')){openNewRec();return;}
- if(e.target.closest('#admRecBtn')){openRecAdm();return;}
+ if(e.target.closest('#admRecBtn')||e.target.closest('[data-hid]')){openRecAdm();return;}
  const it=e.target.closest('.item[data-k]');if(it)openRec(it.dataset.k);
 });
 $('evBox').addEventListener('click',e=>{
