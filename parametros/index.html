@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>Parámetros · Cima Blanca</title>
+<title>Configuración · Cima Blanca</title>
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -189,7 +189,7 @@ details summary{cursor:pointer;font-size:12.5px;font-weight:800;color:var(--acce
   <header class="apphead">
     <a class="backbtn" href="../dashboard/" aria-label="Volver al dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     <img class="logo" src="../Cima-Blanca-logo.png" alt="Cima Blanca">
-    <div class="ttl"><b>Cima Blanca</b><span>Parámetros</span></div>
+    <div class="ttl"><b>Cima Blanca</b><span>Configuración</span></div>
   </header>
 
   <div id="gate" class="gate">
@@ -205,7 +205,8 @@ details summary{cursor:pointer;font-size:12.5px;font-weight:800;color:var(--acce
 
   <div id="app">
     <div class="sync"><span id="syncHint">Sin sincronizar</span><button type="button" class="btn btn-ghost btn-sm" id="syncBtn">Actualizar</button></div>
-    <p class="small" style="margin:0 0 14px">Aquí cambias los valores que usan los demás módulos. Lo ya guardado en reservas <b>no se modifica</b>: cada reserva conserva el valor con que se registró.</p>
+    <a class="card" href="../sincronizar/" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit"><div style="width:46px;height:46px;border-radius:13px;background:rgba(14,143,163,.14);display:grid;place-items:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e8fa3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></div><div style="flex:1;min-width:0"><b style="display:block;font-size:15px;font-weight:800">Sincronizar con Drive</b><span style="display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin-top:2px">Actualiza los datos de Airbnb, directas y adicionales</span></div><span style="color:var(--mut)">›</span></a>
+    <p class="small" style="margin:0 0 14px">Limpieza, comisiones y valores estándar. Aquí cambias los valores que usan los demás módulos. Lo ya guardado en reservas <b>no se modifica</b>: cada reserva conserva el valor con que se registró.</p>
     <div class="msg" id="msg" role="status"></div>
     <div id="cards"></div>
   </div>
@@ -252,7 +253,7 @@ async function call(body) {
   if (!CFG.url || CFG.url.indexOf('PEGA-AQUI') >= 0) throw new Error('Falta pegar la URL del Apps Script de Parámetros en el archivo.');
   const r = await fetch(CFG.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ clave: CFG.clave }, body)) });
   const j = await r.json();
-  if (!j.ok) { if (/Clave incorrecta/.test(String(j.error))) claveRechazada('Parámetros'); throw new Error(j.error || 'Error desconocido'); }
+  if (!j.ok) { if (/Clave incorrecta/.test(String(j.error))) claveRechazada('Configuración'); throw new Error(j.error || 'Error desconocido'); }
   return j;
 }
 function msg(t, c) { $('msg').className = 'msg' + (c ? ' ' + c : ''); $('msg').textContent = t; }
