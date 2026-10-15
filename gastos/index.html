@@ -392,8 +392,8 @@ body:not([data-tab="reg"]) .dash{display:none}
 .pane>.hidrow{grid-column:1/-1}
 
 /* v12 */
-:root{--crec:10,34,51;--cvar:139,108,240;--cope:15,157,110;--cdeu:91,124,255;--ccap:180,99,27}
-@media (prefers-color-scheme:dark){:root{--crec:234,242,246;--cvar:167,139,250;--cope:47,212,154;--cdeu:139,165,255;--ccap:245,185,95}}
+:root{--crec:47,111,143;--cvar:139,108,240;--cope:15,157,110;--cdeu:91,124,255;--ccap:180,99,27}
+@media (prefers-color-scheme:dark){:root{--crec:125,185,214;--cvar:167,139,250;--cope:47,212,154;--cdeu:139,165,255;--ccap:245,185,95}}
 .month{align-items:center}
 .vt{flex:1;min-width:0}
 .vt h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.02em;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -416,7 +416,7 @@ body:not([data-tab="reg"]) .dash{display:none}
 .rkey{display:flex;gap:4px 12px;flex-wrap:wrap;font-size:11.5px;font-weight:700;color:var(--mut);margin-top:7px}
 .rkey span{display:inline-flex;align-items:center;gap:5px}.rkey u{display:inline-block;width:11px;height:11px;border-radius:3px;background:rgb(var(--c))}
 .rmk{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;font-weight:700;color:var(--mut);margin-top:6px}
-.rmk u{display:inline-block;width:20px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:rgb(var(--crec))}.rmk u.h{background:repeating-linear-gradient(135deg,rgb(var(--crec)) 0 3px,rgba(var(--crec),.3) 3px 6px)}
+.rmk u{display:inline-block;width:20px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--mut)}.rmk u.h{background:repeating-linear-gradient(135deg,var(--mut) 0 3px,rgba(128,140,150,.3) 3px 6px)}
 .rnote{font-size:11.5px;color:var(--mut);font-weight:600;margin-top:6px;line-height:1.4}
 .rcd{border-top:1px solid var(--line);margin-top:10px}
 .rrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 0;border-top:1px solid var(--line)}.rrow:first-child{border-top:0}
@@ -448,6 +448,30 @@ body:not([data-tab="reg"]) .dash{display:none}
 .sumg{background:var(--ok-bg);border:1px solid var(--ok-bg);color:var(--ok);border-radius:13px;padding:10px 12px;font-size:13px;font-weight:700;line-height:1.45;margin-top:12px}
 .lmeta{font-size:11.5px;color:var(--mut);font-weight:600;margin-top:5px}
 .lsug{border:0;background:transparent;color:var(--accent);font-weight:800;font-size:12.5px;padding:6px 0;min-height:32px}
+
+/* v13 */
+.rbar{height:22px;gap:2px;margin:10px 0 4px}
+.rbar .sg{display:flex;align-items:center;justify-content:center;overflow:hidden;min-width:0}
+.rbar .sg span{font-size:11px;font-weight:800;color:#fff;background:rgba(0,0,0,.34);border-radius:99px;padding:1px 7px;line-height:1.35;white-space:nowrap}
+.item.lg .lgs{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-size:12.5px;font-weight:800;white-space:nowrap}
+.item.lg .lg1{color:var(--ok)}.item.lg .lg2{color:var(--warn)}
+.item.lg .lgm{display:block;height:5px;border-radius:9px;background:var(--warn);overflow:hidden;margin-top:7px;max-width:180px}
+.item.lg .lgm i{display:block;height:100%;background:var(--ok)}
+@media (min-width:1000px){
+.app{max-width:1240px}
+.hero{display:grid;grid-template-columns:auto 1fr;column-gap:56px;align-items:center;padding:26px 34px}
+.hero .hero-l,.hero .hero-big{grid-column:1}.hero .hero-s{grid-column:2;grid-row:1/3;align-self:center;padding-top:20px}
+.hero .hero-s2{grid-column:2;grid-row:2;align-self:end}.hero .hero-row{grid-column:1/-1}
+.hero-big{font-size:68px}
+#regBox.pane.on .pcol{grid-column:1/-1;max-width:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+#regBox .pcol>*{margin-top:0}
+#regBox .pcol>.rsl,#regBox .pcol>.alldone,#regBox .pcol>.group,#regBox .pcol>.hint{grid-column:1/-1}
+.rcx{padding:18px 20px}.rch{font-size:16px}
+.rbar{height:26px}
+}
+@media (min-width:1200px){
+.pane.on{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:16px}
+}
 </style>
 </head>
 <body data-tab="reg">
@@ -869,7 +893,7 @@ function renderRec(){
  const xs=REC().map(r=>{const ex=existing(r,DS),sug=suggestion(r,DS);return {r,ex,sug,st:ex.length?'reg':((sug&&sug.monto!==undefined)?'sug':'pen')};});
  const por=xs.filter(x=>x.st!=='reg'),ya=xs.filter(x=>x.st==='reg'),sg=xs.filter(x=>x.st==='sug');
  const tya=SUMA(ya.flatMap(x=>x.ex)),pct=xs.length?Math.round(ya.length/xs.length*100):0;
- let h='<div class="rcard"><div class="ringm" style="--p:'+pct+'"><i>'+ya.length+'/'+xs.length+'</i></div><div><b>'+(por.length?ya.length+' de '+xs.length+' al día':'Recurrentes al día')+'</b><span>'+(por.length?'Faltan '+por.length+' por registrar · ':'Todo registrado · ')+'ya llevas '+f2(tya)+' este mes</span></div></div>';
+ let h='<div class="rcard"><div class="ringm" style="--p:'+pct+'"><i>'+ya.length+'/'+xs.length+'</i></div><div><b>'+(por.length?ya.length+' de '+xs.length+' al día':'Recurrentes al día')+'</b><span>'+(por.length?'Faltan '+por.length+' esperados sin anotar · ':'Todo registrado · ')+'ya llevas '+f2(tya)+' este mes</span></div></div>';
  if(sg.length)h+='<button type="button" class="confirm" id="accAll">✓ Confirmar '+sg.length+(sg.length===1?' sugerido':' sugeridos')+'</button>';
  const grp={},hid={};xs.forEach(x=>{const u=x.r.um||'Otros';(grp[u]=grp[u]||[]).push(x);});
  REC_ALL().filter(r=>!activeIn(r,MES)).forEach(r=>{const ex=existing(r,DS);if(SUMA(ex)<=0)return;const u=r.um||'Otros';(hid[u]=hid[u]||[]).push({r,ex});if(!grp[u])grp[u]=[];});
@@ -1180,7 +1204,10 @@ let LOPEN={};
 function limGroup(rows){
  const open=!!LOPEN[MES],tot=SUMA(rows),pp=rows.filter(isPorPagar).length,n=rows.length;
  const chip=pp?['warn',pp+' por pagar']:['ok','Confirmado'];
- let h='<button type="button" class="item ev lg" data-lg="1" aria-expanded="'+open+'"><div class="tile">'+iconX(LIMP,'1. Fijos operativos')+'</div><div class="mid"><b>Limpieza de estadía</b><span><i class="dot ev"></i>'+n+(n===1?' check-out':' check-outs')+' · '+(open?'ocultar':'ver detalle')+'</span></div><div class="right"><span class="amt">'+f2(tot)+'</span><span class="chip '+chip[0]+'">'+esc(chip[1])+'</span></div></button>';
+ const sPor=SUMA(rows.filter(isPorPagar)),sPag=tot-sPor,pPag=tot>0.004?Math.round(sPag/tot*100):100;
+ const rightH=pp?'<div class="right lgs"><span class="lg1">'+f2(sPag)+' pagado</span><span class="lg2">'+f2(sPor)+' por pagar</span></div>':'<div class="right"><span class="amt">'+f2(tot)+'</span><span class="chip ok">Confirmado</span></div>';
+ const mbar=pp?'<span class="lgm" aria-hidden="true"><i style="width:'+pPag+'%"></i></span>':'';
+ let h='<button type="button" class="item ev lg" data-lg="1" aria-expanded="'+open+'"><div class="tile">'+iconX(LIMP,'1. Fijos operativos')+'</div><div class="mid"><b>Limpieza de estadía</b><span><i class="dot ev"></i>'+n+(n===1?' check-out':' check-outs')+' · '+(open?'ocultar':'ver')+'</span>'+mbar+'</div>'+rightH+'</button>';
  if(open)h+='<div class="lgl">'+rows.slice().sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(e=>{
   const d=String(e.detalle||'').replace(/^Check-out\s*·\s*/,''),por=isPorPagar(e),pt=d.split(' · '),cod=pt.length>1?pt[0]:'',nom=pt.length>1?pt.slice(1).join(' · '):d;
   return '<button type="button" class="lrow" data-id="'+esc(e.id)+'"><span class="lt2"><b>'+esc(nom)+'</b><small>'+esc(fdia(e.fecha))+(cod?' · '+esc(cod):'')+(e.medio==='Efectivo'?' · efectivo':'')+(/Ajustada/.test(e.detalle||'')?' · ajustada':'')+'</small></span><span class="lr"><span class="la2">'+f2(e.monto)+'</span><span class="lp'+(por?'':' ok')+'">'+(por?'Por pagar':'Pagada')+'</span></span></button>';
@@ -1226,7 +1253,7 @@ const plu=(n,a,b)=>n+' '+(n===1?a:b);
 const RCKEY='cb_gastos_resopen_v1';
 let RCOPEN={};try{RCOPEN=JSON.parse(localStorage.getItem(RCKEY)||'{}')||{};}catch(e){}
 function pcts(vals){const t=vals.reduce((a,b)=>a+b,0);if(t<=0.004)return vals.map(()=>0);const raw=vals.map(v=>Math.max(0,v)/t*100),fl=raw.map(Math.floor);let rem=100-fl.reduce((a,b)=>a+b,0);const ord=raw.map((r,i)=>[r-fl[i],i]).filter(x=>raw[x[1]]>0).sort((a,b)=>b[0]-a[0]);for(let k=0;k<rem&&ord.length;k++)fl[ord[k%ord.length][1]]++;return fl;}
-const RSEG=(v,c,h)=>v>0.004?'<i class="sg'+(h?' h':'')+'" style="flex-grow:'+v+';--c:var(--'+c+')"></i>':'';
+const RSEG=(v,c,h,t)=>v>0.004?'<i class="sg'+(h?' h':'')+'" style="flex-grow:'+v+';--c:var(--'+c+')">'+(t?'<span>'+t+'</span>':'')+'</i>':'';
 function rcCard(key,title,hoy,cierre,pas,segs,keys,rows,note,proj){
  const open=!!RCOPEN[key];
  return '<div class="rcx"><button type="button" class="rch" data-rc="'+key+'" aria-expanded="'+open+'"><span>'+esc(title)+'</span><i class="rcv">'+(open?'⌃':'⌄')+'</i></button>'+
@@ -1240,6 +1267,7 @@ function rcCard(key,title,hoy,cierre,pas,segs,keys,rows,note,proj){
 function rcRow(name,c,hoy,cierre,pc,pas){
  return '<div class="rrow" style="--c:var(--'+c+')"><div><i></i>'+esc(name)+'</div><div class="rn">'+(pas?'<strong>'+f2(cierre)+'</strong>':f2(hoy)+' → <strong>'+f2(cierre)+'</strong>')+'<small>'+pc+' % del '+(pas?'mes':'cierre')+'</small></div></div>';
 }
+const LB=(p,v,tot)=>tot>0.004&&v/tot>=0.15?p+' %':'';
 function resPanels(mon,DS){
  const pas=esPasado(MES),PB=pas?{m:{ope:0,deu:0,cap:0}}:pendByBlock(DS),pm=PB.m;
  const dev=mon.filter(e=>e.cuenta!=='No'),tr=SUMA(dev.filter(isRecRow)),td=SUMA(dev),tv=td-tr;
@@ -1248,7 +1276,7 @@ function resPanels(mon,DS){
  const p1=pcts([rcC,tv]);
  let h='';
  h+=rcCard('rv','Recurrentes y variables',td,cierre1,pas,
-   RSEG(tr,'crec',0)+RSEG(tv,'cvar',0)+RSEG(gp,'crec',1),
+   RSEG(tr,'crec',0,gp>0.004?'':LB(p1[0],rcC,cierre1))+RSEG(tv,'cvar',0,LB(p1[1],tv,cierre1))+RSEG(gp,'crec',1,LB(p1[0],rcC,cierre1)),
    '<span style="--c:var(--crec)"><u></u>Recurrentes '+p1[0]+' %</span><span style="--c:var(--cvar)"><u></u>Variables '+p1[1]+' %</span>',
    rcRow('Recurrentes','crec',tr,rcC,p1[0],pas)+rcRow('Variables','cvar',tv,tv,p1[1],pas),'',gp>0.004);
  const BL=[['ope','Operativo','cope'],['deu','Deuda y banca','cdeu'],['cap','Pago de capital','ccap']];
@@ -1257,7 +1285,7 @@ function resPanels(mon,DS){
  const p2=pcts(BL.map(x=>sm[x[0]]+pm[x[0]]));
  const capC=sm.cap+pm.cap;
  h+=rcCard('qf','¿En qué se fue?',tot,cierre2,pas,
-   BL.map(x=>RSEG(sm[x[0]],x[2],0)).join('')+BL.map(x=>RSEG(pm[x[0]],x[2],1)).join(''),
+   BL.map((x,i)=>RSEG(sm[x[0]],x[2],0,pm[x[0]]>0.004?'':LB(p2[i],sm[x[0]]+pm[x[0]],cierre2))).join('')+BL.map((x,i)=>RSEG(pm[x[0]],x[2],1,LB(p2[i],sm[x[0]]+pm[x[0]],cierre2))).join(''),
    BL.map((x,i)=>'<span style="--c:var(--'+x[2]+')"><u></u>'+(x[0]==='cap'?'Capital':x[1])+' '+p2[i]+' %</span>').join(''),
    BL.map((x,i)=>rcRow(x[1],x[2],sm[x[0]],sm[x[0]]+pm[x[0]],p2[i],pas)).join(''),
    capC>0.004?'Incluye capital '+f2(capC)+' (baja tu deuda, no es gasto).':'',gp+pm.cap>0.004);
@@ -1270,7 +1298,7 @@ function renderReg(){
  if(P.n){
   const pt=[];
   if(P.pagar.length)pt.push(P.pagar.length+' por pagar');
-  if(P.reg.length)pt.push(P.reg.length+' por registrar');
+  if(P.reg.length)pt.push(P.reg.length+' esperados este mes');
   if(P.conf.length)pt.push(P.conf.length+' por confirmar');
   h+='<button type="button" class="rsl" data-go="pen"><span class="rt"><b>Por resolver · '+P.n+'</b><small>'+pt.join(' · ')+'</small></span><span class="go2">Ver</span></button>';
  }else h+='<div class="alldone" style="margin-top:14px">✓ Todo al día en '+esc(mLabel(MES))+'</div>';
@@ -1288,7 +1316,7 @@ function renderPen(){
  }
  if(P.reg.length){
   const info=P.reg.map(r=>pendRecInfo(r,DS)),nsug=info.filter(x=>x.m!==undefined).length;
-  h+='<div class="group w">Por registrar<span>'+P.reg.length+'</span></div><div class="hint">'+(esPasado(MES)?'Lo registraste en meses anteriores y falta en este mes.':'Se espera este mes y todavía no lo anotas.')+'</div>';
+  h+='<div class="group w">Esperados este mes<span>'+P.reg.length+'</span></div><div class="hint">'+(esPasado(MES)?'Lo registraste en meses anteriores y falta en este mes.':'Se espera este mes y todavía no lo anotas.')+'</div>';
   if(nsug&&!esPasado(MES))h+='<button type="button" class="pbig alt" id="penAcc">✓ Confirmar '+plu(nsug,'sugerido','sugeridos')+'</button>';
   h+=P.reg.map((r,i)=>{const x=info[i];return '<div class="prow dashed"><div class="tile">'+iconX(r.multi?'Hipoteca – interés':(r.con||rname(r)),r.fam)+'</div><div class="pt" data-k="'+esc(r.key)+'"><b>'+esc(rname(r))+'</b><small>'+(x.f?'vence ≈ '+esc(fdia(x.f)):'sin valor habitual')+'</small></div><div class="pa">'+(x.m!==undefined?'≈ '+f2(x.m):'')+'</div><button type="button" class="pbtn" data-act="reg" data-k="'+esc(r.key)+'">Registrar</button></div>';}).join('');
  }
