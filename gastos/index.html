@@ -144,6 +144,9 @@ input,select{font-family:inherit;color:inherit}
 .limc .lh span{font-size:13px;color:var(--mut);font-weight:700}
 .limc .lv{font-size:26px;font-weight:800;letter-spacing:-.03em;margin:6px 0 2px}
 .limc .ls{font-size:12.5px;color:var(--mut);font-weight:600}
+.limc .lre{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:12.5px;color:var(--mut);font-weight:600}
+.limc .lre.warn{color:var(--warn)}
+.limc .lre button{min-height:36px;padding:0 12px;border-radius:11px;border:1px solid var(--line);background:transparent;font-size:12.5px;font-weight:800;color:var(--ink);white-space:nowrap}
 .limc .la{display:flex;gap:8px;margin-top:12px}
 .limc .la button{flex:1;min-height:46px;border-radius:13px;border:1px solid var(--line);background:transparent;font-size:14px;font-weight:800;color:var(--ink)}
 .limc .la button.pri{background:var(--accent);color:var(--accent-ink);border-color:transparent}
@@ -560,6 +563,7 @@ const origenBadge=e=>{
  const o=e.origen||'';
  if(o.startsWith('Tabla'))return '<span class="badge cj">Tabla del banco</span>';
  if(o.startsWith('Manual'))return '<span class="badge">Manual</span>';
+ if(o.startsWith('Generado'))return '<span class="badge">Automático</span>';
  return o?'<span class="badge">'+esc(o)+'</span>':'';
 };
 
@@ -840,6 +844,7 @@ function openReg(id){
  $('rDel').onclick=()=>{
   if(!confirm('¿Quitar "'+e.concepto+'" de '+f2(e.monto)+'? Después lo puedes recuperar con Deshacer.'))return;
   closeSheet();
+  if(String(id).startsWith(LMP))lskipAdd(String(id).slice(LMP.length));
   OPS.push({b:bid(),k:'del',id,nm:e.concepto+' '+f2(e.monto)});persist();UI={};renderAll();
   toast('Quitado: '+e.concepto+' '+f2(e.monto),true);
  };
@@ -941,7 +946,7 @@ function limCard(){
  const DS=dataset(),pp=DS.filter(isPorPagar),tp=SUMA(pp);
  const efeMes=SUMA(DS.filter(e=>e.mes===MES&&e.medio==='Efectivo'&&!isPorPagar(e)));
  const efeLim=SUMA(DS.filter(e=>e.mes===MES&&e.medio==='Efectivo'&&isLimp(e)));
- return '<div class="limc"><div class="lh"><b>Limpieza</b><span>'+(pp.length?pp.length+(pp.length===1?' por pagar':' por pagar'):'Al día')+'</span></div><div class="lv">'+f2(tp)+'</div><div class="ls">'+(tp>0?'Le debes a limpieza':'No le debes nada a limpieza')+(efeMes>0?' · Efectivo pagado en '+esc(mLabel(MES))+': '+f2(efeMes)+(efeLim>0&&efeLim!==efeMes?' ('+f2(efeLim)+' en limpieza)':''):'')+'</div><div class="la"><button type="button" id="limNew">+ Limpieza</button><button type="button" class="pri" id="limPay"'+(pp.length?'':' disabled')+'>Pagar</button></div></div>';
+ return '<div class="limc"><div class="lh"><b>Limpieza</b><span>'+(pp.length?pp.length+(pp.length===1?' por pagar':' por pagar'):'Al día')+'</span></div><div class="lv">'+f2(tp)+'</div><div class="ls">'+(tp>0?'Le debes a limpieza':'No le debes nada a limpieza')+(efeMes>0?' · Efectivo pagado en '+esc(mLabel(MES))+': '+f2(efeMes)+(efeLim>0&&efeLim!==efeMes?' ('+f2(efeLim)+' en limpieza)':''):'')+'</div><div class="la"><button type="button" id="limNew">+ Limpieza</button><button type="button" class="pri" id="limPay"'+(pp.length?'':' disabled')+'>Pagar</button></div>'+limStat()+'</div>';
 }
 const LIM_MAX_PEND=3,LIM_MAX_DIAS=7;
 function renderLimAlert(){
@@ -950,6 +955,43 @@ function renderLimAlert(){
  const dias=Math.floor((new Date(todayISO())-new Date(pp[0].fecha))/86400000);
  if(pp.length<LIM_MAX_PEND&&dias<LIM_MAX_DIAS)return;
  box.innerHTML='<div class="limalert"><div><b>Le debes a limpieza '+f2(SUMA(pp))+'</b><span>'+pp.length+(pp.length===1?' limpieza sin pagar':' limpiezas sin pagar')+(dias>0?' · la más antigua hace '+dias+(dias===1?' día':' días'):'')+'</span></div><button type="button" id="limAlertPay">Pagar</button></div>';
+}
+const LMP='LMP-',LSKIP='cb_lmp_skip';
+let LRUN=false,LLAST=0,LSTAT=null,LMISS={};
+const lskip=()=>{try{return JSON.parse(localStorage.getItem(LSKIP)||'[]');}catch(e){return [];}};
+function lskipAdd(c){try{const a=lskip();if(!a.includes(c)){a.push(c);localStorage.setItem(LSKIP,JSON.stringify(a));}}catch(e){}}
+function limStat(){
+ let t,w=false,btn='<button type="button" id="limRe"'+(LRUN?' disabled':'')+'>'+(LRUN?'Revisando…':'Revisar reservas')+'</button>';
+ if(!connected()){t='Conéctate para generar las limpiezas desde tus reservas.';btn='';}
+ else if(!LSTAT)t='Revisando tus reservas…';
+ else if(LSTAT.err){t='No pude revisar tus reservas: '+LSTAT.err;w=true;}
+ else if(LSTAT.errores.length){t='Falta el costo de limpieza de '+LSTAT.errores.length+(LSTAT.errores.length===1?' reserva':' reservas')+' (revisa Parámetros).';w=true;}
+ else t='Una limpieza por cada check-out · desde feb 2025';
+ return '<div class="lre'+(w?' warn':'')+'"><span>'+esc(t)+'</span>'+btn+'</div>';
+}
+async function autoLimpiezas(manual){
+ if(LRUN||!connected()||SYNCED===null)return;
+ LRUN=true;if(manual)renderReg();
+ try{
+  const j=await api({accion:'limpiezasBase'});
+  const hoy=todayISO(),cur=hoy.slice(0,7),DS=dataset(),sk=new Set(lskip()),have=new Set();
+  DS.forEach(e=>{if(String(e.id).startsWith(LMP))have.add(String(e.id).slice(LMP.length));});
+  const lr=DS.filter(isLimp),cubre=it=>have.has(it.codigo)||lr.some(e=>(e.detalle||'').includes(it.codigo));
+  const falta=j.items.filter(it=>it.checkout<=hoy&&!sk.has(it.codigo)&&!cubre(it));
+  const nuevas=falta.slice(0,400);LMISS={};
+  falta.slice(400).forEach(it=>{const m=it.checkout.slice(0,7);LMISS[m]=(LMISS[m]||0)+1;});
+  LSTAT={t:Date.now(),errores:j.errores||[],excluidos:j.excluidos||[]};
+  if(nuevas.length){
+   const b=bid();let tot=0;
+   nuevas.forEach(it=>{
+    tot+=it.valor;
+    OPS.push({b,k:'add',nm:'Limpieza '+it.codigo+' '+f2(it.valor),e:{id:LMP+it.codigo,fecha:it.checkout,mes:it.checkout.slice(0,7),anuncio:it.anuncio,concepto:LIMP,familia:'1. Fijos operativos',cuenta:'Sí',etiqueta:null,detalle:('Check-out · '+it.codigo+(it.huesped?' · '+it.huesped:'')).slice(0,200),monto:it.valor,estado:it.checkout.slice(0,7)<cur?'Confirmado':'Pendiente de pago',medio:null,doc:null,origen:'Generado de la reserva'}});
+   });
+   persist();UI={};
+   toast(nuevas.length+(nuevas.length===1?' limpieza creada':' limpiezas creadas')+' desde tus reservas · '+f2(Math.round(tot*100)/100),false);
+  }else if(manual&&!LSTAT.errores.length)toast('Todo al día: ya hay una limpieza por cada check-out',false);
+ }catch(e){LSTAT={t:Date.now(),errores:[],err:(e&&e.message)||'Error'};}
+ finally{LRUN=false;renderAll();}
 }
 let LREQ=0;
 function openLimNew(){
@@ -1029,7 +1071,8 @@ function monthState(ym,DS){
  const mon=DS.filter(e=>e.mes===ym),isExc=e=>/^Excepci[oó]n:/i.test(e.detalle||'');
  const open=mon.filter(e=>e.estado!=='Confirmado'&&!isExc(e)&&!isPorPagar(e)),exc=mon.filter(e=>e.estado!=='Confirmado'&&isExc(e)&&!isPorPagar(e));
  const miss=REC().filter(r=>!existing(r,DS).length&&DS.some(e=>e.mes<ym&&matchRow(r,e)));
- return {st:(open.length||miss.length)?'open':'closed',open,exc,miss};
+ const limFalta=LMISS[ym]||0;
+ return {st:(open.length||miss.length||limFalta)?'open':'closed',open,exc,miss,limFalta};
 }
 function renderClose(){
  const ms=monthState(MES,dataset()),seal=$('mSeal'),box=$('closeBox');
@@ -1039,9 +1082,11 @@ function renderClose(){
  const nm=a=>a.slice(0,3).map(x=>esc(x.concepto||rname(x))).join(', ')+(a.length>3?' y '+(a.length-3)+' más':'');
  let h='<div class="clsbar"><b>Este mes no está cerrado</b>';
  if(ms.open.length)h+='<span>'+ms.open.length+(ms.open.length===1?' gasto sin confirmar: ':' gastos sin confirmar: ')+nm(ms.open)+'.</span>';
+ if(ms.limFalta)h+='<span>Faltan '+ms.limFalta+(ms.limFalta===1?' limpieza':' limpiezas')+' de los check-outs de este mes.</span>';
  if(ms.miss.length)h+='<span>Falta registrar: '+ms.miss.map(r=>esc(rname(r))).join(', ')+'. Si no aplica este mes, regístralo en $0 con el motivo.</span>';
  h+='<div class="clsact">';
  if(ms.open.length)h+='<button type="button" id="clsAll">Confirmar '+ms.open.length+(ms.open.length===1?' gasto':' gastos')+'</button><button type="button" class="alt" id="clsExc">Dejar abierto con motivo</button>';
+ if(ms.limFalta)h+='<button type="button" id="clsLim">Generar limpiezas</button>';
  if(ms.miss.length)h+='<button type="button" class="alt" id="clsGo">Ir a Recurrentes</button>';
  box.innerHTML=h+'</div></div>';
 }
@@ -1341,6 +1386,7 @@ async function sync(opt){
   const typing=document.activeElement&&/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
   if(opt.pull&&!first&&!SH&&!typing&&!pendCount())await pullAll();
   setSync('ok');renderAll();
+  if(Date.now()-LLAST>600000){LLAST=Date.now();setTimeout(()=>autoLimpiezas(false),30);}
  }catch(e){
   const off=(e&&(e.name==='AbortError'||e instanceof TypeError));
   setSync('err',off?'Sin conexión':(e&&e.message)||'Error');
@@ -1363,11 +1409,14 @@ document.querySelector('.tabs').addEventListener('click',e=>{
 $('closeBox').addEventListener('click',e=>{
  if(e.target.closest('#clsAll')){closeAll();return;}
  if(e.target.closest('#clsExc')){closeExc();return;}
+
+ if(e.target.closest('#clsLim')){autoLimpiezas(true);return;}
  if(e.target.closest('#clsGo')){document.querySelector('.tabs [data-t=rec]').click();}
 });
 $('regBox').addEventListener('click',e=>{
  if(e.target.closest('#limNew')){openLimNew();return;}
- if(e.target.closest('#limPay')){openLimPay();}
+ if(e.target.closest('#limPay')){openLimPay();return;}
+ if(e.target.closest('#limRe')){autoLimpiezas(true);}
 });
 $('limBox').addEventListener('click',e=>{if(e.target.closest('#limAlertPay'))openLimPay();});
 $('mSeal').addEventListener('click',()=>toast('Para reabrir el mes, corrige cualquier gasto de este mes',false));
