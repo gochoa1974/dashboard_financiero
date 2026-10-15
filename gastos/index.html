@@ -1287,7 +1287,7 @@ function resPanels(mon,DS){
  const tot=SUMA(mon),cierre2=tot+pm.ope+pm.deu+pm.cap;
  const p2=pcts(BL.map(x=>sm[x[0]]+pm[x[0]]));
  const capC=sm.cap+pm.cap;
- h+=rcCard('qf','Total egreso',tot-ppAll,cierre2,pas,
+ h+=rcCard('qf','Total Egreso del mes',tot-ppAll,cierre2,pas,
    BL.map((x,i)=>RSEG(sm[x[0]]-ppB[x[0]],x[2],0,(pm[x[0]]+ppB[x[0]])>0.004?'':LB(p2[i],sm[x[0]]+pm[x[0]],cierre2),i>0)+RSEG(pm[x[0]]+ppB[x[0]],x[2],1,LB(p2[i],sm[x[0]]+pm[x[0]],cierre2),i>0&&(sm[x[0]]-ppB[x[0]])<=0.004)).join(''),
    BL.map((x,i)=>'<span style="--c:var(--'+x[2]+')"><u></u>'+(x[0]==='cap'?'Capital':x[1])+' '+p2[i]+' %</span>').join(''),
    BL.map((x,i)=>rcRow(x[1],x[2],sm[x[0]]-ppB[x[0]],sm[x[0]]+pm[x[0]],p2[i],pas)).join(''),
