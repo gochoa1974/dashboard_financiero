@@ -142,6 +142,7 @@ input,select{font-family:inherit;color:inherit}
 .brk .n{text-align:right}
 .brk .n b{display:block;font-size:15px;font-weight:800;letter-spacing:-.02em}
 .brk .n span{display:block;font-size:12px;color:var(--mut);font-weight:600}
+.brk .t span.pe{color:var(--warn);font-weight:700}
 .item.cap .tile::after{background:var(--warn)}
 .item.cap .tile{background:var(--warn-bg)}
 .tots small{display:block;font-size:12px;font-weight:600;color:var(--mut);margin-top:-2px}
@@ -822,18 +823,30 @@ function renderEv(){
   ?'<div class="group">Este mes<span>'+f2(SUMA(ev))+'</span></div>'+ev.map(regCard).join('')
   :'<div class="empty">Aún no hay gastos eventuales en '+esc(mLabel(MES))+'.<br>Toca «+ Nuevo gasto» para agregar uno.</div>';
 }
+function pendByBlock(DS){
+ const m={ope:0,deu:0,cap:0},v={};
+ const add=(k,x,f)=>{m[k]+=x;if(f&&(!v[k]||f<v[k]))v[k]=f;};
+ REC().forEach(r=>{
+  if(existing(r,DS).length)return;
+  if(r.multi){const c=cuotaFor(MES);if(c){add('cap',c.row[1],c.row[0]);add('deu',c.row[2]+c.row[3]+c.row[4],c.row[0]);}return;}
+  const sg=suggestion(r,DS);
+  if(sg&&sg.monto!==undefined)add(r.fam==='2. Financieros'?'deu':'ope',sg.monto,sg.fecha);
+ });
+ return {m,v};
+}
 function renderReg(){
  const mon=dataset().filter(e=>e.mes===MES),box=$('regBox');
- if(!mon.length){box.innerHTML='<div class="empty">Todavía no hay gastos anotados en '+esc(mLabel(MES))+'.</div>';return;}
  const tot=SUMA(mon);
  let h='';
- if(tot>0){
+ {
+  const DSx=dataset(),pb=pendByBlock(DSx);
   const BL=[['ope','Operativo','Define tu utilidad operativa','var(--rec)'],['deu','Deuda y banca','Interés y seguros del crédito','var(--ev)'],['cap','Pago de capital','Baja tu deuda · no es gasto','var(--warn)']];
   const sm={};BL.forEach(x=>sm[x[0]]=SUMA(mon.filter(e=>blkOf(e)===x[0])));
   const act=BL.filter(x=>sm[x[0]]>0);let rest=100;
   const pc={};act.forEach((x,i)=>{pc[x[0]]=i===act.length-1?rest:Math.round(sm[x[0]]/tot*100);rest-=pc[x[0]];});
-  h+='<div class="panel"><div class="panel-h"><b>¿En qué se fue?</b><span>'+f2(tot)+'</span></div><div class="split">'+act.map(x=>'<i style="background:'+x[3]+';flex-grow:'+sm[x[0]]+'"></i>').join('')+'</div><div class="brk">'+act.map(x=>'<div><i style="background:'+x[3]+'"></i><div class="t"><b>'+x[1]+'</b><span>'+x[2]+'</span></div><div class="n"><b>'+f2(sm[x[0]])+'</b><span>'+pc[x[0]]+' %</span></div></div>').join('')+'</div></div>';
+  h+='<div class="panel"><div class="panel-h"><b>¿En qué se fue?</b><span>'+f2(tot)+'</span></div><div class="split">'+(act.length?act.map(x=>'<i style="background:'+x[3]+';flex-grow:'+sm[x[0]]+'"></i>').join(''):'<i style="background:var(--line);flex-grow:1"></i>')+'</div><div class="brk">'+BL.map(x=>{const k=x[0],pen=pb.m[k]>0.004;return '<div><i style="background:'+x[3]+'"></i><div class="t"><b>'+x[1]+'</b><span>'+x[2]+'</span>'+(pen?'<span class="pe">Por registrar ≈ '+f2(pb.m[k])+(pb.v[k]?' · vence '+fdia(pb.v[k]):'')+'</span>':'')+'</div><div class="n"><b>'+f2(sm[k])+'</b><span>'+(sm[k]>0?pc[k]+' %':'—')+'</span></div></div>';}).join('')+'</div></div>';
  }
+ if(!mon.length){box.innerHTML=h+'<div class="empty">Todavía no hay gastos anotados en '+esc(mLabel(MES))+'.</div>';return;}
  h+='<div class="seg" id="regSeg"><button type="button" data-f="all" class="'+(REGF==='all'?'on':'')+'">Todos</button><button type="button" data-f="rec" class="'+(REGF==='rec'?'on':'')+'">Recurrentes</button><button type="button" data-f="ev" class="'+(REGF==='ev'?'on':'')+'">Eventuales</button></div>';
  const list=mon.filter(e=>REGF==='all'||(REGF==='rec')===isRecRow(e)).sort(regSort);
  if(!list.length)h+='<div class="empty">No hay movimientos para mostrar.</div>';
