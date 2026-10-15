@@ -90,6 +90,7 @@ body{
 .arr{flex:0 0 auto;color:var(--mut)}
 .who{display:none;text-align:center;margin-top:18px;font-size:13px;font-weight:700;color:var(--mut)}
 .who.on{display:block}
+.who #bioMsg{font-size:12px;font-weight:600;min-height:0}
 .who button{font:inherit;font-weight:800;color:var(--ink);background:none;border:0;padding:10px 6px;min-height:44px;cursor:pointer;text-decoration:underline}
 .foot{text-align:center;margin-top:auto;padding-top:24px;font-size:10.5px;letter-spacing:.05em;color:var(--mut);font-weight:700;text-transform:uppercase;opacity:.8}
 </style>
@@ -133,7 +134,7 @@ body{
         <div class="arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       </a>
     </div>
-    <div class="who" id="who"><span id="whoTxt"></span> · <button type="button" id="salir">Salir</button></div>
+    <div class="who" id="who"><span id="whoTxt"></span> · <button type="button" id="salir">Salir</button><br><button type="button" id="bio" hidden></button><div id="bioMsg" role="status"></div></div>
     <div class="foot">Panel privado del propietario</div>
   </div>
 </div>
@@ -145,6 +146,22 @@ body{
     document.querySelectorAll('.card[data-mod]').forEach(function(a){var sin=a.getAttribute('data-sin');a.hidden=!CB.puede(a.getAttribute('data-mod'))||(sin&&CB.puede(sin));});
     document.getElementById('whoTxt').textContent=p.nombre+' · '+p.rolEtiqueta;
     document.getElementById('who').classList.add('on');
+    bio();
+  }
+  function bio(){
+    var L=window.CB&&CB.lock,b=document.getElementById('bio'),m=document.getElementById('bioMsg');
+    if(!L||!L.soportado)return;
+    L.disponible().then(function(ok){
+      if(!ok)return;
+      function txt(){b.textContent=L.activo()?'Quitar '+L.bio:'Activar '+L.bio;}
+      txt();b.hidden=false;
+      b.onclick=function(){
+        m.textContent='';
+        if(L.activo()){L.desactivar();txt();m.textContent=L.bio+' desactivado en este dispositivo.';return;}
+        L.activar().then(function(){txt();m.textContent=L.bio+' activado.';}).catch(function(){m.textContent='No se pudo activar.';});
+      };
+      if(!L.activo())L.ofrecer();
+    });
   }
   if(window.CB&&CB.ready){CB.ready.then(pintar);}
   document.getElementById('salir').addEventListener('click',function(){if(window.CB)CB.salir();});
