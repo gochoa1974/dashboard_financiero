@@ -1268,6 +1268,7 @@ function rcRow(name,c,hoy,cierre,pc,pas){
  return '<div class="rrow" style="--c:var(--'+c+')"><div><i></i>'+esc(name)+'</div><div class="rn">'+(pas?'<strong>'+f2(cierre)+'</strong>':f2(hoy)+' → <strong>'+f2(cierre)+'</strong>')+'<small>'+pc+' % del '+(pas?'mes':'cierre')+'</small></div></div>';
 }
 const LB=(p,v,tot)=>tot>0.004&&v/tot>=0.15?p+' %':'';
+function cuotasNota(m){if(!HIPO||!HIPO.length||m<HIPO_INI||m>String(HIPO[HIPO.length-1][0]).slice(0,7))return '';const n=HIPO.filter(r=>String(r[0]).slice(0,7)===m).length;return n===0?'Este mes no vence cuota de la hipoteca (el banco cuenta períodos de 30 días).':n>1?'Este mes vencen '+n+' cuotas de la hipoteca (el banco cuenta períodos de 30 días).':'';}
 function resPanels(mon,DS){
  const pas=esPasado(MES),PB=pas?{m:{ope:0,deu:0,cap:0}}:pendByBlock(DS),pm=PB.m;
  const dev=mon.filter(e=>e.cuenta!=='No'),tr=SUMA(dev.filter(isRecRow)),td=SUMA(dev),tv=td-tr;
@@ -1288,7 +1289,7 @@ function resPanels(mon,DS){
    BL.map((x,i)=>RSEG(sm[x[0]],x[2],0,pm[x[0]]>0.004?'':LB(p2[i],sm[x[0]]+pm[x[0]],cierre2),i>0)+RSEG(pm[x[0]],x[2],1,LB(p2[i],sm[x[0]]+pm[x[0]],cierre2),i>0&&sm[x[0]]<=0.004)).join(''),
    BL.map((x,i)=>'<span style="--c:var(--'+x[2]+')"><u></u>'+(x[0]==='cap'?'Capital':x[1])+' '+p2[i]+' %</span>').join(''),
    BL.map((x,i)=>rcRow(x[1],x[2],sm[x[0]],sm[x[0]]+pm[x[0]],p2[i],pas)).join(''),
-   capC>0.004?'Incluye capital '+f2(capC)+' (baja tu deuda, no es gasto).':'',gp+pm.cap>0.004);
+   [capC>0.004?'Incluye capital '+f2(capC)+' (baja tu deuda, no es gasto).':'',cuotasNota(MES)].filter(Boolean).join('<br>'),gp+pm.cap>0.004);
  return h;
 }
 function renderReg(){
