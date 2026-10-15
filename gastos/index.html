@@ -525,7 +525,7 @@ const saveRECOV=()=>{try{localStorage.setItem(RECOVKEY,JSON.stringify(RECOV));}c
 const UM_ORDER=['Servicios básicos','Software','Hipoteca','Mantenimiento'];
 const REC_ALL=()=>REC_BASE.concat(RECX.map(x=>({key:x.key,con:x.con,det:x.det,fam:x.fam,um:x.um||'Otros',desde:x.desde,hasta:x.hasta,monto0:x.monto,dia0:x.dia,sub:x.dia?'Cobra el día '+x.dia:'Agregado por ti · edítalo si cambia',src:'habitual',custom:true}))).map(r=>{const o=RECOV[r.key];if(!o)return r;const m=Object.assign({},r,o);if(r.custom&&m.dia0)m.sub='Cobra el día '+m.dia0;return m;});
 const activeIn=(r,ym)=>(!r.desde||ym>=r.desde)&&(!r.hasta||ym<=r.hasta);
-const REC=()=>{const DS=dataset();return REC_ALL().filter(r=>activeIn(r,MES)||existing(r,DS).length>0);};
+const REC=()=>{const DS=dataset();return REC_ALL().filter(r=>activeIn(r,MES)||existing(r,DS).some(e=>(+e.monto||0)>0));};
 const FAMILIAS={
  '1. Fijos operativos':['Impuesto predial','Guardianía / vigilancia','Parqueo (pagado por el anfitrión)'],
  '2. Financieros':['Hipoteca – mora y otros cargos','Comisión bancaria – pago de servicios','Comisión bancaria – transferencia a limpieza','Tarifa de retiro Airbnb'],
