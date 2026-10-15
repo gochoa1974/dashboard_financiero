@@ -145,7 +145,7 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
       ls(K_SES, null); ls(K_CLAVE, null); ls(K_LOCK, null); lockVisible = false;
       CB.alEntrar = enPagina ? function () { location.reload(); } : null; vistaLogin();
     };
-    if (!ES_IOS) setTimeout(function () { intentar(true); }, 250);
+    setTimeout(function () { intentar(true); }, 300);
   }
   CB.lock = { soportado: SOPORTA, bio: BIO, activo: lockActivo, disponible: lockDisponible, activar: lockActivar, desactivar: lockDesactivar,
     ofrecer: function () { ofrecerSi(function () { ocultar(); }); } };
