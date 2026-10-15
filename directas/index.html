@@ -918,7 +918,7 @@ $('lim').addEventListener('input', () => { F.lim = $('lim').value; F.limManual =
 let limReq = 0;
 async function cargarLimpieza() {
   if (!F.ci || F.limManual) return;
-  if (!PARAM_URL || PARAM_URL.indexOf('PEGA-AQUI') >= 0 || !CFG.clave) { $('limHint').textContent = 'Parámetros no está conectado: escribe la limpieza interna a mano.'; return; }
+  if (!PARAM_URL || PARAM_URL.indexOf('PEGA-AQUI') >= 0 || !CFG.clave) { $('limHint').textContent = 'Configuración no está conectada: escribe la limpieza interna a mano.'; return; }
   const mi = ++limReq;
   try {
     const r = await fetch(PARAM_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ clave: CFG.clave, accion: 'valorEn', parametro: 'costo_limpieza', fecha: F.ci }) });
@@ -926,9 +926,9 @@ async function cargarLimpieza() {
     if (mi !== limReq || F.limManual) return;
     if (!j.ok) throw new Error(j.error || 'error');
     F.lim = String(j.resultado.valor); $('lim').value = F.lim; autoUltimo(); pintarPh(); pintarCheck();
-    $('limHint').textContent = 'Según Parámetros para el check-in del ' + fechaBonita(F.ci) + (j.resultado.origen === 'excepcion' ? ' (renegociado)' : '') + '. No se le muestra al huésped. Puedes cambiarlo en esta reserva.';
+    $('limHint').textContent = 'Según Configuración para el check-in del ' + fechaBonita(F.ci) + (j.resultado.origen === 'excepcion' ? ' (renegociado)' : '') + '. No se le muestra al huésped. Puedes cambiarlo en esta reserva.';
     resumen();
-  } catch (e) { if (mi === limReq) $('limHint').textContent = 'No pude leer Parámetros: escribe la limpieza interna a mano.'; }
+  } catch (e) { if (mi === limReq) $('limHint').textContent = 'No pude leer Configuración: escribe la limpieza interna a mano.'; }
 }
 $('px').addEventListener('input', () => { F.pax = $('px').value; F.noches.forEach(x => { x.pax = null; }); });
 document.querySelector('[data-px="-1"]').onclick = () => cambiarPax(-1);
