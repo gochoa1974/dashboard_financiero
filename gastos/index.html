@@ -1278,7 +1278,7 @@ function resPanels(mon,DS){
  const rcC=tr+gp,cierre1=td+gp;
  const p1=pcts([rcC,tv]);
  let h='';
- h+=rcCard('rv','Recurrentes y variables',td-ppT,cierre1,pas,
+ h+=rcCard('rv','Gastos: recurrentes y variables',td-ppT,cierre1,pas,
    RSEG(tr-ppR,'crec',0,(gp+ppR)>0.004?'':LB(p1[0],rcC,cierre1),0)+RSEG(gp+ppR,'crec',1,LB(p1[0],rcC,cierre1),0)+RSEG(tv-ppV,'cvar',0,ppV>0.004?'':LB(p1[1],tv,cierre1),1)+RSEG(ppV,'cvar',1,LB(p1[1],tv,cierre1),0),
    '<span style="--c:var(--crec)"><u></u>Recurrentes '+p1[0]+' %</span><span style="--c:var(--cvar)"><u></u>Variables '+p1[1]+' %</span>',
    rcRow('Recurrentes','crec',tr-ppR,rcC,p1[0],pas)+rcRow('Variables','cvar',tv-ppV,tv,p1[1],pas),'',gp+ppT>0.004);
@@ -1287,7 +1287,7 @@ function resPanels(mon,DS){
  const tot=SUMA(mon),cierre2=tot+pm.ope+pm.deu+pm.cap;
  const p2=pcts(BL.map(x=>sm[x[0]]+pm[x[0]]));
  const capC=sm.cap+pm.cap;
- h+=rcCard('qf','¿En qué se fue?',tot-ppAll,cierre2,pas,
+ h+=rcCard('qf','Total egreso',tot-ppAll,cierre2,pas,
    BL.map((x,i)=>RSEG(sm[x[0]]-ppB[x[0]],x[2],0,(pm[x[0]]+ppB[x[0]])>0.004?'':LB(p2[i],sm[x[0]]+pm[x[0]],cierre2),i>0)+RSEG(pm[x[0]]+ppB[x[0]],x[2],1,LB(p2[i],sm[x[0]]+pm[x[0]],cierre2),i>0&&(sm[x[0]]-ppB[x[0]])<=0.004)).join(''),
    BL.map((x,i)=>'<span style="--c:var(--'+x[2]+')"><u></u>'+(x[0]==='cap'?'Capital':x[1])+' '+p2[i]+' %</span>').join(''),
    BL.map((x,i)=>rcRow(x[1],x[2],sm[x[0]]-ppB[x[0]],sm[x[0]]+pm[x[0]],p2[i],pas)).join(''),
