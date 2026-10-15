@@ -41,6 +41,21 @@ body{margin:0;min-height:100vh;padding:16px 16px 48px;font-family:"Manrope",-app
 .btn{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:800;font-size:14px;cursor:pointer;margin-top:12px}
 .sp{width:34px;height:34px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--acc);animation:r .9s linear infinite;margin:34px auto}
 @keyframes r{to{transform:rotate(360deg)}}
+dialog{border:0;border-radius:22px;padding:0;width:min(420px,calc(100vw - 24px));background:var(--surface);color:var(--ink);box-shadow:0 24px 60px -12px rgba(0,0,0,.5)}
+dialog::backdrop{background:rgba(7,23,34,.6)}
+.dl{padding:20px 18px 18px}.dl h2{margin:0 0 14px;font-size:18px;font-weight:800}
+.dl label{display:block;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin:0 0 6px}
+.dl input,.dl select{width:100%;font:inherit;font-size:16px;font-weight:600;color:var(--ink);background:transparent;border:1.5px solid var(--line);border-radius:12px;padding:12px;margin:0 0 14px;min-height:48px}
+.dl input:focus,.dl select:focus{outline:none;border-color:var(--acc)}
+.dl input[readonly]{opacity:.65}
+.dl .h{margin:-8px 0 14px;font-size:12.5px;font-weight:600;color:var(--mut)}
+.dl .er{min-height:18px;margin:-6px 0 8px;font-size:13px;font-weight:700;color:var(--bad)}
+.dl .bt{display:flex;gap:8px}.dl .bt button{flex:1;min-height:48px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:800;font-size:14.5px;cursor:pointer}
+.dl .bt button.pr{background:var(--acc);color:var(--bg);border-color:var(--acc)}
+.dl .bt button[disabled]{opacity:.6}
+.dl .est{width:100%;margin-top:10px;min-height:46px;border-radius:12px;border:1px solid var(--line);background:transparent;font:inherit;font-weight:800;font-size:14px;cursor:pointer;color:var(--bad)}
+.row.tap{cursor:pointer}.row.tap:active{background:var(--info)}
+.nuevo{width:100%;min-height:50px;border-radius:14px;border:0;background:var(--acc);color:var(--bg);font:inherit;font-weight:800;font-size:15px;cursor:pointer;margin-bottom:12px}
 @media (min-width:1000px){body{padding-top:28px}.wrap{max-width:860px}}
 </style>
 </head>
@@ -52,14 +67,25 @@ body{margin:0;min-height:100vh;padding:16px 16px 48px;font-family:"Manrope",-app
   </div>
   <div class="tabs" role="tablist"><button role="tab" id="tA" aria-selected="true">Actividad</button><button role="tab" id="tU" aria-selected="false">Accesos</button></div>
   <div id="pA"><div class="chips" id="chips" aria-label="Filtrar por persona"></div><div id="lista"><div class="sp" role="status" aria-label="Cargando"></div></div></div>
-  <div id="pU" hidden><div id="usr"><div class="sp" role="status" aria-label="Cargando"></div></div>
-    <p class="nota">Para crear una persona, cambiar una clave o desactivar a alguien, usa el menú «Cima Blanca» del Sheet ACCESOS_CIMA_BLANCA. Una persona desactivada pierde la sesión de inmediato.</p></div>
+  <div id="pU" hidden><button class="nuevo" id="bNuevo" type="button">+ Nueva persona</button><div id="usr"><div class="sp" role="status" aria-label="Cargando"></div></div>
+    <p class="nota">Toca una persona para cambiar su rol, restablecer su clave o desactivarla. Una persona desactivada pierde la sesión de inmediato. Los permisos de cada rol se ajustan en la hoja ROLES del Sheet.</p></div>
 </div>
+<dialog id="dlg" aria-labelledby="dT"><form class="dl" id="dF" method="dialog" autocomplete="off">
+  <h2 id="dT">Persona</h2>
+  <label for="dU">Usuario</label><input id="dU" autocapitalize="none" autocorrect="off" spellcheck="false" required>
+  <label for="dN">Nombre</label><input id="dN" required>
+  <label for="dR">Rol</label><select id="dR"></select>
+  <label for="dC" id="dCL">Clave</label><input id="dC" type="password" autocomplete="new-password">
+  <p class="h" id="dH">Mínimo 8 caracteres.</p>
+  <div class="er" id="dE" role="alert"></div>
+  <div class="bt"><button type="button" id="dX">Cancelar</button><button type="submit" class="pr" id="dS">Guardar</button></div>
+  <button type="button" class="est" id="dA" hidden></button>
+</form></dialog>
 <script>
 (function(){
   var $=function(i){return document.getElementById(i)};
-  var FILAS=[],USU=[],filtro='';
-  var ET={login:['Entró','ok','→'],login_fallido:['Intento fallido de entrada','bad','!'],abrir:['Abrió el módulo','','▢'],usuario_creado:['Se creó un usuario','ok','+'],usuario_actualizado:['Se cambió un usuario','warn','✎'],usuario_desactivado:['Se desactivó un usuario','bad','×']};
+  var FILAS=[],USU=[],ROL=[],YO='',filtro='',editando=null;
+  var ET={login:['Entró','ok','→'],login_fallido:['Intento fallido de entrada','bad','!'],abrir:['Abrió el módulo','','▢'],usuario_creado:['Se creó un usuario','ok','+'],usuario_actualizado:['Se cambió un usuario','warn','✎'],usuario_desactivado:['Se desactivó un usuario','bad','×'],usuario_activado:['Se reactivó un usuario','ok','↺']};
   var MOD={dashboard:'Dashboard',ingresos:'Ingresos',gastos:'Gastos',adicionales:'Adicionales',directas:'Directas',cancelaciones:'Cancelaciones',parametros:'Configuración',sincronizar:'Sincronizar',accesos:'Accesos',actividad:'Actividad'};
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
   var MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -86,17 +112,45 @@ body{margin:0;min-height:100vh;padding:16px 16px 48px;font-family:"Manrope",-app
     if(!USU.length){$('usr').innerHTML='<div class="card"><div class="vacio">Aún no hay personas registradas.</div></div>';return}
     var RE={admin:'Administrador',completo:'Completo',pagos:'Pagos'};
     $('usr').innerHTML='<div class="card">'+USU.map(function(u){
-      return '<div class="row"><div class="dot '+(u.activo?'ok':'bad')+'" aria-hidden="true">'+esc(String(u.nombre||u.usuario).charAt(0).toUpperCase())+'</div><div class="tx"><b>'+esc(u.nombre||u.usuario)+'</b><span>'+esc(u.usuario)+' · '+esc(RE[u.rol]||u.rol)+' · '+(u.ultimo?'Último acceso '+esc(fechaTxt(u.ultimo))+' '+esc(String(u.ultimo).slice(11,16)):'Aún no ha entrado')+'</span></div><span class="pill '+(u.activo?'ok':'bad')+'">'+(u.activo?'Activo':'Desactivado')+'</span></div>';
+      return '<div class="row tap" role="button" tabindex="0" data-u="'+esc(u.usuario)+'"><div class="dot '+(u.activo?'ok':'bad')+'" aria-hidden="true">'+esc(String(u.nombre||u.usuario).charAt(0).toUpperCase())+'</div><div class="tx"><b>'+esc(u.nombre||u.usuario)+'</b><span>'+esc(u.usuario)+' · '+esc(RE[u.rol]||u.rol)+' · '+(u.ultimo?'Último acceso '+esc(fechaTxt(u.ultimo))+' '+esc(String(u.ultimo).slice(11,16)):'Aún no ha entrado')+'</span></div><span class="pill '+(u.activo?'ok':'bad')+'">'+(u.activo?'Activo':'Desactivado')+'</span></div>';
     }).join('')+'</div>';
   }
   function err(id,e){$(id).innerHTML='<div class="card"><div class="vacio">No pude cargar ('+esc(e.message||e)+').<br><button class="btn" type="button" data-r="'+id+'">Reintentar</button></div></div>'}
   function cargar(){
     CB.llamar('actividad',{limite:300}).then(function(r){FILAS=r.filas||[];pintarChips();pintarLista()}).catch(function(e){err('lista',e)});
-    CB.llamar('usuarios',{}).then(function(r){USU=r.usuarios||[];pintarUsuarios()}).catch(function(e){err('usr',e)});
+    CB.llamar('usuarios',{}).then(function(r){USU=r.usuarios||[];ROL=r.roles||[];YO=r.yo||'';pintarUsuarios()}).catch(function(e){err('usr',e)});
   }
   document.addEventListener('click',function(e){var b=e.target.closest('[data-r]');if(!b)return;$('lista').innerHTML='<div class="sp"></div>';$('usr').innerHTML='<div class="sp"></div>';cargar()});
   function tab(a){$('pA').hidden=!a;$('pU').hidden=a;$('tA').setAttribute('aria-selected',a);$('tU').setAttribute('aria-selected',!a)}
   $('tA').onclick=function(){tab(true)};$('tU').onclick=function(){tab(false)};
+
+  var dlg=$('dlg');
+  function abrir(u){
+    editando=u||null;$('dE').textContent='';
+    $('dT').textContent=u?(u.nombre||u.usuario):'Nueva persona';
+    $('dU').value=u?u.usuario:'';$('dU').readOnly=!!u;$('dN').value=u?(u.nombre||''):'';
+    $('dR').innerHTML=ROL.map(function(r){return '<option value="'+esc(r.rol)+'">'+esc(r.etiqueta)+'</option>'}).join('');
+    if(u)$('dR').value=u.rol;
+    $('dC').value='';$('dC').required=!u;$('dCL').textContent=u?'Clave nueva (opcional)':'Clave';
+    $('dH').textContent=u?'Déjala vacía para no cambiarla. Si escribes una, la persona entra con esa clave desde ya.':'Mínimo 8 caracteres. Díselo a la persona en privado.';
+    var a=$('dA');a.hidden=!u||u.usuario===YO;if(u){a.textContent=u.activo?'Desactivar a esta persona':'Reactivar a esta persona';a.style.color=u.activo?'':'var(--ok)'}
+    dlg.showModal();setTimeout(function(){(u?$('dN'):$('dU')).focus()},40);
+  }
+  $('bNuevo').onclick=function(){abrir(null)};
+  $('usr').addEventListener('click',function(e){var r=e.target.closest('.row.tap');if(!r)return;var u=USU.filter(function(x){return x.usuario===r.getAttribute('data-u')})[0];if(u)abrir(u)});
+  $('usr').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){var r=e.target.closest('.row.tap');if(r){e.preventDefault();r.click()}}});
+  $('dX').onclick=function(){dlg.close()};
+  function ocupado(on,txt){$('dS').disabled=on;$('dA').disabled=on;$('dS').textContent=on?(txt||'Guardando…'):'Guardar'}
+  $('dF').addEventListener('submit',function(e){
+    e.preventDefault();$('dE').textContent='';ocupado(true);
+    CB.llamar('guardar_usuario',{usuario:$('dU').value,nombre:$('dN').value,rol:$('dR').value,clave:$('dC').value}).then(function(){dlg.close();ocupado(false);cargar()}).catch(function(er){ocupado(false);$('dE').textContent=er.message||'No pude guardar'});
+  });
+  $('dA').onclick=function(){
+    if(!editando)return;var nuevo=!editando.activo;
+    if(!nuevo&&!confirm('¿Desactivar a '+(editando.nombre||editando.usuario)+'? Perderá la sesión de inmediato.'))return;
+    ocupado(true);
+    CB.llamar('estado_usuario',{usuario:editando.usuario,activo:nuevo}).then(function(){dlg.close();ocupado(false);cargar()}).catch(function(er){ocupado(false);$('dE').textContent=er.message||'No pude cambiar el estado'});
+  };
   CB.ready.then(function(){if(!CB.bloqueado)cargar()});
 })();
 </script>
