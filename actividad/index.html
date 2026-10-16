@@ -61,6 +61,20 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
 .seg button[aria-checked=true]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
 .seg button[disabled]{opacity:.6}
 .blq .ok2:empty{display:none}.blq .ok2{min-height:18px;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--ok)}.blq .ok2.e{color:var(--bad)}
+.sw{display:flex;align-items:center;gap:10px;min-height:44px;margin:0 0 10px;font-size:13.5px;font-weight:700;color:var(--ink);cursor:pointer}
+.sw input{position:absolute;opacity:0;width:44px;height:44px;margin:0}
+.sw .tg{position:relative;flex:0 0 auto;width:44px;height:26px;border-radius:999px;background:var(--line);transition:background .15s}
+.sw .tg::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
+.sw input:checked+.tg{background:var(--ok)}.sw input:checked+.tg::after{transform:translateX(18px)}
+.sw input:focus-visible+.tg{outline:2px solid var(--acc);outline-offset:2px}
+.sw{position:relative}
+.dh{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;margin:10px 0 0;padding:6px 4px;border:0;background:transparent;font:inherit;color:var(--ink);cursor:pointer;text-align:left}
+.dh .dn{flex:1;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--mut)}
+.dh .dc{font-size:12.5px;font-weight:700;color:var(--mut)}
+.dh .ch{flex:0 0 auto;width:20px;height:20px;color:var(--mut);transition:transform .15s}
+.dh[aria-expanded=true] .ch{transform:rotate(90deg)}
+.dh .pill.bad{margin-right:2px}
+.mas{display:block;width:100%;min-height:48px;margin-top:14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:800;font-size:14px;cursor:pointer}
 .nuevo{width:100%;min-height:50px;border-radius:14px;border:0;background:var(--acc);color:var(--bg);font:inherit;font-weight:800;font-size:15px;cursor:pointer;margin-bottom:12px}
 @media (min-width:1000px){body{padding-top:28px}.wrap{max-width:860px}}
 </style>
@@ -72,7 +86,8 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
     <div><h1>Actividad</h1><p id="sub">Quién hizo qué, y quién tiene acceso</p></div>
   </div>
   <div class="tabs" role="tablist"><button role="tab" id="tA" aria-selected="true">Actividad</button><button role="tab" id="tU" aria-selected="false">Accesos</button></div>
-  <div id="pA"><div class="chips" id="chips" aria-label="Filtrar por persona"></div><div id="lista"><div class="sp" role="status" aria-label="Cargando"></div></div></div>
+  <div id="pA"><div class="chips" id="chips" aria-label="Filtrar por persona"></div>
+    <label class="sw"><input type="checkbox" id="soloImp" checked><span class="tg" aria-hidden="true"></span><span>Solo eventos importantes <span style="color:var(--mut);font-weight:600" id="ocultos"></span></span></label><div id="lista"><div class="sp" role="status" aria-label="Cargando"></div></div></div>
   <div id="pU" hidden><button class="nuevo" id="bNuevo" type="button">+ Nueva persona</button><div id="usr"><div class="sp" role="status" aria-label="Cargando"></div></div>
     <div class="card blq" id="blq" hidden>
       <h3>Bloqueo con Face ID</h3>
@@ -102,24 +117,46 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
 (function(){
   var $=function(i){return document.getElementById(i)};
   var FILAS=[],USU=[],ROL=[],YO='',filtro='',editando=null;
-  var ET={login:['Entró','ok','→'],login_fallido:['Intento fallido de entrada','bad','!'],abrir:['Abrió el módulo','','▢'],usuario_creado:['Se creó un usuario','ok','+'],usuario_actualizado:['Se cambió un usuario','warn','✎'],usuario_desactivado:['Se desactivó un usuario','bad','×'],usuario_activado:['Se reactivó un usuario','ok','↺']};
+  var ET={login:['Entró','ok','→'],login_fallido:['Intento fallido de entrada','bad','!'],abrir:['Abrió el módulo','','▢'],usuario_creado:['Se creó un usuario','ok','+'],usuario_actualizado:['Se cambió un usuario','warn','✎'],usuario_desactivado:['Se desactivó un usuario','bad','×'],usuario_activado:['Se reactivó un usuario','ok','↺'],config_bloqueo:['Cambió el bloqueo de la app','warn','⚙']};
   var MOD={dashboard:'Dashboard',ingresos:'Ingresos',gastos:'Gastos',adicionales:'Adicionales',directas:'Directas',cancelaciones:'Cancelaciones',parametros:'Configuración',sincronizar:'Sincronizar',accesos:'Accesos',actividad:'Actividad'};
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
   var MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   function fechaTxt(d){var p=String(d).slice(0,10).split('-');return p.length<3?String(d):(+p[2])+' '+MES[+p[1]-1]+' '+p[0]}
-  function pintarLista(){
-    var fs=FILAS.filter(function(f){return !filtro||String(f[1]).toLowerCase()===filtro});
-    if(!fs.length){$('lista').innerHTML='<div class="card"><div class="vacio">Todavía no hay actividad para mostrar.</div></div>';return}
-    var h='',dia='';
-    fs.forEach(function(f){
-      var d=String(f[0]).slice(0,10);
-      if(d!==dia){if(dia)h+='</div>';dia=d;h+='<div class="day">'+esc(fechaTxt(d))+'</div><div class="card">'}
-      var e=ET[f[3]]||[String(f[3]),'','•'],det=[];
-      if(f[4])det.push(MOD[f[4]]||f[4]);if(f[5])det.push(f[5]);
-      h+='<div class="row"><div class="dot '+e[1]+'" aria-hidden="true">'+e[2]+'</div><div class="tx"><b>'+esc(f[1]||'—')+' · '+esc(e[0])+'</b><span>'+esc(det.join(' · ')||(f[2]?'Rol: '+f[2]:''))+'</span></div><div class="hr">'+esc(String(f[0]).slice(11,16))+'</div></div>';
-    });
-    $('lista').innerHTML=h+'</div>';
+  var DIAS=7,ABIERTOS={},LIM=300,solo=true;
+  try{solo=localStorage.getItem('cb_act_solo')!=='0'}catch(e){}
+  $('soloImp').checked=solo;
+  function nombreDia(d,i){var hoy=new Date(),pad=function(n){return(n<10?'0':'')+n},iso=function(x){return x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate())},ay=new Date(hoy.getTime()-864e5);return d===iso(hoy)?'Hoy · '+fechaTxt(d):d===iso(ay)?'Ayer · '+fechaTxt(d):fechaTxt(d)}
+  function fila(f){
+    var e=ET[f[3]]||[String(f[3]),'','•'],det=[];
+    if(f[4])det.push(MOD[f[4]]||f[4]);if(f[5])det.push(f[5]);
+    return '<div class="row"><div class="dot '+e[1]+'" aria-hidden="true">'+e[2]+'</div><div class="tx"><b>'+esc(f[1]||'—')+' · '+esc(e[0])+'</b><span>'+esc(det.join(' · ')||(f[2]?'Rol: '+f[2]:''))+'</span></div><div class="hr">'+esc(String(f[0]).slice(11,16))+'</div></div>';
   }
+  function pintarLista(){
+    var todas=FILAS.filter(function(f){return !filtro||String(f[1]).toLowerCase()===filtro});
+    var ocult=todas.filter(function(f){return f[3]==='abrir'}).length;
+    var fs=solo?todas.filter(function(f){return f[3]!=='abrir'}):todas;
+    $('ocultos').textContent=solo&&ocult?'('+ocult+' aperturas ocultas)':'';
+    if(!fs.length){$('lista').innerHTML='<div class="card"><div class="vacio">Todavía no hay actividad para mostrar.</div></div>';return}
+    var dias=[],mapa={};
+    fs.forEach(function(f){var d=String(f[0]).slice(0,10);if(!mapa[d]){mapa[d]=[];dias.push(d)}mapa[d].push(f)});
+    var h='';
+    dias.slice(0,DIAS).forEach(function(d,i){
+      var fl=mapa[d],abierto=ABIERTOS.hasOwnProperty(d)?ABIERTOS[d]:i<2,fallos=fl.filter(function(f){return f[3]==='login_fallido'}).length;
+      h+='<button type="button" class="dh" data-d="'+esc(d)+'" aria-expanded="'+abierto+'"><span class="dn">'+esc(nombreDia(d))+'</span>'+(fallos?'<span class="pill bad">'+fallos+(fallos>1?' intentos fallidos':' intento fallido')+'</span>':'')+'<span class="dc">'+fl.length+(fl.length===1?' evento':' eventos')+'</span><svg class="ch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>';
+      if(abierto)h+='<div class="card">'+fl.map(fila).join('')+'</div>';
+    });
+    var resto=dias.length-DIAS;
+    if(resto>0)h+='<button type="button" class="mas" id="masDias">Ver más días ('+resto+' más)</button>';
+    else if(FILAS.length>=LIM&&LIM<1000)h+='<button type="button" class="mas" id="masViejos">Cargar actividad más antigua</button>';
+    $('lista').innerHTML=h;
+  }
+  $('lista').addEventListener('click',function(e){
+    var d=e.target.closest('.dh');
+    if(d){var k=d.getAttribute('data-d'),ab=d.getAttribute('aria-expanded')==='true';ABIERTOS[k]=!ab;pintarLista();var n=$('lista').querySelector('.dh[data-d="'+k+'"]');if(n)n.focus();return}
+    if(e.target.closest('#masDias')){DIAS+=7;pintarLista();return}
+    if(e.target.closest('#masViejos')){LIM=Math.min(LIM*2,1000);e.target.closest('#masViejos').textContent='Cargando…';CB.llamar('actividad',{limite:LIM}).then(function(r){FILAS=r.filas||[];DIAS+=7;pintarChips();pintarLista()}).catch(function(er){err('lista',er)})}
+  });
+  $('soloImp').addEventListener('change',function(){solo=this.checked;try{localStorage.setItem('cb_act_solo',solo?'1':'0')}catch(e){}pintarLista()});
   function pintarChips(){
     var nombres=[];FILAS.forEach(function(f){var u=String(f[1]||'').toLowerCase();if(u&&nombres.indexOf(u)<0)nombres.push(u)});
     $('chips').innerHTML=['']. concat(nombres).map(function(n){return '<button type="button" class="chip" data-u="'+esc(n)+'" aria-pressed="'+(n===filtro)+'">'+(n?esc(n):'Todos')+'</button>'}).join('');
@@ -134,7 +171,7 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
   }
   function err(id,e){$(id).innerHTML='<div class="card"><div class="vacio">No pude cargar ('+esc(e.message||e)+').<br><button class="btn" type="button" data-r="'+id+'">Reintentar</button></div></div>'}
   function cargar(){
-    CB.llamar('actividad',{limite:300}).then(function(r){FILAS=r.filas||[];pintarChips();pintarLista()}).catch(function(e){err('lista',e)});
+    CB.llamar('actividad',{limite:LIM}).then(function(r){FILAS=r.filas||[];pintarChips();pintarLista()}).catch(function(e){err('lista',e)});
     CB.llamar('usuarios',{}).then(function(r){USU=r.usuarios||[];ROL=r.roles||[];YO=r.yo||'';pintarUsuarios();pintarBloqueo(r.bloqueoMin)}).catch(function(e){err('usr',e)});
   }
   function pintarBloqueo(m){
