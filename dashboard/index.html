@@ -6,7 +6,11 @@
 <script src="../auth.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
+<!-- v21 (15 oct 2026, 22:10): estilo unificado (Guía v1.1): tema compartido claro/oscuro, rejilla responsive (1, 2 y 3 columnas), tarjetas con borde de luz y verde unificado. -->
 <title>Dashboard · Cima Blanca</title>
+<meta name="theme-color" content="#0a2233">
+<link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
+<script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,38 +18,38 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#edf2f4;--surface:#ffffff;--ink:#0a2233;--mut:#5f7080;--line:#dde5ea;
-  --hero1:#0a2233;--hero2:#123a52;--hero-mute:#9fc0d3;
-  --accent:#0f9d6e;--accent-ink:#ffffff;--accent2:#b45309;
+  --bg:var(--fondo);--surface:var(--tarjeta);--ink:var(--texto);--mut:var(--texto-2);--line:var(--linea);
+  --hero1:var(--hero-a);--hero2:var(--hero-b);--hero-mute:#9fc0d3;
+  --accent:var(--acento);--accent-t:var(--acento-texto);--accent-ink:#04261a;--accent-bg:color-mix(in srgb,var(--acento) 14%,transparent);
   --shadow:0 1px 2px rgba(10,34,51,.05),0 8px 20px -12px rgba(10,34,51,.2)
 }
-@media (prefers-color-scheme:dark){
-  :root{
-    --bg:#071722;--surface:#0e2536;--ink:#eaf2f6;--mut:#8fa6b5;--line:#1a3649;
-    --hero1:#0f3550;--hero2:#14506b;--hero-mute:#9fc0d3;
-    --accent:#2fd49a;--accent-ink:#04231a;--accent2:#f59e0b;
-    --shadow:0 1px 2px rgba(0,0,0,.4)
-  }
-}
+:root[data-modo="oscuro"]{--shadow:0 1px 2px rgba(0,0,0,.4)}
+@media (prefers-color-scheme:dark){:root[data-modo="auto"]{--shadow:0 1px 2px rgba(0,0,0,.4)}}
 *{box-sizing:border-box}
 html{background:var(--bg)}
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+body{margin:0;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px 40px;
   font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);
   -webkit-font-smoothing:antialiased}
 .wrap{width:100%;max-width:420px}
+@media(min-width:700px){.wrap{max-width:720px}}
+@media(min-width:1000px){.wrap{max-width:1000px}}
 .back{display:inline-flex;align-items:center;gap:6px;color:var(--mut);font-size:13px;font-weight:700;
   text-decoration:none;margin-bottom:14px}
 .hero{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--hero1),var(--hero2));color:#fff;
   border-radius:24px;padding:24px 22px;box-shadow:0 18px 34px -16px rgba(10,34,51,.7);text-align:center;margin-bottom:22px}
 .hero h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.01em}
 .hero p{margin:6px 0 0;font-size:13px;color:var(--hero-mute);font-weight:600}
-.menu{display:flex;flex-direction:column;gap:12px}
+.menu{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:700px){.menu{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1000px){.menu{grid-template-columns:repeat(3,1fr)}}
 .card{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);
   border-radius:18px;padding:16px 16px;box-shadow:var(--shadow);text-decoration:none;color:var(--ink)}
 .card:active{transform:scale(.98)}
-.tile{width:48px;height:48px;border-radius:14px;background:rgba(15,157,110,.12);display:grid;place-items:center;
+.card{transition:transform .12s,border-color .15s;box-shadow:var(--shadow),0 0 0 1px rgba(47,212,154,calc(var(--borde-a)*.5)) inset}
+@media(hover:hover){.card:hover{border-color:var(--accent)}}
+.tile{width:48px;height:48px;border-radius:14px;background:var(--accent-bg);display:grid;place-items:center;
   flex:0 0 auto}
-.tile svg{width:24px;height:24px;stroke:var(--accent);fill:none;stroke-width:1.8}
+.tile svg{width:24px;height:24px;stroke:var(--accent-t);fill:none;stroke-width:1.8}
 .card .txt b{display:block;font-size:15.5px;font-weight:800}
 .card .txt span{display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin-top:2px}
 .card .arr{margin-left:auto;color:var(--mut);flex:0 0 auto}
@@ -60,14 +64,12 @@ body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:c
 .btn{width:100%;min-height:52px;margin-top:12px;border:0;border-radius:14px;background:var(--accent);color:var(--accent-ink);font:800 15px "Manrope",sans-serif;cursor:pointer}
 .btn:disabled{opacity:.5}
 .msg{min-height:20px;margin-top:10px;font-size:13px;font-weight:700;color:var(--mut);line-height:1.4}
-.msg.err{color:#c2303a}
-@media (prefers-color-scheme:dark){.msg.err{color:#ff7b84}}
+.msg.err{color:var(--error)}
 .out{display:block;margin:18px auto 0;border:0;background:transparent;color:var(--mut);font:700 13px "Manrope",sans-serif;min-height:44px;padding:0 14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 #menuBox{display:none}
 .syncline{margin:16px 4px 0;font-size:13px;font-weight:700;color:var(--mut);text-align:center;line-height:1.5}
 .syncline a{color:inherit;text-decoration:underline;text-underline-offset:3px;display:inline-block;min-height:44px;line-height:44px;padding:0 6px}
-.syncline.ok{color:#1c7a45}
-@media (prefers-color-scheme:dark){.syncline.ok{color:#5fd391}}
+.syncline.ok{color:var(--ok)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
