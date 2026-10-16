@@ -207,7 +207,7 @@ details summary{cursor:pointer;font-size:12.5px;font-weight:800;color:var(--acce
 
   <div id="app">
     <div class="sync"><span id="syncHint">Sin sincronizar</span><button type="button" class="btn btn-ghost btn-sm" id="syncBtn">Actualizar</button></div>
-    <a class="card" href="../sincronizar/" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit"><div style="width:46px;height:46px;border-radius:13px;background:rgba(14,143,163,.14);display:grid;place-items:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e8fa3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></div><div style="flex:1;min-width:0"><b style="display:block;font-size:15px;font-weight:800">Sincronizar con Drive</b><span style="display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin-top:2px">Actualiza los datos de Airbnb, directas y adicionales</span></div><span style="color:var(--mut)">›</span></a>
+    <a class="card" href="../sincronizar/" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit"><div style="width:46px;height:46px;border-radius:13px;background:rgba(14,143,163,.14);display:grid;place-items:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e8fa3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></div><div style="flex:1;min-width:0"><b style="display:block;font-size:15px;font-weight:800">Sincronizar con Drive</b><span style="display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin-top:2px">Actualiza los datos de Airbnb, directas y adicionales</span><span id="airbnbInfo" style="display:block;font-size:12.5px;color:var(--ink);font-weight:800;margin-top:6px"></span></div><span style="color:var(--mut)">›</span></a>
     <p class="small" style="margin:0 0 14px">Limpieza, comisiones y valores estándar. Aquí cambias los valores que usan los demás módulos. Lo ya guardado en reservas <b>no se modifica</b>: cada reserva conserva el valor con que se registró.</p>
     <div class="msg" id="msg" role="status"></div>
     <div id="cards"></div>
@@ -259,8 +259,17 @@ async function call(body) {
   return j;
 }
 function msg(t, c) { $('msg').className = 'msg' + (c ? ' ' + c : ''); $('msg').textContent = t; }
-function showApp() { $('gate').style.display = 'none'; $('app').style.display = 'block'; }
-function setHint(ok) { $('syncHint').textContent = ok ? 'Sincronizado ahora' : 'Sin datos aún'; }
+function showApp() { $('gate').style.display = 'none'; $('app').style.display = 'block'; pintarAirbnb(); }
+function fechaHora(d) { return d.toLocaleDateString('es-EC', { day: 'numeric', month: 'short' }).replace('.', '') + ' · ' + d.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', hour12: false }); }
+function setHint(ok) { $('syncHint').textContent = ok ? 'Valores revisados hoy ' + new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', hour12: false }) : 'Sin datos aún'; }
+/* Última vez que se generaron los datos de Airbnb: la guarda Sincronizar o Ingresos en este dispositivo. */
+function pintarAirbnb() {
+  const el = $('airbnbInfo'); if (!el) return;
+  let d = null;
+  try { const i = JSON.parse(localStorage.getItem('cimablanca_sync_info') || 'null'); if (i && i.t) d = new Date(i.t); } catch (e) {}
+  if (!d || isNaN(d)) { try { const c = JSON.parse(localStorage.getItem('cimablanca_ing_maestro') || 'null'); if (c && c.mod) d = new Date(c.mod); } catch (e) {} }
+  el.textContent = d && !isNaN(d) ? 'Datos de Airbnb al ' + fechaHora(d) : 'Datos de Airbnb: abre Ingresos para ver la fecha';
+}
 function aplicar(j) { DATA = j; render(); }
 
 async function conectar(clave) {
