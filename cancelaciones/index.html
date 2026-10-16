@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Cancelaciones y bloqueos · Cima Blanca</title>
-<!-- v20 (15 oct 2026, 21:40): estilo unificado (Guía v1.1): variables del tema compartido, acento verde, claro/oscuro, tarjeta principal en dólares, Borrar oculto a quien no puede borrar. -->
+<!-- v21 (15 oct 2026, 21:45): estilo unificado (Guía v1.1): variables del tema compartido, acento verde, claro/oscuro, tarjeta principal en dólares, Borrar oculto a quien no puede borrar. -->
 <!-- v11 (14 oct 2026, CB-014/CB-009): tipo No-show retirado y tipos renumerados sin saltos: 1 compensación, 2 sin compensación, 3 devolución, 4 overbooking, 5 contracargo. -->
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
@@ -291,6 +291,12 @@ html.cb-sin-borrar .list-item .btns [onclick^="borrar"]{display:none}
 
     <!-- FORM CANCELACION -->
     <div id="panelCanc" role="tabpanel" aria-labelledby="tabCanc">
+      <div class="kpi" style="margin-bottom:16px" id="cKpi" aria-live="polite">
+          <div class="k">Impacto en ingresos</div>
+          <div class="v" id="kImp">$0,00</div>
+          <div class="c" id="kImpDe">Devuelto, perdido y gastos de reubicación</div>
+          <div class="sub"><div>Casos<b id="kN">0</b></div><div>En curso<b id="kCurso">0</b></div><div>Ingreso que se mantiene<b id="kMant">$0,00</b></div></div>
+        </div>
       <div id="cFormWrap">
       <div class="card">
         <h3 id="cFormTitle">Registro de evento / cancelaciones</h3>
@@ -390,12 +396,6 @@ html.cb-sin-borrar .list-item .btns [onclick^="borrar"]{display:none}
       </div>
       <div class="card">
         <h3>Casos registrados</h3>
-        <div class="kpi" id="cKpi" aria-live="polite">
-          <div class="k">Impacto en ingresos</div>
-          <div class="v" id="kImp">$0,00</div>
-          <div class="c" id="kImpDe">Devuelto, perdido y gastos de reubicación</div>
-          <div class="sub"><div>Casos<b id="kN">0</b></div><div>En curso<b id="kCurso">0</b></div><div>Ingreso que se mantiene<b id="kMant">$0,00</b></div></div>
-        </div>
         <div id="cLista"></div>
       </div>
     </div>
