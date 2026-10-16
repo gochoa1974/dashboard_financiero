@@ -6,31 +6,17 @@
 <script src="../auth.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cima Blanca · Sincronizar con Drive</title>
+<meta name="theme-color" content="#0a2233">
+<link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
+<script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v11 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): tema compartido claro/oscuro y verde unificado. Sin cambios de lógica (lectura de Drive, validación y publicación intactas). -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --navy: #1a2233;
-    --navy-2: #1f2a44;
-    --azul: #2563eb;
-    --verde: #15803d;
-    --ambar: #d97706;
-    --gris: #6b7280;
-    --bg: #f7f8fa;
-    --card: #ffffff;
-    --text: #1a2233;
-    --text-muted: #6b7280;
-    --border: #e5e7eb;
-  }
-  @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #0f1420;
-      --card: #171e2e;
-      --text: #f3f4f6;
-      --text-muted: #9ca3af;
-      --border: #2a3344;
-    }
+    --navy: var(--hero-a); --azul: var(--acento); --azul-t: var(--acento-texto); --verde: var(--ok); --ambar: var(--pendiente); --gris: var(--texto-2);
+    --bg: var(--fondo); --card: var(--tarjeta); --text: var(--texto); --text-muted: var(--texto-2); --border: var(--linea);
   }
   * { box-sizing: border-box; }
   body {
@@ -55,27 +41,22 @@
   .card h2 { font-size: 15px; font-weight: 700; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
   .btn {
     display: inline-flex; align-items: center; gap: 8px;
-    background: var(--azul); color: #fff; border: none;
+    background: var(--azul); color: #04261a; border: none;
     font-family: inherit; font-weight: 700; font-size: 14px;
     padding: 12px 20px; border-radius: 10px; cursor: pointer;
   }
   .btn:disabled { opacity: .5; cursor: not-allowed; }
-  .btn.secondary { background: transparent; color: var(--azul); border: 1px solid var(--azul); }
-  .btn.ok { background: var(--verde); }
+  .btn.secondary { background: transparent; color: var(--azul-t); border: 1px solid var(--azul); }
+  .btn.ok { background: var(--azul); }
   .btn.small { padding: 8px 14px; font-size: 13px; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
   .pill {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
   }
-  .pill.ok { background: #dcfce7; color: var(--verde); }
-  .pill.pending { background: #fef3c7; color: var(--ambar); }
-  .pill.off { background: #f3f4f6; color: var(--gris); }
-  @media (prefers-color-scheme: dark) {
-    .pill.ok { background: #0f2a1a; }
-    .pill.pending { background: #2a2110; }
-    .pill.off { background: #20262f; }
-  }
+  .pill.ok { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
+  .pill.pending { background: color-mix(in srgb, var(--pendiente) 16%, transparent); color: var(--pendiente); }
+  .pill.off { background: color-mix(in srgb, var(--texto-2) 16%, transparent); color: var(--texto-2); }
   .log {
     font-size: 13px; color: var(--text-muted);
     max-height: 220px; overflow-y: auto;
@@ -86,21 +67,20 @@
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
   .stat .num { font-size: 24px; font-weight: 800; }
   .stat .label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-  .error { color: #dc2626; font-size: 13px; margin-top: 10px; }
+  .error { color: var(--error); font-size: 13px; margin-top: 10px; }
   svg { width: 18px; height: 18px; flex-shrink: 0; }
-  a.folder-link { color: var(--azul); font-size: 13px; text-decoration: none; }
+  a.folder-link { color: var(--azul-t); font-size: 13px; text-decoration: none; }
   a.folder-link:hover { text-decoration: underline; }
   .hidden { display: none; }
   .note { font-size: 13px; color: var(--text-muted); margin-top: 10px; }
   #autoNote { font-weight: 700; font-size: 14px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); margin: 0 0 16px; }
   #autoNote[hidden] { display: none; }
-  #autoNote.ok { color: #1c7a45; }
-  #autoNote.err { color: #c2303a; }
-  @media (prefers-color-scheme: dark) { #autoNote.ok { color: #5fd391; } #autoNote.err { color: #ff7b84; } }
+  #autoNote.ok { color: var(--ok); }
+  #autoNote.err { color: var(--error); }
   .apphead{display:flex;align-items:center;gap:12px;padding:0 0 16px}
   .backbtn{width:44px;height:44px;border-radius:14px;border:1px solid var(--border);background:var(--card);color:var(--text);display:grid;place-items:center;flex:0 0 auto;text-decoration:none}
   .backbtn svg{width:20px;height:20px}
-  .backbtn:focus-visible{outline:3px solid var(--azul);outline-offset:2px}
+  .backbtn:focus-visible{outline:3px solid var(--acento);outline-offset:2px}
   .apphead .logo{width:40px;height:40px;border-radius:50%;object-fit:cover;display:block;flex:0 0 auto}
   .apphead .ttl b{display:block;font-size:15px;font-weight:700}
   .apphead .ttl span{display:block;font-size:12px;color:var(--text-muted);font-weight:600;margin-top:1px}
