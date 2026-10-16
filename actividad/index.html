@@ -55,6 +55,12 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
 .dl .bt button[disabled]{opacity:.6}
 .dl .est{width:100%;margin-top:10px;min-height:46px;border-radius:12px;border:1px solid var(--line);background:transparent;font:inherit;font-weight:800;font-size:14px;cursor:pointer;color:var(--bad)}
 .row.tap{cursor:pointer}.row.tap:active{background:var(--info)}
+.blq{margin-top:16px;padding:16px 15px}.blq h3{margin:0 0 4px;font-size:15px;font-weight:800}.blq p{margin:0 0 12px;font-size:12.5px;font-weight:600;color:var(--mut);line-height:1.5}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:var(--info);padding:4px;border-radius:14px}
+.seg button{min-height:44px;border:0;border-radius:11px;background:transparent;color:var(--mut);font:inherit;font-size:13.5px;font-weight:800;cursor:pointer}
+.seg button[aria-checked=true]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.seg button[disabled]{opacity:.6}
+.blq .ok2:empty{display:none}.blq .ok2{min-height:18px;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--ok)}.blq .ok2.e{color:var(--bad)}
 .nuevo{width:100%;min-height:50px;border-radius:14px;border:0;background:var(--acc);color:var(--bg);font:inherit;font-weight:800;font-size:15px;cursor:pointer;margin-bottom:12px}
 @media (min-width:1000px){body{padding-top:28px}.wrap{max-width:860px}}
 </style>
@@ -68,6 +74,17 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
   <div class="tabs" role="tablist"><button role="tab" id="tA" aria-selected="true">Actividad</button><button role="tab" id="tU" aria-selected="false">Accesos</button></div>
   <div id="pA"><div class="chips" id="chips" aria-label="Filtrar por persona"></div><div id="lista"><div class="sp" role="status" aria-label="Cargando"></div></div></div>
   <div id="pU" hidden><button class="nuevo" id="bNuevo" type="button">+ Nueva persona</button><div id="usr"><div class="sp" role="status" aria-label="Cargando"></div></div>
+    <div class="card blq" id="blq" hidden>
+      <h3>Bloqueo con Face ID</h3>
+      <p>Cuánto tiempo puede estar la app fuera antes de pedir Face ID de nuevo. Aplica a todas las personas que lo tengan activado.</p>
+      <div class="seg" role="radiogroup" aria-label="Tiempo antes de pedir Face ID">
+        <button type="button" role="radio" data-m="0" aria-checked="false">Siempre</button>
+        <button type="button" role="radio" data-m="1" aria-checked="false">1 min</button>
+        <button type="button" role="radio" data-m="2" aria-checked="false">2 min</button>
+        <button type="button" role="radio" data-m="5" aria-checked="false">5 min</button>
+      </div>
+      <div class="ok2" id="blqM" role="status"></div>
+    </div>
     <p class="nota">Toca una persona para cambiar su rol, restablecer su clave o desactivarla. Una persona desactivada pierde la sesión de inmediato. Los permisos de cada rol se ajustan en la hoja ROLES del Sheet.</p></div>
 </div>
 <dialog id="dlg" aria-labelledby="dT"><form class="dl" id="dF" method="dialog" autocomplete="off">
@@ -118,8 +135,20 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
   function err(id,e){$(id).innerHTML='<div class="card"><div class="vacio">No pude cargar ('+esc(e.message||e)+').<br><button class="btn" type="button" data-r="'+id+'">Reintentar</button></div></div>'}
   function cargar(){
     CB.llamar('actividad',{limite:300}).then(function(r){FILAS=r.filas||[];pintarChips();pintarLista()}).catch(function(e){err('lista',e)});
-    CB.llamar('usuarios',{}).then(function(r){USU=r.usuarios||[];ROL=r.roles||[];YO=r.yo||'';pintarUsuarios()}).catch(function(e){err('usr',e)});
+    CB.llamar('usuarios',{}).then(function(r){USU=r.usuarios||[];ROL=r.roles||[];YO=r.yo||'';pintarUsuarios();pintarBloqueo(r.bloqueoMin)}).catch(function(e){err('usr',e)});
   }
+  function pintarBloqueo(m){
+    if(m===undefined||m===null)return;
+    try{localStorage.setItem('cb_lock_min',String(m))}catch(e){}
+    $('blq').hidden=false;
+    [].forEach.call($('blq').querySelectorAll('.seg button'),function(b){b.setAttribute('aria-checked',String(+b.getAttribute('data-m')===+m))});
+  }
+  $('blq').addEventListener('click',function(e){
+    var b=e.target.closest('.seg button');if(!b||b.getAttribute('aria-checked')==='true')return;
+    var bs=$('blq').querySelectorAll('.seg button'),M=$('blqM'),m=+b.getAttribute('data-m');
+    [].forEach.call(bs,function(x){x.disabled=true});M.className='ok2';M.textContent='Guardando…';
+    CB.llamar('config_guardar',{bloqueoMin:m}).then(function(r){pintarBloqueo(r.bloqueoMin);M.textContent='Guardado. Se aplica la próxima vez que se abra la app.'}).catch(function(er){M.className='ok2 e';M.textContent=er.message||'No pude guardar'}).then(function(){[].forEach.call(bs,function(x){x.disabled=false})});
+  });
   document.addEventListener('click',function(e){var b=e.target.closest('[data-r]');if(!b)return;$('lista').innerHTML='<div class="sp"></div>';$('usr').innerHTML='<div class="sp"></div>';cargar()});
   function tab(a){$('pA').hidden=!a;$('pU').hidden=a;$('tA').setAttribute('aria-selected',a);$('tU').setAttribute('aria-selected',!a)}
   $('tA').onclick=function(){tab(true)};$('tU').onclick=function(){tab(false)};
