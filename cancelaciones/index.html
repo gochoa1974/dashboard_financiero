@@ -7,7 +7,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Cancelaciones y bloqueos · Cima Blanca</title>
+<!-- v20 (15 oct 2026, 21:40): estilo unificado (Guía v1.1): variables del tema compartido, acento verde, claro/oscuro, tarjeta principal en dólares, Borrar oculto a quien no puede borrar. -->
 <!-- v11 (14 oct 2026, CB-014/CB-009): tipo No-show retirado y tipos renumerados sin saltos: 1 compensación, 2 sin compensación, 3 devolución, 4 overbooking, 5 contracargo. -->
+<meta name="theme-color" content="#0a2233">
+<link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
+<script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,21 +19,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#edf2f4;--surface:#ffffff;--ink:#0a2233;--mut:#5f7080;--line:#dde5ea;
-  --hero1:#0a2233;--hero2:#123a52;--hero-mute:#9fc0d3;
-  --accent:#b45309;--accent-ink:#ffffff;--accent-bg:rgba(180,83,9,.12);
-  --ok:#0f9d6e;--bad:#dc2626;
+  --bg:var(--fondo);--surface:var(--tarjeta);--ink:var(--texto);--mut:var(--texto-2);--line:var(--linea);
+  --hero1:var(--hero-a);--hero2:var(--hero-b);--hero-mute:#9fc0d3;
+  --accent:var(--acento);--accent-t:var(--acento-texto);--accent-ink:#04261a;--accent-bg:color-mix(in srgb,var(--acento) 14%,transparent);
+  --bad:var(--error);
   --shadow:0 1px 2px rgba(10,34,51,.05),0 8px 20px -12px rgba(10,34,51,.2)
 }
-@media (prefers-color-scheme:dark){
-  :root{
-    --bg:#071722;--surface:#0e2536;--ink:#eaf2f6;--mut:#8fa6b5;--line:#1a3649;
-    --hero1:#0f3550;--hero2:#14506b;--hero-mute:#9fc0d3;
-    --accent:#f59e0b;--accent-ink:#1a0f00;--accent-bg:rgba(245,158,11,.16);
-    --ok:#2fd49a;--bad:#f87171;
-    --shadow:0 1px 2px rgba(0,0,0,.4)
-  }
-}
+:root[data-modo="oscuro"]{--shadow:0 1px 2px rgba(0,0,0,.4)}
+@media (prefers-color-scheme:dark){:root[data-modo="auto"]{--shadow:0 1px 2px rgba(0,0,0,.4)}}
 *{box-sizing:border-box}
 html{background:var(--bg)}
 body{margin:0;min-height:100vh;padding:20px 16px 40px;
@@ -65,7 +62,7 @@ textarea{resize:vertical;min-height:60px}
 .tabs{display:flex;gap:8px;margin-bottom:16px}
 .tab{flex:1;text-align:center;padding:11px 8px;border-radius:12px;border:1px solid var(--line);
   background:var(--surface);font-weight:800;font-size:13.5px;color:var(--mut);cursor:pointer}
-.tab.on{background:var(--accent-bg);color:var(--accent);border-color:var(--accent)}
+.tab.on{background:var(--accent-bg);color:var(--accent-t);border-color:var(--accent)}
 
 .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;
   box-shadow:var(--shadow);margin-bottom:16px}
@@ -81,7 +78,7 @@ textarea{resize:vertical;min-height:60px}
 .list-item{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;background:var(--bg)}
 .list-item .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .list-item b{font-size:14px}
-.list-item .tag{font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--accent-bg);color:var(--accent);white-space:nowrap}
+.list-item .tag{font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--accent-bg);color:var(--accent-t);white-space:nowrap}
 .list-item .meta{font-size:12.5px;color:var(--mut);font-weight:600;margin-top:4px;line-height:1.5}
 .list-item .btns{display:flex;gap:8px;margin-top:10px}
 .empty{font-size:13px;color:var(--mut);font-weight:600;text-align:center;padding:18px 0}
@@ -93,7 +90,7 @@ button.tab{appearance:none;font-family:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .field label.chk{display:flex;align-items:center;gap:10px;min-height:44px;font-size:13.5px;color:var(--ink);margin:0}
 .chk input{width:20px;height:20px;accent-color:var(--accent)}
-.link{appearance:none;background:none;border:none;padding:10px 0;margin:0 0 6px;color:var(--accent);font-family:inherit;font-weight:800;font-size:13px;cursor:pointer}
+.link{appearance:none;background:none;border:none;padding:10px 0;margin:0 0 6px;color:var(--accent-t);font-family:inherit;font-weight:800;font-size:13px;cursor:pointer}
 .resumen{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--bg);margin:0 0 4px}
 .resumen b{display:block;font-size:14.5px;font-weight:800;overflow-wrap:anywhere}
 .resumen span{display:block;margin-top:2px;font-size:12.5px;color:var(--mut);font-weight:600}
@@ -111,7 +108,7 @@ button.tab{appearance:none;font-family:inherit}
   background:var(--line);color:var(--ink);font-size:12.5px;font-weight:800;transition:background .15s,color .15s}
 .chip.on .num{background:var(--accent);color:var(--accent-ink)}
 .chip:active{transform:scale(.97)}
-.chip.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.chip.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent-t)}
 .chip.bloq{opacity:.45;cursor:not-allowed}
 input[readonly]{opacity:.75;cursor:not-allowed}
 .chip-s{min-height:40px;padding:8px 14px;border-radius:999px;font-size:12.5px;text-align:center}
@@ -121,7 +118,7 @@ input[readonly]{opacity:.75;cursor:not-allowed}
 .acc-h{appearance:none;width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;font-family:inherit;
   color:var(--ink);font-weight:800;font-size:14px;padding:14px;cursor:pointer;text-align:left;min-height:48px}
 .acc-h .acc-s{margin-left:auto;font-size:12px;color:var(--mut);font-weight:700}
-.acc-h.falta .acc-s{color:var(--accent)}
+.acc-h.falta .acc-s{color:var(--accent-t)}
 .acc-h.falta .acc-s::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px}
 .acc-h svg{flex:none;color:var(--mut);transition:transform .2s}
 .acc.open .acc-h svg{transform:rotate(180deg)}
@@ -178,7 +175,7 @@ input[readonly]{opacity:.75;cursor:not-allowed}
 .rf-ov.rf-on .rf-p{transform:none}
 .rf-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
 .rf-top h4{margin:0;font-size:16px;font-weight:800}
-.rf-help{margin:2px 0 0;font-size:12.5px;font-weight:700;color:var(--accent);min-height:18px}
+.rf-help{margin:2px 0 0;font-size:12.5px;font-weight:700;color:var(--accent-t);min-height:18px}
 .rf-x{appearance:none;border:1px solid var(--line);background:transparent;color:var(--mut);border-radius:12px;width:44px;height:44px;flex:none;
   display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .rf-x svg{width:18px;height:18px}
@@ -188,7 +185,7 @@ input[readonly]{opacity:.75;cursor:not-allowed}
 .rf-s small{display:block;font-size:11px;font-weight:700;color:var(--mut)}
 .rf-s b{display:block;font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rf-s.rf-act{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-bg)}
-.rf-n{display:flex;align-items:center;justify-content:center;padding:0 12px;border-radius:12px;background:var(--accent-bg);color:var(--accent);
+.rf-n{display:flex;align-items:center;justify-content:center;padding:0 12px;border-radius:12px;background:var(--accent-bg);color:var(--accent-t);
   font-size:13px;font-weight:800;white-space:nowrap}
 .rf-n:empty{display:none}
 .rf-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
@@ -246,6 +243,19 @@ input[readonly]{opacity:.75;cursor:not-allowed}
 @media (max-width:420px){.rf-btn{font-size:15px;padding:11px 10px;gap:0}.rf-btn svg{display:none}}
 @media (prefers-reduced-motion:reduce){.rf-ov,.rf-p,.rf-d.rf-pop{transition:none;animation:none}}
 
+
+/* ===== v20: tarjeta principal y estilo unificado ===== */
+.kpi{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--hero1),var(--hero2));color:#fff;border-radius:18px;padding:18px;margin-bottom:14px}
+.kpi .k{font-size:13px;font-weight:700;color:var(--hero-mute)}
+.kpi .v{font-size:44px;font-weight:800;line-height:1.05;margin:6px 0 4px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;text-shadow:0 0 22px rgba(47,212,154,var(--glow-a))}
+.kpi .c{font-size:13px;font-weight:600;color:var(--hero-mute)}
+.kpi .sub{display:flex;gap:18px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.14)}
+.kpi .sub div{font-size:12px;font-weight:700;color:var(--hero-mute)}
+.kpi .sub b{display:block;font-size:16px;color:#fff;font-weight:800;font-variant-numeric:tabular-nums}
+:root[data-ahorro="1"] .kpi .v{text-shadow:none}
+html.cb-sin-borrar .list-item .btns [onclick^="borrar"]{display:none}
+.btn-acc{box-shadow:0 0 0 0 transparent}
+.list-item,.stat,.resumen,.acc{background:var(--bg)}
 </style>
 <style>.bad-field{border-color:var(--bad)!important;box-shadow:0 0 0 2px rgba(220,38,38,.18)}.msg .btn{margin-top:8px;width:auto;padding:0 14px}</style>
 </head>
@@ -380,6 +390,12 @@ input[readonly]{opacity:.75;cursor:not-allowed}
       </div>
       <div class="card">
         <h3>Casos registrados</h3>
+        <div class="kpi" id="cKpi" aria-live="polite">
+          <div class="k">Impacto en ingresos</div>
+          <div class="v" id="kImp">$0,00</div>
+          <div class="c" id="kImpDe">Devuelto, perdido y gastos de reubicación</div>
+          <div class="sub"><div>Casos<b id="kN">0</b></div><div>En curso<b id="kCurso">0</b></div><div>Ingreso que se mantiene<b id="kMant">$0,00</b></div></div>
+        </div>
         <div id="cLista"></div>
       </div>
     </div>
@@ -1044,7 +1060,15 @@ async function borrarB(id) {
 }
 
 
+function kpis() {
+  const m = n => (n < 0 ? '-' : '') + '$' + fnum(Math.abs(n), 2);
+  const imp = CANC.reduce((s, r) => s + (Number(r.devueltoPerdido) || 0) + (Number(r.gastoExtra) || 0), 0);
+  const mant = CANC.reduce((s, r) => s + (Number(r.netoQueCuenta) || 0), 0);
+  $('kImp').textContent = m(imp); $('kMant').textContent = m(mant);
+  $('kN').textContent = CANC.length; $('kCurso').textContent = CANC.filter(r => r.estado === 'En curso').length;
+}
 function render() {
+  kpis();
   const lc = $('cLista');
   if (!CANC.length) { lc.innerHTML = '<div class="empty">Todavía no hay casos registrados.</div>'; }
   else {
