@@ -4,8 +4,9 @@
 (function () {
   'use strict';
   var CB_ACCESO_URL = 'https://script.google.com/macros/s/AKfycbxWGwFUlEbsokdfn79n8RDCKFVu-jv2DKdJp4Bq7D_cjrO_NNoDPQdXpW6aTlpxGA/exec';   // URL /exec del Apps Script ACCESO (la pone Luna al recibirla)
-  var K_SES = 'cb_sesion', K_CLAVE = 'cimablanca_clave', K_LOCK = 'cb_lock', K_ACT = 'cb_lock_t', K_NOLOCK = 'cb_lock_no';
-  var IDLE = 120000;   // tras 2 min fuera de la app vuelve a pedir Face ID
+  var K_SES = 'cb_sesion', K_CLAVE = 'cimablanca_clave', K_LOCK = 'cb_lock', K_ACT = 'cb_lock_t', K_NOLOCK = 'cb_lock_no', K_MIN = 'cb_lock_min';
+  // minutos fuera de la app antes de volver a pedir Face ID: lo define el administrador en el servidor (0 = siempre, con 10 s de gracia)
+  function idleMs() { var m = ls(K_MIN); m = m === null ? 1 : +m; return m === 0 ? 10000 : m * 60000; }
   var me = document.currentScript, BASE = me && me.src ? me.src.replace(/[^\/]*$/, '') : '';
   var metaM = document.querySelector('meta[name="cb-modulo"]');
   var MODULO = metaM ? metaM.content : '';
@@ -92,7 +93,7 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
   function lockCfg() { try { var c = JSON.parse(ls(K_LOCK) || 'null'); return c && c.id && c.usuario ? c : null; } catch (e) { return null; } }
   function lockActivo() { var c = lockCfg(), s = leerSes(); return !!(SOPORTA && c && s && s.perfil && s.perfil.usuario === c.usuario); }
   function marcar() { ls(K_ACT, String(Date.now())); }
-  function necesitaBloqueo() { return lockActivo() && (Date.now() - (+ls(K_ACT) || 0) > IDLE); }
+  function necesitaBloqueo() { return lockActivo() && (Date.now() - (+ls(K_ACT) || 0) > idleMs()); }
   function lockDisponible() {
     if (!SOPORTA || !PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) return Promise.resolve(false);
     return PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(function () { return false; });
@@ -175,6 +176,7 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
   function pf(r) { return { usuario: r.usuario, nombre: r.nombre, rol: r.rol, rolEtiqueta: r.rolEtiqueta, modulos: r.modulos, puedeBorrar: r.puedeBorrar, esAdmin: r.esAdmin }; }
   function aplicar(r) {
     CB.perfil = pf(r);
+    if (r.bloqueoMin !== undefined && r.bloqueoMin !== null) ls(K_MIN, String(r.bloqueoMin));
     if (r.claveModulos) ls(K_CLAVE, r.claveModulos);
     var cl = document.documentElement.classList; cl.toggle('cb-admin', !!r.esAdmin); cl.toggle('cb-sin-borrar', !r.puedeBorrar);
     document.documentElement.setAttribute('data-cb-rol', r.rol);
