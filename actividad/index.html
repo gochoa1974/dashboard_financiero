@@ -9,12 +9,17 @@
 <title>Actividad · Cima Blanca</title>
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
+<meta name="theme-color" content="#0a2233">
+<link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
+<script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v3 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): tema compartido claro/oscuro, botones y selección en verde. Sin cambios de lógica. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#edf2f4;--surface:#fff;--ink:#0a2233;--mut:#5f7080;--line:#dde5ea;--acc:#0a2233;--ok:#0f7a56;--okbg:rgba(15,157,110,.12);--warn:#b45309;--warnbg:rgba(180,83,9,.12);--bad:#b42318;--badbg:rgba(220,38,38,.1);--info:rgba(95,112,128,.12);--shadow:0 1px 2px rgba(10,34,51,.05),0 8px 20px -12px rgba(10,34,51,.2)}
-@media (prefers-color-scheme:dark){:root{--bg:#071722;--surface:#0e2536;--ink:#eaf2f6;--mut:#8fa6b5;--line:#1a3649;--acc:#eaf2f6;--ok:#2fd49a;--okbg:rgba(47,212,154,.16);--warn:#f59e0b;--warnbg:rgba(245,158,11,.16);--bad:#ff8a80;--badbg:rgba(248,113,113,.16);--info:rgba(143,166,181,.14);--shadow:0 1px 2px rgba(0,0,0,.4)}}
+:root{--bg:var(--fondo);--surface:var(--tarjeta);--ink:var(--texto);--mut:var(--texto-2);--line:var(--linea);--acc:var(--acento);--accent-t:var(--acento-texto);--accent-ink:#04261a;--okbg:color-mix(in srgb,var(--ok) 14%,transparent);--warn:var(--pendiente);--warnbg:color-mix(in srgb,var(--pendiente) 14%,transparent);--bad:var(--error);--badbg:color-mix(in srgb,var(--error) 14%,transparent);--info:color-mix(in srgb,var(--texto-2) 14%,transparent);--shadow:0 1px 2px rgba(10,34,51,.05),0 8px 20px -12px rgba(10,34,51,.2)}
+:root[data-modo="oscuro"]{--shadow:0 1px 2px rgba(0,0,0,.4)}
+@media (prefers-color-scheme:dark){:root[data-modo="auto"]{--shadow:0 1px 2px rgba(0,0,0,.4)}}
 *{box-sizing:border-box}html{background:var(--bg)}
 body{margin:0;min-height:100vh;padding:16px 16px 48px;font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
 .wrap{width:100%;max-width:760px;margin:0 auto}
@@ -26,7 +31,7 @@ body{margin:0;min-height:100vh;padding:16px 16px 48px;font-family:"Manrope",-app
 .tabs button[aria-selected=true]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
 .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
-.chip[aria-pressed=true]{background:var(--acc);color:var(--bg);border-color:var(--acc)}
+.chip[aria-pressed=true]{background:var(--acc);color:var(--accent-ink);border-color:var(--acc)}
 .day{margin:14px 2px 8px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--mut)}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
 .row{display:flex;gap:12px;align-items:center;padding:13px 15px;border-top:1px solid var(--line)}.row:first-child{border-top:0}
@@ -51,7 +56,7 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
 .dl .h{margin:-8px 0 14px;font-size:12.5px;font-weight:600;color:var(--mut)}
 .dl .er{min-height:18px;margin:-6px 0 8px;font-size:13px;font-weight:700;color:var(--bad)}
 .dl .bt{display:flex;gap:8px}.dl .bt button{flex:1;min-height:48px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:800;font-size:14.5px;cursor:pointer}
-.dl .bt button.pr{background:var(--acc);color:var(--bg);border-color:var(--acc)}
+.dl .bt button.pr{background:var(--acc);color:var(--accent-ink);border-color:var(--acc)}
 .dl .bt button[disabled]{opacity:.6}
 .dl .est{width:100%;margin-top:10px;min-height:46px;border-radius:12px;border:1px solid var(--line);background:transparent;font:inherit;font-weight:800;font-size:14px;cursor:pointer;color:var(--bad)}
 .row.tap{cursor:pointer}.row.tap:active{background:var(--info)}
@@ -75,7 +80,7 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
 .dh[aria-expanded=true] .ch{transform:rotate(90deg)}
 .dh .pill.bad{margin-right:2px}
 .mas{display:block;width:100%;min-height:48px;margin-top:14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:800;font-size:14px;cursor:pointer}
-.nuevo{width:100%;min-height:50px;border-radius:14px;border:0;background:var(--acc);color:var(--bg);font:inherit;font-weight:800;font-size:15px;cursor:pointer;margin-bottom:12px}
+.nuevo{width:100%;min-height:50px;border-radius:14px;border:0;background:var(--acc);color:var(--accent-ink);font:inherit;font-weight:800;font-size:15px;cursor:pointer;margin-bottom:12px}
 @media (min-width:1000px){body{padding-top:28px}.wrap{max-width:860px}}
 </style>
 </head>
