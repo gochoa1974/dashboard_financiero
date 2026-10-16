@@ -213,17 +213,24 @@ $('gateEye').onclick = () => { const i = $('gateKey'); i.type = i.type === 'pass
 $('gateKey').addEventListener('keydown', e => { if (e.key === 'Enter') $('gateGo').click(); });
 $('outBtn').onclick = () => { clearClave(); showGate(''); };
 
-const K0 = getClave();
-if (K0) {
-  showGate('');
-  $('gateMsg').className = 'msg';
-  $('gateMsg').textContent = 'Verificando la clave guardada...';
-  validar(K0).then(v => {
-    if (v === 'ok') showMenu();
-    else if (v === 'mala') { clearClave(); showGate('La clave cambió. Escríbela de nuevo.'); }
-    else { showGate('No se pudo verificar la clave guardada. Comprueba tu conexión e inténtalo otra vez.'); }
-  });
-} else { showGate(''); }
+/* Con el acceso por usuario (auth.js) la persona ya se identificó: este menú no vuelve a pedir ni a verificar la clave de los módulos. */
+if (window.CB && CB.activo) {
+  $('outBtn').textContent = 'Cerrar sesión';
+  $('outBtn').onclick = () => CB.salir();
+  CB.ready.then(() => { if (!CB.bloqueado) showMenu(); });
+} else {
+  const K0 = getClave();
+  if (K0) {
+    showGate('');
+    $('gateMsg').className = 'msg';
+    $('gateMsg').textContent = 'Verificando la clave guardada...';
+    validar(K0).then(v => {
+      if (v === 'ok') showMenu();
+      else if (v === 'mala') { clearClave(); showGate('La clave cambió. Escríbela de nuevo.'); }
+      else { showGate('No se pudo verificar la clave guardada. Comprueba tu conexión e inténtalo otra vez.'); }
+    });
+  } else { showGate(''); }
+}
 </script>
 </body>
 </html>
