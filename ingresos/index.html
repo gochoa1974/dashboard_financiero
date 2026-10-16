@@ -10,30 +10,31 @@
 <title>Ingresos · Cima Blanca</title>
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
+<link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
+<script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v15 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): acento verde (antes turquesa; el turquesa queda solo en la serie Airbnb), gráfico de evolución en el acento, tema compartido claro/oscuro. Sin cambios de lógica. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#edf2f4;--surface:#ffffff;--ink:#0a2233;--mut:#5f7080;--line:#dde5ea;
-  --hero1:#0a2233;--hero2:#123a52;--hero-mute:#9fc0d3;
-  --air:14,143,163;--dir:194,71,138;--ext:138,154,31;
-  --ok:#0b7a55;--ok-bg:#e1f4ec;--warn:#a85a07;--warn-bg:#fdf1d8;--warn-line:#f1d9a3;--off:#56677a;--off-bg:#e8eef2;
-  --bad:#c2303a;--bad-bg:#fdecee;--info:#1d5fa8;--info-bg:#e4effb;
-  --accent:#0e8fa3;--accent-ink:#ffffff;--tabs:#e3eaee;--tabon:#ffffff;
+  --bg:var(--fondo);--surface:var(--tarjeta);--ink:var(--texto);--mut:var(--texto-2);--line:var(--linea);
+  --hero1:var(--hero-a);--hero2:var(--hero-b);--hero-mute:#9fc0d3;
+  --air:14,143,163;--dir:194,71,138;--ext:138,154,31;--evc:15,157,110;
+  --ok-bg:#e1f4ec;--warn:var(--pendiente);--warn-bg:#fdf1d8;--warn-line:#f1d9a3;--off:#56677a;--off-bg:#e8eef2;
+  --bad:var(--error);--bad-bg:#fdecee;--info:#1d5fa8;--info-bg:#e4effb;
+  --accent:var(--acento);--accent-t:var(--acento-texto);--accent-ink:#04261a;--tabs:#e3eaee;--tabon:#ffffff;
   --shadow:0 1px 2px rgba(10,34,51,.05),0 8px 20px -12px rgba(10,34,51,.2)
 }
-@media (prefers-color-scheme:dark){
-  :root{
-    --bg:#071722;--surface:#0e2536;--ink:#eaf2f6;--mut:#8fa6b5;--line:#1a3649;
-    --hero1:#0f3550;--hero2:#14506b;--hero-mute:#9fc0d3;
-    --air:60,195,216;--dir:232,121,178;--ext:190,206,70;
-    --ok:#4fdc9c;--ok-bg:#0f3a30;--warn:#f3b95f;--warn-bg:#3a2c12;--warn-line:#6e4f1d;--off:#a3b6c4;--off-bg:#173345;
-    --bad:#ff7b84;--bad-bg:#3d1a20;--info:#8fc2ff;--info-bg:#12304d;
-    --accent:#3cc3d8;--accent-ink:#04202a;--tabs:#0a1b28;--tabon:#24425a;
-    --shadow:0 1px 2px rgba(0,0,0,.4)
-  }
+:root[data-modo="oscuro"]{
+  --air:60,195,216;--dir:232,121,178;--ext:190,206,70;--evc:47,212,154;
+  --ok-bg:#0f3a30;--warn-bg:#3a2c12;--warn-line:#6e4f1d;--off:#a3b6c4;--off-bg:#173345;
+  --bad-bg:#3d1a20;--info:#8fc2ff;--info-bg:#12304d;--tabs:#0a1b28;--tabon:#24425a;--shadow:0 1px 2px rgba(0,0,0,.4)
 }
+@media (prefers-color-scheme:dark){:root[data-modo="auto"]{
+  --air:60,195,216;--dir:232,121,178;--ext:190,206,70;--evc:47,212,154;
+  --ok-bg:#0f3a30;--warn-bg:#3a2c12;--warn-line:#6e4f1d;--off:#a3b6c4;--off-bg:#173345;
+  --bad-bg:#3d1a20;--info:#8fc2ff;--info-bg:#12304d;--tabs:#0a1b28;--tabon:#24425a;--shadow:0 1px 2px rgba(0,0,0,.4)}}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{background:var(--bg)}
 body{font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;font-size:14px;line-height:1.35}
@@ -183,18 +184,18 @@ details.ver li.bad b{color:var(--bad)}
 .evo .gl{stroke:var(--line);stroke-dasharray:3 4;stroke-width:1}
 .evo .gt{fill:var(--mut);font-size:9px;font-weight:600}
 .evo .bp{fill:var(--mut);opacity:.32}
-.evo .bc{fill:rgb(var(--air));opacity:.55;transition:opacity .15s}
+.evo .bc{fill:rgb(var(--evc));opacity:.55;transition:opacity .15s}
 .evo .bh{fill:url(#evH)}
 .evo g.m{cursor:pointer;outline:none}
 .evo g.m.on .bc{opacity:1}
 .evo g.m:hover .bc{opacity:.8}
 .evo g.m.on:hover .bc{opacity:1}
 .evo g.m.off{cursor:default;pointer-events:none}
-.evo g.m:focus-visible .hit{stroke:rgb(var(--air));stroke-width:2;fill:rgba(var(--air),.08)}
+.evo g.m:focus-visible .hit{stroke:rgb(var(--evc));stroke-width:2;fill:rgba(var(--evc),.08)}
 .evo .hit{fill:transparent;rx:6}
 .evo .ml{fill:var(--mut);font-size:10px;font-weight:700;text-anchor:middle}
 .evo g.on .ml{fill:var(--ink);font-weight:800}
-.evo .ul{fill:rgb(var(--air))}
+.evo .ul{fill:rgb(var(--evc))}
 .evlg{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--mut);font-weight:700;margin:0 0 8px}
 .evlg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .evc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
@@ -430,7 +431,7 @@ function evoHTML(mk){
   for(i=1;i<=12;i++){A.push(evMes(y,i));B.push(evMes(y-1,i));}
   var mx=0;for(i=0;i<12;i++){mx=Math.max(mx,A[i].t,B[i].t);}
   var step=mx<=1500?500:1000,top=Math.max(step,Math.ceil(mx/step)*step);
-  var host=$("p-res"),cw=host&&host.clientWidth>0?host.clientWidth-30:330,W=Math.max(290,Math.min(cw,900)),H=W>600?180:(W>420?150:130),PL=28,bw=(W-PL-4)/12,g=bw*0.78,b=g/2-1,svg='<svg width="'+W+'" height="'+(H+34)+'" viewBox="0 0 '+W+' '+(H+34)+'" role="group" aria-label="Evolución mensual del neto, '+(y-1)+' contra '+y+'"><defs><pattern id="evH" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="rgba(var(--air),.28)"/><rect width="2" height="5" fill="rgb(var(--air))"/></pattern></defs><g transform="translate(0,8)">';
+  var host=$("p-res"),cw=host&&host.clientWidth>0?host.clientWidth-30:330,W=Math.max(290,Math.min(cw,900)),H=W>600?180:(W>420?150:130),PL=28,bw=(W-PL-4)/12,g=bw*0.78,b=g/2-1,svg='<svg width="'+W+'" height="'+(H+34)+'" viewBox="0 0 '+W+' '+(H+34)+'" role="group" aria-label="Evolución mensual del neto, '+(y-1)+' contra '+y+'"><defs><pattern id="evH" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="rgba(var(--evc),.28)"/><rect width="2" height="5" fill="rgb(var(--evc))"/></pattern></defs><g transform="translate(0,8)">';
   for(var gv=step;gv<=top;gv+=step){var gy=H-H*gv/top;svg+='<line class="gl" x1="'+PL+'" x2="'+W+'" y1="'+gy.toFixed(1)+'" y2="'+gy.toFixed(1)+'"/><text class="gt" x="0" y="'+(gy+3).toFixed(1)+'">$'+(gv>=1000?(gv/1000)+"k":gv)+'</text>';}
   for(i=0;i<12;i++){
     var mkk=y+"-"+pad(i+1),x=PL+2+i*bw+(bw-g)/2,on=mkk===mk,inR=mkk>=rg[0]&&mkk<=rg[1];
@@ -462,7 +463,7 @@ function evoHTML(mk){
     c2='<div><small>'+rngTxt.charAt(0).toUpperCase()+rngTxt.slice(1)+' '+y+(enCurso?' (meses cerrados)':'')+'</small><b>'+money(sa)+'</b><em'+(d2!==null?(d2>=0?' class="up"':' class="dn"'):'')+'>'+(d2!==null?(d2>=0?'▲ ':'▼ ')+Math.abs(d2)+'% vs ':'')+money(sb)+' en '+rngTxt+' '+(y-1)+'</em></div>';
   } else c2='<div><small>Acumulado '+y+'</small><b>'+money(A.reduce(function(a,x){return a+x.d;},0))+'</b><em>Sin año anterior para comparar</em></div>';
   return '<div class="panel evo"><div class="panel-h"><b>Evolución del neto</b><span></span></div><div class="rmk">Por mes · '+(y-1)+' contra '+y+' · toca un mes para verlo</div>'+
-    '<div class="evlg"><span><i style="background:rgba(95,112,128,.4)"></i>'+(y-1)+'</span><span><i style="background:rgb(var(--air))"></i>'+y+'</span><span><i style="background:repeating-linear-gradient(45deg,rgb(var(--air)) 0 2px,rgba(var(--air),.28) 2px 5px)"></i>Por dormir</span></div>'+
+    '<div class="evlg"><span><i style="background:rgba(95,112,128,.4)"></i>'+(y-1)+'</span><span><i style="background:rgb(var(--evc))"></i>'+y+'</span><span><i style="background:repeating-linear-gradient(45deg,rgb(var(--evc)) 0 2px,rgba(var(--evc),.28) 2px 5px)"></i>Por dormir</span></div>'+
     svg+'<div class="evc">'+c1+c2+'</div></div>';
 }
 function evGo(el){var g=el.closest&&el.closest("g.m");if(!g||g.classList.contains("off"))return;curMonth=g.getAttribute("data-m");if(M)renderR();}
