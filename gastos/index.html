@@ -14,6 +14,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v14 (17 oct 2026): la limpieza aparece como Por pagar desde el día siguiente al check-in (pedido de Gustavo, para juntar pagos y ahorrar la comisión). -->
 <!-- v13b (15 oct 2026, 22:15): estilo unificado (Guía v1.1): colores base y modo claro/oscuro desde el tema compartido; texto verde pequeño con contraste AA. Sin cambios de lógica. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -740,6 +741,10 @@ function famGuess(texto){
 }
 const LIMP='Limpieza de estadía',PARAM_URL='https://script.google.com/macros/s/AKfycbxJX9a0T36KJWdDB4sGZ0FAGufRCTRwQgxmUwGQqZAlXu5754Jh2ghxv6nU8wkMmqV8xw/exec';
 const isLimp=e=>e.concepto===LIMP,isPorPagar=e=>isLimp(e)&&e.estado==='Pendiente de pago';
+/* v14: la limpieza se debe desde el día siguiente al check-in (o el check-out si la estadía es de 1 noche); sin check-in del servidor, queda el check-out */
+const limDesde=it=>{const co=it.checkout;if(!it.checkin||!/^\d{4}-\d{2}-\d{2}$/.test(it.checkin))return co;const d=new Date(it.checkin+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+1);const x=d.toISOString().slice(0,10);return x<co?x:co;};
+const mesSig=m=>{const y=+m.slice(0,4),k=+m.slice(5);return k===12?(y+1)+'-01':y+'-'+String(k+1).padStart(2,'0');};
+const pendVis=e=>isPorPagar(e)&&(e.mes<=MES||(MES===todayISO().slice(0,7)&&e.mes===mesSig(MES)));
 const ANUNCIOS=['Departamento completo','LST-01_6 pax','LST-02_8 pax','LST-03_4 pax'];
 const KEY='cb_gastos_ops_v4';
 let OPS=[],stOK=true;
@@ -1270,7 +1275,7 @@ function limGroup(rows){
  let h='<button type="button" class="item ev lg" data-lg="1" aria-expanded="'+open+'"><div class="tile">'+iconX(LIMP,'1. Fijos operativos')+'</div><div class="mid"><b>Limpieza de estadía</b><span><i class="dot ev"></i>'+n+(n===1?' check-out':' check-outs')+' · '+(open?'ocultar':'ver')+'</span>'+mbar+'</div>'+rightH+'</button>';
  if(open)h+='<div class="lgl">'+rows.slice().sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(e=>{
   const d=String(e.detalle||'').replace(/^Check-out\s*·\s*/,''),por=isPorPagar(e),pt=d.split(' · '),cod=pt.length>1?pt[0]:'',nom=pt.length>1?pt.slice(1).join(' · '):d;
-  return '<button type="button" class="lrow" data-id="'+esc(e.id)+'"><span class="lt2"><b>'+esc(nom)+'</b><small>'+esc(fdia(e.fecha))+(cod?' · '+esc(cod):'')+(e.medio==='Efectivo'?' · efectivo':'')+(/Ajustada/.test(e.detalle||'')?' · ajustada':'')+'</small></span><span class="lr"><span class="la2">'+f2(e.monto)+'</span><span class="lp'+(por?'':' ok')+'">'+(por?'Por pagar':'Pagada')+'</span></span></button>';
+  return '<button type="button" class="lrow" data-id="'+esc(e.id)+'"><span class="lt2"><b>'+esc(nom)+'</b><small>'+esc(fdia(e.fecha))+(cod?' · '+esc(cod):'')+(e.medio==='Efectivo'?' · efectivo':'')+(/Ajustada/.test(e.detalle||'')?' · ajustada':'')+'</small></span><span class="lr"><span class="la2">'+f2(e.monto)+'</span><span class="lp'+(por?'':' ok')+'">'+(por?((e.fecha||'')>todayISO()?'Pago adelantado':'Por pagar'):'Pagada')+'</span></span></button>';
  }).join('')+'</div>';
  else h+='<div style="height:9px"></div>';
  return h;
@@ -1298,7 +1303,7 @@ function pendByBlock(DS){
 }
 function pendItems(){
  const DS=dataset(),cur=todayISO().slice(0,7);
- const pagar=DS.filter(e=>isPorPagar(e)&&e.mes<=MES).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+ const pagar=DS.filter(pendVis).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
  let reg=[];
  if(MES<=cur){const ms=monthState(MES,DS);reg=esPasado(MES)?(ms.miss||[]):REC().filter(r=>!existing(r,DS).length);}
  const isExc=e=>/^Excepci[oó]n:/i.test(e.detalle||'');
@@ -1486,7 +1491,7 @@ function renderTotals(){
  $('nReg').textContent=mon.length;
 }
 function limCard(){
- const DS=dataset(),pp=DS.filter(e=>isPorPagar(e)&&e.mes<=MES),tp=SUMA(pp);
+ const DS=dataset(),pp=DS.filter(pendVis),tp=SUMA(pp);
  const efeMes=SUMA(DS.filter(e=>e.mes===MES&&e.medio==='Efectivo'&&!isPorPagar(e)));
  const efeLim=SUMA(DS.filter(e=>e.mes===MES&&e.medio==='Efectivo'&&isLimp(e)));
  return '<div class="limc"><div class="lh"><b>Limpieza</b><span>'+(pp.length?pp.length+(pp.length===1?' por pagar':' por pagar'):'Al día')+'</span></div><div class="lv">'+f2(tp)+'</div><div class="ls">'+(tp>0?'Le debes a limpieza · '+esc(pendMeses(pp)):'No le debes nada a limpieza')+(efeMes>0?' · Efectivo pagado en '+esc(mLabel(MES))+': '+f2(efeMes)+(efeLim>0&&efeLim!==efeMes?' ('+f2(efeLim)+' en limpieza)':''):'')+'</div><div class="la"><button type="button" id="limNew">+ Limpieza</button><button type="button" class="pri" id="limPay"'+(pp.length?'':' disabled')+'>Pagar</button></div>'+limStat()+'</div>';
@@ -1514,7 +1519,7 @@ async function autoLimpiezas(manual){
   const hoy=todayISO(),cur=hoy.slice(0,7),DS=dataset(),sk=new Set(lskip()),have=new Set();
   DS.forEach(e=>{if(String(e.id).startsWith(LMP))have.add(String(e.id).slice(LMP.length));});
   const lr=DS.filter(isLimp),cubre=it=>have.has(it.codigo)||lr.some(e=>(e.detalle||'').includes(it.codigo));
-  const falta=j.items.filter(it=>it.checkout<=hoy&&!sk.has(it.codigo)&&!cubre(it));
+  const falta=j.items.filter(it=>limDesde(it)<=hoy&&!sk.has(it.codigo)&&!cubre(it));
   const exc=new Set((j.excluidos||[]).map(x=>x.codigo)),sobran=DS.filter(e=>String(e.id).startsWith(LMP)&&exc.has(String(e.id).slice(LMP.length)));
   if(sobran.length){const b2=bid();sobran.forEach(e=>OPS.push({b:b2,k:'del',id:e.id,nm:'Limpieza '+e.id.slice(LMP.length)+' (no-show o sin limpieza)'}));persist();UI={};toast('Quité '+sobran.length+(sobran.length===1?' limpieza':' limpiezas')+' de reservas sin limpieza (no-show o cancelación)',false);}
   const nuevas=falta.slice(0,400);LMISS={};
@@ -1578,7 +1583,7 @@ function openLimPay(pre){
  const html=()=>{
   const rows=pp.map(e=>{
    const g=lmGuest(e),adj=ST.ov[e.id]!==undefined&&Math.abs(ST.ov[e.id]-e.monto)>0.004;
-   return '<div class="lk2"><input type="checkbox" data-id="'+esc(e.id)+'" aria-label="Pagar '+esc(g.nom)+'"'+(ST.chk.has(e.id)?' checked':'')+'><div class="lkt"><b>'+esc(g.nom)+'</b><small>Check-out '+esc(fdia(e.fecha))+(g.cod?' · '+esc(g.cod):'')+'</small>'+(adj?'<span class="adj">Ajustada · estándar '+f2(e.monto)+'</span>':'')+'</div><button type="button" class="lkamt'+(ST.edit===e.id?' on':'')+'" data-ed="'+esc(e.id)+'" aria-label="Cambiar el valor de esta limpieza"><span>'+f2(amt(e))+'</span><i><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></i></button></div>'+
+   return '<div class="lk2"><input type="checkbox" data-id="'+esc(e.id)+'" aria-label="Pagar '+esc(g.nom)+'"'+(ST.chk.has(e.id)?' checked':'')+'><div class="lkt"><b>'+esc(g.nom)+'</b><small>Check-out '+esc(fdia(e.fecha))+(g.cod?' · '+esc(g.cod):'')+((e.fecha||'')>todayISO()?' · pago adelantado':'')+'</small>'+(adj?'<span class="adj">Ajustada · estándar '+f2(e.monto)+'</span>':'')+'</div><button type="button" class="lkamt'+(ST.edit===e.id?' on':'')+'" data-ed="'+esc(e.id)+'" aria-label="Cambiar el valor de esta limpieza"><span>'+f2(amt(e))+'</span><i><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></i></button></div>'+
     (ST.edit===e.id?'<div class="lked"><div class="field"><label for="lpV">Valor de esta limpieza</label><input type="text" id="lpV" inputmode="decimal" autocomplete="off"></div><div class="field"><label for="lpMo">Motivo (opcional)</label><input type="text" id="lpMo" autocomplete="off" placeholder="Ej. limpieza profunda"></div><div class="hn">Solo cambia esta limpieza. El valor estándar sigue en '+f2(e.monto)+'. <button type="button" class="lsug" data-std="'+esc(e.id)+'">Volver al estándar</button></div></div>':'');
   }).join('');
   return rows+
