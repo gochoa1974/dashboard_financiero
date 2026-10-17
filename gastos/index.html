@@ -1836,7 +1836,9 @@ function closeExc(){
  ms.open.forEach(e=>{const d=('Excepción: '+t.slice(0,120)+(e.detalle?' · '+e.detalle:'')).slice(0,200);OPS.push({b,k:'edit',id:e.id,ch:{detalle:d},nm:'Excepción de cierre: '+e.concepto+' '+f2(e.monto)});});
  persist();UI={};renderAll();toast('Anotado como excepción',true);
 }
-function renderAll(){
+function pubRes(){try{const m={};dataset().forEach(e=>{const k=e.mes;if(!k)return;const o=m[k]||(m[k]={g:0,c:0,p:0,f:{}}),v=+e.monto||0;if(e.cuenta==='No'){o.c+=v;return;}o.g+=v;if(isPorPagar(e))o.p+=v;const f=String(e.familia||'5').charAt(0);o.f[f]=(o.f[f]||0)+v;});Object.keys(m).forEach(k=>{const o=m[k];o.g=Math.round(o.g*100)/100;o.c=Math.round(o.c*100)/100;o.p=Math.round(o.p*100)/100;Object.keys(o.f).forEach(f=>o.f[f]=Math.round(o.f[f]*100)/100);});localStorage.setItem('cb_res_gas_v1',JSON.stringify({t:Date.now(),m}));}catch(e){}}
+function renderAll(){pubRes();return renderAll0();}
+function renderAll0(){
  $('mLbl').querySelector('.mfull').textContent=mLabel(MES);$('mLbl').querySelector('.mshort').textContent=mShort(MES).replace(/ (\d\d)$/,function(m,y){return ' 20'+y;});setVTitle();
  $('mHoy').style.display=MES===todayISO().slice(0,7)?'none':'';
  applyPer();renderRec();renderEv();renderReg();renderPen();renderTotals();renderClose();renderLimAlert();
