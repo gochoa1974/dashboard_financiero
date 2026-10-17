@@ -12,6 +12,7 @@
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v5 (17 oct 2026): grupo «Inversión» (parámetros sin excepciones, unidad MES con selector de mes). Requiere el script de Parámetros v3. -->
 <!-- v4 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): tema compartido claro/oscuro, verde unificado, texto verde con contraste AA. Sin cambios de lógica. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -245,7 +246,7 @@ let DATA = null, abierto = null; // abierto: {p, modo:'base'|'exc', id}
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function fb(iso) { if (!iso) return ''; const x = iso.split('-'); return +x[2] + ' ' + MESES[+x[1] - 1] + ' ' + x[0]; }
 const fnum = (n, d) => { n = Number(n) || 0; const p = Math.abs(n).toFixed(d == null ? 2 : d).split('.'); return (n < 0 ? '-' : '') + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (p[1] ? ',' + p[1] : ''); };
-function fmt(p, v) { const n = Math.round(Number(v) * 100) / 100; if (p.unidad === '%') return fnum(n, 2).replace(/,?0+$/, '') + '%'; return '$' + fnum(n, 2); }
+function fmt(p, v) { if (v == null || v === '') return '—'; if (p.unidad === 'MES') { const n = Number(v), m = n % 100, y = Math.floor(n / 100); return MESES[m - 1] + ' ' + y; } const n = Math.round(Number(v) * 100) / 100; if (p.unidad === '%') return fnum(n, 2).replace(/,?0+$/, '') + '%'; return '$' + fnum(n, 2); }
 
 async function call(body) {
   if (!CFG.url || CFG.url.indexOf('PEGA-AQUI') >= 0) throw new Error('Falta pegar la URL del Apps Script de Parámetros en el archivo.');
@@ -285,7 +286,7 @@ function formHtml(k, p) {
   const a = abierto; if (!a || a.p !== k) return '';
   if (a.modo === 'base') {
     return '<div class="frm" data-p="' + k + '"><h4>Cambiar valor base</h4><div class="row2">' +
-      '<div class="field"><label for="f_v">Nuevo valor (' + esc(p.unidad === '%' ? '%' : '$') + ')</label><input type="number" inputmode="decimal" id="f_v" step="0.01" min="0" value="' + esc(a.v || '') + '"></div>' +
+      '<div class="field"><label for="f_v">Nuevo valor (' + esc(p.unidad === '%' ? '%' : p.unidad === 'MES' ? 'mes' : '$') + ')</label>' + (p.unidad === 'MES' ? '<input type="month" id="f_v" value="' + esc(a.v || '') + '">' : '<input type="number" inputmode="decimal" id="f_v" step="0.01" min="0" value="' + esc(a.v || '') + '">') + '</div>' +
       '<div class="field"><label for="f_d">Rige desde</label><input type="date" id="f_d" min="2024-01-01" max="2100-12-31" value="' + esc(a.d || hoyISO()) + '"></div></div>' +
       '<div class="small" style="margin:-4px 0 12px">El valor anterior se conserva en el historial. No cambia lo ya guardado en reservas.</div>' +
       '<div class="btns" style="display:flex;gap:8px;margin-bottom:12px"><button type="button" class="btn btn-acc btn-sm" data-ok="base">Guardar</button><button type="button" class="btn btn-ghost btn-sm" data-cancel>Cancelar</button></div></div>';
@@ -300,30 +301,32 @@ function formHtml(k, p) {
 
 function render() {
   if (!DATA) return;
+  let ultimoGrupo = null;
   $('cards').innerHTML = Object.keys(DATA.parametros).map(k => {
     const p = DATA.parametros[k], h = p.hoy, ex = h.origen === 'excepcion';
+    const cab = (p.grupo || '') !== ultimoGrupo ? (ultimoGrupo = (p.grupo || ''), p.grupo ? '<h2 style="margin:22px 2px 6px;font-size:17px;font-weight:800">' + esc(p.grupo) + '</h2><p class="small" style="margin:0 2px 12px">Datos de la inversión. Alimentan los indicadores de Resultados financieros. Cambia un valor y todo se recalcula; cada cambio queda en el historial.</p>' : '') : '';
     const baseVig = p.bases.filter(b => b.desde <= hoyISO()).slice(-1)[0] || p.bases[0];
     const excs = p.excepciones.map(x =>
       '<div class="it"><div class="t">' + fb(x.desde) + ' → ' + fb(x.hasta) + '<small>' + esc(x.nota || 'Sin nota') + '</small></div><div class="val">' + fmt(p, x.valor) + '</div>' +
       '<div class="btns"><button type="button" class="btn btn-edit btn-sm" data-edit="' + esc(x.id) + '" data-p="' + k + '">Editar</button>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-del="' + esc(x.id) + '" data-firma="' + esc(x.firma || '') + '">Borrar</button></div></div>').join('');
     const hist = p.bases.slice().reverse().map(b => '<div class="it"><div class="t">Desde ' + fb(b.desde) + '<small>' + esc(b.nota || '') + '</small></div><div class="val">' + fmt(p, b.valor) + '</div></div>').join('');
-    return '<div class="card" data-card="' + k + '"><h3>' + esc(p.nombre) + '</h3>' +
+    return cab + '<div class="card" data-card="' + k + '"><h3>' + esc(p.nombre) + '</h3>' +
       '<p class="hint">La fecha que cuenta es: ' + esc(p.fechaDe) + '.</p>' +
-      '<div class="vig"><div><div class="k">Hoy vale</div><div class="v">' + fmt(p, h.valor) + '</div></div><span class="o' + (ex ? ' ex' : '') + '">' + (ex ? 'Renegociado hasta ' + fb(h.hasta) : 'Valor base') + '</span></div>' +
-      '<div class="sec"><span>Valor base: ' + fmt(p, baseVig.valor) + '</span><button type="button" class="btn btn-ghost btn-sm" data-base="' + k + '">Cambiar valor base</button></div>' +
+      '<div class="vig"><div><div class="k">' + (p.sinExc ? 'Valor actual' : 'Hoy vale') + '</div><div class="v">' + fmt(p, h.valor) + '</div></div><span class="o' + (ex ? ' ex' : '') + '">' + (ex ? 'Renegociado hasta ' + fb(h.hasta) : (p.sinExc ? 'Desde ' + fb(h.desde) : 'Valor base')) + '</span></div>' +
+      '<div class="sec"><span>' + (p.sinExc ? 'Valor vigente: ' : 'Valor base: ') + fmt(p, baseVig.valor) + '</span><button type="button" class="btn btn-ghost btn-sm" data-base="' + k + '">' + (p.sinExc ? 'Cambiar valor' : 'Cambiar valor base') + '</button></div>' +
       (abierto && abierto.p === k && abierto.modo === 'base' ? formHtml(k, p) : '') +
-      '<div class="sec"><span>Renegociado por fechas</span><button type="button" class="btn btn-ghost btn-sm" data-nueva="' + k + '">+ Agregar</button></div>' +
+      (p.sinExc ? '' : '<div class="sec"><span>Renegociado por fechas</span><button type="button" class="btn btn-ghost btn-sm" data-nueva="' + k + '">+ Agregar</button></div>' +
       (abierto && abierto.p === k && abierto.modo === 'exc' ? formHtml(k, p) : '') +
-      (excs || '<div class="nada">Sin excepciones. Se usa el valor base en todas las fechas.</div>') +
-      '<details class="hist"><summary>Historial del valor base (' + p.bases.length + ')</summary>' + hist + '</details></div>';
+      (excs || '<div class="nada">Sin excepciones. Se usa el valor base en todas las fechas.</div>')) +
+      '<details class="hist"><summary>Historial (' + p.bases.length + ')</summary>' + hist + '</details></div>';
   }).join('');
 }
 
 $('cards').addEventListener('click', async e => {
   const t = e.target.closest('button'); if (!t) return;
   const card = t.closest('[data-card]'), k = card && card.dataset.card;
-  if (t.dataset.base) { abierto = { p: t.dataset.base, modo: 'base' }; render(); const f = $('f_v'); if (f) f.focus(); return; }
+  if (t.dataset.base) { const pp = DATA.parametros[t.dataset.base], hv = pp.hoy && pp.hoy.valor; abierto = { p: t.dataset.base, modo: 'base', v: pp.unidad === 'MES' && hv ? String(Math.floor(hv / 100)) + '-' + String(hv % 100).padStart(2, '0') : (hv == null ? '' : hv) }; render(); const f = $('f_v'); if (f) f.focus(); return; }
   if (t.dataset.nueva) { abierto = { p: t.dataset.nueva, modo: 'exc' }; render(); const f = $('f_d'); if (f) f.focus(); return; }
   if (t.dataset.edit) {
     const x = DATA.parametros[k].excepciones.filter(z => z.id === t.dataset.edit)[0]; if (!x) return;
@@ -342,7 +345,7 @@ $('cards').addEventListener('click', async e => {
     return;
   }
   if (t.dataset.ok) {
-    const v = $('f_v').value, d = $('f_d').value; if (v === '') { msg('Escribe el valor.', 'err'); $('f_v').classList.add('bad'); $('f_v').focus(); return; }
+    let v = $('f_v').value; const d = $('f_d').value; if (DATA.parametros[abierto.p].unidad === 'MES' && v) v = String(v).replace('-', ''); if (v === '') { msg('Escribe el valor.', 'err'); $('f_v').classList.add('bad'); $('f_v').focus(); return; }
     t.disabled = true; msg('Guardando...');
     try {
       const body = t.dataset.ok === 'base' ? { accion: 'guardarBase', parametro: abierto.p, valor: v, desde: d } :
