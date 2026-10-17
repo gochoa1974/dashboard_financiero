@@ -13,6 +13,7 @@
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v28 (17 oct 2026): gráfico de evolución compara año anterior vs actual, igual que Ingresos. -->
 <!-- v27 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): encabezado navy y verde unificados (antes verde pino y teal), tema compartido claro/oscuro. Sin cambios de lógica. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -624,10 +625,17 @@ details.cat-i,.sim-i{border:1.5px solid var(--line)}
 .rs-neg{font-size:12.5px;color:var(--mut);font-weight:700;margin-top:8px}
 .rs-ev{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;align-items:end;height:112px}
 .rs-ev button{appearance:none;border:none;background:none;padding:0;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;height:100%;font-family:inherit;color:var(--mut)}
-.rs-ev .b{display:block;border-radius:5px 5px 2px 2px;background:var(--accent);opacity:.38;min-height:3px;transition:height .5s cubic-bezier(.2,.8,.2,1),opacity .2s}
-.rs-ev button.on .b{opacity:1}
-.rs-ev button:hover .b{opacity:.7}
-.rs-ev button.on:hover .b{opacity:1}
+.rs-ev .bb{display:flex;align-items:flex-end;gap:2px;flex:1;justify-content:center}
+.rs-ev .b{display:block;flex:1;max-width:11px;border-radius:4px 4px 2px 2px;min-height:3px;transition:height .5s cubic-bezier(.2,.8,.2,1),opacity .2s}
+.rs-ev .b.p{background:var(--mut);opacity:.35}
+.rs-ev .b.c{background:var(--accent);opacity:.45}
+.rs-ev button.on .b.c{opacity:1}
+.rs-ev button:hover .b.c{opacity:.75}
+.rs-ev button.on:hover .b.c{opacity:1}
+.rs-lgd{display:flex;gap:14px;font-size:11.5px;color:var(--mut);font-weight:700;margin:0 0 8px}
+.rs-lgd i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.rs-lgd i.p{background:var(--mut);opacity:.4}
+.rs-lgd i.c{background:var(--accent)}
 .rs-ev button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 .rs-ev u{text-decoration:none;font-size:10.5px;font-weight:700;text-align:center;margin-top:5px}
 .rs-ev button.on u{color:var(--ink);font-weight:800}
@@ -2562,9 +2570,12 @@ function renderResumen() {
     (meds.length ? meds.map(k => '<div class="rs-lg"><span class="n"><em>' + esc(medioN(k)) + '</em></span><b>' + money(gm[k]) + (tot ? '<small>' + Math.round(100 * gm[k] / tot) + '%</small>' : '') + '</b></div>').join('') : '<div class="rs-empty" style="padding:8px 0">Nada cobrado este mes.</div>') + '</div>';
   // Evolución del año
   const vals = []; for (let m = 1; m <= 12; m++) { const k = anio + '-' + String(m).padStart(2, '0'); vals.push({ k: k, v: k > hoyM ? 0 : sumL(delMes(k).filter(l => !esSinPago(l))), fut: k > hoyM }); }
-  const mx = Math.max.apply(null, vals.map(x => x.v).concat([1]));
-  const hEvo = '<div class="rs-card"><h3>Evolución ' + esc(anio) + '</h3><p class="rs-sub">Por mes de check-in · toca un mes para verlo</p><div class="rs-ev">' +
-    vals.map((x, i) => '<button type="button" data-m="' + x.k + '" class="' + (x.k === mk ? 'on' : '') + '"' + (x.fut ? ' disabled style="opacity:.35;cursor:default"' : '') + ' aria-label="' + esc(mesLbl(x.k)) + ': ' + money(x.v) + '"' + (x.k === mk ? ' aria-current="true"' : '') + '><i class="b" style="height:' + (x.fut ? 3 : Math.max(3, Math.round(86 * x.v / mx))) + 'px"></i><u>' + MESES_I[i] + '</u></button>').join('') + '</div></div>';
+  const prev = []; for (let m = 1; m <= 12; m++) { const k = (anio - 1) + '-' + String(m).padStart(2, '0'); prev.push(sumL(delMes(k).filter(l => !esSinPago(l)))); }
+  const mx = Math.max.apply(null, vals.map(x => x.v).concat(prev, [1]));
+  const alt = v => Math.max(3, Math.round(86 * v / mx));
+  const hEvo = '<div class="rs-card"><h3>Evolución del cobro</h3><p class="rs-sub">Por mes de check-in · ' + (anio - 1) + ' contra ' + anio + ' · toca un mes para verlo</p>' +
+    '<div class="rs-lgd"><span><i class="p"></i>' + (anio - 1) + '</span><span><i class="c"></i>' + anio + '</span></div><div class="rs-ev">' +
+    vals.map((x, i) => '<button type="button" data-m="' + x.k + '" class="' + (x.k === mk ? 'on' : '') + '"' + (x.fut ? ' disabled style="opacity:.35;cursor:default"' : '') + ' aria-label="' + esc(mesLbl(x.k)) + ': ' + money(x.v) + ' · ' + (anio - 1) + ': ' + money(prev[i]) + '"' + (x.k === mk ? ' aria-current="true"' : '') + '><span class="bb"><i class="b p" style="height:' + alt(prev[i]) + 'px"></i><i class="b c" style="height:' + (x.fut ? 3 : alt(x.v)) + 'px"></i></span><u>' + MESES_I[i] + '</u></button>').join('') + '</div></div>';
   box.innerHTML = '<div class="rs-grid"><div class="rs-c rs-c1"><div style="order:1">' + hHero + '</div><div style="order:3">' + hSrv + '</div><div style="order:4">' + hPay + '</div></div><div class="rs-c rs-c2"><div style="order:2">' + hRes + '</div><div style="order:5">' + hEvo + '</div></div></div>';
 }
 $('rsPrev').onclick = () => { resMes = mesMover(resMes || HOY.slice(0, 7), -1); renderResumen(); };
