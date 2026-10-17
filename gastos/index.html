@@ -241,6 +241,8 @@ body.per-on .fab{display:none!important}
 @media (prefers-reduced-motion:reduce){.psheet,.psh-bg{transition:none}}
 .fab{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:448px;min-height:58px;border:none;border-radius:18px;background:var(--ink);color:var(--surface);font-size:16px;font-weight:800;box-shadow:0 16px 30px -12px rgba(10,34,51,.7);z-index:4}
 .fab:active{transform:translateX(-50%) scale(.985)}
+.draftb{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--accent-soft,#e6f4ec);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 12px;font-size:13px;font-weight:700}
+.draftb button{background:none;border:0;color:var(--accent);font-weight:800;font-size:13px;min-height:32px;padding:0 6px}
 .scrim{position:fixed;inset:0;background:rgba(5,16,24,.55);opacity:0;pointer-events:none;transition:opacity .22s;z-index:5}
 .scrim.on{opacity:1;pointer-events:auto}
 .sheet{position:fixed;left:50%;bottom:0;width:100%;max-width:480px;transform:translate(-50%,100%);background:var(--surface);border-radius:26px 26px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom,0px));transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s .3s;max-height:92vh;overflow:auto;z-index:6;visibility:hidden}
@@ -1110,6 +1112,7 @@ function openNewRec(){
  $('nrMonto').oninput=e=>{NR.monto=e.target.value;};
  $('nrDia').onchange=e=>{NR.dia=+e.target.value;};
  $('nrDesde').onchange=e=>{NR.desde=e.target.value;};
+ draftOpen();
  $('nrDia').value='1';
  $('nrGo').onclick=()=>{
   const nm=NR.con.trim();if(!nm)return;
@@ -1226,6 +1229,7 @@ function openNv(){
  initNv();
  {const vt=varTypes().filter(t=>!t.hid);$('nvChips').innerHTML=vt.map(t=>'<button type="button" class="qchip" data-c="'+esc(t.con)+'">'+esc(t.con)+'</button>').join('')||'<span class="hint">Sin atajos visibles · actívalos en «Administrar variables».</span>';
   $('nvChips').onclick=e=>{const b=e.target.closest('.qchip');if(!b)return;$('nvCon').value=b.dataset.c;$('nvCon').dispatchEvent(new Event('input'));$('nvMonto').focus();};}
+ draftOpen();
  setTimeout(()=>{if(SH&&SH.t==='nv')$('nvMonto').focus();},340);
 }
 
@@ -1682,6 +1686,7 @@ function openLimNew(){
   OPS.push({b,k:'add',nm:LIMP+' '+f2(m),e:{id:uid(),fecha:f,mes:f.slice(0,7),anuncio:$('lnA').value,concepto:LIMP,familia:'1. Fijos operativos',cuenta:'Sí',etiqueta:null,detalle:det,monto:m,estado:'Pendiente de pago',medio:null,doc:null,origen:'Manual (formulario)'}});
   closeSheet();persist();UI={};renderAll();toast('Limpieza registrada: '+f2(m)+' por pagar',true);
  };
+ draftOpen();
 }
 const COMSUGKEY='cb_lim_comsug_v1';
 function comSug(){try{const v=parseFloat(localStorage.getItem(COMSUGKEY));return isNaN(v)?0.45:v;}catch(e){return 0.45;}}
@@ -2179,8 +2184,36 @@ $('regBox').addEventListener('click',e=>{
  const it=e.target.closest('.item[data-id]');if(it)openReg(it.dataset.id);
 });
 $('fab').onclick=openNv;
-$('shClose').onclick=closeSheet;
-$('scrim').onclick=closeSheet;
+$('shClose').onclick=()=>{const d=SH&&DRAFT_T[SH.t]&&draftGet(SH.t);closeSheet();if(d)toast('Borrador guardado · sigue donde quedaste',false);};
+$('scrim').onclick=()=>{if(SH&&DRAFT_T[SH.t])return;closeSheet();};
+
+/* ===== Borradores: lo que escribes en un formulario nuevo no se pierde ===== */
+const DRAFT_T={nv:'Nuevo gasto',newrec:'Nuevo recurrente',limn:'Registrar limpieza'},DRAFT_GO={nv:'nvGo',newrec:'nrGo',limn:'lnGo'};
+const DK=t=>'cb_borr_gastos_'+t;let DRAFT0=null;
+function draftGet(t){try{const o=JSON.parse(localStorage.getItem(DK(t))||'null');if(o&&o.v&&Date.now()-o.t<6048e5)return o;}catch(e){}return null;}
+function draftClear(t){try{localStorage.removeItem(DK(t));}catch(e){}fabPaint();}
+const draftVals=()=>{const o={};$('shBody').querySelectorAll('input[id],select[id],textarea[id]').forEach(el=>{o[el.id]=el.value;});return o;};
+function draftSave(){
+ if(!SH||!DRAFT_T[SH.t]||!DRAFT0)return;
+ const v=draftVals(),dirty=Object.keys(v).some(k=>v[k]!==DRAFT0[k]);
+ try{if(dirty)localStorage.setItem(DK(SH.t),JSON.stringify({t:Date.now(),v:v}));else localStorage.removeItem(DK(SH.t));}catch(e){}
+ fabPaint();
+}
+function draftOpen(){
+ const t=SH&&SH.t;if(!DRAFT_T[t])return;
+ DRAFT0=draftVals();
+ const d=draftGet(t);
+ if(d){
+  Object.keys(d.v).forEach(id=>{const el=$(id);if(!el||el.type==='checkbox')return;el.value=d.v[id];el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));});
+  $('shBody').insertAdjacentHTML('afterbegin','<div class="draftb" role="status"><span>Borrador recuperado</span><button type="button" id="drDel">Descartar</button></div>');
+  $('drDel').onclick=()=>{draftClear(t);closeSheet();({nv:openNv,newrec:openNewRec,limn:openLimNew})[t]();};
+ }
+ const g=$(DRAFT_GO[t]);
+ if(g&&g.onclick){const o=g.onclick;g.onclick=function(){const r=o.apply(this,arguments);if(!SH)draftClear(t);return r;};}
+}
+function fabPaint(){const f=$('fab');if(!f)return;f.textContent=(draftGet('nv')?'+ Nuevo gasto · borrador':'+ Nuevo gasto');}
+$('shBody').addEventListener('input',draftSave);$('shBody').addEventListener('change',draftSave);
+fabPaint();
 document.addEventListener('keydown',e=>{
  if(e.key==='Escape'&&SH)closeSheet();
  if(e.key==='Enter'&&gateOpen()&&e.target.id==='gateKey')gateGo();
