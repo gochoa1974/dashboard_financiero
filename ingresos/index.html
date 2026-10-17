@@ -178,9 +178,9 @@ details.ver li.bad b{color:var(--bad)}
   .sticky{position:static;background:none;padding-top:0;margin-top:0}
   .view{max-width:520px}
 }
-.pchips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;margin:0 0 4px;scrollbar-width:none}
+.pchips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px;margin:0 0 4px;scrollbar-width:none}
 .pchips::-webkit-scrollbar{display:none}
-.pchip{flex:none;min-height:40px;padding:0 15px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13.5px;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.pchip{flex:none;min-height:40px;padding:0 11px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13px;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
 .pchip svg{width:14px;height:14px}
 .pchip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .pchip.mas[aria-expanded="true"]{border-color:var(--accent);color:var(--accent-t)}
@@ -192,6 +192,7 @@ details.ver li.bad b{color:var(--bad)}
 .sheet .grip{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 10px}
 .sheet h3{font-size:17px;font-weight:800}
 .sheet .gt{margin:14px 0 6px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--mut)}
+.shn{font-size:12px;color:var(--mut);font-weight:600;margin:8px 0 0}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .opt{min-height:48px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:14px;font-weight:700;text-align:left;padding:0 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .opt[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-t)}
@@ -319,7 +320,7 @@ details.ver li.bad b{color:var(--bad)}
       <div class="grip"></div><h3 id="shT">Elegir período</h3>
       <div class="gt">Calendario</div><div class="opts" id="oCal"></div>
       <div class="gt">Recientes</div><div class="opts" id="oRec"></div>
-      <div class="gt">Todo el historial</div><div class="opts" id="oAll"></div>
+      <div class="gt">Acumulado</div><div class="opts" id="oAll"></div><p class="shn" id="oAllN"></p>
       <button type="button" class="sh-x" id="shX">Cerrar</button>
     </div>
     <details class="ver" id="ver"><summary id="verSum">Cómo se verificó</summary><ul id="verList"></ul></details>
@@ -417,8 +418,8 @@ function monthRange(){
   return [a,b];
 }
 var PERK="cimablanca_ing_per",per="mes";
-var P_CAL=[["mes","Este mes"],["anio","Este año"],["pasado",String(+HOY.slice(0,4)-1)]],P_REC=[["30","30 días"],["60","60 días"],["90","90 días"],["180","180 días"],["12m","12 meses"]],P_ALL=[["todo","Todo"]];
-var P_QUICK=[["mes","Mes"],["anio","Año"],["todo","Todo"]],P_LBL={};P_CAL.concat(P_REC,P_ALL).forEach(function(x){P_LBL[x[0]]=x[1];});
+var P_CAL=[["mes","Este mes"],["anio",String(+HOY.slice(0,4))],["pasado",String(+HOY.slice(0,4)-1)]],P_REC=[["30","30 días"],["60","60 días"],["90","90 días"],["180","180 días"],["12m","12 meses"]],P_ALL=[["todo","Acumulado"]];
+var P_QUICK=[["anio",String(+HOY.slice(0,4))],["pasado",String(+HOY.slice(0,4)-1)],["todo","Acumulado"]],P_LBL={};P_CAL.concat(P_REC,P_ALL).forEach(function(x){P_LBL[x[0]]=x[1];});
 (function(){var g=ssGet(PERK);if(g&&P_LBL[g])per=g;})();
 function addYear(s,n){var p=s.split("-");var d=new Date(Date.UTC(+p[0]+n,+p[1]-1,+p[2]));return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1)+"-"+pad(d.getUTCDate());}
 function endM(mk){return mk+"-"+pad(new Date(+mk.slice(0,4),+mk.slice(5),0).getDate());}
@@ -427,7 +428,7 @@ function perRange(){
   if(per==="mes")return [curMonth+"-01",endM(curMonth)];
   if(per==="anio")return [y+"-01-01",y+"-12-31"];
   if(per==="pasado")return [(y-1)+"-01-01",(y-1)+"-12-31"];
-  if(per==="todo"){var rg=monthRange();return [rg[0]+"-01",endM(rg[1])];}
+  if(per==="todo"){var rg=monthRange();return [rg[0]+"-01",HOY];}
   if(per==="12m")return [shiftMonth(hm,-11)+"-01",endM(hm)];
   var n=+per;return [addDays(HOY,-(n-1)),HOY];
 }
@@ -443,13 +444,14 @@ function perCmp(){
 }
 function pIco(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';}
 function pChips(){
-  var enQ=P_QUICK.some(function(q){return q[0]===per;});
+  var enQ=per==="mes"||P_QUICK.some(function(q){return q[0]===per;});
   $("pChips").innerHTML=P_QUICK.map(function(q){return '<button type="button" class="pchip" data-p="'+q[0]+'" aria-pressed="'+(per===q[0])+'">'+q[1]+'</button>';}).join("")+
-    '<button type="button" class="pchip mas" id="masB" aria-haspopup="dialog" aria-expanded="false"'+(enQ?'':' aria-pressed="true"')+'>'+(enQ?'Período':P_LBL[per])+' '+pIco()+'</button>';
+    '<button type="button" class="pchip mas" id="masB" aria-haspopup="dialog" aria-expanded="false"'+(enQ?'':' aria-pressed="true"')+'>'+(enQ?'Período':(per==='mes'?'Mes':P_LBL[per]))+' '+pIco()+'</button>';
 }
 function pSheet(){
   function ob(l){return l.map(function(p){return '<button type="button" class="opt" data-p="'+p[0]+'" aria-pressed="'+(per===p[0])+'">'+p[1]+'</button>';}).join("");}
   $("oCal").innerHTML=ob(P_CAL);$("oRec").innerHTML=ob(P_REC);$("oAll").innerHTML=ob(P_ALL);
+  var a0=M?monthRange()[0]:"";$("oAllN").textContent=a0?("Suma todo lo generado desde "+MC[+a0.slice(5)-1]+" "+a0.slice(0,4)+" hasta hoy."):"Suma todo lo generado hasta hoy.";
 }
 var pFoco=null;
 function shAbre(){pSheet();pFoco=document.activeElement;$("shBg").classList.add("on");$("sheet").classList.add("on");$("sheet").setAttribute("aria-hidden","false");var b=$("masB");if(b)b.setAttribute("aria-expanded","true");var p=document.querySelector('#sheet .opt[aria-pressed="true"]')||$("shX");setTimeout(function(){p.focus();},60);}
@@ -557,7 +559,7 @@ function renderR(){
   $("mPrev").disabled=mk<=rg[0];$("mNext").disabled=mk>=rg[1];
   $("mHoy").hidden=(mk===HOY.slice(0,7));
   var totAll=o.totD+o.totP;
-  $("rLabel").textContent=pm?("Generado en "+MESES[+mk.slice(5)-1]+" · neto"):("Generado · "+(per==="todo"?"todo el historial":(["30","60","90","180","12m"].indexOf(per)>=0?"últimos "+P_LBL[per]:P_LBL[per].toLowerCase()))+" · neto");
+  $("rLabel").textContent=pm?("Generado en "+MESES[+mk.slice(5)-1]+" · neto"):("Generado · "+(per==="todo"?"acumulado":(["30","60","90","180","12m"].indexOf(per)>=0?"últimos "+P_LBL[per]:P_LBL[per].toLowerCase()))+" · neto");
   $("rBig").innerHTML=moneyBig(o.totD);
   $("rSub").textContent=o.totP>0.004?("+ "+money(o.totP)+" por dormir en el resto "+(pm?"del mes":"del período")):(totAll>0?"Todo lo reservado de "+Pm+" ya se durmió":"Sin reservas en "+Pm);
   var pct=(o.nD+o.nP)>0?Math.round(o.nD/(o.nD+o.nP)*100):0;
@@ -568,7 +570,7 @@ function renderR(){
   $("kN").textContent=o.nD;
   var cp=perCmp(),rc=$("rCmp");
   if(cp&&cp.dp!=null){rc.hidden=false;rc.className="hero-c "+(cp.dp>=0?"up":"dn");rc.textContent=(cp.dp>=0?"▲ ":"▼ ")+Math.abs(cp.dp)+"% vs mismo período del año anterior";}
-  else if(cp&&cp.none){rc.hidden=false;rc.className="hero-c";rc.textContent="Sin año anterior completo para comparar";}
+  else if(cp&&cp.none){rc.hidden=false;rc.className="hero-c";rc.textContent=(per==="todo"?"Acumulado: no se compara con otro año":"Sin año anterior completo para comparar");}
   else rc.hidden=true;
   var nd=o.nD>0?o.netoD/o.nD:0;
   $("kA").textContent=o.nD>0?money(nd):"—";
