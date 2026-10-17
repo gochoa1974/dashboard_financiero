@@ -14,6 +14,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v15 (17 oct 2026): filtros de período en Resumen (Mes, Año, Todo y panel Período). -->
 <!-- v14 (17 oct 2026): la limpieza aparece como Por pagar desde el día siguiente al check-in (pedido de Gustavo, para juntar pagos y ahorrar la comisión). -->
 <!-- v13b (15 oct 2026, 22:15): estilo unificado (Guía v1.1): colores base y modo claro/oscuro desde el tema compartido; texto verde pequeño con contraste AA. Sin cambios de lógica. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -209,6 +210,33 @@ input,select{font-family:inherit;color:inherit}
 .seg button.on{background:var(--tabon);color:var(--ink);box-shadow:0 1px 3px rgba(10,34,51,.16)}
 .pane .seg{margin-top:14px}
 .empty{text-align:center;color:var(--mut);font-size:14px;font-weight:600;padding:40px 20px;line-height:1.5}
+.pbar{margin:0 0 6px}
+.pchips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}
+.pchips::-webkit-scrollbar{display:none}
+.pchip{flex:none;min-height:40px;padding:0 15px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13.5px;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.pchip svg{width:14px;height:14px}
+.pchip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.pchip.mas[aria-expanded="true"]{border-color:var(--accent);color:var(--accent-t,var(--accent))}
+.prange{font-size:12.5px;color:var(--mut);font-weight:700;margin:2px 0 8px}
+body[data-tab]:not([data-tab="reg"]) .pbar{display:none}
+body.per-on .mgrp,body.per-on .vchips,body.per-on #closeBox,body.per-on #limBox{display:none!important}
+body.per-on .fab{display:none!important}
+.hero-c{font-size:13px;font-weight:700;margin-top:6px;color:#fff;opacity:.92}
+.hero-c.up{color:#fbbf86}.hero-c.dn{color:#6ee7b7}
+.psh-bg{position:fixed;inset:0;background:rgba(3,12,18,.55);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+.psh-bg.on{opacity:1;pointer-events:auto}
+.psheet{position:fixed;left:0;right:0;bottom:0;z-index:61;background:var(--surface);color:var(--ink);border-radius:22px 22px 0 0;max-width:560px;margin:0 auto;padding:10px 18px calc(18px + env(safe-area-inset-bottom,0px));transform:translateY(104%);visibility:hidden;transition:transform .25s cubic-bezier(.2,.8,.2,1),visibility 0s linear .25s;max-height:86%;overflow-y:auto;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+.psheet.on{transform:none;visibility:visible;transition-delay:0s}
+.psheet .grip{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 10px}
+.psheet h3{font-size:17px;font-weight:800}
+.psheet .gt{margin:14px 0 6px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--mut)}
+.popts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.popt{min-height:48px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:14px;font-weight:700;text-align:left;padding:0 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.popt[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-t,var(--accent))}
+.popt[aria-pressed="true"]::after{content:"✓";font-weight:800}
+.psh-x{margin-top:16px;width:100%;min-height:48px;border-radius:99px;border:1px solid var(--line);background:none;color:var(--ink);font-size:14px;font-weight:700}
+.evc.one{grid-template-columns:1fr}
+@media (prefers-reduced-motion:reduce){.psheet,.psh-bg{transition:none}}
 .fab{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:448px;min-height:58px;border:none;border-radius:18px;background:var(--ink);color:var(--surface);font-size:16px;font-weight:800;box-shadow:0 16px 30px -12px rgba(10,34,51,.7);z-index:4}
 .fab:active{transform:translateX(-50%) scale(.985)}
 .scrim{position:fixed;inset:0;background:rgba(5,16,24,.55);opacity:0;pointer-events:none;transition:opacity .22s;z-index:5}
@@ -553,12 +581,14 @@ html.cb-sin-borrar #rDel{display:none}
       <div class="vt"><h2 id="vTitle">Resumen de gastos</h2><small id="vSub">Qué salió y por qué</small><div class="vchips"><button type="button" class="hoy" id="mHoy" style="display:none">Ir a este mes</button><span class="seal" id="mSeal" style="display:none"></span></div></div>
       <div class="mgrp"><button type="button" class="nav" id="mPrev" aria-label="Mes anterior">◀</button><b id="mLbl"><span class="mfull"></span><span class="mshort"></span></b><button type="button" class="nav" id="mNext" aria-label="Mes siguiente">▶</button></div>
     </div>
+    <div class="pbar" id="pBar"><div class="pchips" id="pChips" role="group" aria-label="Período"></div><div class="prange" id="pRng" hidden></div></div>
     <div class="dash">
     <section class="hero" aria-label="Resumen del mes">
       <div class="hero-l" id="hLabel"></div>
       <div class="hero-big" id="total"></div>
       <div class="hero-s" id="hMov"></div>
       <div class="hero-s2" id="hGasto"></div>
+      <div class="hero-c" id="hCmp" hidden></div>
       <div class="hstats">
         <div><b id="kRec"></b><span>Recurrentes</span></div>
         <div><b id="kEv"></b><span>Variables</span></div>
@@ -588,6 +618,14 @@ html.cb-sin-borrar #rDel{display:none}
 </div>
 <button type="button" class="fab" id="fab">+ Nuevo gasto</button>
 
+<div class="psh-bg" id="pBg"></div>
+<div class="psheet" id="pSh" role="dialog" aria-modal="true" aria-labelledby="pShT" aria-hidden="true">
+  <div class="grip"></div><h3 id="pShT">Elegir período</h3>
+  <div class="gt">Calendario</div><div class="popts" id="oCal"></div>
+  <div class="gt">Recientes</div><div class="popts" id="oRec"></div>
+  <div class="gt">Todo el historial</div><div class="popts" id="oAll"></div>
+  <button type="button" class="psh-x" id="pShX">Cerrar</button>
+</div>
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shT">
   <div class="grab"></div>
@@ -1319,21 +1357,81 @@ const RCKEY='cb_gastos_resopen_v1';
 let RCOPEN={};try{RCOPEN=JSON.parse(localStorage.getItem(RCKEY)||'{}')||{};}catch(e){}
 function pcts(vals){const t=vals.reduce((a,b)=>a+b,0);if(t<=0.004)return vals.map(()=>0);const raw=vals.map(v=>Math.max(0,v)/t*100),fl=raw.map(Math.floor);let rem=100-fl.reduce((a,b)=>a+b,0);const ord=raw.map((r,i)=>[r-fl[i],i]).filter(x=>raw[x[1]]>0).sort((a,b)=>b[0]-a[0]);for(let k=0;k<rem&&ord.length;k++)fl[ord[k%ord.length][1]]++;return fl;}
 const RSEG=(v,c,h,t,st)=>v>0.004?'<i class="sg'+(h?' h':'')+(st?' cs':'')+'" style="flex-grow:'+v+';--c:var(--'+c+')">'+(t?'<span>'+t+'</span>':'')+'</i>':'';
-function rcCard(key,title,hoy,cierre,pas,segs,keys,rows,note,proj){
+function rcCard(key,title,hoy,cierre,pas,segs,keys,rows,note,proj,lbl){
  const open=true;
  return '<div class="rcx"><div class="rch"><span>'+esc(title)+'</span></div>'+
-  '<div class="rcs">'+(pas?'<span>Total del mes <b>'+f2(cierre)+'</b></span>':'<span>Ya pagado <b>'+f2(hoy)+'</b></span><span>Cierre del mes <b>'+f2(cierre)+'</b></span>')+'</div>'+
+  '<div class="rcs">'+(pas?'<span>Total del '+(lbl||'mes')+' <b>'+f2(cierre)+'</b></span>':'<span>Ya pagado <b>'+f2(hoy)+'</b></span><span>Cierre del mes <b>'+f2(cierre)+'</b></span>')+'</div>'+
   '<div class="rbar">'+(segs||'<i class="sg" style="flex-grow:1;--c:var(--cvar);opacity:.15"></i>')+'</div>'+
   '<div class="rkey">'+keys+'</div>'+
   (proj?'<div class="rmk"><span><u></u>Sólido = ya salió</span><span><u class="h"></u>Rayado = por venir</span></div>':'')+
   (note?'<div class="rnote">'+note+'</div>':'')+
   (open?'<div class="rcd">'+rows+'</div>':'')+'</div>';
 }
-function rcRow(name,c,hoy,cierre,pc,pas){
- return '<div class="rrow" style="--c:var(--'+c+')"><div><i></i>'+esc(name)+'</div><div class="rn">'+(pas?'<strong>'+f2(cierre)+'</strong>':f2(hoy)+' → <strong>'+f2(cierre)+'</strong>')+'<small>'+pc+' % del '+(pas?'mes':'cierre')+'</small></div></div>';
+function rcRow(name,c,hoy,cierre,pc,pas,lbl){
+ return '<div class="rrow" style="--c:var(--'+c+')"><div><i></i>'+esc(name)+'</div><div class="rn">'+(pas?'<strong>'+f2(cierre)+'</strong>':f2(hoy)+' → <strong>'+f2(cierre)+'</strong>')+'<small>'+pc+' % del '+(pas?(lbl||'mes'):'cierre')+'</small></div></div>';
 }
 const LB=(p,v,tot)=>tot>0.004&&v/tot>=0.15?p+' %':'';
 function cuotasNota(m){if(!HIPO||!HIPO.length||m<HIPO_INI||m>String(HIPO[HIPO.length-1][0]).slice(0,7))return '';const n=HIPO.filter(r=>String(r[0]).slice(0,7)===m).length;return n===0?'Este mes no vence cuota de la hipoteca (el banco cuenta períodos de 30 días).':n>1?'Este mes vencen '+n+' cuotas de la hipoteca (el banco cuenta períodos de 30 días).':'';}
+/* ===== v15: filtros de período (solo en Resumen) ===== */
+const PERK='cb_gastos_per_v1',P_CAL=[['mes','Este mes'],['anio','Este año'],['pasado',String(+todayISO().slice(0,4)-1)]],P_REC=[['30','30 días'],['60','60 días'],['90','90 días'],['180','180 días'],['12m','12 meses']],P_ALL=[['todo','Todo']],P_QUICK=[['mes','Mes'],['anio','Año'],['todo','Todo']],P_LBL={};
+P_CAL.concat(P_REC,P_ALL).forEach(x=>P_LBL[x[0]]=x[1]);
+let PER='mes';try{const g=sessionStorage.getItem(PERK);if(g&&P_LBL[g])PER=g;}catch(e){}
+const perOn=()=>PER!=='mes'&&(document.body.dataset.tab||'reg')==='reg';
+const addD=(iso,n)=>{const p=iso.split('-').map(Number),d=new Date(Date.UTC(p[0],p[1]-1,p[2]+n));return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate());};
+const addY=(iso,n)=>{const p=iso.split('-').map(Number);return (p[0]+n)+iso.slice(4);};
+function perWin(DS){
+ const t=todayISO(),y=+t.slice(0,4),cm=t.slice(0,7),ms=DS.map(e=>e.mes).filter(Boolean).sort();
+ if(PER==='anio')return {m:1,s:y+'-01',e:y+'-12'};
+ if(PER==='pasado')return {m:1,s:(y-1)+'-01',e:(y-1)+'-12'};
+ if(PER==='12m')return {m:1,s:addM(cm,-11),e:cm};
+ if(PER==='todo')return {m:1,s:ms[0]||cm,e:ms.length?ms[ms.length-1]:cm,todo:1};
+ return {m:0,s:addD(t,-(+PER-1)),e:t};
+}
+const selRows=(DS,w)=>DS.filter(e=>w.m?(e.mes>=w.s&&e.mes<=w.e):((e.fecha||'')>=w.s&&(e.fecha||'')<=w.e));
+const wLabel=w=>w.m?(mLabel(w.s)+' – '+mLabel(w.e)):(fdia(w.s)+' '+w.s.slice(0,4)+' – '+fdia(w.e)+' '+w.e.slice(0,4));
+function perCmp(DS){
+ /* compara el gasto (sin capital) de meses/días ya cerrados contra las mismas fechas del año anterior, desde que hay datos del año anterior */
+ const w=perWin(DS);if(w.todo)return {none:1};
+ const t=todayISO(),cm=t.slice(0,7),ms=DS.map(e=>e.mes).filter(Boolean).sort(),fm=ms[0]||cm;
+ const sum=(a,b)=>SUMA(selRows(DS,{m:w.m,s:a,e:b}).filter(e=>e.cuenta!=='No'));
+ let cs,ce,ps,pe;
+ if(w.m){const last=addM(cm,-1);ce=w.e<last?w.e:last;cs=w.s>addM(fm,12)?w.s:addM(fm,12);if(cs>ce)return {none:1};ps=addM(cs,-12);pe=addM(ce,-12);}
+ else{const f1=addY(fm+'-01',1);cs=w.s>f1?w.s:f1;ce=w.e;if(cs>ce)return {none:1};ps=addY(cs,-1);pe=addY(ce,-1);}
+ const cur=sum(cs,ce),prev=sum(ps,pe);
+ if(prev<0.005)return {none:1};
+ return {w:{m:w.m,s:cs,e:ce},cur:cur,prev:prev,dp:Math.round((cur-prev)/prev*100),y:+ce.slice(0,4)};
+}
+const cmpTxt=c=>c.dp===0?'Igual que el mismo período del año anterior':(c.dp>0?'▲ '+c.dp+'% más':'▼ '+Math.abs(c.dp)+'% menos')+' que el mismo período del año anterior';
+const P_ICO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+function pChips(){
+ const enQ=P_QUICK.some(q=>q[0]===PER);
+ $('pChips').innerHTML=P_QUICK.map(q=>'<button type="button" class="pchip" data-p="'+q[0]+'" aria-pressed="'+(PER===q[0])+'">'+q[1]+'</button>').join('')+'<button type="button" class="pchip mas" id="masB" aria-haspopup="dialog" aria-expanded="false"'+(enQ?'':' aria-pressed="true"')+'>'+(enQ?'Período':P_LBL[PER])+' '+P_ICO+'</button>';
+}
+let pFoco=null;
+function pShAbre(){
+ const ob=l=>l.map(p=>'<button type="button" class="popt" data-p="'+p[0]+'" aria-pressed="'+(PER===p[0])+'">'+p[1]+'</button>').join('');
+ $('oCal').innerHTML=ob(P_CAL);$('oRec').innerHTML=ob(P_REC);$('oAll').innerHTML=ob(P_ALL);
+ pFoco=document.activeElement;$('pBg').classList.add('on');$('pSh').classList.add('on');$('pSh').setAttribute('aria-hidden','false');
+ const b=$('masB');if(b)b.setAttribute('aria-expanded','true');
+ const p=document.querySelector('#pSh .popt[aria-pressed="true"]')||$('pShX');setTimeout(()=>p.focus(),60);
+}
+function pShCierra(){$('pBg').classList.remove('on');$('pSh').classList.remove('on');$('pSh').setAttribute('aria-hidden','true');const b=$('masB');if(b)b.setAttribute('aria-expanded','false');if(pFoco&&pFoco.focus)try{pFoco.focus();}catch(e){}}
+function applyPer(){document.body.classList.toggle('per-on',perOn());pChips();}
+function setPer(p){PER=p;try{sessionStorage.setItem(PERK,p);}catch(e){}if(SH)closeSheet();renderAll();}
+function perPanels(DS){
+ const w=perWin(DS),rows=selRows(DS,w),dev=rows.filter(e=>e.cuenta!=='No'),tr=SUMA(dev.filter(isRecRow)),td=SUMA(dev),tv=td-tr,lim=SUMA(dev.filter(isLimp));
+ const p1=pcts([tr,tv]);let h='';
+ h+=rcCard('prv','Gastos: recurrentes y variables',td,td,true,RSEG(tr,'crec',0,LB(p1[0],tr,td))+RSEG(tv,'cvar',0,LB(p1[1],tv,td)),
+  '<span style="--c:var(--crec)"><u></u>Recurrentes '+p1[0]+' %</span><span style="--c:var(--cvar)"><u></u>Variables '+p1[1]+' %</span>',
+  rcRow('Recurrentes','crec',tr,tr,p1[0],true,'período')+rcRow('Variables','cvar',tv,tv,p1[1],true,'período'),lim>0.004?'De los variables, la limpieza fue '+f2(lim)+'.':'',false,'período');
+ const BL=[['ope','Operativo','cope'],['deu','Deuda y banca','cdeu'],['cap','Pago de capital','ccap']],sm={};BL.forEach(x=>sm[x[0]]=SUMA(rows.filter(e=>blkOf(e)===x[0])));
+ const tot=SUMA(rows),p2=pcts(BL.map(x=>sm[x[0]]));
+ h+=rcCard('pqf','Total egreso del período',tot,tot,true,BL.map((x,i)=>RSEG(sm[x[0]],x[2],0,LB(p2[i],sm[x[0]],tot),i>0)).join(''),
+  BL.map((x,i)=>'<span style="--c:var(--'+x[2]+')"><u></u>'+(x[0]==='cap'?'Capital':x[1])+' '+p2[i]+' %</span>').join(''),
+  BL.map((x,i)=>rcRow(x[1],x[2],sm[x[0]],sm[x[0]],p2[i],true,'período')).join(''),sm.cap>0.004?'Incluye capital '+f2(sm.cap)+' (baja tu deuda, no es gasto).':'',false,'período');
+ return h;
+}
+
 function resPanels(mon,DS){
  const pas=esPasado(MES),PB=pas?{m:{ope:0,deu:0,cap:0}}:pendByBlock(DS),pm=PB.m;
  const dev=mon.filter(e=>e.cuenta!=='No'),tr=SUMA(dev.filter(isRecRow)),td=SUMA(dev),tv=td-tr;
@@ -1370,8 +1468,13 @@ function resolverCard(P,mon){
  if(P.conf.length)rows.push([P.conf.length+(P.conf.length===1?' por confirmar':' por confirmar'),'Confirmar']);
  return '<div class="porres"><b>Por resolver · '+P.n+(P.n===1?' cosa':' cosas')+'</b><small>Para cerrar '+esc(MESES[+MES.slice(5)-1])+'</small>'+rows.map(r=>'<button type="button" class="pr" data-go="pen"><span>'+esc(r[0])+'</span><i>'+r[1]+' ›</i></button>').join('')+'</div>';
 }
+function pTile(DS){
+ const c=perCmp(DS);
+ if(c&&c.dp!=null)return '<div><small>'+esc(wLabel(c.w))+' · gasto sin capital</small><b>'+f2(c.cur)+'</b><em class="'+(c.dp>0?'up':(c.dp<0?'dn':''))+'">'+(c.dp>0?'▲ '+c.dp+'% más que ':(c.dp<0?'▼ '+Math.abs(c.dp)+'% menos que ':'Igual que '))+f2(c.prev)+' en las mismas fechas de '+(c.y-1)+'</em></div>';
+ const w=perWin(DS);return '<div><small>'+esc(P_LBL[PER])+'</small><b>'+f2(SUMA(selRows(DS,w).filter(e=>e.cuenta!=='No')))+'</b><em>Sin año anterior completo para comparar</em></div>';
+}
 function evoCard(){
- const DS=dataset(),y=+MES.slice(0,4),m0=+MES.slice(5),cur=todayISO().slice(0,7);
+ const DS=dataset(),po=perOn(),cur=todayISO().slice(0,7),AN=po?(PER==='pasado'?((+cur.slice(0,4)-1)+'-12'):cur):MES,y=+AN.slice(0,4),m0=+AN.slice(5);
  const gm=(yy,i)=>{const k=yy+'-'+pad(i),ls=DS.filter(e=>e.mes===k&&e.cuenta!=='No');const pp=SUMA(ls.filter(isPorPagar));return {t:SUMA(ls),p:pp,has:ls.length>0};};
  const A=[],B=[];for(let i=1;i<=12;i++){A.push(gm(y,i));B.push(gm(y-1,i));}
  let mx=0;A.concat(B).forEach(x=>{mx=Math.max(mx,x.t);});
@@ -1380,7 +1483,7 @@ function evoCard(){
  let svg='<svg width="'+W+'" height="'+(H+34)+'" viewBox="0 0 '+W+' '+(H+34)+'" role="group" aria-label="Evolución mensual del gasto, '+(y-1)+' contra '+y+'"><defs><pattern id="evH" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="rgba(var(--crec),.3)"/><rect width="2" height="5" fill="rgb(var(--crec))"/></pattern></defs><g transform="translate(0,8)">';
  for(let gv=step;gv<=top;gv+=step){const gy=H-H*gv/top;svg+='<line class="gl" x1="'+PL+'" x2="'+W+'" y1="'+gy.toFixed(1)+'" y2="'+gy.toFixed(1)+'"/><text class="gt" x="0" y="'+(gy+3).toFixed(1)+'">$'+(gv>=1000?(gv/1000)+'k':gv)+'</text>';}
  for(let i=0;i<12;i++){
-  const k=y+'-'+pad(i+1),x=PL+2+i*bw+(bw-g)/2,on=k===MES,inR=A[i].has||B[i].has||k<=cur;
+  const k=y+'-'+pad(i+1),x=PL+2+i*bw+(bw-g)/2,on=!po&&k===MES,inR=A[i].has||B[i].has||k<=cur;
   const hp=H*B[i].t/top,hd=H*(A[i].t-A[i].p)/top,hh=H*A[i].p/top;
   svg+='<g class="m'+(on?' on':'')+(k>cur&&!A[i].has?' off':'')+'" data-m="'+k+'"'+(k>cur&&!A[i].has?' aria-hidden="true"':' role="button" tabindex="0"')+' aria-label="'+mLabel(k)+': '+f2(A[i].t)+(A[i].p>0.004?' (por pagar '+f2(A[i].p)+')':'')+'"'+(on?' aria-current="true"':'')+'>'+
    '<rect class="hit" x="'+(x-3).toFixed(1)+'" y="0" width="'+(g+6).toFixed(1)+'" height="'+(H+24)+'"/>'+
@@ -1390,13 +1493,13 @@ function evoCard(){
    '<text class="ml" x="'+(x+g/2).toFixed(1)+'" y="'+(H+15)+'">'+MESES[i].charAt(0).toUpperCase()+'</text>'+(on?'<rect class="ul" x="'+(x-1).toFixed(1)+'" y="'+(H+19)+'" width="'+(g+2).toFixed(1)+'" height="3" rx="1.5"/>':'')+'</g>';
  }
  svg+='</g></svg>';
- const enCurso=MES>=cur,c=A[m0-1],pv=B[m0-1],nm=MESES[m0-1];
+ const enCurso=AN>=cur,c=A[m0-1],pv=B[m0-1],nm=MESES[m0-1];
  let c1='<div><small>'+nm.charAt(0).toUpperCase()+nm.slice(1)+' '+y+(enCurso?' (en curso)':'')+'</small><b>'+f2(c.t)+'</b>';
  if(pv.has){const dp=pv.t>0?Math.round((c.t-pv.t)/pv.t*100):null;
   c1+='<em'+(!enCurso&&dp!==null?(dp>0?' class="up"':' class="dn"'):'')+'>'+(!enCurso&&dp!==null&&dp!==0?(dp>0?'▲ '+dp+'% más que ':'▼ '+Math.abs(dp)+'% menos que '):'')+nm.slice(0,3)+' '+(y-1)+(enCurso?' cerró en ':': ')+f2(pv.t)+'</em>';
  }else c1+='<em>Sin dato de '+(y-1)+'</em>';
  c1+='</div>';
- let fin=enCurso?(MES===cur?m0-1:+cur.slice(5)-1):m0;if(MES>cur&&y>+cur.slice(0,4))fin=0;
+ let fin=enCurso?(AN===cur?m0-1:+cur.slice(5)-1):m0;if(AN>cur&&y>+cur.slice(0,4))fin=0;
  let ini=0;for(let i=0;i<12;i++){if(B[i].has){ini=i+1;break;}}
  const AB=(a,bb)=>MESES[a-1].slice(0,3)+(bb>a?'–'+MESES[bb-1].slice(0,3):'');
  let c2;
@@ -1404,10 +1507,11 @@ function evoCard(){
   const d2=sb>0?Math.round((sa-sb)/sb*100):null,rt=AB(ini,fin);
   c2='<div><small>'+rt.charAt(0).toUpperCase()+rt.slice(1)+' '+y+(enCurso?' (meses cerrados)':'')+'</small><b>'+f2(sa)+'</b><em'+(d2!==null?(d2>0?' class="up"':' class="dn"'):'')+'>'+(d2!==null&&d2!==0?(d2>0?'▲ '+d2+'% más que ':'▼ '+Math.abs(d2)+'% menos que '):'')+f2(sb)+' en '+rt+' '+(y-1)+'</em></div>';
  }else c2='<div><small>Acumulado '+y+'</small><b>'+f2(A.reduce((t,x)=>t+x.t,0))+'</b><em>Sin año anterior para comparar</em></div>';
- return '<div class="evo"><h3>Evolución del gasto</h3><p class="evs">Por mes · '+(y-1)+' contra '+y+' · toca un mes para verlo</p><div class="evlg"><span><i style="background:rgba(95,112,128,.4)"></i>'+(y-1)+'</span><span><i style="background:rgb(var(--crec))"></i>'+y+'</span><span><i style="background:repeating-linear-gradient(45deg,rgb(var(--crec)) 0 2px,rgba(var(--crec),.3) 2px 5px)"></i>Por pagar</span></div>'+svg+'<div class="evc">'+c1+c2+'</div></div>';
+ return '<div class="evo"><h3>Evolución del gasto</h3><p class="evs">Por mes · '+(y-1)+' contra '+y+' · toca un mes para verlo</p><div class="evlg"><span><i style="background:rgba(95,112,128,.4)"></i>'+(y-1)+'</span><span><i style="background:rgb(var(--crec))"></i>'+y+'</span><span><i style="background:repeating-linear-gradient(45deg,rgb(var(--crec)) 0 2px,rgba(var(--crec),.3) 2px 5px)"></i>Por pagar</span></div>'+svg+'<div class="evc'+(po?' one':'')+'">'+(po?pTile(DS):c1+c2)+'</div></div>';
 }
 function renderReg(){
  const DS=dataset(),mon=DS.filter(e=>e.mes===MES),box=$('regBox'),tot=SUMA(mon),P=pendItems();
+ if(perOn()){box.innerHTML='<div class="pcol">'+perPanels(DS)+evoCard()+'</div>';box.querySelectorAll('.evo g.m[data-m]').forEach(g=>{const go=()=>{if(!g.classList.contains('off'))goMonth(g.dataset.m);};g.onclick=go;g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});return;}
  let h='<div class="pcol">',porRes=null;
  if(P.n){
   const pt=[];
@@ -1469,7 +1573,7 @@ function setTotal(v){
  raf=requestAnimationFrame(step);
 }
 function renderTotals(){
- const DS=dataset(),mon=DS.filter(e=>e.mes===MES);
+ const DS=dataset(),mon0=DS.filter(e=>e.mes===MES),po=perOn(),mon=po?selRows(DS,perWin(DS)):mon0;
  const tRec=SUMA(mon.filter(isRecRow)),tEv=SUMA(mon.filter(e=>!isRecRow(e))),gasto=SUMA(mon.filter(e=>e.cuenta!=='No')),capi=SUMA(mon.filter(e=>e.cuenta==='No')),efe=SUMA(mon.filter(e=>e.medio==='Efectivo'&&!isPorPagar(e))),ppag=SUMA(mon.filter(isPorPagar)),tot=SUMA(mon.filter(e=>e.medio!=='Efectivo'&&!isPorPagar(e)));
  const rl=REC();let saved=0,pend=0;
  rl.forEach(r=>{
@@ -1479,16 +1583,22 @@ function renderTotals(){
   const s=suggestion(r,DS);if(s&&s.monto!==undefined)pend+=s.monto;
  });
  const falta=rl.length-saved,pct=rl.length?saved/rl.length:0;
- $('hLabel').textContent='Salió del banco';
+ $('hLabel').textContent=po?'Salió del banco · '+(PER==='todo'?'todo el historial':(['30','60','90','180','12m'].indexOf(PER)>=0?'últimos '+P_LBL[PER]:P_LBL[PER].toLowerCase())):'Salió del banco';
  setTotal(tot);
  $('hMov').textContent=mon.length+(mon.length===1?' movimiento registrado':' movimientos registrados');
- {const L=['Gasto del mes: '+f2(gasto)];if(capi>0.005)L.push('+ Capital de la hipoteca (no es gasto): '+f2(capi));if(efe>0.005)L.push('− Pagado en efectivo (no sale del banco): '+f2(efe));if(ppag>0.005)L.push('− Por pagar (aún no sale): '+f2(ppag));$('hGasto').textContent=L.length>1?L.join('\n'):'';}
+ {const L=['Gasto del '+(po?'período':'mes')+': '+f2(gasto)];if(capi>0.005)L.push('+ Capital de la hipoteca (no es gasto): '+f2(capi));if(efe>0.005)L.push('− Pagado en efectivo (no sale del banco): '+f2(efe));if(ppag>0.005)L.push('− Por pagar (aún no sale): '+f2(ppag));$('hGasto').textContent=L.length>1?L.join('\n'):'';}
  $('kRec').textContent=f2(tRec);
  $('kEv').textContent=f2(tEv);
  $('kPen').textContent=f2(ppag);
  $('nRec').textContent=falta?falta:rl.length;$('nRec').classList.toggle('alert',falta>0);
- $('nEv').textContent=mon.filter(e=>!isRecRow(e)).length;
- $('nReg').textContent=mon.length;
+ $('nEv').textContent=mon0.filter(e=>!isRecRow(e)).length;
+ $('nReg').textContent=mon0.length;
+ {const hc=$('hCmp'),c=po?perCmp(DS):null;
+  if(c&&c.dp!=null){hc.hidden=false;hc.className='hero-c '+(c.dp>0?'up':(c.dp<0?'dn':''));hc.textContent=cmpTxt(c);}
+  else if(c&&c.none){hc.hidden=false;hc.className='hero-c';hc.textContent='Sin año anterior completo para comparar';}
+  else hc.hidden=true;
+  const pr=$('pRng');pr.hidden=!po;
+  if(po){const w=perWin(DS);pr.textContent=w.m?(mLabel(w.s)+' al '+mLabel(w.e)):(fdia(w.s)+' '+w.s.slice(0,4)+' al '+fdia(w.e)+' '+w.e.slice(0,4));}}
 }
 function limCard(){
  const DS=dataset(),pp=DS.filter(pendVis),tp=SUMA(pp);
@@ -1721,7 +1831,7 @@ function closeExc(){
 function renderAll(){
  $('mLbl').querySelector('.mfull').textContent=mLabel(MES);$('mLbl').querySelector('.mshort').textContent=mShort(MES).replace(/ (\d\d)$/,function(m,y){return ' 20'+y;});setVTitle();
  $('mHoy').style.display=MES===todayISO().slice(0,7)?'none':'';
- renderRec();renderEv();renderReg();renderPen();renderTotals();renderClose();renderLimAlert();
+ applyPer();renderRec();renderEv();renderReg();renderPen();renderTotals();renderClose();renderLimAlert();
 }
 
 function toast(msg,withUndo){
@@ -1740,6 +1850,7 @@ function setHint(){
 }
 function hasPending(){return !!SH;}
 function goMonth(ym){
+ if(PER!=='mes'){PER='mes';try{sessionStorage.setItem(PERK,'mes');}catch(e){}if(ym===MES){renderAll();return;}}
  if(ym===MES)return;
  if(SH)closeSheet();
  MES=ym;UI={};EXTRA=[];REGF='all';
@@ -2007,6 +2118,10 @@ async function sync(opt){
  }
 }
 function scheduleFlush(){if(!connected())return;clearTimeout(ftimer);setSync('pend');ftimer=setTimeout(()=>sync({}),450);}
+$('pChips').addEventListener('click',e=>{const b=e.target.closest('.pchip');if(!b)return;if(b.id==='masB'){pShAbre();return;}setPer(b.dataset.p);});
+$('pSh').addEventListener('click',e=>{const b=e.target.closest('.popt');if(!b)return;pFoco=null;pShCierra();setPer(b.dataset.p);});
+$('pShX').onclick=pShCierra;$('pBg').onclick=pShCierra;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('pSh').classList.contains('on'))pShCierra();});
 $('mPrev').onclick=()=>goMonth(addM(MES,-1));
 $('mNext').onclick=()=>goMonth(addM(MES,1));
 $('mHoy').onclick=()=>goMonth(todayISO().slice(0,7));
@@ -2015,7 +2130,7 @@ document.querySelector('.tabs').addEventListener('click',e=>{
  document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));
  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('on'));
  b.classList.add('on');
- $({rec:'recRows',ev:'evBox',pen:'penBox',reg:'regBox'}[b.dataset.t]).classList.add('on');document.body.dataset.tab=b.dataset.t;setVTitle();
+ $({rec:'recRows',ev:'evBox',pen:'penBox',reg:'regBox'}[b.dataset.t]).classList.add('on');document.body.dataset.tab=b.dataset.t;setVTitle();renderAll();
 });
 $('closeBox').addEventListener('click',e=>{
  if(e.target.closest('#clsAll')){closeAll();return;}
