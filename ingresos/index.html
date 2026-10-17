@@ -319,7 +319,7 @@ details.ver li.bad b{color:var(--bad)}
     <div class="sh-bg" id="shBg"></div>
     <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shT" aria-hidden="true">
       <div class="grip"></div><h3 id="shT">Elegir período</h3>
-      <div class="gt">Calendario · de enero a la fecha</div><div class="opts" id="oCal"></div>
+      <div class="gt">Calendario</div><div class="opts" id="oCal"></div>
       <div class="gt">Meses cerrados</div><div class="opts" id="oRec"></div><p class="shn">Solo meses completos, sin el mes en curso.</p>
       <div class="gt">Acumulado</div><div class="opts" id="oAll"></div><p class="shn" id="oAllN"></p>
       <button type="button" class="sh-x" id="shX">Cerrar</button>
@@ -428,7 +428,7 @@ function perRange(){
   var y=+HOY.slice(0,4),hm=HOY.slice(0,7);
   if(per==="mes")return [curMonth+"-01",endM(curMonth)];
   if(per==="anio")return [y+"-01-01",HOY];
-  if(per==="pasado")return [(y-1)+"-01-01",addYear(HOY,-1)];
+  if(per==="pasado")return [(y-1)+"-01-01",(y-1)+"-12-31"];
   if(per==="todo"){var rg=monthRange();return [rg[0]+"-01",HOY];}
   var n=per==="12m"?12:({"30":1,"60":2,"90":3,"180":6}[per]||1);return [shiftMonth(hm,-n)+"-01",endM(shiftMonth(hm,-1))];
 }
