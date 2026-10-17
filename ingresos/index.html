@@ -178,9 +178,9 @@ details.ver li.bad b{color:var(--bad)}
   .sticky{position:static;background:none;padding-top:0;margin-top:0}
   .view{max-width:520px}
 }
-.pchips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px;margin:0 0 4px;scrollbar-width:none}
+.pchips{display:flex;gap:5px;overflow-x:auto;padding:2px 0 6px;margin:0 0 4px;scrollbar-width:none}
 .pchips::-webkit-scrollbar{display:none}
-.pchip{flex:none;min-height:40px;padding:0 11px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13px;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.pchip{flex:none;min-height:40px;padding:0 9px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13px;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
 .pchip svg{width:14px;height:14px}
 .pchip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .pchip.mas[aria-expanded="true"]{border-color:var(--accent);color:var(--accent-t)}
@@ -194,6 +194,7 @@ details.ver li.bad b{color:var(--bad)}
 .sheet .gt{margin:14px 0 6px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--mut)}
 .shn{font-size:12px;color:var(--mut);font-weight:600;margin:8px 0 0}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt small{font-size:11px;font-weight:600;color:var(--mut);white-space:nowrap}
 .opt{min-height:48px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:14px;font-weight:700;text-align:left;padding:0 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .opt[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-t)}
 .opt[aria-pressed="true"]::after{content:"✓";font-weight:800}
@@ -318,8 +319,8 @@ details.ver li.bad b{color:var(--bad)}
     <div class="sh-bg" id="shBg"></div>
     <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shT" aria-hidden="true">
       <div class="grip"></div><h3 id="shT">Elegir período</h3>
-      <div class="gt">Calendario</div><div class="opts" id="oCal"></div>
-      <div class="gt">Recientes</div><div class="opts" id="oRec"></div>
+      <div class="gt">Calendario · de enero a la fecha</div><div class="opts" id="oCal"></div>
+      <div class="gt">Meses cerrados</div><div class="opts" id="oRec"></div><p class="shn">Solo meses completos, sin el mes en curso.</p>
       <div class="gt">Acumulado</div><div class="opts" id="oAll"></div><p class="shn" id="oAllN"></p>
       <button type="button" class="sh-x" id="shX">Cerrar</button>
     </div>
@@ -419,18 +420,17 @@ function monthRange(){
 }
 var PERK="cimablanca_ing_per",per="mes";
 var P_CAL=[["mes","Este mes"],["anio",String(+HOY.slice(0,4))],["pasado",String(+HOY.slice(0,4)-1)]],P_REC=[["30","30 días"],["60","60 días"],["90","90 días"],["180","180 días"],["12m","12 meses"]],P_ALL=[["todo","Acumulado"]];
-var P_QUICK=[["anio",String(+HOY.slice(0,4))],["pasado",String(+HOY.slice(0,4)-1)],["todo","Acumulado"]],P_LBL={};P_CAL.concat(P_REC,P_ALL).forEach(function(x){P_LBL[x[0]]=x[1];});
+var P_QUICK=[["mes","Mes"],["anio",String(+HOY.slice(0,4))],["pasado",String(+HOY.slice(0,4)-1)],["todo","Acumulado"]],P_LBL={};P_CAL.concat(P_REC,P_ALL).forEach(function(x){P_LBL[x[0]]=x[1];});
 (function(){var g=ssGet(PERK);if(g&&P_LBL[g])per=g;})();
 function addYear(s,n){var p=s.split("-");var d=new Date(Date.UTC(+p[0]+n,+p[1]-1,+p[2]));return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1)+"-"+pad(d.getUTCDate());}
 function endM(mk){return mk+"-"+pad(new Date(+mk.slice(0,4),+mk.slice(5),0).getDate());}
 function perRange(){
   var y=+HOY.slice(0,4),hm=HOY.slice(0,7);
   if(per==="mes")return [curMonth+"-01",endM(curMonth)];
-  if(per==="anio")return [y+"-01-01",y+"-12-31"];
-  if(per==="pasado")return [(y-1)+"-01-01",(y-1)+"-12-31"];
+  if(per==="anio")return [y+"-01-01",HOY];
+  if(per==="pasado")return [(y-1)+"-01-01",addYear(HOY,-1)];
   if(per==="todo"){var rg=monthRange();return [rg[0]+"-01",HOY];}
-  if(per==="12m")return [shiftMonth(hm,-11)+"-01",endM(hm)];
-  var n=+per;return [addDays(HOY,-(n-1)),HOY];
+  var n=per==="12m"?12:({"30":1,"60":2,"90":3,"180":6}[per]||1);return [shiftMonth(hm,-n)+"-01",endM(shiftMonth(hm,-1))];
 }
 function perCmp(){
   /* compara solo noches ya dormidas, desde el primer día con año anterior posible, contra las mismas fechas del año anterior */
@@ -444,12 +444,15 @@ function perCmp(){
 }
 function pIco(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';}
 function pChips(){
-  var enQ=per==="mes"||P_QUICK.some(function(q){return q[0]===per;});
+  var enQ=P_QUICK.some(function(q){return q[0]===per;});
   $("pChips").innerHTML=P_QUICK.map(function(q){return '<button type="button" class="pchip" data-p="'+q[0]+'" aria-pressed="'+(per===q[0])+'">'+q[1]+'</button>';}).join("")+
-    '<button type="button" class="pchip mas" id="masB" aria-haspopup="dialog" aria-expanded="false"'+(enQ?'':' aria-pressed="true"')+'>'+(enQ?'Período':(per==='mes'?'Mes':P_LBL[per]))+' '+pIco()+'</button>';
+    '<button type="button" class="pchip mas" id="masB" aria-haspopup="dialog" aria-expanded="false"'+(enQ?'':' aria-pressed="true"')+'>'+(enQ?'Período':P_LBL[per])+' '+pIco()+'</button>';
 }
 function pSheet(){
-  function ob(l){return l.map(function(p){return '<button type="button" class="opt" data-p="'+p[0]+'" aria-pressed="'+(per===p[0])+'">'+p[1]+'</button>';}).join("");}
+  var hm=HOY.slice(0,7),NN={"30":1,"60":2,"90":3,"180":6,"12m":12};
+  function ab(m){return MC[+m.slice(5)-1].slice(0,3).toLowerCase()+(m.slice(0,4)!==hm.slice(0,4)?" "+m.slice(2,4):"");}
+  function sub(k){if(!NN[k])return "";var a=ab(shiftMonth(hm,-NN[k])),b=ab(shiftMonth(hm,-1));return '<small>'+(NN[k]===1?b:a+"\u2013"+b)+'</small>';}
+  function ob(l){return l.map(function(p){return '<button type="button" class="opt" data-p="'+p[0]+'" aria-pressed="'+(per===p[0])+'">'+p[1]+sub(p[0])+'</button>';}).join("");}
   $("oCal").innerHTML=ob(P_CAL);$("oRec").innerHTML=ob(P_REC);$("oAll").innerHTML=ob(P_ALL);
   var a0=M?monthRange()[0]:"";$("oAllN").textContent=a0?("Suma todo lo generado desde "+MC[+a0.slice(5)-1]+" "+a0.slice(0,4)+" hasta hoy."):"Suma todo lo generado hasta hoy.";
 }
@@ -559,7 +562,7 @@ function renderR(){
   $("mPrev").disabled=mk<=rg[0];$("mNext").disabled=mk>=rg[1];
   $("mHoy").hidden=(mk===HOY.slice(0,7));
   var totAll=o.totD+o.totP;
-  $("rLabel").textContent=pm?("Generado en "+MESES[+mk.slice(5)-1]+" · neto"):("Generado · "+(per==="todo"?"acumulado":(["30","60","90","180","12m"].indexOf(per)>=0?"últimos "+P_LBL[per]:P_LBL[per].toLowerCase()))+" · neto");
+  $("rLabel").textContent=pm?("Generado en "+MESES[+mk.slice(5)-1]+" · neto"):("Generado · "+(per==="todo"?"acumulado":(["30","60","90","180","12m"].indexOf(per)>=0?"últimos "+P_LBL[per]+" cerrados":P_LBL[per].toLowerCase()))+" · neto");
   $("rBig").innerHTML=moneyBig(o.totD);
   $("rSub").textContent=o.totP>0.004?("+ "+money(o.totP)+" por dormir en el resto "+(pm?"del mes":"del período")):(totAll>0?"Todo lo reservado de "+Pm+" ya se durmió":"Sin reservas en "+Pm);
   var pct=(o.nD+o.nP)>0?Math.round(o.nD/(o.nD+o.nP)*100):0;
