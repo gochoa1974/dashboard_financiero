@@ -417,7 +417,7 @@ function monthRange(){
   return [a,b];
 }
 var PERK="cimablanca_ing_per",per="mes";
-var P_CAL=[["mes","Este mes"],["anio","Este año"],["pasado","Año pasado"]],P_REC=[["30","30 días"],["60","60 días"],["90","90 días"],["180","180 días"],["12m","12 meses"]],P_ALL=[["todo","Todo"]];
+var P_CAL=[["mes","Este mes"],["anio","Este año"],["pasado",String(+HOY.slice(0,4)-1)]],P_REC=[["30","30 días"],["60","60 días"],["90","90 días"],["180","180 días"],["12m","12 meses"]],P_ALL=[["todo","Todo"]];
 var P_QUICK=[["mes","Mes"],["anio","Año"],["todo","Todo"]],P_LBL={};P_CAL.concat(P_REC,P_ALL).forEach(function(x){P_LBL[x[0]]=x[1];});
 (function(){var g=ssGet(PERK);if(g&&P_LBL[g])per=g;})();
 function addYear(s,n){var p=s.split("-");var d=new Date(Date.UTC(+p[0]+n,+p[1]-1,+p[2]));return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1)+"-"+pad(d.getUTCDate());}
@@ -557,7 +557,7 @@ function renderR(){
   $("mPrev").disabled=mk<=rg[0];$("mNext").disabled=mk>=rg[1];
   $("mHoy").hidden=(mk===HOY.slice(0,7));
   var totAll=o.totD+o.totP;
-  $("rLabel").textContent=pm?("Generado en "+MESES[+mk.slice(5)-1]+" · neto"):("Generado · "+(per==="todo"?"todo el historial":(/^\d/.test(P_LBL[per])?"últimos "+P_LBL[per]:P_LBL[per].toLowerCase()))+" · neto");
+  $("rLabel").textContent=pm?("Generado en "+MESES[+mk.slice(5)-1]+" · neto"):("Generado · "+(per==="todo"?"todo el historial":(["30","60","90","180","12m"].indexOf(per)>=0?"últimos "+P_LBL[per]:P_LBL[per].toLowerCase()))+" · neto");
   $("rBig").innerHTML=moneyBig(o.totD);
   $("rSub").textContent=o.totP>0.004?("+ "+money(o.totP)+" por dormir en el resto "+(pm?"del mes":"del período")):(totAll>0?"Todo lo reservado de "+Pm+" ya se durmió":"Sin reservas en "+Pm);
   var pct=(o.nD+o.nP)>0?Math.round(o.nD/(o.nD+o.nP)*100):0;
