@@ -12,8 +12,10 @@
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- v6 (18 oct 2026): filtro Comparar, recuperación de la inversión, nota de Flujo de caja, intereses/seguros separados, gráfico mensual dinámico, gastos por familia. -->
 <!-- v5: cascada «De los ingresos a la caja»; corrige selector Período. -->
 <!-- v4: calificación Malo→Excelente por indicador (umbrales de Configuración), margen mensual en tabla y gráfico. -->
 <!-- v3: carga sola Ingresos y Gastos (iframes ocultos) + gráfico de resultado neto mensual arriba. -->
@@ -104,6 +106,10 @@ td.pos{color:var(--ok);font-weight:800}td.neg{color:var(--err);font-weight:800}
 .shn{font-size:12px;color:var(--texto-2);font-weight:600;margin:8px 0 0}
 .cl{width:100%;min-height:48px;margin-top:16px;border-radius:99px;border:1px solid var(--linea);background:transparent;color:var(--texto);font:700 14px var(--fuente);cursor:pointer}
 [hidden]{display:none!important}
+body.cmpOn .hero,body.cmpOn .grid,body.cmpOn .mnav,body.cmpOn .rng{display:none!important}
+.pbbar{height:14px;border-radius:99px;background:color-mix(in srgb,var(--texto) 9%,transparent);overflow:hidden;margin:10px 0 6px}.pbbar i{display:block;height:100%;background:var(--acento);border-radius:99px;min-width:3px}
+.fm{display:grid;gap:10px;margin-top:10px}.fm .r{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:13px;font-weight:600}.fm .r b{font-weight:800}.fm .r .bar{grid-column:1/-1;height:8px;border-radius:99px;background:color-mix(in srgb,var(--texto) 8%,transparent);overflow:hidden}.fm .r .bar i{display:block;height:100%;background:var(--gasto);border-radius:99px}
+.seg{display:flex;gap:6px;margin:10px 0 6px;overflow-x:auto;scrollbar-width:none}.seg button{flex:none;min-height:38px;padding:0 14px;border-radius:99px;border:1px solid var(--linea);background:var(--fondo);color:var(--texto);font:700 13px var(--fuente);cursor:pointer;white-space:nowrap}.seg button[aria-pressed=true]{background:var(--texto);color:var(--fondo);border-color:var(--texto)}
 </style>
 </head>
 <body>
@@ -116,6 +122,7 @@ td.pos{color:var(--ok);font-weight:800}td.neg{color:var(--err);font-weight:800}
   <div class="pchips" id="pChips"></div>
   <div class="mnav" id="mnav"><button id="mPrev" aria-label="Mes anterior">◀</button><b id="mLbl"></b><button id="mNext" aria-label="Mes siguiente">▶</button></div>
   <p class="rng" id="rng"></p>
+  <div id="cmpHost" hidden></div>
 
   <section class="hero" id="hero" aria-label="Resultado del período">
     <div class="l" id="hL"></div>
@@ -152,9 +159,15 @@ td.pos{color:var(--ok);font-weight:800}td.neg{color:var(--err);font-weight:800}
     <div class="card">
       <h2>Flujo de caja</h2>
       <div class="v" id="fN"></div>
-      <div class="d">Lo generado menos lo que ya salió, <b>incluido el capital</b> de la hipoteca.</div>
+      <div class="d">Lo que generó el negocio. <b>No es el saldo de tu cuenta.</b> Es lo generado menos lo que ya salió, incluido el capital de la hipoteca.</div>
       <div class="er" id="fLeg"></div>
       <div class="note" id="fC"></div>
+    </div>
+
+    <div class="card">
+      <h2>En qué se va cada $1</h2>
+      <div class="d" id="fmP"></div>
+      <div class="fm" id="fm"></div>
     </div>
 
     <div class="card g3">
@@ -165,9 +178,19 @@ td.pos{color:var(--ok);font-weight:800}td.neg{color:var(--err);font-weight:800}
     </div>
 
     <div class="card g3">
-      <h2>Evolución mensual</h2>
-      <svg class="chart" id="chart" viewBox="0 0 640 220" role="img" aria-label="Ingresos y gastos por mes"></svg>
-      <div class="lg2"><span><span class="dot" style="background:var(--acento)"></span>Ingresos</span><span><span class="dot" style="background:var(--gasto)"></span>Gastos</span><span><span class="dot" style="background:var(--texto);border-radius:50%"></span>Resultado</span></div>
+      <h2>Recuperación de la inversión</h2>
+      <div class="d">Qué parte de tu capital propio ya volvió a tu bolsillo. No depende del filtro.</div>
+      <div class="v" id="pbT">—</div>
+      <div class="pbbar" aria-hidden="true"><i id="pbF" style="width:0"></i></div>
+      <div class="note" id="pbN"></div>
+    </div>
+
+    <div class="card g3">
+      <h2 id="mT">Evolución mensual</h2>
+      <div class="d" id="mD"></div>
+      <div class="seg" id="mSeg" role="group" aria-label="Elegir qué ver"></div>
+      <svg class="chart" id="chart" viewBox="0 0 640 220" role="img" aria-label="Evolución mensual"></svg>
+      <p class="note" id="mN"></p>
     </div>
   </div>
 </div>
@@ -200,7 +223,7 @@ function build(){
   FIRST=ini&&ini<=CM?ini:first;
   var m=FIRST;
   while(m<=CM){var i=SI.m[m]||[0,0],g=SG.m[m]||{g:0,c:0,p:0,f:{}};
-    D[m]={ing:i[0],pd:i[1],gas:g.g,cap:g.c,pp:g.p,fam:g.f||{},parcial:m===CM};m=sm(m,1);}
+    D[m]={ing:i[0],pd:i[1],gas:g.g,cap:g.c,pp:g.p,fam:g.f||{},fx:g.x||null,parcial:m===CM};m=sm(m,1);}
 }
 var FAMOP=[["1","Fijos operativos"],["3","Mantenimiento y reposición"],["4","Logística e imprevistos"],["5","Otros / varios"]];
 function months(a,b){var o=[],m=a;while(m<=b){if(D[m])o.push(m);m=sm(m,1);}return o;}
@@ -211,7 +234,8 @@ function agg(ms){
   var I=sum(ms,function(m){return D[m].ing;}),fam={};
   ["1","2","3","4","5"].forEach(function(k){fam[k]=sum(ms,function(m){return D[m].fam[k]||0;});});
   var Gop=fam["1"]+fam["3"]+fam["4"]+fam["5"],Gfin=fam["2"],G=sum(ms,function(m){return D[m].gas;});
-  return {I:I,fam:fam,Gop:Gop,Gfin:Gfin,G:G,Ro:I-Gop,R:I-G,C:sum(ms,function(m){return D[m].cap;}),PP:sum(ms,function(m){return D[m].pp;}),n:ms.length};
+  var fx=ms.length&&ms.every(function(m){return D[m].fx;})?{i:sum(ms,function(m){return D[m].fx.i||0;}),s:sum(ms,function(m){return D[m].fx.s||0;}),o:sum(ms,function(m){return D[m].fx.o||0;})}:null;
+  return {fx:fx,I:I,fam:fam,Gop:Gop,Gfin:Gfin,G:G,Ro:I-Gop,R:I-G,C:sum(ms,function(m){return D[m].cap;}),PP:sum(ms,function(m){return D[m].pp;}),n:ms.length};
 }
 
 /* ===== filtros (mismas reglas que Ingresos y Gastos) ===== */
@@ -229,7 +253,7 @@ function rango(){
 }
 var ICO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
 function chips(){var enQ=QUICK.some(function(q){return q[0]===per;});
-  $("pChips").innerHTML=QUICK.map(function(q){return '<button class="pchip" data-p="'+q[0]+'" aria-pressed="'+(per===q[0])+'">'+q[1]+'</button>';}).join("")+'<button class="pchip mas" id="masB" aria-pressed="'+(!enQ)+'">'+(enQ?"Período":LBL[per])+' '+ICO+'</button>';}
+  $("pChips").innerHTML=QUICK.map(function(q){return '<button class="pchip" data-p="'+q[0]+'" aria-pressed="'+(per===q[0])+'">'+q[1]+'</button>';}).join("")+'<button class="pchip mas" id="masB" aria-pressed="'+(!enQ)+'">'+(enQ?"Período":LBL[per])+' '+ICO+'</button>'+CBC.chipHtml();}
 function sheet(){$("oAllN").textContent="Desde "+ab(FIRST)+" hasta hoy.";
   function ob(l){return l.map(function(p){var s=NN[p[0]]?'<small>'+(NN[p[0]]===1?ab(sm(CM,-1)):ab(sm(CM,-NN[p[0]]))+"–"+ab(sm(CM,-1)))+'</small>':"";return '<button class="opt" data-p="'+p[0]+'" aria-pressed="'+(per===p[0])+'">'+p[1]+s+'</button>';}).join("");}
   $("oCal").innerHTML=ob(CAL);$("oRec").innerHTML=ob(REC);$("oAll").innerHTML=ob(ALL);}
@@ -257,26 +281,45 @@ function indicadores(ms){
   out+=rate("Cap rate",a.Ro,I?I.valor:0,"Resultado operativo ÷ valor del departamento","cap_rate");
   out+=rate("ROI",a.R,inv,"Resultado ÷ inversión total","roi");
   var pagado=SG&&SG.m?Object.keys(SG.m).reduce(function(s,k){return s+(SG.m[k].c||0);},0):0;
-  var patr=I?I.valor-Math.max(I.prestamo-pagado,0):0;
+  var saldoEst=I?Math.max(I.prestamo-pagado,0):0;
+  if(I&&I.saldo!=null&&I.saldoMes){var despues=Object.keys(SG.m).filter(function(k){return k>I.saldoMes;}).reduce(function(s,k){return s+(SG.m[k].c||0);},0);saldoEst=Math.max(I.saldo-despues,0);}
+  var patr=I?I.valor-saldoEst:0;
   out+=rate("ROE",a.R,patr,"Resultado ÷ patrimonio actual en el departamento","roe");
   var flujo=a.R+a.PP-a.C;
   out+=rate("Retorno sobre capital propio",flujo,cap,"Flujo de caja ÷ capital propio puesto","retorno_capital");
   var pl=I?I.valor-I.precio:null;
   out+=kp("Plusvalía estimada",pl==null?null:f0(pl)+" · "+pc(pl/I.precio*100),"Valor estimado − precio de compra. No forma parte del resultado.");
   $("kp").innerHTML=out;
-  $("kN").innerHTML="Calificación: Malo · Regular · Bueno · Muy bueno · Excelente (umbrales editables en Configuración → Calificación de indicadores). "+(I?("Inversión total "+f0(inv)+" · préstamo "+f0(I.prestamo)+" · capital propio "+f0(cap)+" · patrimonio actual ≈ "+f0(patr)+" (valor "+f0(I.valor)+" − saldo estimado de la hipoteca). Los datos se editan en Configuración → Inversión."):"Sin datos de inversión: complétalos en Configuración → Inversión para ver ROI, ROE y cap rate.");
+  $("kN").innerHTML="Calificación: Malo · Regular · Bueno · Muy bueno · Excelente (umbrales editables en Configuración → Calificación de indicadores). "+(I?("Inversión total "+f0(inv)+" · préstamo "+f0(I.prestamo)+" · capital propio "+f0(cap)+" · patrimonio actual ≈ "+f0(patr)+" (valor "+f0(I.valor)+" − saldo "+(I.saldo!=null?"real de la hipoteca según el banco":"estimado de la hipoteca")+"). Los datos se editan en Configuración → Inversión."):"Sin datos de inversión: complétalos en Configuración → Inversión para ver ROI, ROE y cap rate.");
 }
 
 /* ===== render ===== */
 function cmpPrev(ms){var prev=ms.map(function(m){return sm(m,-12);});if(!prev.every(function(m){return D[m];}))return null;return {ing:sum(prev,function(m){return D[m].ing;}),gas:sum(prev,function(m){return D[m].gas;})};}
+function etqF(){return per==="mes"?ml(cur):per==="todo"?"acumulado":(NN[per]?"últimos "+LBL[per]+" cerrados":LBL[per]);}
+var MET={
+ ing:{label:"Ingresos",fmt:"$",val:function(ms){return agg(ms).I;}},
+ gas:{label:"Gastos",fmt:"$",good:"down",val:function(ms){return agg(ms).G;}},
+ res:{label:"Resultado",fmt:"$",val:function(ms){return agg(ms).R;}},
+ mgn:{label:"Margen neto",fmt:"%",val:function(ms){var a=agg(ms);return a.I>0?a.R/a.I*100:null;}},
+ flu:{label:"Flujo de caja",fmt:"$",val:function(ms){var a=agg(ms);return a.R+a.PP-a.C;}}
+};
+function cmpInit(){
+  CBC.init({key:"res",host:"cmpHost",first:FIRST,cur:CM,has:function(m){return !!D[m];},metrics:MET,
+    kpis:["ing","gas","res","mgn"],chart:["ing","gas","res","flu","mgn"],rows:[["ing"],["gas"],["res",1],["mgn"],["flu",1]],
+    primary:function(){if(per==="todo")return [];var r=rango();return months(r[0],r[1]);},
+    primaryLabel:function(){return etqF().charAt(0).toUpperCase()+etqF().slice(1);},
+    ref:function(id,ms){if(id!=="ing")return null;var a=agg(ms.filter(function(m){return D[m];}));return a.n?{v:(a.G+a.C)/a.n,label:"Equilibrio",red:true}:null;},
+    onChange:function(){chips();render();}});
+}
 function render(){
+  CBC.render();document.body.classList.toggle("cmpOn",CBC.active());
   var r=rango(),ms=months(r[0],r[1]);
   $("mnav").style.display=per==="mes"?"flex":"none";
   $("mLbl").textContent=ml(cur);
   $("mNext").disabled=cur>=CM;$("mPrev").disabled=cur<=FIRST;$("mNext").style.opacity=$("mNext").disabled?.35:1;$("mPrev").style.opacity=$("mPrev").disabled?.35:1;
   $("rng").textContent=per==="mes"?(D[cur].parcial?"Mes en curso · al "+HOY.slice(8)+" de "+MN[+cur.slice(5)-1]:"Mes cerrado"):(ml(r[0])+" al "+ml(r[1])+(per==="anio"||per==="todo"?" · hasta hoy":""));
   var a=agg(ms),I=a.I,G=a.G,R=a.R,mg=I>0?R/I*100:0;
-  var etq=per==="mes"?ml(cur):per==="todo"?"acumulado":(NN[per]?"últimos "+LBL[per]+" cerrados":LBL[per]);
+  var etq=etqF();
   $("hL").textContent="Resultado · "+etq;
   $("hN").className="n"+(R<0?" neg":"");$("hN").innerHTML=(R<-0.5?"−":"")+"<sup>$</sup>"+String(Math.abs(Math.round(R))).replace(/\B(?=(\d{3})+(?!\d))/g,".");
   $("hM").innerHTML='<span class="pill">Margen '+pc(mg)+'</span><span class="pill">Por cada $1 queda $'+(Math.max(mg,0)/100).toFixed(2).replace(".",",")+'</span>';
@@ -303,7 +346,7 @@ function render(){
   h+='<div class="h"><span>− Gastos operativos</span><span>'+f0(a.Gop)+'</span></div>';
   FAMOP.forEach(function(f){if(a.fam[f[0]]>.5)h+='<div class="s"><span>'+f[1]+'</span><span>'+f0(a.fam[f[0]])+'</span></div>';});
   h+='<div class="t"><span>= Resultado operativo</span><span class="'+(a.Ro<0?"neg":"pos")+'">'+f0(a.Ro)+'</span></div>';
-  h+='<div class="h"><span>− Gastos financieros</span><span>'+f0(a.Gfin)+'</span></div><div class="s"><span>Intereses, seguros y mora de la hipoteca</span><span></span></div>';
+  h+='<div class="h"><span>− Gastos financieros</span><span>'+f0(a.Gfin)+'</span></div>'+(a.fx?'<div class="s"><span>Intereses de la hipoteca</span><span>'+f0(a.fx.i)+'</span></div><div class="s"><span>Seguros de la hipoteca</span><span>'+f0(a.fx.s)+'</span></div><div class="s"><span>Mora, comisiones y otros</span><span>'+f0(a.fx.o)+'</span></div>':'<div class="s"><span>Intereses, seguros y mora de la hipoteca</span><span></span></div>');
   h+='<div class="t"><span>= Resultado antes de depreciación</span><span class="'+(a.R<0?"neg":"pos")+'">'+f0(a.R)+'</span></div>';
   h+='<div class="g"><span>Depreciación</span><span>Con Inventarios</span></div>';
   $("er").innerHTML=h;
@@ -315,23 +358,51 @@ function render(){
   $("fC").textContent=per==="mes"&&D[cur].parcial?"El mes en curso aún está incompleto: se compara al cerrar.":"";
 
   indicadores(ms);
-  grafico(per==="mes"?months(sm(cur,-5),cur):ms);
+  grafMet(per==="mes"?months(sm(cur,-5),cur):ms);
+  familias(a);payback();
   grafNeto(per==="mes"?months(sm(cur,-5),cur):ms);
   cascada(a,etq);
 }
-function grafico(cm){
-  var W=640,H=220,pl=34,pb=24,pt=10,n=cm.length;if(!n){$("chart").innerHTML="";return;}
-  var bw=(W-pl)/n,mx=Math.max.apply(null,cm.map(function(m){return Math.max(D[m].ing,D[m].gas);}))*1.1||1,mn=Math.min(0,Math.min.apply(null,cm.map(function(m){return D[m].ing-D[m].gas;})));
-  var yy=function(v){return pt+(H-pt-pb)*(1-(v-mn)/(mx-mn));},s="";
-  [0,.5,1].forEach(function(k){var v=mn+(mx-mn)*k;s+='<line x1="'+pl+'" x2="'+W+'" y1="'+yy(v)+'" y2="'+yy(v)+'" stroke="var(--linea)"/><text x="0" y="'+(yy(v)+3)+'">'+f0(v)+'</text>';});
-  var pts=[];
-  cm.forEach(function(m,i){var x=pl+i*bw,w=Math.min(bw*.36,18),gx=x+bw/2,a=D[m].ing,b=D[m].gas,op=D[m].parcial?".55":"1";
-    s+='<rect x="'+(gx-w-1)+'" y="'+Math.min(yy(a),yy(0))+'" width="'+w+'" height="'+Math.abs(yy(0)-yy(a))+'" rx="3" fill="var(--acento)" opacity="'+op+'"/><rect x="'+(gx+1)+'" y="'+Math.min(yy(b),yy(0))+'" width="'+w+'" height="'+Math.abs(yy(0)-yy(b))+'" rx="3" fill="var(--gasto)" opacity="'+op+'"/>';
-    pts.push([gx,yy(a-b)]);
-    if(n<=14||i%2===0)s+='<text x="'+gx+'" y="'+(H-6)+'" text-anchor="middle">'+MN[+m.slice(5)-1].slice(0,3)+(n>12&&(m.slice(5)==="01"||i===0)?" "+m.slice(2,4):"")+'</text>';});
-  s+='<polyline fill="none" stroke="var(--texto)" stroke-width="2" points="'+pts.map(function(p){return p[0]+","+p[1];}).join(" ")+'"/>';
-  pts.forEach(function(p){s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3" fill="var(--tarjeta)" stroke="var(--texto)" stroke-width="2"/>';});
-  $("chart").innerHTML=s;
+var mSel="ing";
+function grafMet(cm){
+  var el=$("chart"),M=MET[mSel],n=cm.length;
+  $("mSeg").innerHTML=Object.keys(MET).map(function(k){return '<button type="button" data-mt="'+k+'" aria-pressed="'+(k===mSel)+'">'+MET[k].label+'</button>';}).join("");
+  $("mT").textContent=M.label+" por mes";
+  if(!n){el.innerHTML="";return;}
+  var W=(el.parentNode.clientWidth||700)<520?380:640,H=230,pl=40,pb=26,pt=22;el.setAttribute("viewBox","0 0 "+W+" "+H);
+  var v=cm.map(function(m){return M.val([m]);}),ok=v.filter(function(x){return x!=null;});
+  var cl=cm.filter(function(m){return !D[m].parcial;}),ac=agg(cl),pe=(mSel==="ing"&&ac.n)?(ac.G+ac.C)/ac.n:null;
+  var all=ok.slice();if(pe!=null)all.push(pe);
+  var mx=Math.max(0,Math.max.apply(null,all))*1.15||1,mn=Math.min(0,Math.min.apply(null,all));if(mn<0)mn*=1.15;
+  var yy=function(x){return pt+(H-pt-pb)*(1-(x-mn)/(mx-mn));},bw=(W-pl)/n,w=Math.min(bw*.62,34),s="";
+  var fv=function(x){return M.fmt==="%"?Math.round(x)+"%":f0(x);};
+  [mn,0,mx].forEach(function(x){s+='<line x1="'+pl+'" x2="'+W+'" y1="'+yy(x)+'" y2="'+yy(x)+'" stroke="var(--linea)"/><text x="0" y="'+(yy(x)+3)+'">'+fv(x)+'</text>';});
+  cm.forEach(function(m,i){var x=v[i];if(x==null)return;var gx=pl+i*bw+bw/2,y0=yy(0),y1=yy(x),bad=x<0||(pe!=null&&!D[m].parcial&&x<pe),col=bad?"var(--err)":(mSel==="gas"?"var(--gasto)":"var(--acento)");
+    s+='<rect x="'+(gx-w/2)+'" y="'+Math.min(y0,y1)+'" width="'+w+'" height="'+Math.max(Math.abs(y0-y1),1)+'" rx="4" fill="'+col+'" opacity="'+(D[m].parcial?".5":"1")+'"/>';
+    if(n<=8)s+='<text x="'+gx+'" y="'+(x<0?y1+12:y1-4)+'" text-anchor="middle" style="font-weight:700">'+fv(x)+'</text>';
+    if(n<=14||i%2===0)s+='<text x="'+gx+'" y="'+(H-8)+'" text-anchor="middle">'+MN[+m.slice(5)-1].slice(0,3)+(n>12&&(m.slice(5)==="01"||i===0)?" "+m.slice(2,4):"")+'</text>';});
+  if(pe!=null)s+='<line x1="'+pl+'" x2="'+W+'" y1="'+yy(pe)+'" y2="'+yy(pe)+'" stroke="var(--texto)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="'+W+'" y="'+(yy(pe)-5)+'" text-anchor="end" style="font-weight:800;fill:var(--texto)">Equilibrio '+f0(pe)+'</text>';
+  el.innerHTML=s;
+  $("mD").textContent=(per==="mes"?"Últimos 6 meses":etqF().charAt(0).toUpperCase()+etqF().slice(1))+" · sigue el filtro de arriba";
+  $("mN").textContent=pe!=null?"Línea = ingreso mensual que necesitas para cubrir gastos y capital. Rojo = mes por debajo. Barras claras = mes en curso.":(mSel==="gas"?"Gasto de cada mes, sin el capital de la hipoteca.":"Rojo = mes en pérdida.");
+}
+function familias(a){
+  var rows=FAMOP.concat([["2","Financieros (hipoteca)"]]),I=a.I,h="";
+  $("fmP").textContent=I>0?"Porcentaje del ingreso · "+etqF():"Sin ingresos en este período.";
+  if(I>0)rows.forEach(function(f){var x=a.fam[f[0]]||0;if(x<=.5)return;var p=x/I*100;h+='<div class="r"><span>'+f[1]+'</span><b>'+f0(x)+' · '+pc(p,0)+'</b><div class="bar"><i style="width:'+Math.min(p,100)+'%"></i></div></div>';});
+  if(I>0)h+='<div class="r"><span>Queda (resultado)</span><b>'+f0(a.R)+' · '+pc(a.R/I*100,0)+'</b></div>';
+  $("fm").innerHTML=h;
+}
+function payback(){
+  var I=INV&&INV.ok?INV:null;
+  if(!I){$("pbT").textContent="Falta dato";$("pbF").style.width="0";$("pbN").textContent="Completa la inversión en Configuración → Inversión.";return;}
+  var inv=I.precio+I.legales+I.muebles,cap=inv-I.prestamo,all=months(FIRST,CM),a=agg(all),rec=a.R+a.PP-a.C;
+  var cl=all.filter(function(m){return !D[m].parcial;}),ac=agg(cl),avg=cl.length?(ac.R+ac.PP-ac.C)/cl.length:0;
+  var p=cap>0?Math.max(0,rec/cap*100):0;
+  $("pbT").textContent="Has recuperado "+pc(p)+" de tus "+f0(cap);
+  $("pbF").style.width=Math.min(p,100)+"%";
+  var falta=Math.max(cap-rec,0),est=avg>0?falta/avg/12:null;
+  $("pbN").innerHTML="Flujo de caja acumulado: <b>"+f0(rec)+"</b>. "+(est!=null?("Al ritmo actual (≈"+f0(avg)+" al mes) faltan unos <b>"+est.toFixed(1).replace(".",",")+" años</b>."):"Con el flujo actual aún no se puede estimar.")+" Aparte, la plusvalía estimada es <b>"+f0(I.valor-I.precio)+"</b> (no entra en este cálculo).";
 }
 function grafNeto(cm){
   var W=640,H=236,pl=40,pb=38,pt=14,n=cm.length,el=$("chNet");if(!n){el.innerHTML="";return;}
@@ -373,16 +444,16 @@ function cascada(a,etq){
   $("casN").textContent="Verde = entra o queda, naranja = sale, gris = subtotal. El capital de la hipoteca no es gasto, pero sí sale de tu caja.";
 }
 function set(p){per=p;chips();render();}
-document.addEventListener("click",function(e){var b=e.target.closest("[data-p]");if(b){set(b.dataset.p);closeSh();return;}
-  if(e.target.closest("#masB"))openSh();if(e.target.id==="shX"||e.target.id==="bg")closeSh();
+document.addEventListener("click",function(e){var mt=e.target.closest("[data-mt]");if(mt){mSel=mt.dataset.mt;render();return;}var b=e.target.closest("[data-p]");if(b){set(b.dataset.p);closeSh();return;}
+  if(e.target.closest("#cmpB")){CBC.open();return;}if(e.target.closest("#masB"))openSh();if(e.target.id==="shX"||e.target.id==="bg")closeSh();
   if(e.target.id==="mPrev"&&cur>FIRST){cur=sm(cur,-1);render();}if(e.target.id==="mNext"&&cur<CM){cur=sm(cur,1);render();}});
 document.addEventListener("keydown",function(e){if(e.key==="Escape")closeSh();});
 
 /* ===== datos de inversión (Configuración → Inversión) ===== */
 function aplicarInv(j){
   try{var P=j.parametros;function v(k){return P[k]&&P[k].hoy&&P[k].hoy.valor!=null?+P[k].hoy.valor:null;}
-    var pr=v("precio_compra"),lg=v("gastos_legales"),mu=v("muebles_equipamiento"),pm=v("prestamo_hipotecario"),va=v("valor_departamento"),ini=v("inicio_resultados");
-    INV={ok:[pr,lg,mu,pm,va].every(function(x){return x!=null;}),precio:pr||0,legales:lg||0,muebles:mu||0,prestamo:pm||0,valor:va||0,inicio:ini?String(Math.floor(ini/100))+"-"+String(ini%100).padStart(2,"0"):null,cal:null,t:Date.now()};
+    var pr=v("precio_compra"),lg=v("gastos_legales"),mu=v("muebles_equipamiento"),pm=v("prestamo_hipotecario"),va=v("valor_departamento"),ini=v("inicio_resultados"),sh=v("saldo_hipoteca"),shd=P.saldo_hipoteca&&P.saldo_hipoteca.hoy?String(P.saldo_hipoteca.hoy.desde||"").slice(0,7):null;
+    INV={ok:[pr,lg,mu,pm,va].every(function(x){return x!=null;}),precio:pr||0,legales:lg||0,muebles:mu||0,prestamo:pm||0,valor:va||0,inicio:ini?String(Math.floor(ini/100))+"-"+String(ini%100).padStart(2,"0"):null,saldo:sh,saldoMes:shd,cal:null,t:Date.now()};
     var cal={};Object.keys(CAL0).forEach(function(k){var arr=[1,2,3,4].map(function(i){return v("cal_"+k+"_"+i);});if(arr.every(function(x){return x!=null;}))cal[k]=arr;});INV.cal=cal;
     try{localStorage.setItem("cb_res_inv_v1",JSON.stringify(INV));}catch(e){}
   }catch(e){}
@@ -391,12 +462,12 @@ function cargarInv(){
   var k=null;try{k=localStorage.getItem("cimablanca_clave");}catch(e){}
   if(!k)return;
   fetch(PARAM_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({clave:k,accion:"listar"})})
-   .then(function(r){return r.json();}).then(function(j){if(j&&j.ok&&j.parametros&&j.parametros.precio_compra){aplicarInv(j);build();if(Object.keys(D).length){if(cur<FIRST)cur=CM;chips();render();}}}).catch(function(){});
+   .then(function(r){return r.json();}).then(function(j){if(j&&j.ok&&j.parametros&&j.parametros.precio_compra){aplicarInv(j);build();cmpInit();if(Object.keys(D).length){if(cur<FIRST)cur=CM;chips();render();}}}).catch(function(){});
 }
 function ago(t){if(!t)return"sin datos";var m=Math.round((Date.now()-t)/60000);return m<2?"ahora":m<60?"hace "+m+" min":m<1440?"hace "+Math.round(m/60)+" h":"hace "+Math.round(m/1440)+" d";}
 var PIDS=["pChips","mnav","rng","hero","grid"];
 function mostrar(fin){
-  SI=ld("cb_res_ing_v1");SG=ld("cb_res_gas_v1");INV=ld("cb_res_inv_v1");build();
+  SI=ld("cb_res_ing_v1");SG=ld("cb_res_gas_v1");INV=ld("cb_res_inv_v1");build();cmpInit();
   if(Object.keys(D).length){$("vacio").hidden=true;PIDS.forEach(function(i){$(i).style.display="";});$("fresh").textContent="Ingresos "+ago(SI.t)+" · Gastos "+ago(SG.t);if(cur<FIRST||!D[cur])cur=CM;chips();render();return true;}
   if(fin){$("vacio").hidden=false;PIDS.forEach(function(i){$(i).style.display="none";});$("diag").textContent="Ingresos: "+(SI&&SI.m?"listo":"no respondió")+" · Gastos: "+(SG&&SG.m?"listo":"no respondió")+". Revisa que estén subidas las versiones nuevas.";}
   return false;
