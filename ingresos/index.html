@@ -12,6 +12,8 @@
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
+<!-- v18 (18 oct 2026): listas Airbnb/Directas/Extras agrupadas por mes (acordeón con total al final) y filtro Comparar. Ningún valor cambia. -->
 <!-- v16 (17 oct 2026): filtros de período (Mes, Año, Todo y panel Período con año pasado, 30/60/90/180 días y 12 meses) con comparación contra el mismo período del año anterior. -->
 <!-- v15 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): acento verde (antes turquesa; el turquesa queda solo en la serie Airbnb), gráfico de evolución en el acento, tema compartido claro/oscuro. Sin cambios de lógica. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -133,6 +135,22 @@ input{font-family:inherit;color:inherit}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:var(--shadow)}
 .kpi small{display:block;font-size:11.5px;color:var(--mut);font-weight:700}
 .kpi b{display:block;font-size:19px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
+.mo{background:var(--surface);border:1px solid var(--line);border-radius:18px;margin-top:10px;overflow:hidden;box-shadow:var(--shadow)}
+.mh{width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;min-height:64px;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.mh .pm{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:20px;font-weight:700;line-height:1;color:var(--mut)}
+.mo.open .mh .pm{background:var(--acento);border-color:var(--acento);color:#04261a}
+.mh .mt{flex:1;min-width:0}.mh .mt b{display:block;font-size:16px}.mh .mt b::first-letter{text-transform:uppercase}.mh .mt span{display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin-top:1px}
+.mh .mt span .lq{color:var(--acento-texto);font-weight:800}.mh .mt span .pn{color:var(--pendiente);font-weight:800}
+.mh .ma{font-size:18px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.mb{padding:2px 10px 4px;border-top:1px solid var(--line);background:color-mix(in srgb,var(--ink) 3%,transparent)}.mb .item{box-shadow:none;margin:8px 0}
+.mb[hidden]{display:none}
+.mtools{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin:12px 2px 0;font-size:12.5px;color:var(--mut);font-weight:600}
+.mtools button{appearance:none;background:none;border:0;font:inherit;font-weight:800;color:var(--acento-texto);cursor:pointer;min-height:36px;padding:0 6px}
+.ysub{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;margin-top:10px;border-radius:14px;border:1px dashed var(--line);font-weight:800;font-size:14px}
+.mtot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px;margin-top:12px;border-radius:18px;background:var(--ink);color:var(--bg);font-weight:800;font-size:16px}.mtot b{font-size:22px;letter-spacing:-.02em}
+.mtn{text-align:center;font-size:12px;color:var(--mut);font-weight:600;margin:8px 0 0}
+body.cmpOn #secR .dash,body.cmpOn #mNav,body.cmpOn #pRng{display:none!important}
+#cmpHost{margin-top:10px}
 .group{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:18px 2px 10px}
 .group span{letter-spacing:0;font-size:13px;white-space:nowrap}
 .item{width:100%;text-align:left;display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:9px;min-height:64px;box-shadow:var(--shadow)}
@@ -261,6 +279,7 @@ details.ver li.bad b{color:var(--bad)}
     <section id="secR">
       <div class="pchips" id="pChips" role="group" aria-label="Período"></div>
       <div class="prange" id="pRng" hidden></div>
+      <div id="cmpHost" hidden></div>
       <div class="month" id="mNav">
         <button type="button" class="nav" id="mPrev" aria-label="Mes anterior">◀</button>
         <div class="mid-m"><b id="mLbl"></b><button type="button" class="hoy" id="mHoy" hidden>Ir a este mes</button></div>
@@ -446,7 +465,7 @@ function pIco(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColo
 function pChips(){
   var enQ=P_QUICK.some(function(q){return q[0]===per;});
   $("pChips").innerHTML=P_QUICK.map(function(q){return '<button type="button" class="pchip" data-p="'+q[0]+'" aria-pressed="'+(per===q[0])+'">'+q[1]+'</button>';}).join("")+
-    '<button type="button" class="pchip mas" id="masB" aria-haspopup="dialog" aria-expanded="false"'+(enQ?'':' aria-pressed="true"')+'>'+(enQ?'Período':P_LBL[per])+' '+pIco()+'</button>';
+    '<button type="button" class="pchip mas" id="masB" aria-haspopup="dialog" aria-expanded="false"'+(enQ?'':' aria-pressed="true"')+'>'+(enQ?'Período':P_LBL[per])+' '+pIco()+'</button>'+CBC.chipHtml();
 }
 function pSheet(){
   var hm=HOY.slice(0,7),NN={"30":1,"60":2,"90":3,"180":6,"12m":12};
@@ -554,7 +573,27 @@ function evoHTML(mk){
 }
 function evGo(el){var g=el.closest&&el.closest("g.m");if(!g||g.classList.contains("off"))return;curMonth=g.getAttribute("data-m");per="mes";ssSet(PERK,"mes");pChips();if(M)renderR();}
 function pubRes(){try{if(!M||!(M.reservas||[]).length)return;var rg=monthRange(),m=rg[0],end=HOY.slice(0,7),o={};while(m<=end){var c=calcMonth(m);o[m]=[Math.round(c.totD*100)/100,Math.round(c.totP*100)/100];m=shiftMonth(m,1);}localStorage.setItem("cb_res_ing_v1",JSON.stringify({t:Date.now(),m:o}));}catch(e){}}
+var CM_MEMO={};
+function cmM(m){if(CM_MEMO[m]&&CM_MEMO[m].t===HOY+(M&&M.reservas?M.reservas.length:0))return CM_MEMO[m].o;var o=calcMonth(m);CM_MEMO[m]={t:HOY+(M&&M.reservas?M.reservas.length:0),o:o};return o;}
+function dim(m){return new Date(+m.slice(0,4),+m.slice(5),0).getDate();}
+function csum(ms,f){return ms.reduce(function(s,m){return s+f(cmM(m));},0);}
+var CMET={
+ ing:{label:"Generado",fmt:"$",val:function(ms){return csum(ms,function(o){return o.totD;});}},
+ air:{label:"Airbnb",fmt:"$",val:function(ms){return csum(ms,function(o){return o.air.bD;});}},
+ dir:{label:"Directas",fmt:"$",val:function(ms){return csum(ms,function(o){return o.dir.bD;});}},
+ ext:{label:"Extras",fmt:"$",val:function(ms){return csum(ms,function(o){return o.ext.cD;});}},
+ noc:{label:"Noches dormidas",fmt:"n",val:function(ms){return csum(ms,function(o){return o.nD;});}},
+ occ:{label:"Ocupación",fmt:"%",val:function(ms){var d=ms.reduce(function(s,m){return s+dim(m);},0);return d?csum(ms,function(o){return o.nD;})/d*100:null;}},
+ nn:{label:"Neto por noche",fmt:"$2",val:function(ms){var n=csum(ms,function(o){return o.nD;});return n?csum(ms,function(o){return o.netoD;})/n:null;}}
+};
+function cmpInit(){if(!M||!(M.reservas||[]).length)return;var rg=monthRange();
+  CBC.init({key:"ing",host:"cmpHost",first:rg[0],cur:HOY.slice(0,7),has:function(m){return m>=rg[0]&&m<=HOY.slice(0,7);},metrics:CMET,
+   kpis:["ing","noc","occ","nn"],chart:["ing","air","dir","ext","noc","occ"],rows:[["ing",1],["air"],["dir"],["ext"],["noc"],["occ"],["nn"]],
+   primary:function(){if(per==="todo")return [];return perMonths(perRange());},
+   primaryLabel:function(){return per==="mes"?mLabel(curMonth):(P_LBL[per]||"Período");},
+   onChange:function(){pChips();renderR();}});}
 function renderR(){try{pubRes();}catch(e){}
+  try{cmpInit();CBC.render();document.body.classList.toggle("cmpOn",CBC.active());}catch(e){}
   return renderR0();}
 function renderR0(){
   var mk=curMonth,rg=monthRange(),pr=perRange(),o=per==="mes"?calcMonth(mk):calcRange(pr[0],pr[1]),pm=per==="mes",Pm=pm?"este mes":"este período";
@@ -605,8 +644,10 @@ function renderR0(){
   $("p-res").innerHTML=res;
 
   /* listas */
-  $("p-air").innerHTML=resList(o.air.rows,"air");
-  $("p-dir").innerHTML=resList(o.dir.rows,"dir");
+  var acc=perMonths(pr);
+  if(acc.length>1){$("p-air").innerHTML=accList("air",acc,pr);$("p-dir").innerHTML=accList("dir",acc,pr);$("p-ext").innerHTML=accList("ext",acc,pr);}
+  else{$("p-air").innerHTML=resList(o.air.rows,"air");
+  $("p-dir").innerHTML=resList(o.dir.rows,"dir");}
   var ex="";
   if(o.ext.rows.length){
     ex+='<div class="group">Cobrados<span>'+money(o.ext.cD+o.ext.cP)+'</span></div>';
@@ -618,11 +659,38 @@ function renderR0(){
   }
   if(!ex)ex='<div class="empty">Sin extras en '+Pm+'.</div>';
   ex+='<div class="rmk" style="margin-top:10px">Los extras se cuentan en el mes de entrada de su reserva.</div>';
-  $("p-ext").innerHTML=ex;
+  if(acc.length<=1)$("p-ext").innerHTML=ex;
   $("tabs").querySelector('[data-t="air"]').textContent="Airbnb · "+o.air.rows.length;
   $("tabs").querySelector('[data-t="dir"]').textContent="Directas · "+o.dir.rows.length;
   $("tabs").querySelector('[data-t="ext"]').textContent="Extras · "+(o.ext.rows.length+o.ext.rowsSin.length);
 }
+var OPENM={};
+function perMonths(pr){var o=[],m=pr[0].slice(0,7),e=pr[1].slice(0,7);while(m<=e&&o.length<200){o.push(m);m=shiftMonth(m,1);}return o;}
+function accData(key,m,pr){var s=pr[0]>m+"-01"?pr[0]:m+"-01",e=endM(m);if(pr[1]<e)e=pr[1];var o=calcRange(s,e),rows,tot=0,n=0,liq=0,pen=0,noch=0;
+  if(key==="ext"){rows=o.ext.rows;tot=o.ext.cD+o.ext.cP;n=rows.length;return {o:o,rows:rows,tot:tot,n:n,sum:n+(n===1?" extra":" extras")};}
+  rows=key==="air"?o.air.rows:o.dir.rows;
+  rows.forEach(function(e){tot+=e.share;noch+=e.inM;if(key==="dir"||e.r.estado==="Liquidado")liq++;else pen++;});
+  n=rows.length;
+  return {o:o,rows:rows,tot:tot,n:n,sum:n+(n===1?" reserva":" reservas")+" · "+noch+(noch===1?" noche":" noches")+(liq?' · <span class="lq">'+liq+(key==="dir"?(liq===1?" cobrada":" cobradas"):(liq===1?" liquidada":" liquidadas"))+'</span>':"")+(pen?' · <span class="pn">'+pen+" por liquidar</span>":"")};}
+function accList(key,months,pr){
+  var D=months.map(function(m){var d=accData(key,m,pr);d.m=m;return d;}),h="",any=D.some(function(d){return d.n>0||(key==="ext"&&d.o.ext.rowsSin.length);});
+  if(!any)return '<div class="empty">Sin '+(key==="ext"?"extras":"reservas de este origen")+' en el período.</div>';
+  var hm=HOY.slice(0,7),def=months.indexOf(hm)>=0?hm:months[months.length-1];
+  h+='<div class="mtools"><span>Toca un mes para ver el detalle</span><span style="white-space:nowrap"><button type="button" data-mx="'+key+':1">Expandir todo</button><button type="button" data-mx="'+key+':0">Contraer todo</button></span></div>';
+  var ty=null,ys=0,grand=0,multiY=months[0].slice(0,4)!==months[months.length-1].slice(0,4);
+  function ysub(){if(multiY&&ty!==null)h+='<div class="ysub"><span>Total '+ty+'</span><span>'+money(ys)+'</span></div>';ys=0;}
+  D.forEach(function(d){var y=d.m.slice(0,4);if(ty!==null&&y!==ty)ysub();ty=y;
+    var id=key+":"+d.m,op=OPENM[id]===undefined?d.m===def:OPENM[id],body="";
+    if(key==="ext"){body=d.rows.slice().sort(function(a,b){return a.r.fecha_inicio<b.r.fecha_inicio?-1:1;}).map(function(e){return extRow(e,false);}).join("");
+      if(d.o.ext.rowsSin.length)body+='<div class="group">Sin cobrar · no es caja<span>'+money(d.o.ext.sin)+'</span></div>'+d.o.ext.rowsSin.map(function(e){return extRow(e,true);}).join("");}
+    else body=d.rows.length?resList(d.rows,key):"";
+    if(!body)body='<div class="empty" style="margin:10px 0">Sin '+(key==="ext"?"extras":"reservas")+' en este mes.</div>';
+    ys+=d.tot;grand+=d.tot;
+    h+='<div class="mo'+(op?" open":"")+'" data-m="'+id+'"><button type="button" class="mh" aria-expanded="'+op+'" data-mo="'+id+'"><span class="pm" aria-hidden="true">'+(op?"−":"+")+'</span><span class="mt"><b>'+mLabel(d.m)+(d.m===hm?" · en curso":"")+'</b><span>'+(d.n?d.sum:"Sin movimientos")+'</span></span><span class="ma">'+money(d.tot)+'</span></button><div class="mb"'+(op?"":" hidden")+'>'+body+'</div></div>';});
+  ysub();
+  var lbl=key==="air"?"Airbnb":key==="dir"?"Directas":"Extras cobrados";
+  h+='<div class="mtot"><span>Total '+lbl+(pr[0].slice(0,4)===pr[1].slice(0,4)?" "+pr[0].slice(0,4):"")+'</span><b>'+money(grand)+'</b></div><p class="mtn">Incluye lo ya dormido y lo que falta por dormir. El total generado del período está en el Resumen.</p>';
+  return h;}
 function resList(rows,key){
   if(!rows.length)return '<div class="empty">Sin reservas de este origen en el período.</div>';
   rows.sort(function(a,b){return a.r.fecha_inicio<b.r.fecha_inicio?-1:1;});
@@ -694,7 +762,10 @@ $("vR").addEventListener("click",function(){setTimeout(function(){if(M)renderR()
 var evRT=null;window.addEventListener("resize",function(){clearTimeout(evRT);evRT=setTimeout(function(){if(M)renderR();},180);});
 $("p-res").addEventListener("click",function(e){evGo(e.target);});
 $("p-res").addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){var g=e.target.closest&&e.target.closest("g.m");if(g){e.preventDefault();evGo(g);var again=document.querySelector('#p-res g.m.on');if(again)again.focus();}}});
-$("pChips").addEventListener("click",function(e){var b=e.target.closest(".pchip");if(!b)return;if(b.id==="masB"){shAbre();return;}setPer(b.dataset.p);});
+document.addEventListener("click",function(e){var b=e.target.closest("[data-mo]");
+  if(b){var id=b.dataset.mo,mo=b.closest(".mo"),op=!mo.classList.contains("open");OPENM[id]=op;mo.classList.toggle("open",op);b.setAttribute("aria-expanded",op);b.querySelector(".pm").textContent=op?"−":"+";mo.querySelector(".mb").hidden=!op;return;}
+  var x=e.target.closest("[data-mx]");if(x){var p=x.dataset.mx.split(":"),pane=x.closest(".pane");pane.querySelectorAll(".mo").forEach(function(mo){var id=mo.dataset.m;OPENM[id]=p[1]==="1";});renderR();}});
+$("pChips").addEventListener("click",function(e){var b=e.target.closest(".pchip");if(!b)return;if(b.id==="cmpB"){CBC.open();return;}if(b.id==="masB"){shAbre();return;}setPer(b.dataset.p);});
 $("sheet").addEventListener("click",function(e){var b=e.target.closest(".opt");if(!b)return;pFoco=null;shCierra();setPer(b.dataset.p);});
 $("shX").addEventListener("click",shCierra);$("shBg").addEventListener("click",shCierra);
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&$("sheet").classList.contains("on"))shCierra();});
