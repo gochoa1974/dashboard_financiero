@@ -246,7 +246,7 @@ details summary{cursor:pointer;font-size:12.5px;font-weight:800;color:var(--acce
   <header class="apphead">
     <a class="backbtn" href="../dashboard/" aria-label="Volver al dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     <img class="logo" src="../Cima-Blanca-logo.png" alt="Cima Blanca">
-    <div class="ttl"><b>Cima Blanca</b><span>Configuración · v7</span></div>
+    <div class="ttl"><b>Cima Blanca</b><span>Configuración · v8</span></div>
   </header>
 
   <div id="gate" class="gate">
@@ -366,7 +366,7 @@ const RUB = [
   { id: 'inv', t: 'Inversión', s: 'Compra, préstamo y valor', d: 'Datos de la inversión. Alimentan los indicadores de Resultados financieros. Cambia un valor y todo se recalcula; cada cambio queda en el historial.', ic: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>' },
   { id: 'cal', t: 'Calificación de indicadores', s: 'De Malo a Excelente', d: 'Cada indicador se califica Malo, Regular, Bueno, Muy bueno o Excelente. Pon el valor mínimo para llegar a cada nivel; por debajo de Regular es Malo. Toca una fila para editarla.', ic: '<path d="M5 20V10M12 20V4M19 20v-7"/>' }
 ];
-const INV_GRUPOS = [['Compra', ['precio_compra', 'gastos_legales', 'muebles_equipamiento', 'fecha_compra']], ['Financiamiento', ['prestamo_hipotecario']], ['Valor actual', ['valor_departamento']], ['Estado de resultados', ['inicio_resultados']]];
+const INV_GRUPOS = [['Compra', ['precio_compra', 'gastos_legales', 'muebles_equipamiento', 'fecha_compra']], ['Financiamiento', ['prestamo_hipotecario', 'saldo_hipoteca']], ['Valor actual', ['valor_departamento']], ['Estado de resultados', ['inicio_resultados']]];
 const CAL_IND = [['margen_neto', 'Margen neto'], ['cobertura', 'Cobertura de la deuda'], ['cap_rate', 'Cap rate'], ['roi', 'ROI'], ['roe', 'ROE'], ['retorno_capital', 'Retorno sobre capital propio']];
 const CAL_NIV = ['Regular', 'Bueno', 'Muy bueno', 'Excelente'];
 let rub = null;
