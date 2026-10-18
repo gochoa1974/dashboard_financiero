@@ -14,6 +14,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
+<!-- v17 (18 oct 2026): filtro Comparar (años, períodos, año anterior); publica intereses/seguros/otros de la hipoteca para Resultados. -->
 <!-- v15 (17 oct 2026): filtros de período en Resumen (Mes, Año, Todo y panel Período). -->
 <!-- v14 (17 oct 2026): la limpieza aparece como Por pagar desde el día siguiente al check-in (pedido de Gustavo, para juntar pagos y ahorrar la comisión). -->
 <!-- v13b (15 oct 2026, 22:15): estilo unificado (Guía v1.1): colores base y modo claro/oscuro desde el tema compartido; texto verde pequeño con contraste AA. Sin cambios de lógica. -->
@@ -571,6 +573,10 @@ body:not([data-tab="reg"]) .dash{display:none}
  body[data-tab="reg"] .sticky{padding-left:0;padding-right:0}
 }
 html.cb-sin-borrar #rDel{display:none}
+body.cmpOn[data-tab="reg"] .dash,body.cmpOn[data-tab="reg"] #regBox{display:none!important}
+body:not([data-tab="reg"]) #cmpHost{display:none!important}
+#cmpHost{margin:10px 16px 0;grid-column:1/-1}
+@media(min-width:900px){#cmpHost{margin:10px 24px 0}}
 </style>
 </head>
 <body data-tab="reg">
@@ -586,6 +592,7 @@ html.cb-sin-borrar #rDel{display:none}
       <div class="mgrp"><button type="button" class="nav" id="mPrev" aria-label="Mes anterior">◀</button><b id="mLbl"><span class="mfull"></span><span class="mshort"></span></b><button type="button" class="nav" id="mNext" aria-label="Mes siguiente">▶</button></div>
     </div>
     <div class="pbar" id="pBar"><div class="pchips" id="pChips" role="group" aria-label="Período"></div><div class="prange" id="pRng" hidden></div></div>
+    <div id="cmpHost" hidden></div>
     <div class="dash">
     <section class="hero" aria-label="Resumen del mes">
       <div class="hero-l" id="hLabel"></div>
@@ -1411,7 +1418,7 @@ const cmpTxt=c=>c.dp===0?'Igual que el mismo período del año anterior':(c.dp>0
 const P_ICO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 function pChips(){
  const enQ=P_QUICK.some(q=>q[0]===PER);
- $('pChips').innerHTML=P_QUICK.map(q=>'<button type="button" class="pchip" data-p="'+q[0]+'" aria-pressed="'+(PER===q[0])+'">'+q[1]+'</button>').join('')+'<button type="button" class="pchip mas" id="masB" aria-haspopup="dialog" aria-expanded="false"'+(enQ?'':' aria-pressed="true"')+'>'+(enQ?'Período':P_LBL[PER])+' '+P_ICO+'</button>';
+ $('pChips').innerHTML=P_QUICK.map(q=>'<button type="button" class="pchip" data-p="'+q[0]+'" aria-pressed="'+(PER===q[0])+'">'+q[1]+'</button>').join('')+'<button type="button" class="pchip mas" id="masB" aria-haspopup="dialog" aria-expanded="false"'+(enQ?'':' aria-pressed="true"')+'>'+(enQ?'Período':P_LBL[PER])+' '+P_ICO+'</button>'+CBC.chipHtml();
 }
 let pFoco=null;
 function pShAbre(){
@@ -1836,8 +1843,16 @@ function closeExc(){
  ms.open.forEach(e=>{const d=('Excepción: '+t.slice(0,120)+(e.detalle?' · '+e.detalle:'')).slice(0,200);OPS.push({b,k:'edit',id:e.id,ch:{detalle:d},nm:'Excepción de cierre: '+e.concepto+' '+f2(e.monto)});});
  persist();UI={};renderAll();toast('Anotado como excepción',true);
 }
-function pubRes(){try{const m={};dataset().forEach(e=>{const k=e.mes;if(!k)return;const o=m[k]||(m[k]={g:0,c:0,p:0,f:{}}),v=+e.monto||0;if(e.cuenta==='No'){o.c+=v;return;}o.g+=v;if(isPorPagar(e))o.p+=v;const f=String(e.familia||'5').charAt(0);o.f[f]=(o.f[f]||0)+v;});Object.keys(m).forEach(k=>{const o=m[k];o.g=Math.round(o.g*100)/100;o.c=Math.round(o.c*100)/100;o.p=Math.round(o.p*100)/100;Object.keys(o.f).forEach(f=>o.f[f]=Math.round(o.f[f]*100)/100);});localStorage.setItem('cb_res_gas_v1',JSON.stringify({t:Date.now(),m}));}catch(e){}}
-function renderAll(){pubRes();return renderAll0();}
+let RESM={};
+function pubRes(){try{const m={};dataset().forEach(e=>{const k=e.mes;if(!k)return;const o=m[k]||(m[k]={g:0,c:0,p:0,f:{},x:{i:0,s:0,o:0}}),v=+e.monto||0;if(e.cuenta==='No'){o.c+=v;return;}o.g+=v;if(isPorPagar(e))o.p+=v;const f=String(e.familia||'5').charAt(0);o.f[f]=(o.f[f]||0)+v;if(f==='2'){const c=String(e.concepto||'');if(c.startsWith('Hipoteca – interés'))o.x.i+=v;else if(c.startsWith('Hipoteca – seguros'))o.x.s+=v;else o.x.o+=v;}});const r2=n=>Math.round(n*100)/100;Object.keys(m).forEach(k=>{const o=m[k];o.g=r2(o.g);o.c=r2(o.c);o.p=r2(o.p);Object.keys(o.f).forEach(f=>o.f[f]=r2(o.f[f]));Object.keys(o.x).forEach(f=>o.x[f]=r2(o.x[f]));});RESM=m;localStorage.setItem('cb_res_gas_v1',JSON.stringify({t:Date.now(),m}));}catch(e){}}
+const CF_LBL={'1':'Fijos operativos','2':'Financieros','3':'Mantenimiento y reposición','4':'Logística e imprevistos','5':'Otros / varios'};
+const CF_MET=(()=>{const M={gas:{label:'Gasto total',fmt:'$',good:'down',val:ms=>ms.reduce((s,m)=>s+((RESM[m]||{}).g||0),0)},cap:{label:'Capital hipoteca',fmt:'$',good:'down',val:ms=>ms.reduce((s,m)=>s+((RESM[m]||{}).c||0),0)}};Object.keys(CF_LBL).forEach(f=>{M['f'+f]={label:CF_LBL[f],fmt:'$',good:'down',val:ms=>ms.reduce((s,m)=>s+((((RESM[m]||{}).f)||{})[f]||0),0)};});return M;})();
+function cfPrimary(){const cm=todayISO().slice(0,7),Y=+cm.slice(0,4),rg=(a,b)=>{const o=[];let m=a;while(m<=b&&o.length<400){o.push(m);m=addM(m,1);}return o;},_n={'30':1,'60':2,'90':3,'180':6,'12m':12};
+ if(PER==='mes')return [MES];if(PER==='anio')return rg(Y+'-01',cm);if(PER==='pasado')return rg((Y-1)+'-01',(Y-1)+'-12');if(_n[PER])return rg(addM(cm,-_n[PER]),addM(cm,-1));return [];}
+function cmpInit(){const ks=Object.keys(RESM).sort(),cm=todayISO().slice(0,7);if(!ks.length)return;
+ CBC.init({key:'gas',host:'cmpHost',first:ks[0],cur:cm,has:m=>!!RESM[m],metrics:CF_MET,kpis:['gas','f1','f2','f3'],chart:['gas','f1','f2','f3','f4','f5'],rows:[['gas',1],['f1'],['f2'],['f3'],['f4'],['f5'],['cap']],
+  primary:cfPrimary,primaryLabel:()=>(P_LBL[PER]||'Período')+(PER==='mes'?' '+MES:''),onChange:()=>renderAll()});}
+function renderAll(){pubRes();cmpInit();if(window.CBC){CBC.render();document.body.classList.toggle('cmpOn',CBC.active());}return renderAll0();}
 function renderAll0(){
  $('mLbl').querySelector('.mfull').textContent=mLabel(MES);$('mLbl').querySelector('.mshort').textContent=mShort(MES).replace(/ (\d\d)$/,function(m,y){return ' 20'+y;});setVTitle();
  $('mHoy').style.display=MES===todayISO().slice(0,7)?'none':'';
@@ -2128,7 +2143,7 @@ async function sync(opt){
  }
 }
 function scheduleFlush(){if(!connected())return;clearTimeout(ftimer);setSync('pend');ftimer=setTimeout(()=>sync({}),450);}
-$('pChips').addEventListener('click',e=>{const b=e.target.closest('.pchip');if(!b)return;if(b.id==='masB'){pShAbre();return;}setPer(b.dataset.p);});
+$('pChips').addEventListener('click',e=>{const b=e.target.closest('.pchip');if(!b)return;if(b.id==='cmpB'){CBC.open();return;}if(b.id==='masB'){pShAbre();return;}setPer(b.dataset.p);});
 $('pSh').addEventListener('click',e=>{const b=e.target.closest('.popt');if(!b)return;pFoco=null;pShCierra();setPer(b.dataset.p);});
 $('pShX').onclick=pShCierra;$('pBg').onclick=pShCierra;
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('pSh').classList.contains('on'))pShCierra();});
