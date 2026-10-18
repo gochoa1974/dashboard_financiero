@@ -14,6 +14,7 @@
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- v3: carga sola Ingresos y Gastos (iframes ocultos) + gráfico de resultado neto mensual arriba. -->
 <!-- v2 (17 oct 2026): tabla mes a mes (ingresos, gastos, resultado), estado de resultados e indicadores financieros. Inversión desde Configuración. -->
 <style>
 :root{--acento-t:var(--acento-texto);--hero-a:#0a2233;--hero-b:#123a52;--err:var(--error);--gasto:var(--pendiente);--r3:18px;--r4:24px;--pill:999px}
@@ -106,7 +107,7 @@ td.pos{color:var(--ok);font-weight:800}td.neg{color:var(--err);font-weight:800}
   <div class="top"><a class="back" href="../dashboard/" aria-label="Volver al dashboard">‹</a><div><b>Cima Blanca</b><small>Resultados financieros</small></div></div>
   <h1>Resultados financieros</h1>
   <p class="sub" id="fresh">Lo que entró, lo que salió y lo que quedó</p>
-  <div id="vacio" class="card" hidden><h3>Faltan datos</h3><p style="margin:6px 0 10px">Este panel lee lo que ya calculan Ingresos y Gastos. Abre cada uno una vez en este aparato y vuelve aquí.</p><a class="pchip" href="../ingresos/">Abrir Ingresos</a> <a class="pchip" href="../gastos/">Abrir Gastos</a></div>
+  <div id="vacio" class="card" hidden><h3>Faltan datos</h3><p style="margin:6px 0 10px">Este panel lee lo que ya calculan Ingresos y Gastos. Abre cada uno una vez en este aparato y vuelve aquí.</p><p id="diag" class="note" style="margin:0 0 10px;font-weight:700"></p><a class="pchip" href="../ingresos/">Abrir Ingresos</a> <a class="pchip" href="../gastos/">Abrir Gastos</a></div>
 
   <div class="pchips" id="pChips"></div>
   <div class="mnav" id="mnav"><button id="mPrev" aria-label="Mes anterior">◀</button><b id="mLbl"></b><button id="mNext" aria-label="Mes siguiente">▶</button></div>
@@ -121,6 +122,11 @@ td.pos{color:var(--ok);font-weight:800}td.neg{color:var(--err);font-weight:800}
   </section>
 
   <div class="grid" id="grid">
+    <div class="card g3">
+      <h2>Resultado neto por mes</h2>
+      <div class="d">Ingresos menos gastos de cada mes. Verde = ganancia, rojo = pérdida.</div>
+      <svg class="chart" id="chNet" viewBox="0 0 640 220" role="img" aria-label="Resultado neto por mes"></svg>
+    </div>
     <div class="card g3">
       <h2 id="tT">Mes a mes</h2>
       <div class="tw"><table id="tbl"><thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Resultado</th></tr></thead><tbody id="tb"></tbody></table></div>
@@ -297,6 +303,7 @@ function render(){
 
   indicadores(ms);
   grafico(per==="mes"?months(sm(cur,-5),cur):ms);
+  grafNeto(per==="mes"?months(sm(cur,-5),cur):ms);
 }
 function grafico(cm){
   var W=640,H=220,pl=34,pb=24,pt=10,n=cm.length;if(!n){$("chart").innerHTML="";return;}
@@ -307,10 +314,21 @@ function grafico(cm){
   cm.forEach(function(m,i){var x=pl+i*bw,w=Math.min(bw*.36,18),gx=x+bw/2,a=D[m].ing,b=D[m].gas,op=D[m].parcial?".55":"1";
     s+='<rect x="'+(gx-w-1)+'" y="'+Math.min(yy(a),yy(0))+'" width="'+w+'" height="'+Math.abs(yy(0)-yy(a))+'" rx="3" fill="var(--acento)" opacity="'+op+'"/><rect x="'+(gx+1)+'" y="'+Math.min(yy(b),yy(0))+'" width="'+w+'" height="'+Math.abs(yy(0)-yy(b))+'" rx="3" fill="var(--gasto)" opacity="'+op+'"/>';
     pts.push([gx,yy(a-b)]);
-    if(n<=14||i%2===0)s+='<text x="'+gx+'" y="'+(H-6)+'" text-anchor="middle">'+MN[+m.slice(5)-1].slice(0,3)+(n>12&&m.slice(5)==="01"?" "+m.slice(2,4):"")+'</text>';});
+    if(n<=14||i%2===0)s+='<text x="'+gx+'" y="'+(H-6)+'" text-anchor="middle">'+MN[+m.slice(5)-1].slice(0,3)+(n>12&&(m.slice(5)==="01"||i===0)?" "+m.slice(2,4):"")+'</text>';});
   s+='<polyline fill="none" stroke="var(--texto)" stroke-width="2" points="'+pts.map(function(p){return p[0]+","+p[1];}).join(" ")+'"/>';
   pts.forEach(function(p){s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3" fill="var(--tarjeta)" stroke="var(--texto)" stroke-width="2"/>';});
   $("chart").innerHTML=s;
+}
+function grafNeto(cm){
+  var W=640,H=220,pl=40,pb=24,pt=14,n=cm.length,el=$("chNet");if(!n){el.innerHTML="";return;}
+  var v=cm.map(function(m){return D[m].ing-D[m].gas;}),mx=Math.max(0,Math.max.apply(null,v))*1.15||1,mn=Math.min(0,Math.min.apply(null,v))*1.15;
+  var yy=function(x){return pt+(H-pt-pb)*(1-(x-mn)/(mx-mn));},bw=(W-pl)/n,w=Math.min(bw*.6,34),s="";
+  [mn,0,mx].forEach(function(x){s+='<line x1="'+pl+'" x2="'+W+'" y1="'+yy(x)+'" y2="'+yy(x)+'" stroke="var(--linea)"/><text x="0" y="'+(yy(x)+3)+'">'+f0(x)+'</text>';});
+  cm.forEach(function(m,i){var gx=pl+i*bw+bw/2,x=v[i],y0=yy(0),y1=yy(x),col=x<0?"var(--err)":"var(--acento)",op=D[m].parcial?".5":"1";
+    s+='<rect x="'+(gx-w/2)+'" y="'+Math.min(y0,y1)+'" width="'+w+'" height="'+Math.max(Math.abs(y0-y1),1)+'" rx="4" fill="'+col+'" opacity="'+op+'"/>';
+    if(n<=14)s+='<text x="'+gx+'" y="'+(x<0?y1+12:y1-4)+'" text-anchor="middle" style="font-weight:700">'+f0(x)+'</text>';
+    if(n<=14||i%2===0)s+='<text x="'+gx+'" y="'+(H-6)+'" text-anchor="middle">'+MN[+m.slice(5)-1].slice(0,3)+(n>12&&(m.slice(5)==="01"||i===0)?" "+m.slice(2,4):"")+'</text>';});
+  el.innerHTML=s;
 }
 function set(p){per=p;chips();render();}
 document.addEventListener("click",function(e){var b=e.target.closest("[data-p]");if(b){set(b.dataset.p);closeSh();return;}
@@ -333,9 +351,24 @@ function cargarInv(){
    .then(function(r){return r.json();}).then(function(j){if(j&&j.ok&&j.parametros&&j.parametros.precio_compra){aplicarInv(j);build();if(Object.keys(D).length){if(cur<FIRST)cur=CM;chips();render();}}}).catch(function(){});
 }
 function ago(t){if(!t)return"sin datos";var m=Math.round((Date.now()-t)/60000);return m<2?"ahora":m<60?"hace "+m+" min":m<1440?"hace "+Math.round(m/60)+" h":"hace "+Math.round(m/1440)+" d";}
-build();
-if(!Object.keys(D).length){$("vacio").hidden=false;["pChips","mnav","rng","hero","grid"].forEach(function(i){$(i).style.display="none";});}
-else{$("fresh").textContent="Ingresos "+ago(SI.t)+" · Gastos "+ago(SG.t);chips();render();cargarInv();}
+var ALL=["pChips","mnav","rng","hero","grid"];
+function mostrar(fin){
+  SI=ld("cb_res_ing_v1");SG=ld("cb_res_gas_v1");INV=ld("cb_res_inv_v1");build();
+  if(Object.keys(D).length){$("vacio").hidden=true;ALL.forEach(function(i){$(i).style.display="";});$("fresh").textContent="Ingresos "+ago(SI.t)+" · Gastos "+ago(SG.t);if(cur<FIRST||!D[cur])cur=CM;chips();render();return true;}
+  if(fin){$("vacio").hidden=false;ALL.forEach(function(i){$(i).style.display="none";});$("diag").textContent="Ingresos: "+(SI&&SI.m?"listo":"no respondió")+" · Gastos: "+(SG&&SG.m?"listo":"no respondió")+". Revisa que estén subidas las versiones nuevas.";}
+  return false;
+}
+function cargarFuentes(){
+  var t0=Date.now(),viejo=!(SI&&SI.m&&SG&&SG.m)||(t0-Math.min(SI.t||0,SG.t||0))>600000;
+  if(!viejo)return;
+  var tengo=Object.keys(D).length>0;
+  if(!tengo){$("vacio").hidden=false;$("diag").textContent="Cargando Ingresos y Gastos… unos segundos.";ALL.forEach(function(i){$(i).style.display="none";});}
+  var fr=["../ingresos/index.html","../gastos/index.html"].map(function(u){var f=document.createElement("iframe");f.src=u;f.setAttribute("aria-hidden","true");f.tabIndex=-1;f.style.cssText="position:fixed;left:-3000px;top:0;width:1100px;height:900px;border:0;opacity:0;pointer-events:none";document.body.appendChild(f);return f;});
+  var iv=setInterval(function(){var a=ld("cb_res_ing_v1"),b=ld("cb_res_gas_v1"),ok=a&&b&&a.t>=t0&&b.t>=t0,fin=Date.now()-t0>45000;
+    if(ok||fin){clearInterval(iv);fr.forEach(function(f){f.remove();});mostrar(true);if(ok)cargarInv();}},900);
+}
+mostrar(false);if(Object.keys(D).length)cargarInv();
+cargarFuentes();
 </script>
 </body>
 </html>
