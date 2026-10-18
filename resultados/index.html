@@ -14,6 +14,7 @@
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- v5: cascada «De los ingresos a la caja»; corrige selector Período. -->
 <!-- v4: calificación Malo→Excelente por indicador (umbrales de Configuración), margen mensual en tabla y gráfico. -->
 <!-- v3: carga sola Ingresos y Gastos (iframes ocultos) + gráfico de resultado neto mensual arriba. -->
 <!-- v2 (17 oct 2026): tabla mes a mes (ingresos, gastos, resultado), estado de resultados e indicadores financieros. Inversión desde Configuración. -->
@@ -46,7 +47,8 @@ h2{font-size:15px;margin:0 0 2px;font-weight:800}
 .pill{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:99px;background:rgba(255,255,255,.12);font-size:13px;font-weight:700}
 .hero .eq{display:grid;grid-template-columns:1fr 1fr;margin-top:16px;border-top:1px solid rgba(255,255,255,.15);padding-top:12px}
 .hero .eq div{font-size:12px;opacity:.85}.hero .eq b{display:block;font-size:20px}
-.grid{display:grid;gap:12px;margin-top:12px;grid-template-columns:1fr}
+.grid{display:grid;gap:12px;margin-top:12px;grid-template-columns:minmax(0,1fr)}.grid>*{min-width:0}
+@media(max-width:460px){table{font-size:12.5px}td,th{padding-left:3px!important;padding-right:3px!important}}
 @media(min-width:760px){.grid{grid-template-columns:1fr 1fr}.g3{grid-column:1/-1}}
 .card{background:var(--tarjeta);border:1px solid var(--linea);border-radius:var(--r3);padding:16px}
 .card h3{margin:0 0 2px;font-size:13px;color:var(--texto-2);font-weight:700;letter-spacing:.02em;text-transform:uppercase}
@@ -128,6 +130,12 @@ td.pos{color:var(--ok);font-weight:800}td.neg{color:var(--err);font-weight:800}
       <h2>Resultado neto por mes</h2>
       <div class="d">Ingresos menos gastos de cada mes. Verde = ganancia, rojo = pérdida. Abajo, el margen: cuánto de cada $1 que entró quedó.</div>
       <svg class="chart" id="chNet" viewBox="0 0 640 236" role="img" aria-label="Resultado neto por mes"></svg>
+    </div>
+    <div class="card g3">
+      <h2>De los ingresos a la caja</h2>
+      <div class="d" id="casP"></div>
+      <svg class="chart" id="chCas" viewBox="0 0 640 270" role="img" aria-label="Cascada de ingresos a flujo de caja"></svg>
+      <p class="note" id="casN"></p>
     </div>
     <div class="card g3">
       <h2 id="tT">Mes a mes</h2>
@@ -309,6 +317,7 @@ function render(){
   indicadores(ms);
   grafico(per==="mes"?months(sm(cur,-5),cur):ms);
   grafNeto(per==="mes"?months(sm(cur,-5),cur):ms);
+  cascada(a,etq);
 }
 function grafico(cm){
   var W=640,H=220,pl=34,pb=24,pt=10,n=cm.length;if(!n){$("chart").innerHTML="";return;}
@@ -337,6 +346,32 @@ function grafNeto(cm){
   s+='<text x="0" y="'+(H-6)+'" style="font-size:9px">Margen</text>';
   el.innerHTML=s;
 }
+function cascada(a,etq){
+  var el=$("chCas"),I=a.I;if(!(I>0)){el.innerHTML="";return;}
+  var F=a.R+a.PP-a.C,it=[{l:["Ingresos"],v:I,t:"T",c:"var(--acento)"}];
+  FAMOP.forEach(function(f){var x=a.fam[f[0]];if(x>.5)it.push({l:{"1":["Fijos"],"3":["Mantenim."],"4":["Logística"],"5":["Otros"]}[f[0]],v:-x,t:"D",c:"var(--gasto)"});});
+  it.push({l:["Resultado","operativo"],v:a.Ro,t:"S",c:"var(--texto-2)"});
+  it.push({l:["Financieros"],v:-a.Gfin,t:"D",c:"var(--gasto)"});
+  it.push({l:["Resultado"],v:a.R,t:"S",c:a.R<0?"var(--err)":"var(--acento)"});
+  if(a.PP>.5)it.push({l:["Limpieza","por pagar"],v:a.PP,t:"D",c:"var(--acento)"});
+  it.push({l:["Capital","hipoteca"],v:-a.C,t:"D",c:"var(--gasto)"});
+  it.push({l:["Caja"],v:F,t:"S",c:F<0?"var(--err)":"var(--acento)"});
+  var lv=0,pts=[],mx=0,mn=0;
+  it.forEach(function(x){var a0,b0;if(x.t==="D"){a0=lv;lv=lv+x.v;b0=lv;}else{a0=0;b0=x.v;lv=x.v;}x.a=a0;x.b=b0;mx=Math.max(mx,a0,b0);mn=Math.min(mn,a0,b0);});
+  mx*=1.12;mn=mn<0?mn*1.2:0;
+  var nar=(el.parentNode.clientWidth||700)<520,W=nar?380:640,H=270,pl=6,pt=30,pb=44,n=it.length;el.setAttribute("viewBox","0 0 "+W+" "+H);var bw=(W-pl)/n,w=Math.min(bw*.62,54),yy=function(v){return pt+(H-pt-pb)*(1-(v-mn)/(mx-mn));},s="";
+  s+='<line x1="'+pl+'" x2="'+W+'" y1="'+yy(0)+'" y2="'+yy(0)+'" stroke="var(--linea)"/>';
+  it.forEach(function(x,i){var gx=pl+i*bw+bw/2,y1=yy(Math.max(x.a,x.b)),y2=yy(Math.min(x.a,x.b)),h=Math.max(y2-y1,1.5);
+    s+='<rect x="'+(gx-w/2)+'" y="'+y1+'" width="'+w+'" height="'+h+'" rx="4" fill="'+x.c+'"/>';
+    if(i<n-1)s+='<line x1="'+(gx+w/2)+'" x2="'+(gx+bw-w/2)+'" y1="'+yy(x.b)+'" y2="'+yy(x.b)+'" stroke="var(--texto-2)" stroke-dasharray="2 3" opacity=".6"/>';
+    var vtxt=(x.t==="D"?(x.v<0?"−":"+"):"")+f0(Math.abs(x.v)),ty=y1-15;
+    s+='<text x="'+gx+'" y="'+ty+'" text-anchor="middle" style="font-weight:800;font-size:'+(nar?9.5:11)+'px;fill:var(--texto)">'+vtxt+'</text>';
+    s+='<text x="'+gx+'" y="'+(ty+11)+'" text-anchor="middle" style="font-size:'+(nar?8.5:9.5)+'px">'+pc(Math.abs(x.v)/I*100,0)+'</text>';
+    x.l.forEach(function(t,k){s+='<text x="'+gx+'" y="'+(H-30+k*12)+'" text-anchor="middle" style="font-size:'+(nar?9:10.5)+'px;fill:var(--texto-2)">'+(nar?({"Resultado":"Result.","operativo":"oper.","Financieros":"Financ.","hipoteca":"hipot.","Mantenim.":"Mant."}[t]||t):t)+'</text>';});});
+  el.innerHTML=s;
+  $("casP").textContent=etq.charAt(0).toUpperCase()+etq.slice(1)+" · cada barra con su % sobre el ingreso";
+  $("casN").textContent="Verde = entra o queda, naranja = sale, gris = subtotal. El capital de la hipoteca no es gasto, pero sí sale de tu caja.";
+}
 function set(p){per=p;chips();render();}
 document.addEventListener("click",function(e){var b=e.target.closest("[data-p]");if(b){set(b.dataset.p);closeSh();return;}
   if(e.target.closest("#masB"))openSh();if(e.target.id==="shX"||e.target.id==="bg")closeSh();
@@ -359,18 +394,18 @@ function cargarInv(){
    .then(function(r){return r.json();}).then(function(j){if(j&&j.ok&&j.parametros&&j.parametros.precio_compra){aplicarInv(j);build();if(Object.keys(D).length){if(cur<FIRST)cur=CM;chips();render();}}}).catch(function(){});
 }
 function ago(t){if(!t)return"sin datos";var m=Math.round((Date.now()-t)/60000);return m<2?"ahora":m<60?"hace "+m+" min":m<1440?"hace "+Math.round(m/60)+" h":"hace "+Math.round(m/1440)+" d";}
-var ALL=["pChips","mnav","rng","hero","grid"];
+var PIDS=["pChips","mnav","rng","hero","grid"];
 function mostrar(fin){
   SI=ld("cb_res_ing_v1");SG=ld("cb_res_gas_v1");INV=ld("cb_res_inv_v1");build();
-  if(Object.keys(D).length){$("vacio").hidden=true;ALL.forEach(function(i){$(i).style.display="";});$("fresh").textContent="Ingresos "+ago(SI.t)+" · Gastos "+ago(SG.t);if(cur<FIRST||!D[cur])cur=CM;chips();render();return true;}
-  if(fin){$("vacio").hidden=false;ALL.forEach(function(i){$(i).style.display="none";});$("diag").textContent="Ingresos: "+(SI&&SI.m?"listo":"no respondió")+" · Gastos: "+(SG&&SG.m?"listo":"no respondió")+". Revisa que estén subidas las versiones nuevas.";}
+  if(Object.keys(D).length){$("vacio").hidden=true;PIDS.forEach(function(i){$(i).style.display="";});$("fresh").textContent="Ingresos "+ago(SI.t)+" · Gastos "+ago(SG.t);if(cur<FIRST||!D[cur])cur=CM;chips();render();return true;}
+  if(fin){$("vacio").hidden=false;PIDS.forEach(function(i){$(i).style.display="none";});$("diag").textContent="Ingresos: "+(SI&&SI.m?"listo":"no respondió")+" · Gastos: "+(SG&&SG.m?"listo":"no respondió")+". Revisa que estén subidas las versiones nuevas.";}
   return false;
 }
 function cargarFuentes(){
   var t0=Date.now(),viejo=!(SI&&SI.m&&SG&&SG.m)||(t0-Math.min(SI.t||0,SG.t||0))>600000;
   if(!viejo)return;
   var tengo=Object.keys(D).length>0;
-  if(!tengo){$("vacio").hidden=false;$("diag").textContent="Cargando Ingresos y Gastos… unos segundos.";ALL.forEach(function(i){$(i).style.display="none";});}
+  if(!tengo){$("vacio").hidden=false;$("diag").textContent="Cargando Ingresos y Gastos… unos segundos.";PIDS.forEach(function(i){$(i).style.display="none";});}
   var fr=["../ingresos/index.html","../gastos/index.html"].map(function(u){var f=document.createElement("iframe");f.src=u;f.setAttribute("aria-hidden","true");f.tabIndex=-1;f.style.cssText="position:fixed;left:-3000px;top:0;width:1100px;height:900px;border:0;opacity:0;pointer-events:none";document.body.appendChild(f);return f;});
   var iv=setInterval(function(){var a=ld("cb_res_ing_v1"),b=ld("cb_res_gas_v1"),ok=a&&b&&a.t>=t0&&b.t>=t0,fin=Date.now()-t0>45000;
     if(ok||fin){clearInterval(iv);fr.forEach(function(f){f.remove();});mostrar(true);if(ok)cargarInv();}},900);
