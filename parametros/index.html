@@ -12,6 +12,7 @@
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v7 (17 oct 2026): rediseño por rubros (Operación, Inversión, Calificación): menú lateral en iPad/laptop, lista y detalle en celular, filas con hoja inferior de edición, tabla de calificación. Misma lógica y mismo script v4. -->
 <!-- v6 (17 oct 2026): grupo «Calificación de indicadores» (requiere script v4). -->
 <!-- v5 (17 oct 2026): grupo «Inversión» (parámetros sin excepciones, unidad MES con selector de mes). Requiere el script de Parámetros v3. -->
 <!-- v4 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): tema compartido claro/oscuro, verde unificado, texto verde con contraste AA. Sin cambios de lógica. -->
@@ -182,6 +183,62 @@ details summary{cursor:pointer;font-size:12.5px;font-weight:800;color:var(--acce
 .apphead .ttl span{display:block;font-size:12px;color:var(--mut);font-weight:600;margin-top:1px}
 @media (min-width:900px){.wrap{max-width:760px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ===== v7: rubros ===== */
+.wrap{max-width:640px}
+@media (min-width:900px){.wrap{max-width:1040px}}
+.cfg{display:block}
+@media (min-width:900px){.cfg{display:grid;grid-template-columns:270px minmax(0,1fr);gap:22px;align-items:start}.cfg nav{position:sticky;top:16px}}
+.nv{display:flex;flex-direction:column;gap:6px}
+.nvi{appearance:none;font-family:inherit;text-align:left;display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;text-decoration:none;box-shadow:var(--shadow);transition:transform .12s,border-color .15s,background .15s}
+.nvi:active{transform:scale(.985)}
+.nvi.on{border-color:var(--accent);background:var(--accent-bg)}
+.nvi .ic{width:38px;height:38px;border-radius:11px;background:var(--accent-bg);display:grid;place-items:center;flex:none}
+.nvi .ic svg{width:19px;height:19px;stroke:var(--accent-t);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.nvi .tx{flex:1;min-width:0}
+.nvi .tx b{display:block;font-size:14.5px;font-weight:800}
+.nvi .tx small{display:block;font-size:12px;color:var(--mut);font-weight:600;margin-top:1px}
+.nvi .ch{color:var(--mut);font-size:20px;flex:none}
+.nvh{font-size:11.5px;font-weight:800;color:var(--mut);letter-spacing:.06em;text-transform:uppercase;margin:14px 4px 4px}
+.ph{display:flex;align-items:center;gap:8px;margin:0 0 4px}
+.ph h2{margin:0;font-size:20px;font-weight:800;letter-spacing:-.01em}
+.pback{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);width:40px;height:40px;border-radius:12px;font-size:20px;cursor:pointer;display:grid;place-items:center;flex:none}
+.pd{margin:0 0 14px;font-size:13px;color:var(--mut);font-weight:600;line-height:1.5}
+.gt{font-size:12px;font-weight:800;color:var(--mut);margin:16px 4px 6px}
+.grp{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.row{appearance:none;font-family:inherit;color:var(--ink);background:transparent;border:0;border-bottom:1px solid var(--line);width:100%;text-align:left;display:flex;align-items:center;gap:10px;min-height:60px;padding:11px 14px;cursor:pointer}
+.row:last-child{border-bottom:0}
+.row:active{background:var(--accent-bg)}
+.row .rt{flex:1;min-width:0;font-size:14px;font-weight:700;line-height:1.3}
+.row .rt small{display:block;font-size:11.5px;color:var(--mut);font-weight:600;margin-top:2px}
+.row .rv{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.row .ch{color:var(--mut);font-size:18px}
+.stats{margin-bottom:6px}
+.cal{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.cal .hd,.cal .rw{display:grid;grid-template-columns:minmax(0,1.5fr) repeat(4,minmax(0,1fr));gap:4px;align-items:center;padding:11px 12px}
+.cal .hd{font-size:11px;font-weight:800;color:var(--mut);border-bottom:1px solid var(--line);background:var(--bg)}
+.cal .hd span{text-align:right}
+.cal .hd span::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;background:currentColor}
+.cal .hd .l1{color:var(--warn)}.cal .hd .l2,.cal .hd .l3{color:var(--accent-t)}.cal .hd .l4{color:var(--accent-t)}
+.cal .rw{appearance:none;font-family:inherit;color:var(--ink);background:transparent;border:0;border-bottom:1px solid var(--line);width:100%;text-align:left;cursor:pointer;min-height:56px}
+.cal .rw:last-child{border-bottom:0}
+.cal .rw:active{background:var(--accent-bg)}
+.cal .rw b{font-size:13.5px;font-weight:800;line-height:1.25}
+.cal .rw i{font-style:normal;text-align:right;font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.bgs{position:fixed;inset:0;background:rgba(5,15,25,.5);opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
+.bgs.on{opacity:1;pointer-events:auto}
+.shx{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-radius:22px 22px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));z-index:51;max-height:90vh;overflow:auto;transform:translateY(105%);transition:transform .25s;box-shadow:0 -12px 40px -12px rgba(0,0,0,.4);max-width:560px;margin:0 auto}
+.shx.on{transform:none}
+@media (min-width:900px){.shx{bottom:auto;top:50%;border-radius:22px;transform:translateY(-40%) scale(.97);opacity:0;pointer-events:none}.shx.on{transform:translateY(-50%);opacity:1;pointer-events:auto}}
+.shx .gr{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 12px}
+.shx h3{margin:0 0 2px;font-size:17px;font-weight:800}
+.shx .sd{margin:0 0 14px;font-size:12.5px;color:var(--mut);font-weight:600;line-height:1.45}
+.lv{display:flex;align-items:center;gap:6px}
+.lv::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.lv.l1::before{background:var(--warn)}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translate(-50%,30px);opacity:0;background:var(--ink);color:var(--surface);font-size:13px;font-weight:700;padding:11px 16px;border-radius:12px;z-index:60;transition:all .25s;max-width:calc(100vw - 32px);pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.err{background:var(--bad);color:#fff}
 </style>
 </head>
 <body>
@@ -205,12 +262,17 @@ details summary{cursor:pointer;font-size:12.5px;font-weight:800;color:var(--acce
 
   <div id="app">
     <div class="sync"><span id="syncHint">Sin sincronizar</span><button type="button" class="btn btn-ghost btn-sm" id="syncBtn">Actualizar</button></div>
-    <a class="card" href="../sincronizar/" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit"><div style="width:46px;height:46px;border-radius:13px;background:var(--accent-bg);display:grid;place-items:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="stroke:var(--accent-t)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></div><div style="flex:1;min-width:0"><b style="display:block;font-size:15px;font-weight:800">Sincronizar con Drive</b><span style="display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin-top:2px">Actualiza los datos de Airbnb, directas y adicionales</span><span id="airbnbInfo" style="display:block;font-size:12.5px;color:var(--ink);font-weight:800;margin-top:6px"></span></div><span style="color:var(--mut)">›</span></a>
-    <p class="small" style="margin:0 0 14px">Limpieza, comisiones y valores estándar. Aquí cambias los valores que usan los demás módulos. Lo ya guardado en reservas <b>no se modifica</b>: cada reserva conserva el valor con que se registró.</p>
-    <div class="msg" id="msg" role="status"></div>
-    <div id="cards"></div>
+    <div class="cfg">
+      <nav id="nav" aria-label="Rubros de configuración"></nav>
+      <section id="cards" aria-live="polite"></section>
+    </div>
+    <div class="msg" id="msg" role="status" hidden></div>
   </div>
 </div>
+
+<div class="bgs" id="sbg"></div>
+<div class="shx" id="shx" role="dialog" aria-modal="true" aria-labelledby="shT" aria-hidden="true"></div>
+<div class="toast" id="toast" role="status"></div>
 
 <script>
 // ===== URL de tu implementación de Apps Script de PARÁMETROS (termina en /exec) =====
@@ -247,7 +309,7 @@ let DATA = null, abierto = null; // abierto: {p, modo:'base'|'exc', id}
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function fb(iso) { if (!iso) return ''; const x = iso.split('-'); return +x[2] + ' ' + MESES[+x[1] - 1] + ' ' + x[0]; }
 const fnum = (n, d) => { n = Number(n) || 0; const p = Math.abs(n).toFixed(d == null ? 2 : d).split('.'); return (n < 0 ? '-' : '') + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (p[1] ? ',' + p[1] : ''); };
-function fmt(p, v) { if (v == null || v === '') return '—'; if (p.unidad === 'MES') { const n = Number(v), m = n % 100, y = Math.floor(n / 100); return MESES[m - 1] + ' ' + y; } const n = Math.round(Number(v) * 100) / 100; if (p.unidad === '%') return fnum(n, 2).replace(/,?0+$/, '') + '%'; return '$' + fnum(n, 2); }
+function fmt(p, v) { if (v == null || v === '') return '—'; if (p.unidad === 'MES') { const n = Number(v), m = n % 100, y = Math.floor(n / 100); return MESES[m - 1] + ' ' + y; } const n = Math.round(Number(v) * 100) / 100; if (p.unidad === '%') return fnum(n, 2).replace(/,?0+$/, '') + '%'; return '$' + fnum(n, Number.isInteger(n) ? 0 : 2); }
 
 async function call(body) {
   if (!CFG.url || CFG.url.indexOf('PEGA-AQUI') >= 0) throw new Error('Falta pegar la URL del Apps Script de Parámetros en el archivo.');
@@ -256,7 +318,6 @@ async function call(body) {
   if (!j.ok) { if (/Clave incorrecta/.test(String(j.error))) claveRechazada('Configuración'); throw new Error(j.error || 'Error desconocido'); }
   return j;
 }
-function msg(t, c) { $('msg').className = 'msg' + (c ? ' ' + c : ''); $('msg').textContent = t; }
 function showApp() { $('gate').style.display = 'none'; $('app').style.display = 'block'; pintarAirbnb(); }
 function fechaHora(d) { return d.toLocaleDateString('es-EC', { day: 'numeric', month: 'short' }).replace('.', '') + ' · ' + d.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', hour12: false }); }
 function setHint(ok) { $('syncHint').textContent = ok ? 'Valores revisados hoy ' + new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', hour12: false }) : 'Sin datos aún'; }
@@ -300,29 +361,127 @@ function formHtml(k, p) {
     '<div class="btns" style="display:flex;gap:8px;margin-bottom:12px"><button type="button" class="btn btn-acc btn-sm" data-ok="exc">Guardar</button><button type="button" class="btn btn-ghost btn-sm" data-cancel>Cancelar</button></div></div>';
 }
 
+const RUB = [
+  { id: 'op', t: 'Operación', s: 'Limpieza y comisión de Airbnb', d: 'Valores estándar que usan Ingresos y Gastos. Lo ya guardado en reservas no se modifica: cada reserva conserva el valor con que se registró.', ic: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>' },
+  { id: 'inv', t: 'Inversión', s: 'Compra, préstamo y valor', d: 'Datos de la inversión. Alimentan los indicadores de Resultados financieros. Cambia un valor y todo se recalcula; cada cambio queda en el historial.', ic: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>' },
+  { id: 'cal', t: 'Calificación de indicadores', s: 'De Malo a Excelente', d: 'Cada indicador se califica Malo, Regular, Bueno, Muy bueno o Excelente. Pon el valor mínimo para llegar a cada nivel; por debajo de Regular es Malo. Toca una fila para editarla.', ic: '<path d="M5 20V10M12 20V4M19 20v-7"/>' }
+];
+const INV_GRUPOS = [['Compra', ['precio_compra', 'gastos_legales', 'muebles_equipamiento', 'fecha_compra']], ['Financiamiento', ['prestamo_hipotecario']], ['Valor actual', ['valor_departamento']], ['Estado de resultados', ['inicio_resultados']]];
+const CAL_IND = [['margen_neto', 'Margen neto'], ['cobertura', 'Cobertura de la deuda'], ['cap_rate', 'Cap rate'], ['roi', 'ROI'], ['roe', 'ROE'], ['retorno_capital', 'Retorno sobre capital propio']];
+const CAL_NIV = ['Regular', 'Bueno', 'Muy bueno', 'Excelente'];
+let rub = null;
+const wide = () => window.matchMedia('(min-width:900px)').matches;
+
+function toast(t, err) { const e = $('toast'); e.textContent = t; e.className = 'toast on' + (err ? ' err' : ''); clearTimeout(toast.t); toast.t = setTimeout(() => { e.className = 'toast'; }, err ? 6000 : 3200); }
+function msg(t, c) { if (t) toast(t, c === 'err'); }
+
+function cardHtml(k) {
+  const p = DATA.parametros[k], h = p.hoy, ex = h.origen === 'excepcion';
+  const baseVig = p.bases.filter(b => b.desde <= hoyISO()).slice(-1)[0] || p.bases[0];
+  const excs = p.excepciones.map(x =>
+    '<div class="it"><div class="t">' + fb(x.desde) + ' → ' + fb(x.hasta) + '<small>' + esc(x.nota || 'Sin nota') + '</small></div><div class="val">' + fmt(p, x.valor) + '</div>' +
+    '<div class="btns"><button type="button" class="btn btn-edit btn-sm" data-edit="' + esc(x.id) + '" data-p="' + k + '">Editar</button>' +
+    '<button type="button" class="btn btn-ghost btn-sm" data-del="' + esc(x.id) + '" data-firma="' + esc(x.firma || '') + '">Borrar</button></div></div>').join('');
+  const hist = p.bases.slice().reverse().map(b => '<div class="it"><div class="t">Desde ' + fb(b.desde) + '<small>' + esc(b.nota || '') + '</small></div><div class="val">' + fmt(p, b.valor) + '</div></div>').join('');
+  return '<div class="card" data-card="' + k + '"><h3>' + esc(p.nombre) + '</h3>' +
+    '<p class="hint">La fecha que cuenta es: ' + esc(p.fechaDe) + '.</p>' +
+    '<div class="vig"><div><div class="k">Hoy vale</div><div class="v">' + fmt(p, h.valor) + '</div></div><span class="o' + (ex ? ' ex' : '') + '">' + (ex ? 'Renegociado hasta ' + fb(h.hasta) : 'Valor base') + '</span></div>' +
+    '<div class="sec"><span>Valor base: ' + fmt(p, baseVig.valor) + '</span><button type="button" class="btn btn-ghost btn-sm" data-base="' + k + '">Cambiar valor base</button></div>' +
+    (abierto && abierto.p === k && abierto.modo === 'base' ? formHtml(k, p) : '') +
+    '<div class="sec"><span>Renegociado por fechas</span><button type="button" class="btn btn-ghost btn-sm" data-nueva="' + k + '">+ Agregar</button></div>' +
+    (abierto && abierto.p === k && abierto.modo === 'exc' ? formHtml(k, p) : '') +
+    (excs || '<div class="nada">Sin excepciones. Se usa el valor base en todas las fechas.</div>') +
+    '<details class="hist"><summary>Historial (' + p.bases.length + ')</summary>' + hist + '</details></div>';
+}
+function rowHtml(k) {
+  const p = DATA.parametros[k]; if (!p) return '';
+  const h = p.hoy || {};
+  return '<button type="button" class="row" data-row="' + k + '"><span class="rt">' + esc(p.nombre) + (h.desde ? '<small>Rige desde ' + fb(h.desde) + '</small>' : '') + '</span><span class="rv">' + fmt(p, h.valor) + '</span><span class="ch" aria-hidden="true">›</span></button>';
+}
+const vv = k => { const p = DATA.parametros[k]; return p && p.hoy && p.hoy.valor != null ? Number(p.hoy.valor) : null; };
+function fmtCal(ind, v) { if (v == null) return '—'; return ind === 'cobertura' ? fnum(v / 100, 2) + '×' : fnum(v, 1).replace(/,0$/, '') + '%'; }
+
+function panelInv() {
+  const pr = vv('precio_compra'), lg = vv('gastos_legales'), mu = vv('muebles_equipamiento'), pm = vv('prestamo_hipotecario'), va = vv('valor_departamento');
+  const ok = [pr, lg, mu, pm, va].every(x => x != null), tot = (pr || 0) + (lg || 0) + (mu || 0), cap = tot - (pm || 0), plus = (va || 0) - (pr || 0);
+  const D = x => ok ? '$' + fnum(x, 0) : '—';
+  let h = '<div class="stats"><div class="stat"><div class="k">Inversión total</div><div class="v">' + D(tot) + '</div></div><div class="stat"><div class="k">Capital propio</div><div class="v">' + D(cap) + '</div></div><div class="stat"><div class="k">Plusvalía</div><div class="v">' + D(plus) + '</div></div></div>';
+  INV_GRUPOS.forEach(g => { const rows = g[1].map(rowHtml).join(''); if (rows) h += '<div class="gt">' + g[0] + '</div><div class="grp">' + rows + '</div>'; });
+  return h;
+}
+function panelCal() {
+  if (!DATA.parametros['cal_margen_neto_1']) return '<div class="alerta info"><b>Falta actualizar el script de Parámetros</b><ul><li>Publica el script v4 con «Versión nueva» y toca Actualizar.</li></ul></div>';
+  let h = '<div class="cal"><div class="hd"><span style="text-align:left">Indicador</span><span class="l1">Regular</span><span class="l2">Bueno</span><span class="l3">Muy bueno</span><span class="l4">Excelente</span></div>';
+  CAL_IND.forEach(c => { h += '<button type="button" class="rw" data-cal="' + c[0] + '"><b>' + esc(c[1]) + '</b>' + [1, 2, 3, 4].map(i => '<i>' + fmtCal(c[0], vv('cal_' + c[0] + '_' + i)) + '</i>').join('') + '</button>'; });
+  return h + '</div><p class="small" style="margin:10px 4px">Cada columna es el valor mínimo para llegar a ese nivel. La cobertura de la deuda se ve en veces (1,25× = 125%).</p>';
+}
+function renderNav() {
+  $('nav').innerHTML = '<div class="nv">' + RUB.map(r => '<button type="button" class="nvi' + (rub === r.id ? ' on' : '') + '" data-nav="' + r.id + '"' + (rub === r.id ? ' aria-current="page"' : '') + '><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true">' + r.ic + '</svg></span><span class="tx"><b>' + esc(r.t) + '</b><small>' + esc(r.s) + '</small></span><span class="ch" aria-hidden="true">›</span></button>').join('') +
+    '</div><div class="nvh">Datos</div><a class="nvi" href="../sincronizar/"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></span><span class="tx"><b>Sincronizar con Drive</b><small>Actualiza Airbnb, directas y adicionales</small><small id="airbnbInfo" style="color:var(--ink);font-weight:800"></small></span><span class="ch" aria-hidden="true">›</span></a>';
+  pintarAirbnb();
+}
 function render() {
   if (!DATA) return;
-  let ultimoGrupo = null;
-  $('cards').innerHTML = Object.keys(DATA.parametros).map(k => {
-    const p = DATA.parametros[k], h = p.hoy, ex = h.origen === 'excepcion';
-    const cab = (p.grupo || '') !== ultimoGrupo ? (ultimoGrupo = (p.grupo || ''), p.grupo ? '<h2 style="margin:22px 2px 6px;font-size:17px;font-weight:800">' + esc(p.grupo) + '</h2><p class="small" style="margin:0 2px 12px">' + (p.grupo === 'Inversión' ? 'Datos de la inversión. Alimentan los indicadores de Resultados financieros. Cambia un valor y todo se recalcula; cada cambio queda en el historial.' : 'Cada indicador se califica Malo, Regular, Bueno, Muy bueno o Excelente. Aquí pones el valor mínimo para llegar a cada nivel; por debajo de Regular es Malo.') + '</p>' : '') : '';
-    const baseVig = p.bases.filter(b => b.desde <= hoyISO()).slice(-1)[0] || p.bases[0];
-    const excs = p.excepciones.map(x =>
-      '<div class="it"><div class="t">' + fb(x.desde) + ' → ' + fb(x.hasta) + '<small>' + esc(x.nota || 'Sin nota') + '</small></div><div class="val">' + fmt(p, x.valor) + '</div>' +
-      '<div class="btns"><button type="button" class="btn btn-edit btn-sm" data-edit="' + esc(x.id) + '" data-p="' + k + '">Editar</button>' +
-      '<button type="button" class="btn btn-ghost btn-sm" data-del="' + esc(x.id) + '" data-firma="' + esc(x.firma || '') + '">Borrar</button></div></div>').join('');
-    const hist = p.bases.slice().reverse().map(b => '<div class="it"><div class="t">Desde ' + fb(b.desde) + '<small>' + esc(b.nota || '') + '</small></div><div class="val">' + fmt(p, b.valor) + '</div></div>').join('');
-    return cab + '<div class="card" data-card="' + k + '"><h3>' + esc(p.nombre) + '</h3>' +
-      '<p class="hint">La fecha que cuenta es: ' + esc(p.fechaDe) + '.</p>' +
-      '<div class="vig"><div><div class="k">' + (p.sinExc ? 'Valor actual' : 'Hoy vale') + '</div><div class="v">' + fmt(p, h.valor) + '</div></div><span class="o' + (ex ? ' ex' : '') + '">' + (ex ? 'Renegociado hasta ' + fb(h.hasta) : (p.sinExc ? 'Desde ' + fb(h.desde) : 'Valor base')) + '</span></div>' +
-      '<div class="sec"><span>' + (p.sinExc ? 'Valor vigente: ' : 'Valor base: ') + fmt(p, baseVig.valor) + '</span><button type="button" class="btn btn-ghost btn-sm" data-base="' + k + '">' + (p.sinExc ? 'Cambiar valor' : 'Cambiar valor base') + '</button></div>' +
-      (abierto && abierto.p === k && abierto.modo === 'base' ? formHtml(k, p) : '') +
-      (p.sinExc ? '' : '<div class="sec"><span>Renegociado por fechas</span><button type="button" class="btn btn-ghost btn-sm" data-nueva="' + k + '">+ Agregar</button></div>' +
-      (abierto && abierto.p === k && abierto.modo === 'exc' ? formHtml(k, p) : '') +
-      (excs || '<div class="nada">Sin excepciones. Se usa el valor base en todas las fechas.</div>')) +
-      '<details class="hist"><summary>Historial (' + p.bases.length + ')</summary>' + hist + '</details></div>';
-  }).join('');
+  const w = wide(); if (w && !rub) rub = 'op';
+  renderNav();
+  $('nav').hidden = !w && rub !== null;
+  $('cards').hidden = !w && rub === null;
+  const r = RUB.filter(x => x.id === rub)[0]; if (!r) { $('cards').innerHTML = ''; return; }
+  let h = '<div class="ph">' + (w ? '' : '<button type="button" class="pback" data-back aria-label="Volver a Configuración">‹</button>') + '<h2>' + esc(r.t) + '</h2></div><p class="pd">' + esc(r.d) + '</p>';
+  if (rub === 'op') h += ['costo_limpieza', 'comision_airbnb'].filter(k => DATA.parametros[k]).map(cardHtml).join('');
+  else if (rub === 'inv') h += panelInv();
+  else h += panelCal();
+  $('cards').innerHTML = h;
 }
+window.matchMedia('(min-width:900px)').addEventListener('change', () => { if (DATA) render(); });
+
+/* ----- hoja inferior ----- */
+function openSheet(html) { $('shx').innerHTML = '<div class="gr"></div>' + html; $('shx').classList.add('on'); $('sbg').classList.add('on'); $('shx').setAttribute('aria-hidden', 'false'); const f = $('shx').querySelector('input'); if (f) setTimeout(() => f.focus(), 260); }
+function closeSheet() { $('shx').classList.remove('on'); $('sbg').classList.remove('on'); $('shx').setAttribute('aria-hidden', 'true'); }
+function openRow(k) {
+  const p = DATA.parametros[k], hv = p.hoy && p.hoy.valor, mes = p.unidad === 'MES';
+  const v = mes && hv ? String(Math.floor(hv / 100)) + '-' + String(hv % 100).padStart(2, '0') : (hv == null ? '' : hv);
+  const hist = p.bases.slice().reverse().map(b => '<div class="it"><div class="t">Desde ' + fb(b.desde) + '<small>' + esc(b.nota || '') + '</small></div><div class="val">' + fmt(p, b.valor) + '</div></div>').join('');
+  openSheet('<h3 id="shT">' + esc(p.nombre) + '</h3><p class="sd">Hoy: <b>' + fmt(p, hv) + '</b>. La fecha que cuenta es: ' + esc(p.fechaDe) + '.</p>' +
+    '<div class="row2"><div class="field"><label for="s_v">Nuevo valor (' + (p.unidad === '%' ? '%' : mes ? 'mes' : '$') + ')</label>' + (mes ? '<input type="month" id="s_v" value="' + esc(v) + '">' : '<input type="number" inputmode="decimal" id="s_v" step="0.01" min="0" value="' + esc(v) + '">') + '</div>' +
+    '<div class="field"><label for="s_d">Rige desde</label><input type="date" id="s_d" min="2024-01-01" max="2100-12-31" value="' + esc(hoyISO()) + '"></div></div>' +
+    '<div class="small" style="margin:-4px 0 12px">El valor anterior se conserva en el historial.</div>' +
+    '<div class="actions"><button type="button" class="btn btn-ghost" data-sx>Cancelar</button><button type="button" class="btn btn-acc" style="flex:1" data-sv="' + k + '">Guardar</button></div>' +
+    '<details class="hist" style="margin-top:12px"><summary>Historial (' + p.bases.length + ')</summary>' + hist + '</details>');
+}
+function openCal(ind) {
+  const c = CAL_IND.filter(x => x[0] === ind)[0], cob = ind === 'cobertura';
+  const f = CAL_NIV.map((n, i) => { const v = vv('cal_' + ind + '_' + (i + 1)); return '<div class="field"><label class="lv l' + (i === 0 ? 1 : 2) + '" for="s_c' + (i + 1) + '">Desde ' + n + ' (' + (cob ? '×' : '%') + ')</label><input type="number" inputmode="decimal" id="s_c' + (i + 1) + '" step="' + (cob ? '0.05' : '0.5') + '" min="0" value="' + (v == null ? '' : (cob ? Math.round(v) / 100 : v)) + '"></div>'; }).join('');
+  openSheet('<h3 id="shT">' + esc(c[1]) + '</h3><p class="sd">Valor mínimo para llegar a cada nivel. Por debajo de Regular es Malo. Cada valor debe ser mayor que el anterior.</p><div class="row2">' + f + '</div>' +
+    '<div class="field"><label for="s_d">Rige desde</label><input type="date" id="s_d" min="2024-01-01" max="2100-12-31" value="' + esc(hoyISO()) + '"></div>' +
+    '<div class="actions"><button type="button" class="btn btn-ghost" data-sx>Cancelar</button><button type="button" class="btn btn-acc" style="flex:1" data-sc="' + ind + '">Guardar</button></div>');
+}
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button,#sbg'); if (!t) return;
+  if (t.id === 'sbg' || t.hasAttribute('data-sx')) { closeSheet(); return; }
+  if (t.dataset.nav) { rub = t.dataset.nav; render(); window.scrollTo({ top: 0 }); return; }
+  if (t.hasAttribute('data-back')) { rub = null; render(); window.scrollTo({ top: 0 }); return; }
+  if (t.dataset.row) { openRow(t.dataset.row); return; }
+  if (t.dataset.cal) { openCal(t.dataset.cal); return; }
+  if (t.dataset.sv) {
+    const k = t.dataset.sv, p = DATA.parametros[k]; let v = $('s_v').value; const d = $('s_d').value;
+    if (v === '') { toast('Escribe el valor.', true); $('s_v').classList.add('bad'); return; }
+    if (p.unidad === 'MES') v = String(v).replace('-', '');
+    t.disabled = true;
+    try { aplicar(await call({ accion: 'guardarBase', parametro: k, valor: v, desde: d })); closeSheet(); setHint(true); toast('Guardado. Ya lo usan los demás módulos.'); }
+    catch (err) { t.disabled = false; toast(String(err.message || err), true); }
+    return;
+  }
+  if (t.dataset.sc) {
+    const ind = t.dataset.sc, cob = ind === 'cobertura', d = $('s_d').value, vals = [];
+    for (let i = 1; i <= 4; i++) { const x = $('s_c' + i).value; if (x === '') { toast('Completa los cuatro valores.', true); $('s_c' + i).classList.add('bad'); return; } vals.push(Math.round(parseFloat(x) * (cob ? 100 : 1) * 100) / 100); }
+    for (let i = 1; i < 4; i++) if (!(vals[i] > vals[i - 1])) { toast('Cada nivel debe ser mayor que el anterior.', true); return; }
+    t.disabled = true;
+    try { let j; for (let i = 0; i < 4; i++) j = await call({ accion: 'guardarBase', parametro: 'cal_' + ind + '_' + (i + 1), valor: vals[i], desde: d }); aplicar(j); closeSheet(); setHint(true); toast('Calificación guardada.'); }
+    catch (err) { t.disabled = false; toast(String(err.message || err), true); }
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
 
 $('cards').addEventListener('click', async e => {
   const t = e.target.closest('button'); if (!t) return;
