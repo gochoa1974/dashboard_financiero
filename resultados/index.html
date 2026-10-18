@@ -14,6 +14,7 @@
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- v4: calificación Malo→Excelente por indicador (umbrales de Configuración), margen mensual en tabla y gráfico. -->
 <!-- v3: carga sola Ingresos y Gastos (iframes ocultos) + gráfico de resultado neto mensual arriba. -->
 <!-- v2 (17 oct 2026): tabla mes a mes (ingresos, gastos, resultado), estado de resultados e indicadores financieros. Inversión desde Configuración. -->
 <style>
@@ -83,6 +84,7 @@ td.pos{color:var(--ok);font-weight:800}td.neg{color:var(--err);font-weight:800}
 .k .kf{font-size:11.5px;color:var(--texto-2);line-height:1.35}
 .k.off .kv{color:var(--texto-2);font-size:16px;font-weight:700}
 .chip{display:inline-block;font-size:11px;font-weight:800;border-radius:99px;padding:2px 8px;margin-left:4px;border:1px solid currentColor}
+.chip.lv0{color:var(--err)}.chip.lv1{color:var(--pendiente)}.chip.lv2{color:var(--ok)}.chip.lv3{background:var(--ok);border-color:var(--ok);color:var(--tarjeta)}.chip.lv4{background:var(--ok);border-color:var(--ok);color:var(--tarjeta)}
 .chip.ok{color:var(--ok)}.chip.mid{color:var(--pendiente)}.chip.bad{color:var(--err)}
 .chart{width:100%;height:auto;display:block;margin-top:8px}
 .chart text{fill:var(--texto-2);font:600 10px var(--fuente)}
@@ -124,12 +126,12 @@ td.pos{color:var(--ok);font-weight:800}td.neg{color:var(--err);font-weight:800}
   <div class="grid" id="grid">
     <div class="card g3">
       <h2>Resultado neto por mes</h2>
-      <div class="d">Ingresos menos gastos de cada mes. Verde = ganancia, rojo = pérdida.</div>
-      <svg class="chart" id="chNet" viewBox="0 0 640 220" role="img" aria-label="Resultado neto por mes"></svg>
+      <div class="d">Ingresos menos gastos de cada mes. Verde = ganancia, rojo = pérdida. Abajo, el margen: cuánto de cada $1 que entró quedó.</div>
+      <svg class="chart" id="chNet" viewBox="0 0 640 236" role="img" aria-label="Resultado neto por mes"></svg>
     </div>
     <div class="card g3">
       <h2 id="tT">Mes a mes</h2>
-      <div class="tw"><table id="tbl"><thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Resultado</th></tr></thead><tbody id="tb"></tbody></table></div>
+      <div class="tw"><table id="tbl"><thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Resultado</th><th>Margen</th></tr></thead><tbody id="tb"></tbody></table></div>
       <p class="note" id="tN"></p>
     </div>
 
@@ -227,32 +229,34 @@ function openSh(){sheet();$("bg").classList.add("on");$("sh").classList.add("on"
 function closeSh(){$("bg").classList.remove("on");$("sh").classList.remove("on");$("sh").setAttribute("aria-hidden","true");}
 
 /* ===== indicadores ===== */
+var CAL0={margen_neto:[10,25,40,55],cobertura:[100,125,160,200],cap_rate:[4,6,9,12],roi:[3,5,8,11],roe:[3,6,10,14],retorno_capital:[5,8,12,16]},NIV=["Malo","Regular","Bueno","Muy bueno","Excelente"];
+function calif(ind,v){if(v==null||!isFinite(v))return null;var c=(INV&&INV.cal&&INV.cal[ind])||CAL0[ind],n=0;c.forEach(function(x){if(v>=x)n++;});return ["lv"+n,(n===4?"★ ":"")+NIV[n]];}
 function kp(label,val,formula,cls){return '<div class="k'+(val==null?' off':'')+'"><div class="kl">'+label+(cls?'<span class="chip '+cls[0]+'">'+cls[1]+'</span>':'')+'</div><div class="kv">'+(val==null?'Falta dato':val)+'</div><div class="kf">'+formula+'</div></div>';}
 function indicadores(ms){
   var cl=ms.filter(function(m){return !D[m].parcial;}),a=agg(cl),n=cl.length,out="";
   var ok=n>0&&a.I>0;
   $("kP").textContent=n?("Sobre "+n+(n===1?" mes cerrado":" meses cerrados")+(ms.length>n?" (sin el mes en curso)":"")+"."):"Este período aún no tiene meses cerrados.";
   out+=kp("Margen operativo",ok?pc(a.Ro/a.I*100):null,"Resultado operativo ÷ ingresos");
-  out+=kp("Margen neto",ok?pc(a.R/a.I*100):null,"Resultado antes de depreciación ÷ ingresos");
+  out+=kp("Margen neto",ok?pc(a.R/a.I*100):null,"Resultado antes de depreciación ÷ ingresos",ok?calif("margen_neto",a.R/a.I*100):null);
   out+=kp("Gasto sobre ingreso",ok?pc(a.G/a.I*100):null,"Gastos ÷ ingresos");
-  var ds=a.Gfin+a.C,dscr=ds>0&&ok?a.Ro/ds:null,dcl=dscr==null?null:(dscr>=1.25?["ok","Sana"]:dscr>=1?["mid","Justa"]:["bad","No alcanza"]);
+  var ds=a.Gfin+a.C,dscr=ds>0&&ok?a.Ro/ds:null,dcl=dscr==null?null:calif("cobertura",dscr*100);
   out+=kp("Cobertura de la deuda",dscr==null?null:dscr.toFixed(2).replace(".",",")+"×","Resultado operativo ÷ (intereses + capital de la hipoteca)",dcl);
   var pe=n?(a.G+a.C)/n:null,pr=n?a.I/n:null;
   out+=kp("Punto de equilibrio mensual",pe==null?null:f0(pe),"Ingreso mensual para cubrir gastos y capital. Promedio actual: "+(pr==null?"—":f0(pr)),pr!=null&&pe!=null?(pr>=pe?["ok","Cubierto"]:["bad","Bajo"]):null);
   var anual=n>=3?12/n:null,I=INV&&INV.ok?INV:null,why=n<3?"Elige 3 meses o más para anualizar.":null;
-  function rate(label,num,den,formula){var v=(anual&&I&&den>0)?pc(num*anual/den*100):null;return kp(label,v,formula+(v==null?(why?" · "+why:" · Falta dato en Configuración → Inversión."):" · anualizado"));}
+  function rate(label,num,den,formula,ind){var x=(anual&&I&&den>0)?num*anual/den*100:null,v=x==null?null:pc(x);return kp(label,v,formula+(v==null?(why?" · "+why:" · Falta dato en Configuración → Inversión."):" · anualizado"),x==null?null:calif(ind,x));}
   var inv=I?I.precio+I.legales+I.muebles:0,cap=I?inv-I.prestamo:0;
-  out+=rate("Cap rate",a.Ro,I?I.valor:0,"Resultado operativo ÷ valor del departamento");
-  out+=rate("ROI",a.R,inv,"Resultado ÷ inversión total");
+  out+=rate("Cap rate",a.Ro,I?I.valor:0,"Resultado operativo ÷ valor del departamento","cap_rate");
+  out+=rate("ROI",a.R,inv,"Resultado ÷ inversión total","roi");
   var pagado=SG&&SG.m?Object.keys(SG.m).reduce(function(s,k){return s+(SG.m[k].c||0);},0):0;
   var patr=I?I.valor-Math.max(I.prestamo-pagado,0):0;
-  out+=rate("ROE",a.R,patr,"Resultado ÷ patrimonio actual en el departamento");
+  out+=rate("ROE",a.R,patr,"Resultado ÷ patrimonio actual en el departamento","roe");
   var flujo=a.R+a.PP-a.C;
-  out+=rate("Retorno sobre capital propio",flujo,cap,"Flujo de caja ÷ capital propio puesto");
+  out+=rate("Retorno sobre capital propio",flujo,cap,"Flujo de caja ÷ capital propio puesto","retorno_capital");
   var pl=I?I.valor-I.precio:null;
   out+=kp("Plusvalía estimada",pl==null?null:f0(pl)+" · "+pc(pl/I.precio*100),"Valor estimado − precio de compra. No forma parte del resultado.");
   $("kp").innerHTML=out;
-  $("kN").innerHTML=I?("Inversión total "+f0(inv)+" · préstamo "+f0(I.prestamo)+" · capital propio "+f0(cap)+" · patrimonio actual ≈ "+f0(patr)+" (valor "+f0(I.valor)+" − saldo estimado de la hipoteca). Los datos se editan en Configuración → Inversión."):"Sin datos de inversión: complétalos en Configuración → Inversión para ver ROI, ROE y cap rate.";
+  $("kN").innerHTML="Calificación: Malo · Regular · Bueno · Muy bueno · Excelente (umbrales editables en Configuración → Calificación de indicadores). "+(I?("Inversión total "+f0(inv)+" · préstamo "+f0(I.prestamo)+" · capital propio "+f0(cap)+" · patrimonio actual ≈ "+f0(patr)+" (valor "+f0(I.valor)+" − saldo estimado de la hipoteca). Los datos se editan en Configuración → Inversión."):"Sin datos de inversión: complétalos en Configuración → Inversión para ver ROI, ROE y cap rate.");
 }
 
 /* ===== render ===== */
@@ -272,14 +276,15 @@ function render(){
 
   /* tabla mes a mes */
   var tm=per==="mes"?months(sm(cur,-5),cur):ms,rows="",ty=null,acc=[];
-  function filaSub(y,arr){var s=agg(arr);return '<tr class="sub"><td>Total '+y+'</td><td>'+f0(s.I)+'</td><td>'+f0(s.G)+'</td><td class="'+(s.R<0?"neg":"pos")+'">'+f0(s.R)+'</td></tr>';}
+  function mgn(i,r){return i>0?pc(r/i*100,0):"—";}
+  function filaSub(y,arr){var s=agg(arr);return '<tr class="sub"><td>Total '+y+'</td><td>'+f0(s.I)+'</td><td>'+f0(s.G)+'</td><td class="'+(s.R<0?"neg":"pos")+'">'+f0(s.R)+'</td><td>'+mgn(s.I,s.R)+'</td></tr>';}
   tm.forEach(function(m,i){var y=m.slice(0,4);
     if(per==="todo"&&ty&&y!==ty){rows+=filaSub(ty,acc);acc=[];}
     ty=y;acc.push(m);var d=D[m],res=d.ing-d.gas;
-    rows+='<tr class="'+(d.parcial?"par ":"")+(per==="mes"&&m===cur?"sel":"")+'"><td>'+ab(m)+'</td><td>'+f0(d.ing)+'</td><td>'+f0(d.gas)+'</td><td class="'+(res<0?"neg":"pos")+'">'+f0(res)+'</td></tr>';});
+    rows+='<tr class="'+(d.parcial?"par ":"")+(per==="mes"&&m===cur?"sel":"")+'"><td>'+ab(m)+'</td><td>'+f0(d.ing)+'</td><td>'+f0(d.gas)+'</td><td class="'+(res<0?"neg":"pos")+'">'+f0(res)+'</td><td>'+mgn(d.ing,res)+'</td></tr>';});
   if(per==="todo"&&acc.length)rows+=filaSub(ty,acc);
   var at=agg(tm);
-  rows+='<tr class="tot"><td>Total</td><td>'+f0(at.I)+'</td><td>'+f0(at.G)+'</td><td class="'+(at.R<0?"neg":"pos")+'">'+f0(at.R)+'</td></tr>';
+  rows+='<tr class="tot"><td>Total</td><td>'+f0(at.I)+'</td><td>'+f0(at.G)+'</td><td class="'+(at.R<0?"neg":"pos")+'">'+f0(at.R)+'</td><td>'+mgn(at.I,at.R)+'</td></tr>';
   $("tb").innerHTML=rows;
   $("tT").textContent=per==="mes"?"Últimos 6 meses":"Mes a mes";
   $("tN").textContent="Ingresos = lo generado (noches dormidas + adicionales). Gastos = todo gasto del mes, sin el capital de la hipoteca. Resultado = Ingresos − Gastos.";
@@ -320,14 +325,16 @@ function grafico(cm){
   $("chart").innerHTML=s;
 }
 function grafNeto(cm){
-  var W=640,H=220,pl=40,pb=24,pt=14,n=cm.length,el=$("chNet");if(!n){el.innerHTML="";return;}
+  var W=640,H=236,pl=40,pb=38,pt=14,n=cm.length,el=$("chNet");if(!n){el.innerHTML="";return;}
   var v=cm.map(function(m){return D[m].ing-D[m].gas;}),mx=Math.max(0,Math.max.apply(null,v))*1.15||1,mn=Math.min(0,Math.min.apply(null,v))*1.15;
   var yy=function(x){return pt+(H-pt-pb)*(1-(x-mn)/(mx-mn));},bw=(W-pl)/n,w=Math.min(bw*.6,34),s="";
   [mn,0,mx].forEach(function(x){s+='<line x1="'+pl+'" x2="'+W+'" y1="'+yy(x)+'" y2="'+yy(x)+'" stroke="var(--linea)"/><text x="0" y="'+(yy(x)+3)+'">'+f0(x)+'</text>';});
   cm.forEach(function(m,i){var gx=pl+i*bw+bw/2,x=v[i],y0=yy(0),y1=yy(x),col=x<0?"var(--err)":"var(--acento)",op=D[m].parcial?".5":"1";
     s+='<rect x="'+(gx-w/2)+'" y="'+Math.min(y0,y1)+'" width="'+w+'" height="'+Math.max(Math.abs(y0-y1),1)+'" rx="4" fill="'+col+'" opacity="'+op+'"/>';
     if(n<=14)s+='<text x="'+gx+'" y="'+(x<0?y1+12:y1-4)+'" text-anchor="middle" style="font-weight:700">'+f0(x)+'</text>';
-    if(n<=14||i%2===0)s+='<text x="'+gx+'" y="'+(H-6)+'" text-anchor="middle">'+MN[+m.slice(5)-1].slice(0,3)+(n>12&&(m.slice(5)==="01"||i===0)?" "+m.slice(2,4):"")+'</text>';});
+    if(n<=14||i%2===0)s+='<text x="'+gx+'" y="'+(H-20)+'" text-anchor="middle">'+MN[+m.slice(5)-1].slice(0,3)+(n>12&&(m.slice(5)==="01"||i===0)?" "+m.slice(2,4):"")+'</text>';
+    if(D[m].ing>0&&(n<=14||i%2===0))s+='<text x="'+gx+'" y="'+(H-6)+'" text-anchor="middle" style="font-size:9px;font-weight:700;fill:'+(x<0?"var(--err)":"var(--texto-2)")+'">'+Math.round(x/D[m].ing*100)+'%</text>';});
+  s+='<text x="0" y="'+(H-6)+'" style="font-size:9px">Margen</text>';
   el.innerHTML=s;
 }
 function set(p){per=p;chips();render();}
@@ -340,7 +347,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")closeSh();})
 function aplicarInv(j){
   try{var P=j.parametros;function v(k){return P[k]&&P[k].hoy&&P[k].hoy.valor!=null?+P[k].hoy.valor:null;}
     var pr=v("precio_compra"),lg=v("gastos_legales"),mu=v("muebles_equipamiento"),pm=v("prestamo_hipotecario"),va=v("valor_departamento"),ini=v("inicio_resultados");
-    INV={ok:[pr,lg,mu,pm,va].every(function(x){return x!=null;}),precio:pr||0,legales:lg||0,muebles:mu||0,prestamo:pm||0,valor:va||0,inicio:ini?String(Math.floor(ini/100))+"-"+String(ini%100).padStart(2,"0"):null,t:Date.now()};
+    INV={ok:[pr,lg,mu,pm,va].every(function(x){return x!=null;}),precio:pr||0,legales:lg||0,muebles:mu||0,prestamo:pm||0,valor:va||0,inicio:ini?String(Math.floor(ini/100))+"-"+String(ini%100).padStart(2,"0"):null,cal:null,t:Date.now()};
+    var cal={};Object.keys(CAL0).forEach(function(k){var arr=[1,2,3,4].map(function(i){return v("cal_"+k+"_"+i);});if(arr.every(function(x){return x!=null;}))cal[k]=arr;});INV.cal=cal;
     try{localStorage.setItem("cb_res_inv_v1",JSON.stringify(INV));}catch(e){}
   }catch(e){}
 }
