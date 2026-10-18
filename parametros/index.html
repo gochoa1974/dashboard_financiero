@@ -12,6 +12,7 @@
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v6 (17 oct 2026): grupo «Calificación de indicadores» (requiere script v4). -->
 <!-- v5 (17 oct 2026): grupo «Inversión» (parámetros sin excepciones, unidad MES con selector de mes). Requiere el script de Parámetros v3. -->
 <!-- v4 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): tema compartido claro/oscuro, verde unificado, texto verde con contraste AA. Sin cambios de lógica. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -304,7 +305,7 @@ function render() {
   let ultimoGrupo = null;
   $('cards').innerHTML = Object.keys(DATA.parametros).map(k => {
     const p = DATA.parametros[k], h = p.hoy, ex = h.origen === 'excepcion';
-    const cab = (p.grupo || '') !== ultimoGrupo ? (ultimoGrupo = (p.grupo || ''), p.grupo ? '<h2 style="margin:22px 2px 6px;font-size:17px;font-weight:800">' + esc(p.grupo) + '</h2><p class="small" style="margin:0 2px 12px">Datos de la inversión. Alimentan los indicadores de Resultados financieros. Cambia un valor y todo se recalcula; cada cambio queda en el historial.</p>' : '') : '';
+    const cab = (p.grupo || '') !== ultimoGrupo ? (ultimoGrupo = (p.grupo || ''), p.grupo ? '<h2 style="margin:22px 2px 6px;font-size:17px;font-weight:800">' + esc(p.grupo) + '</h2><p class="small" style="margin:0 2px 12px">' + (p.grupo === 'Inversión' ? 'Datos de la inversión. Alimentan los indicadores de Resultados financieros. Cambia un valor y todo se recalcula; cada cambio queda en el historial.' : 'Cada indicador se califica Malo, Regular, Bueno, Muy bueno o Excelente. Aquí pones el valor mínimo para llegar a cada nivel; por debajo de Regular es Malo.') + '</p>' : '') : '';
     const baseVig = p.bases.filter(b => b.desde <= hoyISO()).slice(-1)[0] || p.bases[0];
     const excs = p.excepciones.map(x =>
       '<div class="it"><div class="t">' + fb(x.desde) + ' → ' + fb(x.hasta) + '<small>' + esc(x.nota || 'Sin nota') + '</small></div><div class="val">' + fmt(p, x.valor) + '</div>' +
