@@ -6,6 +6,8 @@
 <script src="../auth.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
+<!-- v24 (19 oct 2026, 08:20): tarjeta propia «Sincronización» (antes se hacía desde Configuración) con la hora de la última sincronización (ámbar si pasaron más de 24 h o no hay); Configuración queda solo con sus valores. El enlace «Actualizar» del pie se mantiene como atajo. -->
+<!-- v23 (18 oct 2026, 21:00): tarjeta Hotelería. -->
 <!-- v21 (15 oct 2026, 22:10): estilo unificado (Guía v1.1): tema compartido claro/oscuro, rejilla responsive (1, 2 y 3 columnas), tarjetas con borde de luz y verde unificado. -->
 <title>Dashboard · Cima Blanca</title>
 <meta name="theme-color" content="#0a2233">
@@ -70,6 +72,7 @@ body{margin:0;min-height:100vh;display:flex;align-items:flex-start;justify-conte
 .syncline{margin:16px 4px 0;font-size:13px;font-weight:700;color:var(--mut);text-align:center;line-height:1.5}
 .syncline a{color:inherit;text-decoration:underline;text-underline-offset:3px;display:inline-block;min-height:44px;line-height:44px;padding:0 6px}
 .syncline.ok{color:var(--ok)}
+.card .txt span.warn{color:var(--pendiente)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -158,6 +161,15 @@ body{margin:0;min-height:100vh;display:flex;align-items:flex-start;justify-conte
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
     </a>
+    <a class="card" href="../sincronizar/">
+      <div class="tile">
+        <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="txt"><b>Sincronización</b><span id="syncCardSub">Actualizar datos de Airbnb</span></div>
+      <div class="arr">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </a>
     <a class="card" href="../parametros/">
       <div class="tile">
         <svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 5v4M8 15v4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -198,6 +210,13 @@ function pintarSync() {
   el.className = 'syncline';
   if (q === 'ok') { txt = '✓ Datos de Airbnb actualizados'; el.className = 'syncline ok'; }
   else if (q === 'al_dia') { txt = '✓ Datos de Airbnb al día'; el.className = 'syncline ok'; }
+  /* tarjeta Sincronización: última vez; ámbar si pasaron más de 24 h o nunca se sincronizó */
+  const sub = $('syncCardSub');
+  if (sub) {
+    const t = info && info.t ? new Date(info.t) : null, ok = t && !isNaN(t.getTime());
+    sub.textContent = 'Actualizar datos de Airbnb · ' + (ok ? 'Última: ' + t.toLocaleString('es-EC', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'aún sin sincronizar');
+    sub.className = (!ok || (Date.now() - t.getTime()) > 24 * 3600 * 1000) ? 'warn' : '';
+  }
   el.textContent = txt + ' · ';
   const a = document.createElement('a'); a.href = '../sincronizar/?auto=1'; a.textContent = 'Actualizar'; el.appendChild(a);
   if (q) { try { history.replaceState(null, '', location.pathname); } catch (e) {} }
