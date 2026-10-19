@@ -15,6 +15,7 @@
 <script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- v6b (18 oct 2026 14:30): etiqueta «Gastos (fijo+var.)» en cascada y estado de resultados. -->
 <!-- v6 (18 oct 2026): filtro Comparar, recuperación de la inversión, nota de Flujo de caja, intereses/seguros separados, gráfico mensual dinámico, gastos por familia. -->
 <!-- v5: cascada «De los ingresos a la caja»; corrige selector Período. -->
 <!-- v4: calificación Malo→Excelente por indicador (umbrales de Configuración), margen mensual en tabla y gráfico. -->
@@ -225,7 +226,7 @@ function build(){
   while(m<=CM){var i=SI.m[m]||[0,0],g=SG.m[m]||{g:0,c:0,p:0,f:{}};
     D[m]={ing:i[0],pd:i[1],gas:g.g,cap:g.c,pp:g.p,fam:g.f||{},fx:g.x||null,parcial:m===CM};m=sm(m,1);}
 }
-var FAMOP=[["1","Fijos operativos"],["3","Mantenimiento y reposición"],["4","Logística e imprevistos"],["5","Otros / varios"]];
+var FAMOP=[["1","Gastos fijos y variables"],["3","Mantenimiento y reposición"],["4","Logística e imprevistos"],["5","Otros / varios"]];
 function months(a,b){var o=[],m=a;while(m<=b){if(D[m])o.push(m);m=sm(m,1);}return o;}
 function sum(ms,fn){return ms.reduce(function(s,m){return s+fn(m);},0);}
 function f0(n){var neg=n<-0.5;n=Math.abs(Math.round(n));return(neg?"−":"")+"$"+String(n).replace(/\B(?=(\d{3})+(?!\d))/g,".");}
@@ -420,7 +421,7 @@ function grafNeto(cm){
 function cascada(a,etq){
   var el=$("chCas"),I=a.I;if(!(I>0)){el.innerHTML="";return;}
   var F=a.R+a.PP-a.C,it=[{l:["Ingresos"],v:I,t:"T",c:"var(--acento)"}];
-  FAMOP.forEach(function(f){var x=a.fam[f[0]];if(x>.5)it.push({l:{"1":["Fijos"],"3":["Mantenim."],"4":["Logística"],"5":["Otros"]}[f[0]],v:-x,t:"D",c:"var(--gasto)"});});
+  FAMOP.forEach(function(f){var x=a.fam[f[0]];if(x>.5)it.push({l:{"1":["Gastos","fijo+var."],"3":["Mantenim."],"4":["Logística"],"5":["Otros"]}[f[0]],v:-x,t:"D",c:"var(--gasto)"});});
   it.push({l:["Resultado","operativo"],v:a.Ro,t:"S",c:"var(--texto-2)"});
   it.push({l:["Financieros"],v:-a.Gfin,t:"D",c:"var(--gasto)"});
   it.push({l:["Resultado"],v:a.R,t:"S",c:a.R<0?"var(--err)":"var(--acento)"});
@@ -438,7 +439,7 @@ function cascada(a,etq){
     var vtxt=(x.t==="D"?(x.v<0?"−":"+"):"")+f0(Math.abs(x.v)),ty=y1-15;
     s+='<text x="'+gx+'" y="'+ty+'" text-anchor="middle" style="font-weight:800;font-size:'+(nar?9.5:11)+'px;fill:var(--texto)">'+vtxt+'</text>';
     s+='<text x="'+gx+'" y="'+(ty+11)+'" text-anchor="middle" style="font-size:'+(nar?8.5:9.5)+'px">'+pc(Math.abs(x.v)/I*100,0)+'</text>';
-    x.l.forEach(function(t,k){s+='<text x="'+gx+'" y="'+(H-30+k*12)+'" text-anchor="middle" style="font-size:'+(nar?9:10.5)+'px;fill:var(--texto-2)">'+(nar?({"Resultado":"Result.","operativo":"oper.","Financieros":"Financ.","hipoteca":"hipot.","Mantenim.":"Mant."}[t]||t):t)+'</text>';});});
+    x.l.forEach(function(t,k){s+='<text x="'+gx+'" y="'+(H-30+k*12)+'" text-anchor="middle" style="font-size:'+(nar?9:10.5)+'px;fill:var(--texto-2)">'+(nar?({"Resultado":"Result.","operativo":"oper.","Financieros":"Financ.","hipoteca":"hipot.","Mantenim.":"Mant.","fijo+var.":"fijo+var."}[t]||t):t)+'</text>';});});
   el.innerHTML=s;
   $("casP").textContent=etq.charAt(0).toUpperCase()+etq.slice(1)+" · cada barra con su % sobre el ingreso";
   $("casN").textContent="Verde = entra o queda, naranja = sale, gris = subtotal. El capital de la hipoteca no es gasto, pero sí sale de tu caja.";
