@@ -289,7 +289,7 @@ function render(){
     tarjeta("RevPAR",f2(a.rev),"Ingreso neto ÷ noches disponibles")+
     tarjeta("Noches vendidas",a.dp?String(a.v):null,"de "+a.dp+" disponibles")+
     tarjeta("Estadía media",a.alos==null?null:num(a.alos,2)+" noches","Noches ÷ reservas · "+a.rs+(a.rs===1?" reserva":" reservas"))+
-    tarjeta("Anticipación de reserva",a.lead==null?null:num(a.lead,0)+" días",a.lead==null?(a.rs?"Falta la fecha de reserva: actualiza con Sincronizar v12":"Días entre reservar y llegar"):"Días entre reservar y llegar · "+a.ln+" de "+a.rs+" reservas (las directas no traen fecha)")+
+    tarjeta("Anticipación de reserva",a.lead==null?null:num(a.lead,0)+(Math.round(a.lead)===1?" día":" días"),a.lead==null?(a.rs?"Falta la fecha de reserva: actualiza con Sincronizar":"Días entre reservar y llegar"):"Días entre reservar y llegar · "+a.ln+" de "+a.rs+(a.rs===1?" reserva":" reservas"))+
     tarjeta("Cancelaciones",CT,CT==null?"Abre Cancelaciones una vez en este aparato":(a.tasa==null?"":pc(a.tasa)+" de las reservas · ")+"por fecha de check-in");
   /* mes a mes */
   var tm=per==="mes"?months(sm(cur,-5),cur):ms;
@@ -330,7 +330,7 @@ function lectura(tm){
   var mo=ml(c[c.length-1]),mp=ml(c[c.length-2]);
   if(dO>=1&&dA<=-1)t="En "+mo+" vendiste más noches que en "+mp+" ("+(dO>=0?"+":"")+num(dO,1)+" pts), pero a una tarifa menor ("+num(dA,1)+"%): el RevPAR "+(dR>=0?"subió":"bajó")+" "+num(Math.abs(dR),1)+"%.";
   else if(dO<=-1&&dA>=1)t="En "+mo+" vendiste menos noches que en "+mp+" ("+num(dO,1)+" pts), pero cobraste más por noche (+"+num(dA,1)+"%): el RevPAR "+(dR>=0?"subió":"bajó")+" "+num(Math.abs(dR),1)+"%.";
-  else t="De "+mp+" a "+mo+" la ocupación "+(dO>=0?"subió ":"bajó ")+num(Math.abs(dO),1)+" pts, el ADR "+(dA>=0?"subió ":"bajó ")+num(Math.abs(dA),1)+"% y el RevPAR "+(dR>=0?"subió ":"bajó ")+num(Math.abs(dR),1)+"%.";
+  else t="De "+rangoMes(mp,mo)+" la ocupación "+(dO>=0?"subió ":"bajó ")+num(Math.abs(dO),1)+" pts, el ADR "+(dA>=0?"subió ":"bajó ")+num(Math.abs(dA),1)+"% y el RevPAR "+(dR>=0?"subió ":"bajó ")+num(Math.abs(dR),1)+"%.";
   if(c[c.length-2]<"2026-04"&&c[c.length-1]>="2026-04")t+=" Ojo: la comisión de Airbnb cambió de 3% a 15,5% en abril de 2026 y baja el ADR neto.";
   el.textContent=t;el.hidden=false;
 }
@@ -341,11 +341,12 @@ document.addEventListener("click",function(e){var mt=e.target.closest("[data-mt]
 document.addEventListener("keydown",function(e){if(e.key==="Escape")closeSh();});
 
 /* ===== carga ===== */
+function rangoMes(a,b){var ya=a.slice(-4),yb=b.slice(-4);return ya===yb?a.slice(0,-5)+" a "+b.slice(0,-5)+" de "+yb:a.replace(" "," de ")+" a "+b.replace(" "," de ");}
 function ago(t){if(!t)return"sin datos";var m=Math.round((Date.now()-t)/60000);return m<2?"ahora":m<60?"hace "+m+" min":m<1440?"hace "+Math.round(m/60)+" h":"hace "+Math.round(m/1440)+" d";}
 var PIDS=["pChips","mnav","rng","hero","sg","grid"];
 function mostrar(fin){
   leerMaestro();build();
-  if(Object.keys(D).length){cmpInit();$("vacio").hidden=true;PIDS.forEach(function(i){$(i).style.display="";});var si=ld("cb_res_ing_v1");$("fresh").textContent="Ingresos "+ago(si&&si.t);if(cur<FIRST||!D[cur])cur=CM;chips();render();return true;}
+  if(Object.keys(D).length){cmpInit();$("vacio").hidden=true;PIDS.forEach(function(i){$(i).style.display="";});var si=ld("cb_res_ing_v1");$("fresh").textContent="Datos actualizados "+ago(si&&si.t);if(cur<FIRST||!D[cur])cur=CM;chips();render();return true;}
   if(fin){$("vacio").hidden=false;PIDS.concat(["lec"]).forEach(function(i){$(i).style.display="none";});$("diag").textContent="Ingresos no respondió. Revisa que esté subida la versión nueva.";}
   return false;
 }
