@@ -9,6 +9,8 @@
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v13 (18 oct 2026, 21:25): las reservas directas copian «Fecha de la reserva» (columna Q de INGRESOS_RESERVAS_DIRECTAS) al maestro como fecha_reserva; si una fila no la trae queda null (nunca se inventa). Si la reserva tiene varios tramos se toma la fecha más temprana. -->
+<!-- v12 (18 oct 2026, 21:30): el maestro ahora copia todo lo relevante de los archivos fuente: fecha de reserva, limpieza, mascotas, tarifa por servicio, anuncio interno (Airbnb); huéspedes y anuncio interno (directas); check-in, check-out, noches y anuncio interno (adicionales, para las extensiones de estadía). Solo agrega campos: ninguno existente cambia. -->
 <!-- v11 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): tema compartido claro/oscuro y verde unificado. Sin cambios de lógica (lectura de Drive, validación y publicación intactas). -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -170,7 +172,7 @@
   var SYNC_KEY = "cimablanca_sync_info";            // { t: cuándo se sincronizó, csvMax: CSV más nuevo visto, n: reservas }
   var csvMaxMod = "";
   var ING_VER = "10";            // v10 (CB-006): el concepto y el ítem de Adicionales se leen también de las columnas «Concepto» e «Ítem». v9 (CB-003): publicación todo o nada; si la versión guardada es otra, se vuelve a procesar una vez (v8: el resumen guarda también las resoluciones)
-  var SCHEMA_VERSION = "11";    // v9: schema_version, huella y manifiesto; v11 (CB-007/008): resumen separa bruto, comisiones, neto, cobros y ahorro
+  var SCHEMA_VERSION = "13";    // v9: schema_version, huella y manifiesto; v11 (CB-007/008): resumen separa bruto, comisiones, neto, cobros y ahorro
   var BACKUP_JSON_NAME = "MAESTRO_INGRESOS_CIMA_BLANCA_anterior.json";   // copia única del maestro previo
   var srcInfo = {};             // v9: archivos y conteos leídos de cada fuente (manifiesto)
   var lastManifest = null;      // v9
@@ -374,6 +376,14 @@
     return result.data;
   }
 
+  function listingDe(row, texto) {
+    var l = String(row["Listing Interno"] || row["Listing"] || "").trim();
+    if (l) return l;
+    var t = String(texto || "").toLowerCase();
+    if (t.indexOf("playa") !== -1 || t.indexOf("8 pax") !== -1) return "LST-02_8 pax";
+    if (t.indexOf("miami") !== -1 || t.indexOf("4 pax") !== -1 || t.indexOf("back up 01") !== -1) return "LST-03_4 pax";
+    return "LST-01_6 pax";
+  }
   function cleanCode(c) {
     return (c || "").toString().trim();
   }
@@ -445,6 +455,11 @@
           fecha_inicio: toIsoDate(row["Fecha de inicio"]),
           fecha_finalizacion: toIsoDate(row["Fecha de finalización"]),
           noches: toNumber(row["Noches"]),
+          fecha_reserva: toIsoDate(row["Fecha de la reservación"]) || null,
+          listing: listingDe(row, row["Anuncio"]),
+          tarifa_limpieza: 0,
+          tarifa_mascotas: 0,
+          tarifa_servicio: 0,
           monto: 0,
           ingresos_brutos: 0,
           archivo_origen: file.fileName,
@@ -454,6 +469,11 @@
       var rec = byCode[code];
       rec.monto += toNumber(row["Monto"]);
       rec.ingresos_brutos += toNumber(row["Ingresos brutos"]);
+      rec.tarifa_limpieza += toNumber(row["Tarifa de limpieza"]);
+      rec.tarifa_mascotas += toNumber(row["Tarifa por mascotas"]);
+      rec.tarifa_servicio += toNumber(row["Tarifa por servicio"]);
+      var fr = toIsoDate(row["Fecha de la reservación"]);
+      if (fr && (!rec.fecha_reserva || fr < rec.fecha_reserva)) rec.fecha_reserva = fr;
     });
     return byCode;
   }
@@ -590,6 +610,8 @@
       var checkout = toIsoDate(row["Día del Check-Out"]);
       var noches = toNumber(row["Número_de_Noches"]);
       var monto = toNumber(row["Monto ($)"]);
+      var frd = toIsoDate(row["Fecha de la reserva"] || row["Fecha de reserva"]);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(frd)) frd = null;
       if (!byCode[code]) {
         byCode[code] = {
           codigo_confirmacion: code,
@@ -598,6 +620,9 @@
           fecha_inicio: checkin,
           fecha_finalizacion: checkout,
           noches: 0,
+          fecha_reserva: frd,
+          listing: listingDe(row, row["Nombre de Listado"]),
+          huespedes: toNumber(row["No Huesped"]) || null,
           monto: 0,
           ingresos_brutos: 0,
           estado: "Liquidado",
@@ -610,6 +635,7 @@
       rec.noches += noches;
       rec.monto += monto;
       rec.ingresos_brutos += monto;
+      if (frd && (!rec.fecha_reserva || frd < rec.fecha_reserva)) rec.fecha_reserva = frd;
       if (checkin && (!rec.fecha_inicio || checkin < rec.fecha_inicio)) rec.fecha_inicio = checkin;
       if (checkout && (!rec.fecha_finalizacion || checkout > rec.fecha_finalizacion)) rec.fecha_finalizacion = checkout;
     });
@@ -627,6 +653,10 @@
         cantidad: row["Cantidad"] === "" ? null : toNumber(row["Cantidad"]),
         monto: toNumber(row["Monto ($)"]),
         medio_cobro: row["MEDIO DE COBRO"] || "",
+        checkin: toIsoDate(row["Día del Check-In"]) || null,
+        checkout: toIsoDate(row["Día del Check-Out"]) || null,
+        noches: row["Número_de_Noches"] === "" || row["Número_de_Noches"] == null ? null : toNumber(row["Número_de_Noches"]),
+        listing: listingDe(row, row["Nombre de Listado"]),
         archivo_origen: file.fileName,
         actualizado: file.modifiedTime
       };
@@ -944,6 +974,12 @@
         "Check-in": r.fecha_inicio,
         "Check-out": r.fecha_finalizacion,
         "Noches": r.noches,
+        "Fecha de reserva": r.fecha_reserva || "",
+        "Anuncio interno": r.listing || "",
+        "Huéspedes": r.huespedes || "",
+        "Tarifa de limpieza": r.tarifa_limpieza || 0,
+        "Tarifa por mascotas": r.tarifa_mascotas || 0,
+        "Tarifa por servicio": r.tarifa_servicio || 0,
         "Monto": r.monto,
         "Ingresos brutos": r.ingresos_brutos,
         "Adicionales": r.adicionales_total || 0,
@@ -960,6 +996,10 @@
         "Concepto": a.concepto,
         "Ítem": a.item,
         "Cantidad": a.cantidad,
+        "Check-in": a.checkin || "",
+        "Check-out": a.checkout || "",
+        "Noches": a.noches == null ? "" : a.noches,
+        "Anuncio interno": a.listing || "",
         "Monto": a.monto,
         "Medio de cobro": a.medio_cobro,
         "Archivo origen": a.archivo_origen
