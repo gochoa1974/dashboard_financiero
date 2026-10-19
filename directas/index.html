@@ -12,6 +12,7 @@
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v17 (18 oct 2026, 21:10): campo obligatorio «Fecha de reserva» con calendario propio y botón «Hoy» (por defecto hoy; no posterior al check-in ni a hoy). Se envía como fechaReserva; requiere Apps Script Directas v5. -->
 <!-- v16 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): tema compartido claro/oscuro, verde unificado, texto verde con contraste AA. Sin cambios de lógica. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -241,6 +242,9 @@ input[readonly]{opacity:.8;cursor:not-allowed}
 .rf-clr{appearance:none;border:1px solid var(--line);background:transparent;color:var(--mut);border-radius:12px;font-family:inherit;
   font-weight:800;font-size:13px;min-height:44px;padding:0 14px;cursor:pointer}
 .rf-foot .rf-hint{font-size:12px;color:var(--mut);font-weight:600}
+.rf-hoyb{appearance:none;border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent-t);border-radius:12px;font-family:inherit;font-weight:800;font-size:14px;min-height:44px;padding:0 20px;cursor:pointer}
+.rf-hoyb[disabled]{opacity:.4;cursor:default}
+.rf-one .rf-p{max-width:420px}
 .rf-lock{overflow:hidden!important}
 @keyframes rfpop{0%{transform:scale(.9)}100%{transform:scale(1)}}
 @media (min-width:720px){
@@ -300,6 +304,9 @@ input[readonly]{opacity:.8;cursor:not-allowed}
         <div class="field"><span class="lbl" id="anLbl">Anuncio</span>
           <div class="chips" role="radiogroup" aria-labelledby="anLbl" id="anuncios"></div>
           <div class="small" id="anHint"></div></div>
+
+        <div class="field"><label for="fr">Fecha de reserva</label><input type="date" id="fr">
+          <div class="small" id="frHint">Día en que el huésped te confirmó la reserva.</div></div>
 
         <div class="field"><span class="lbl">Fechas y valor de la estadía</span>
           <div class="row2">
@@ -649,6 +656,173 @@ input[readonly]{opacity:.8;cursor:not-allowed}
   window.RangoFechas = { montar, _estado: () => st, _abrir: abrir, _cerrar: cerrar };
 })();
 
+/* ===== Calendario de una sola fecha (Fecha de reserva) · mismo estilo que el de rango ===== */
+(function () {
+  'use strict';
+  const MES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const MESC = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  const DSEM = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+  const SEM7 = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+  const ICON_CAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>';
+  const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const ICON_L = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>';
+  const ICON_R = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  const p2 = n => (n < 10 ? '0' : '') + n;
+  const iso = (y, m, d) => y + '-' + p2(m + 1) + '-' + p2(d);
+  function parse(s) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? { y: +m[1], m: +m[2] - 1, d: +m[3] } : null; }
+  function utc(s) { const o = parse(s); return Date.UTC(o.y, o.m, o.d); }
+  function addDias(s, n) { const t = new Date(utc(s) + n * 86400000); return iso(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate()); }
+  function bonita(s) { const o = parse(s); if (!o) return ''; return DSEM[new Date(Date.UTC(o.y, o.m, o.d)).getUTCDay()] + ' ' + o.d + ' ' + MESC[o.m] + ' ' + o.y; }
+  function larga(s) { const o = parse(s); return o ? o.d + ' de ' + MES[o.m] + ' de ' + o.y : ''; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+  const vDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  let ov = null, panel = null, cfg = null, st = null, ultimoFoco = null;
+
+  function fijar(el, v) { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }
+  function lim() { return { min: cfg.min, max: cfg.max() }; }
+
+  function refrescar(c) {
+    const v = vDesc.get.call(c.el), sp = c.btn.querySelector('.rf-v');
+    sp.textContent = v ? bonita(v) : 'Elegir fecha';
+    sp.classList.toggle('rf-ph', !v);
+    c.btn.setAttribute('aria-label', c.etq + ': ' + (v ? larga(v) : 'sin fecha'));
+  }
+
+  function montar(opt) {
+    const el = opt.el; if (!el || el._rf) return;
+    const c = { el: el, titulo: opt.titulo, min: opt.min, max: opt.max, hoy: opt.hoy, etq: 'Fecha de reserva' };
+    const b = document.createElement('button');
+    b.type = 'button'; b.id = el.id + '_rf'; b.className = 'rf-btn'; b.setAttribute('aria-haspopup', 'dialog');
+    b.innerHTML = ICON_CAL + '<span class="rf-v rf-ph">Elegir fecha</span>';
+    const lab = document.querySelector('label[for="' + el.id + '"]'); if (lab) { c.etq = lab.textContent.trim(); lab.setAttribute('for', b.id); }
+    el.parentNode.insertBefore(b, el.nextSibling);
+    el.hidden = true; el.tabIndex = -1; el.setAttribute('aria-hidden', 'true'); el._rf = true;
+    c.btn = b;
+    Object.defineProperty(el, 'value', { configurable: true, get() { return vDesc.get.call(this); }, set(v) { vDesc.set.call(this, v); refrescar(c); } });
+    el.focus = function () { b.focus(); };
+    el.scrollIntoView = function (o) { b.scrollIntoView(o); };
+    new MutationObserver(() => {
+      ['bad', 'bad-field'].forEach(n => b.classList.toggle(n, el.classList.contains(n)));
+      if (el.getAttribute('aria-invalid')) b.setAttribute('aria-invalid', 'true'); else b.removeAttribute('aria-invalid');
+    }).observe(el, { attributes: true, attributeFilter: ['class', 'aria-invalid'] });
+    b.addEventListener('click', () => abrir(c));
+    refrescar(c);
+    window.FechaUna._c = c;
+  }
+
+  function construir() {
+    ov = document.createElement('div'); ov.className = 'rf-ov rf-one'; ov.hidden = true;
+    ov.innerHTML = '<div class="rf-p" role="dialog" aria-modal="true" aria-labelledby="fuTit"></div>';
+    document.body.appendChild(ov);
+    panel = ov.firstChild;
+    ov.addEventListener('mousedown', e => { if (e.target === ov) cerrar(); });
+    ov.addEventListener('keydown', teclado);
+    panel.addEventListener('click', clickPanel);
+  }
+
+  function abrir(c) {
+    if (!ov) construir();
+    cfg = c;
+    const v = vDesc.get.call(c.el) || '', L = lim();
+    let ref = v || c.hoy(); if (ref > L.max) ref = L.max; if (ref < L.min) ref = L.min;
+    const o = parse(ref);
+    st = { sel: v || null, mes: { y: o.y, m: o.m }, foco: ref, cierre: null };
+    ultimoFoco = document.activeElement;
+    ov.hidden = false;
+    document.documentElement.classList.add('rf-lock');
+    render(true);
+    requestAnimationFrame(() => ov.classList.add('rf-on'));
+  }
+
+  function cerrar() {
+    if (!ov || ov.hidden) return;
+    clearTimeout(st && st.cierre);
+    ov.classList.remove('rf-on');
+    const fin = () => { ov.hidden = true; document.documentElement.classList.remove('rf-lock'); };
+    const rm = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    if (rm) fin(); else setTimeout(fin, 180);
+    const volver = cfg && cfg.btn;
+    if (volver) { try { volver.focus(); } catch (e) {} }
+  }
+
+  function render(foco) {
+    const L = lim(), hoyS = cfg.hoy(), m = st.mes;
+    const hayPrev = (m.y * 12 + m.m) > (parse(L.min).y * 12 + parse(L.min).m);
+    const hayNext = (m.y * 12 + m.m) < (parse(L.max).y * 12 + parse(L.max).m);
+    const hoyOk = hoyS >= L.min && hoyS <= L.max;
+    let h = '<div class="rf-top"><div><h4 id="fuTit">' + esc(cfg.titulo) + '</h4><p class="rf-help" aria-live="polite">' + (st.sel ? esc(bonita(st.sel)) : 'Elige el día en que te confirmó') + '</p></div>' +
+      '<button type="button" class="rf-x" data-a="x" aria-label="Cerrar calendario">' + ICON_X + '</button></div>';
+    h += '<div class="rf-nav"><button type="button" data-a="prev" aria-label="Mes anterior"' + (hayPrev ? '' : ' disabled') + '>' + ICON_L + '</button>' +
+      '<button type="button" data-a="next" aria-label="Mes siguiente"' + (hayNext ? '' : ' disabled') + '>' + ICON_R + '</button></div><div class="rf-ms">';
+    const primero = new Date(Date.UTC(m.y, m.m, 1)).getUTCDay(), off = (primero + 6) % 7, dias = new Date(Date.UTC(m.y, m.m + 1, 0)).getUTCDate();
+    h += '<div class="rf-m"><h5>' + MES[m.m] + ' ' + m.y + '</h5><div class="rf-g" role="grid">';
+    SEM7.forEach(w => { h += '<div class="rf-w" aria-hidden="true">' + w + '</div>'; });
+    for (let i = 0; i < off; i++) h += '<span></span>';
+    for (let d = 1; d <= dias; d++) {
+      const f = iso(m.y, m.m, d), dis = f < L.min || f > L.max, es = f === st.sel;
+      const etq = larga(f) + (f === hoyS ? ', hoy' : '') + (es ? ', seleccionada' : '');
+      h += '<button type="button" class="rf-d' + (f === hoyS ? ' rf-hoy' : '') + (es ? ' rf-st' : '') + '" data-d="' + f + '" tabindex="' + (f === st.foco ? '0' : '-1') + '" aria-label="' + esc(etq) + '"' + (es ? ' aria-pressed="true"' : '') + (dis ? ' disabled' : '') + '>' + d + '</button>';
+    }
+    h += '</div></div></div>';
+    h += '<div class="rf-foot"><button type="button" class="rf-hoyb" data-a="hoy"' + (hoyOk ? '' : ' disabled') + '>Hoy</button><span class="rf-hint">' + (L.max < hoyS ? 'Hasta el día del check-in.' : 'No puede ser posterior a hoy.') + '</span></div>';
+    panel.innerHTML = h;
+    if (foco) enfocar(st.foco);
+  }
+
+  function enfocar(f) {
+    let b = panel.querySelector('.rf-d[data-d="' + f + '"]:not([disabled])');
+    if (!b) b = panel.querySelector('.rf-d:not([disabled])');
+    if (b) { st.foco = b.dataset.d; panel.querySelectorAll('.rf-d[tabindex="0"]').forEach(x => x.tabIndex = -1); b.tabIndex = 0; try { b.focus({ preventScroll: true }); } catch (e) { b.focus(); } }
+  }
+
+  function irMes(delta) {
+    let mm = st.mes.m + delta, y = st.mes.y;
+    while (mm > 11) { mm -= 12; y++; } while (mm < 0) { mm += 12; y--; }
+    const L = lim();
+    if ((y * 12 + mm) < (parse(L.min).y * 12 + parse(L.min).m) || (y * 12 + mm) > (parse(L.max).y * 12 + parse(L.max).m)) return;
+    st.mes = { y: y, m: mm };
+  }
+
+  function elegir(d) {
+    st.sel = d; st.foco = d;
+    fijar(cfg.el, d);
+    render(true);
+    const b = panel.querySelector('.rf-d[data-d="' + d + '"]'); if (b) b.classList.add('rf-pop');
+    st.cierre = setTimeout(cerrar, 260);
+  }
+
+  function clickPanel(e) {
+    const t = e.target.closest('button'); if (!t || t.disabled) return;
+    if (t.classList.contains('rf-d')) { elegir(t.dataset.d); return; }
+    const a = t.dataset.a;
+    if (a === 'x') cerrar();
+    else if (a === 'prev') { irMes(-1); render(false); const b = panel.querySelector('[data-a="prev"]'); if (b && !b.disabled) b.focus(); }
+    else if (a === 'next') { irMes(1); render(false); const b = panel.querySelector('[data-a="next"]'); if (b && !b.disabled) b.focus(); }
+    else if (a === 'hoy') { const h = cfg.hoy(), o = parse(h); st.mes = { y: o.y, m: o.m }; elegir(h); }
+  }
+
+  function teclado(e) {
+    if (e.key === 'Escape') { e.preventDefault(); cerrar(); return; }
+    if (e.key === 'Tab') {
+      const f = Array.from(panel.querySelectorAll('button:not([disabled]):not([tabindex="-1"])'));
+      if (!f.length) return;
+      const i = f.indexOf(document.activeElement);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+      return;
+    }
+    const d = e.target.closest && e.target.closest('.rf-d'); if (!d) return;
+    const mapa = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+    if (mapa[e.key] === undefined) return;
+    e.preventDefault();
+    const nf = addDias(d.dataset.d, mapa[e.key]), L = lim();
+    if (nf < L.min || nf > L.max) return;
+    const o = parse(nf); st.mes = { y: o.y, m: o.m }; st.foco = nf; render(true);
+  }
+
+  window.FechaUna = { montar, _abrir: () => cfg && abrir(cfg), _cerrar: cerrar };
+})();
+
 function mapA(t){t=(t||'').toLowerCase();if(t.indexOf('playa')!==-1||t.indexOf('8 pax')!==-1||t.indexOf('8 huésp')!==-1)return 'LST-02_8 pax';if(t.indexOf('miami')!==-1||t.indexOf('4 pax')!==-1||t.indexOf('4 huésp')!==-1)return 'LST-03_4 pax';if(t.indexOf('cima')!==-1||t.indexOf('6 pax')!==-1||t.indexOf('6 huésp')!==-1)return 'LST-01_6 pax';return null;}function libres(){var s={};try{var d=JSON.parse(localStorage.getItem('cimablanca_canc_data')||'null');((d&&d.cancelaciones)||[]).forEach(function(c){if(c.codigo&&Number(c.nochesCuentan)===0&&Number(c.nochesLiberadas)>0)s[c.codigo]=1;});}catch(e){}return s;}
 function ocupDirectas(){
   var out=[],a=(typeof anuncio!=='undefined')?anuncio:'',lib=libres();
@@ -662,6 +836,7 @@ function ocupDirectas(){
     out.push({ini:r.fecha_inicio,fin:r.fecha_finalizacion,etq:'Airbnb '+(r.codigo_confirmacion||'')+' · '+(r.huesped||'')});});}catch(e){}
   return out;}
 RangoFechas.montar({ ci: document.getElementById('ci'), co: document.getElementById('co'), titulo: 'Fechas de la estadía', ocupadas: ocupDirectas });
+FechaUna.montar({ el: document.getElementById('fr'), titulo: 'Fecha de reserva', min: '2024-01-01', hoy: function () { return HOY; }, max: function () { return (F.ci && F.ci < HOY) ? F.ci : HOY; } });
 </script>
 <script>
 // ===== URL de tu implementación de Apps Script (termina en /exec) =====
@@ -727,7 +902,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ 
 const fnum = (n, d) => { n = Number(n) || 0; const p = Math.abs(n).toFixed(d == null ? 2 : d).split('.'); return (n < 0 ? '-' : '') + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (p[1] ? ',' + p[1] : ''); };
 function money(n) { const v = Math.round((Number(n) || 0) * 100) / 100; return (v < 0 ? '-' : '') + '$' + fnum(Math.abs(v), 2); }
 function numCod(c) { const m = /^Reserva_Directa_(\d+)$/.exec(String(c || '')); return m ? parseInt(m[1], 10) : 0; }
-function nuevoForm() { return { ci: '', co: '', coManual: false, tot: '', lim: '', limManual: false, ultManual: false, pax: 2, modo: 'prom', noches: [] }; }
+function nuevoForm() { return { fr: (typeof HOY === 'string' ? HOY : ''), ci: '', co: '', coManual: false, tot: '', lim: '', limManual: false, ultManual: false, pax: 2, modo: 'prom', noches: [] }; }
 const NOCHES_MAX = 60, DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 function diaDe(iso) { const x = iso.split('-'); return DIAS[new Date(Date.UTC(+x[0], +x[1] - 1, +x[2])).getUTCDay()]; }
 function cents(n) { return Math.round((Number(n) || 0) * 100); }
@@ -895,6 +1070,7 @@ function resumen() {
   $('netoTxt').innerHTML = (n && T) ? 'Cobrado <b>' + money(T / 100) + '</b> − Limpieza interna <b>' + money(L / 100) + '</b> = Neto <b>' + money(N / 100) + '</b>' + (F.lim === '' ? ' <span style="color:var(--bad)">· falta la limpieza</span>' : '') : '';
 }
 function pintarForm() {
+  $('fr').value = F.fr || '';
   $('ci').value = F.ci; $('co').value = F.co; $('tot').value = F.tot; $('lim').value = F.lim; $('px').value = F.pax;
   $('ci').min = editCodigo ? FMIN : HOY; $('ci').max = FMAX;
   $('co').min = F.ci ? addDiasISO(F.ci, 1) : FMIN; $('co').max = FMAX;
@@ -909,6 +1085,7 @@ $('ci').addEventListener('input', () => {
   }
   armarNoches(); autoUltimo(); pintarNoches(); resumen(); ocultarConfirmar(); cargarLimpieza();
 });
+$('fr').addEventListener('input', () => { F.fr = $('fr').value; ocultarConfirmar(); });
 $('co').addEventListener('input', () => { F.co = $('co').value; F.coManual = !!F.co; armarNoches(); autoUltimo(); pintarNoches(); resumen(); ocultarConfirmar(); });
 $('tot').addEventListener('input', () => { F.tot = $('tot').value; autoUltimo(); pintarPh(); pintarCheck(); resumen(); ocultarConfirmar(); });
 $('lim').addEventListener('input', () => { F.lim = $('lim').value; F.limManual = true; autoUltimo(); pintarPh(); pintarCheck(); resumen(); ocultarConfirmar(); });
@@ -966,7 +1143,8 @@ function resetForm() {
   $('formTitle').textContent = 'Nueva reserva directa';
   $('codigoTxt').textContent = SIGUIENTE || 'Reserva_Directa_—';
   $('codigoNota').textContent = 'Código automático';
-  $('cancelar').hidden = true; ocultarConfirmar();
+  document.querySelectorAll('.bad,.bad-field').forEach(x => x.classList.remove('bad', 'bad-field'));
+  $('cancelar').hidden = true; ocultarConfirmar(); $('frHint').textContent = 'Día en que el huésped te confirmó la reserva.';
   pintarChips(); pintarForm();
 }
 $('cancelar').onclick = () => { resetForm(); msg(''); };
@@ -978,16 +1156,20 @@ function leerForm() {
     const nx = F.noches[i];
     t.push({ checkin: addDiasISO(F.ci, i), checkout: addDiasISO(F.ci, i + 1), noches: 1, monto: m[i], noHuesped: (nx && nx.pax) ? nx.pax : pax });
   }
-  return { codigo: editCodigo || '', firma: editFirma, huesped: $('huesped').value.trim(), anuncio: anuncio, medio: medio, comentario: $('comentario').value.trim(), tramos: t, limpieza: F.lim === '' ? '' : Math.round(Number(F.lim) * 100) / 100, _total: cents(F.tot), _pax: pax };
+  return { codigo: editCodigo || '', firma: editFirma, fechaReserva: F.fr || '', huesped: $('huesped').value.trim(), anuncio: anuncio, medio: medio, comentario: $('comentario').value.trim(), tramos: t, limpieza: F.lim === '' ? '' : Math.round(Number(F.lim) * 100) / 100, _total: cents(F.tot), _pax: pax };
 }
 function validar(r) {
   if (!r.huesped) return { msg: 'Escribe el nombre del huésped.', id: 'huesped' };
   const cap = capDe(r.anuncio), n = nNoches();
+  if (!F.fr) return { msg: 'Elige la fecha de reserva (el día en que el huésped te confirmó).', id: 'fr' };
+  if (F.fr < FMIN || F.fr > FMAX) return { msg: 'La fecha de reserva debe estar entre 2024 y 2100.', id: 'fr' };
+  if (F.fr > HOY) return { msg: 'La fecha de reserva no puede ser posterior a hoy.', id: 'fr' };
   if (!F.ci) return { msg: 'Completa el check-in.', id: 'ci' };
   if (!F.co) return { msg: 'Completa el check-out.', id: 'co' };
   if (F.ci < FMIN || F.ci > FMAX) return { msg: 'El check-in debe estar entre 2024 y 2100.', id: 'ci' };
   if (F.co < FMIN || F.co > FMAX) return { msg: 'El check-out debe estar entre 2024 y 2100.', id: 'co' };
   if (F.co <= F.ci) return { msg: 'El check-out debe ser posterior al check-in.', id: 'co' };
+  if (F.fr > F.ci) return { msg: 'La fecha de reserva no puede ser posterior al check-in.', id: 'fr' };
   if (n > NOCHES_MAX) return { msg: 'Máximo ' + NOCHES_MAX + ' noches por reserva.', id: 'co' };
   if (!editCodigo && F.ci < HOY) return { msg: 'El check-in de una reserva nueva debe ser de hoy en adelante.', id: 'ci' };
   if (!(r._total > 0)) return { msg: 'Escribe el valor total de la estadía.', id: 'tot' };
@@ -1094,7 +1276,7 @@ $('lista').addEventListener('click', async e => {
     editCodigo = r.codigo; editFirma = r.firma || ''; anuncio = r.anuncio; medio = r.medio;
     F = nuevoForm();
     const ts = r.tramos.slice().sort((x, y) => x.checkin < y.checkin ? -1 : 1);
-    F.ci = ts[0].checkin; F.co = ts[ts.length - 1].checkout; F.coManual = true; F.modo = 'noche';
+    F.fr = r.fechaReserva || ''; F.ci = ts[0].checkin; F.co = ts[ts.length - 1].checkout; F.coManual = true; F.modo = 'noche';
     F.lim = r.limpieza == null ? '' : String(r.limpieza); F.limManual = true;
     F.tot = String(Math.round(ts.reduce((q, t) => q + cents(t.monto), 0)) / 100); F.pax = Math.max.apply(null, ts.map(t => t.noHuesped));
     F.noches = [];
@@ -1105,6 +1287,7 @@ $('lista').addEventListener('click', async e => {
     $('codigoTxt').textContent = r.codigo; $('codigoNota').textContent = 'No cambia';
     $('cancelar').hidden = false; ocultarConfirmar();
     pintarChips(); pintarForm(); msg('');
+    $('frHint').textContent = r.fechaReserva ? 'Día en que el huésped te confirmó la reserva.' : 'Esta reserva no tiene fecha de reserva: elígela para poder guardar.';
     if (r.limpieza == null) $('limHint').textContent = 'Esta reserva no tiene limpieza registrada: escríbela para calcular el neto.';
     $('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
