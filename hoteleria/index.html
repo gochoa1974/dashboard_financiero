@@ -13,9 +13,10 @@
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
-<script src="../glosario_cb_v1_1_2026-10-20_1010.js"></script>
+<script src="../glosario_cb_v1_2_2026-10-20_1035.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- v3.3 (20 oct 2026 10:35): noches de cortesía (extensiones SIN PAGO) = bloqueadas: salen de disponibles y vendidas; regla escrita en «Cómo se calcula». -->
 <!-- v3.1 (20 oct 2026 10:05): el módulo pasa a llamarse «KPIs · Hotelería», igual que su tarjeta del Dashboard. -->
 <!-- v3 (20 oct 2026 10:00): glosario vivo (ⓘ en cada indicador, etiquetas Neto/Sin limpieza, «Cómo se aplica» en lista), «Ventana de reserva» y «Duración de estadía» (mediana y promedio) como PriceLabs, variación contra el período anterior, botones de 44 px. -->
 <!-- v2 (18 oct 2026 21:45): usa los campos nuevos del maestro (Sincronizar v12): anticipación real (fecha de reserva), ADR sin limpieza, ADR bruto y noches de las extensiones de estadía. -->
@@ -205,7 +206,7 @@ function pc(n,d){return n==null||!isFinite(n)?null:num(n,d==null?1:d)+"%";}
 function nz(s){return s==null?"Sin datos":s;}
 
 /* ===== datos: reservas del maestro de Ingresos + cancelaciones ===== */
-var RES=[],ADI=[],CANC=null,D={},FIRST=CM,MINF=null,EXTN=0,HASLP=false,HASFR=false;
+var RES=[],ADI=[],CANC=null,D={},FIRST=CM,MINF=null,EXTN=0,BLQ=0,HASLP=false,HASFR=false;
 function leerMaestro(){
   var c=ld("cimablanca_ing_maestro");var M=c&&(c.data||c);
   RES=(M&&M.reservas)||[];
@@ -222,7 +223,7 @@ function build(){
   while(m<=CM){D[m]={vend:0,disp:0,neto:0,bru:0,res:0,nch:0,ls:0,ln:0,rl:0,canc:null,nl:[],parcial:m===CM,primero:m===FIRST};
     var a=m===FIRST?MINF:m+"-01",b=m===CM?addD(HOY,-1):m+"-"+String(dim(m)).padStart(2,"0");
     D[m].disp=b>=a?diff(a,b)+1:0;D[m]._a=a;D[m]._b=b;m=sm(m,1);}
-  var seen={};
+  var seen={},blk={};BLQ=0;
   RES.forEach(function(r){var ns=+r.noches||0;if(!ns||!r.fecha_inicio)return;
     var bruR=+r.ingresos_brutos||(+r.monto||0),lp=(r.origen==="Airbnb"&&bruR>0)?(+r.tarifa_limpieza||0):0;
     var neto=(+r.monto||0)-lp*(+r.monto||0)/(bruR||1),bru=bruR-lp,ck=r.fecha_inicio.slice(0,7);
@@ -230,7 +231,9 @@ function build(){
     for(var i=0;i<ns;i++){var d=addD(r.fecha_inicio,i),k=d.slice(0,7),x=D[k];if(!x||d>x._b||d<x._a)continue;
       x.neto+=neto/ns;x.bru+=bru/ns;if(!seen[d]){seen[d]=1;x.vend++;}}});
   /* extensiones de estadía: noches extra pagadas aparte (Adicionales), con su check-in y noches */
-  ADI.forEach(function(a){if(!/xtensi/i.test((a.concepto||"")+(a.item||""))||a.medio_cobro==="SIN PAGO"||!a.checkin||!(+a.noches>0))return;
+  ADI.forEach(function(a){if(!/xtensi/i.test((a.concepto||"")+(a.item||""))||!a.checkin||!(+a.noches>0))return;
+    if(a.medio_cobro==="SIN PAGO"){/* cortesía = noche bloqueada: sale de disponibles y vendidas, sin ingreso */
+      for(var j=0;j<+a.noches;j++){var dc=addD(a.checkin,j),xc=D[dc.slice(0,7)];if(!xc||dc>xc._b||dc<xc._a||seen[dc]||blk[dc])continue;blk[dc]=1;xc.disp--;BLQ++;}return;}
     var monto=+a.monto||0,n=+a.noches,ck=a.checkin.slice(0,7);
     if(D[ck]){D[ck].nch+=n;}
     for(var i=0;i<n;i++){var d=addD(a.checkin,i),k=d.slice(0,7),x=D[k];if(!x||d>x._b||d<x._a)continue;x.neto+=monto/n;x.bru+=monto/n;if(!seen[d]){seen[d]=1;x.vend++;}}});
@@ -345,7 +348,7 @@ function render(){
    ["ventana","Ventana de reserva","Días entre reservar y llegar",""],
    ["cancelaciones","Cancelaciones","Reservas canceladas, por fecha de check-in",""]];
   $("how").innerHTML=IT.map(function(i){return '<div class="it"><b>'+i[1]+'</b><div class="fx">'+i[2]+'</div>'+(i[3]?'<div class="ex">'+i[3]+'</div>':'')+'</div>';}).join("")
-   +'<div class="rg"><div class="rt">Reglas</div><ul><li>Disponible = cada día hasta ayer. Hoy no se descuentan noches bloqueadas.</li><li>La noche de salida no cuenta.</li><li>Comisión de Airbnb: 3% en reservas hechas hasta el 11 abr 2026 y 15,5% desde el 18 abr; por eso el ADR neto no es comparable entre ambas etapas.</li>'+(EXTN?'<li>Las extensiones de estadía ('+EXTN+') suman sus noches y su ingreso.</li>':'')+'</ul></div>'
+   +'<div class="rg"><div class="rt">Reglas</div><ul><li>Disponible = cada día hasta ayer, menos las noches bloqueadas o de cortesía.</li><li>Una noche de cortesía (regalada, sin pago) se trata como bloqueada: no cuenta como vendida ni como disponible, y no tiene ingreso.'+(BLQ?' En este rango hay '+BLQ+'.':'')+'</li><li>La noche de salida no cuenta.</li><li>Comisión de Airbnb: 3% en reservas hechas hasta el 11 abr 2026 y 15,5% desde el 18 abr; por eso el ADR neto no es comparable entre ambas etapas.</li>'+(EXTN?'<li>Las extensiones de estadía pagadas suman sus noches y su ingreso.</li>':'')+'</ul></div>'
    +'<a class="lk" href="../glosario/">Ver el glosario completo →</a>';
 }
 function grafico(tm){
