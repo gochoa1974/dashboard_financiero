@@ -13,14 +13,14 @@
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
-<script src="../glosario_cb_v1_6_2026-10-20_1230.js"></script>
+<script src="../glosario_cb_v1_7_2026-10-20_1305.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <!-- v3.3 (20 oct 2026 10:35): noches de cortesía (extensiones SIN PAGO) = bloqueadas: salen de disponibles y vendidas; regla escrita en «Cómo se calcula». -->
-<!-- v4.5 (20 oct 2026 13:20): selector de período sin chips escondidos: los 5 rangos (Mes, 7, 30, 365 días y el año) van en un solo control segmentado de ancho completo y «Otro período» y «Comparar» son dos botones en una segunda fila; en pantallas anchas todo en una línea. Según Apple HIG (máx. 5 segmentos en iPhone), REI Cedar (máx. 2 filas) y Nielsen Norman Group (lo que se desliza fuera de pantalla no se ve). -->
 <!-- v4.4 (20 oct 2026 13:00): Hotelería verifica sola con Drive (sin iframe): al abrir pide el maestro y reemplaza su copia si cambió o es vieja; el subtítulo dice «al día», «hay archivos nuevos sin procesar» o «sin verificar»; el aviso «Datos incompletos» trae el botón «Actualizar datos» de 44 px. Requiere Ingresos v19. -->
 <!-- v4.3 (20 oct 2026 12:40): diagnóstico de datos: «Datos del maestro» con su fecha real (ya no «actualizados ahora»), conteo de reservas con limpieza en «Cómo se calcula», aviso «Datos incompletos» cuando a este aparato le llegan reservas sin tarifa de limpieza, y un intento automático de pedir el maestro completo a Drive (una vez por sesión). -->
-<!-- v4.2 (20 oct 2026 12:30): colores por base (Mi ingreso verde, PriceLabs azul, AirDNA violeta) en franja, tarjeta principal, ADR/RevPAR, chips, hoja y gráfico; rangos de 7, 30 y 365 días a la vista junto a Mes y el año; nueva tarjeta «Las tres miradas» (Mi ingreso, PriceLabs y AirDNA en columnas, mismo período); etiquetas «ADR bruto/neto» en gráfico y tabla; la lectura del mes en curso dice que compara los dos últimos meses cerrados; nota de marcas; apunta a glosario v1.6. -->
+<!-- v4.6 (20 oct 2026 13:15): las fórmulas de «Cómo se calcula» empiezan con el nombre de la base (Mi ingreso, PriceLabs o AirDNA); el glosario pasa a v1.7.
+v4.2 (20 oct 2026 12:30): colores por base (Mi ingreso verde, PriceLabs azul, AirDNA violeta) en franja, tarjeta principal, ADR/RevPAR, chips, hoja y gráfico; rangos de 7, 30 y 365 días a la vista junto a Mes y el año; nueva tarjeta «Las tres miradas» (Mi ingreso, PriceLabs y AirDNA en columnas, mismo período); etiquetas «ADR bruto/neto» en gráfico y tabla; la lectura del mes en curso dice que compara los dos últimos meses cerrados; nota de marcas; apunta a glosario v1.6. -->
 <!-- v4.1 (20 oct 2026 11:45): el rango móvil lleva su ⓘ al glosario; apunta a glosario v1.5. -->
 <!-- v4 (20 oct 2026 11:30): ficha «Base» (Mi ingreso / PriceLabs / AirDNA) que cambia ADR, RevPAR, etiquetas y notas; rangos móviles de 7, 30 y 365 días con variación contra el período anterior; con la base PriceLabs, ventana, duración y reservas por fecha de reserva (mediana); textos de rango y cancelaciones corregidos. -->
 <!-- v3.1 (20 oct 2026 10:05): el módulo pasa a llamarse «KPIs · Hotelería», igual que su tarjeta del Dashboard. -->
@@ -38,16 +38,7 @@ body{margin:0;background:var(--fondo);color:var(--texto);font:14px/1.45 var(--fu
 h1{margin:10px 0 0;font-size:24px;font-weight:800;letter-spacing:-.02em}
 .sub{margin:2px 0 12px;color:var(--texto-2);font-size:13px;font-weight:600}
 h2{font-size:15px;margin:0 0 2px;font-weight:800}
-.pchips{display:grid;gap:8px;padding:2px 0 8px}
-.sgm{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:color-mix(in srgb,var(--texto) 8%,transparent);border-radius:99px;padding:3px}
-.sgm button{min-height:44px;border:0;background:transparent;border-radius:99px;color:var(--texto);font:700 13px var(--fuente);white-space:nowrap;padding:0 2px;cursor:pointer}
-.sgm button[aria-pressed=true]{background:var(--texto);color:var(--fondo)}
-.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.act{min-height:44px;border-radius:99px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font:700 13px var(--fuente);display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:0 10px;white-space:nowrap}
-.act[aria-pressed=true]{border:1.5px solid var(--acento);color:var(--acento-t)}
-.act svg{width:14px;height:14px}
-@media(max-width:380px){.sgm button{font-size:12.5px}}
-@media(min-width:760px){.pchips{display:flex;align-items:center;flex-wrap:wrap}.sgm{grid-template-columns:repeat(5,auto)}.sgm button{padding:0 16px}.acts{display:flex}.act{padding:0 16px}}
+.pchips{display:flex;gap:5px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}
 .pchip{flex:none;min-height:44px;padding:0 9px;border-radius:99px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font:700 13px var(--fuente);white-space:nowrap;display:inline-flex;align-items:center;gap:4px;cursor:pointer;text-decoration:none}
 .pchip[aria-pressed=true]{background:var(--texto);color:var(--fondo);border-color:var(--texto)}
 .pchip.mas[aria-pressed=true]{background:transparent;color:var(--acento-t);border-color:var(--acento)}
@@ -157,7 +148,6 @@ body[data-base=adna]{--acento:#8b4bd1;--acento-t:#6d28d9;--on-ac:#fff;--hero-a:#
 body[data-base=pl] .card.bc{border-top:4px solid var(--acento)}body[data-base=adna] .card.bc{border-top:4px solid var(--acento)}
 body[data-base=pl] .tg span.n{background:#1d4ed8;border-color:#1d4ed8;color:#fff}body[data-base=adna] .tg span.n{background:#6d28d9;border-color:#6d28d9;color:#fff}
 body[data-base=pl] .pchip[aria-pressed=true],body[data-base=adna] .pchip[aria-pressed=true]{background:var(--acento);border-color:var(--acento);color:#fff}
-body[data-base=pl] .sgm button[aria-pressed=true],body[data-base=adna] .sgm button[aria-pressed=true]{background:var(--acento);color:#fff}
 body[data-base=pl] .bstrip,body[data-base=adna] .bstrip{border-width:1.5px}
 .t3{margin-top:10px}.t3 table{width:100%;table-layout:fixed}.t3 th,.t3 td{text-align:center}
 .t3 thead th{padding:0 2px 8px;vertical-align:bottom;border-bottom:0}
@@ -359,7 +349,7 @@ function rango(){
 }
 var ICO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
 function chips(){var enQ=QUICK.some(function(q){return q[0]===per;});
-  $("pChips").innerHTML='<div class="sgm" role="group" aria-label="Período">'+QUICK.map(function(q){return '<button type="button" data-p="'+q[0]+'" aria-pressed="'+(per===q[0])+'">'+q[1]+'</button>';}).join("")+'</div><div class="acts"><button type="button" class="act" id="masB" aria-pressed="'+(!enQ)+'">'+(enQ?"Otro período":LBL[per])+' '+ICO+'</button>'+CBC.chipHtml("act")+'</div>';}
+  $("pChips").innerHTML=QUICK.map(function(q){return '<button class="pchip" data-p="'+q[0]+'" aria-pressed="'+(per===q[0])+'">'+q[1]+'</button>';}).join("")+'<button class="pchip mas" id="masB" aria-pressed="'+(!enQ)+'">'+(enQ?"Período":LBL[per])+' '+ICO+'</button>'+CBC.chipHtml();}
 function sheet(){$("oAllN").textContent="Desde "+ab(FIRST)+" hasta hoy.";
   function ob(l){return l.map(function(p){var s=NN[p[0]]?'<small>'+(NN[p[0]]===1?ab(sm(CM,-1)):ab(sm(CM,-NN[p[0]]))+"–"+ab(sm(CM,-1)))+'</small>':"";return '<button class="opt" data-p="'+p[0]+'" aria-pressed="'+(per===p[0])+'">'+p[1]+s+'</button>';}).join("");}
   $("oCal").innerHTML=ob(CAL);$("oMov").innerHTML=MOV.map(function(p){return '<button class="opt" data-p="'+p[0]+'" aria-pressed="'+(per===p[0])+'" style="justify-content:center">'+p[1]+'</button>';}).join("");$("oMovN").textContent="Hasta ayer, "+fd(addD(HOY,-1))+". Se compara con el período anterior de igual duración.";$("oRec").innerHTML=ob(REC);$("oAll").innerHTML=ob(ALL);}
@@ -444,12 +434,12 @@ function render(){
   tres();
   var pl2=BASE==="pl",ad2=BASE==="adna";
   var IT=[["ocupacion","Ocupación","Noches vendidas ÷ noches disponibles",pc(a.occ)==null?"":"Ahora: "+a.v+" ÷ "+a.dp+" = "+pc(a.occ)],
-   ["adr","ADR · tarifa por noche",pl2?"Ingreso bruto de hospedaje ÷ noches vendidas":ad2?"Ingreso bruto con limpieza ÷ noches vendidas":"Ingreso neto de hospedaje ÷ noches vendidas",
+   ["adr","ADR · tarifa por noche",pl2?"PriceLabs · ingreso bruto de hospedaje ÷ noches vendidas":ad2?"AirDNA · ingreso bruto con limpieza ÷ noches vendidas":"Mi ingreso · ingreso neto de hospedaje ÷ noches vendidas",
      pl2?"Bruto: antes de la comisión de Airbnb u otra plataforma (OTA)"+(HASLP?", y sin la tarifa de limpieza.":", pero incluye la limpieza (el maestro aún no la trae).")
      :ad2?"Bruto con la limpieza incluida y sin la tarifa de servicio al huésped.":"Neto: se calcula sin la comisión de Airbnb ni de otras plataformas (OTA)"+(HASLP?" y sin la tarifa de limpieza.":", pero incluye la limpieza (el maestro aún no la trae).")],
-   ["revpar","RevPAR",(pl2||ad2?"Ingreso bruto":"Ingreso neto")+" ÷ noches disponibles","Es lo mismo que ADR × ocupación"],
-   ["duracion","Duración de estadía",pl2?"Mediana de noches de las reservas hechas en el período":"Noches por reserva con check-in en el período",pl2?"Como PriceLabs: por fecha de reserva":"Mediana y promedio"],
-   ["ventana","Ventana de reserva",pl2?"Mediana de días entre reservar y llegar, de las reservas hechas en el período":"Promedio de días entre reservar y llegar, de las reservas con check-in en el período",""],
+   ["revpar","RevPAR",(pl2?"PriceLabs · ingreso bruto":ad2?"AirDNA · ingreso bruto con limpieza":"Mi ingreso · ingreso neto")+" ÷ noches disponibles","Es lo mismo que ADR × ocupación"],
+   ["duracion","Duración de estadía",pl2?"PriceLabs · mediana de noches de las reservas hechas en el período":(ad2?"AirDNA":"Mi ingreso")+" · noches por reserva con check-in en el período",pl2?"Como PriceLabs: por fecha de reserva":"Mediana y promedio"],
+   ["ventana","Ventana de reserva",pl2?"PriceLabs · mediana de días entre reservar y llegar, de las reservas hechas en el período":(ad2?"AirDNA":"Mi ingreso")+" · promedio de días entre reservar y llegar, de las reservas con check-in en el período",""],
    ["cancelaciones","Cancelaciones","Reservas canceladas, por fecha de check-in",""]];
   $("how").innerHTML=IT.map(function(i){return '<div class="it"><b>'+i[1]+'</b><div class="fx">'+i[2]+'</div>'+(i[3]?'<div class="ex">'+i[3]+'</div>':'')+'</div>';}).join("")
    +'<div class="rg"><div class="rt">Reglas</div><ul><li>Disponible = cada día hasta ayer, menos las noches bloqueadas o de cortesía.</li><li>Datos de este aparato: maestro generado '+(GEN?genTxt().replace("Datos del ",""):"sin fecha")+' · '+RES.length+' reservas · '+NLP+' de '+NAIR+' de Airbnb con limpieza · '+NFR+' con fecha de reserva.</li><li>PriceLabs y AirDNA son marcas de sus respectivos dueños; Cima Blanca no está afiliada a ellas. Las bases replican sus metodologías públicas solo para comparar.</li><li>Una noche de cortesía (regalada, sin pago) se trata como bloqueada: no cuenta como vendida ni como disponible, y no tiene ingreso.'+(BLQ?' En este rango hay '+BLQ+'.':'')+'</li><li>La noche de salida no cuenta.</li>'+baseRules()+'<li>Comisión de Airbnb: 3% en reservas hechas hasta el 11 abr 2026 y 15,5% desde el 18 abr; por eso el ADR neto no es comparable entre ambas etapas.</li>'+(EXTN?'<li>Las extensiones de estadía pagadas suman sus noches y su ingreso.</li>':'')+'</ul></div>'
