@@ -123,6 +123,34 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
         .catch(function (er) { b.disabled = false; b.textContent = 'Guardar y entrar'; e.textContent = er.message || 'No pude guardar. Revisa tu conexión.'; });
     });
   }
+  /* «Cambiar mi clave» (voluntario, con la clave actual) */
+  function vistaMiClave() {
+    var p = CB.perfil || {};
+    pintar('<img class="cblogo" src="' + logo() + '" alt="Cima Blanca"><h1>Cambiar mi clave</h1><p class="cbsub">' + (p.nombre ? esc(p.nombre) + ' · ' : '') + 'Usa una que solo tú sepas</p>' +
+      '<form class="cbcard" id="cbf4" autocomplete="on"><input type="text" name="username" autocomplete="username" value="' + esc(p.usuario || '') + '" hidden readonly>' +
+      '<label for="cba0">Clave actual</label><input id="cba0" type="password" autocomplete="current-password" required>' +
+      '<label for="cba1">Clave nueva</label><input id="cba1" name="password" type="password" autocomplete="new-password" minlength="8" required>' +
+      '<label for="cba2">Repite la clave nueva</label><input id="cba2" type="password" autocomplete="new-password" minlength="8" required>' +
+      '<div class="cbhint">Mínimo 8 caracteres.</div>' +
+      '<div class="cberr" id="cbe" role="alert"></div><div class="cbok" id="cbo4" role="status"></div><button class="cbbtn" id="cbb" type="submit">Guardar clave nueva</button></form>' +
+      '<button class="cbl2" id="cbc" type="button">Cancelar</button>');
+    var f = document.getElementById('cbf4'), b = document.getElementById('cbb'), e = document.getElementById('cbe'), o = document.getElementById('cbo4');
+    document.getElementById('cbc').onclick = function () { ocultar(); };
+    setTimeout(function () { var u = document.getElementById('cba0'); if (u) u.focus(); }, 50);
+    f.addEventListener('submit', function (ev) {
+      ev.preventDefault(); e.textContent = '';
+      var a0 = document.getElementById('cba0').value, a = document.getElementById('cba1').value, c = document.getElementById('cba2').value;
+      if (a.length < 8) { e.textContent = 'La clave nueva debe tener al menos 8 caracteres.'; return; }
+      if (a !== c) { e.textContent = 'Las dos claves nuevas no coinciden.'; return; }
+      if (a === a0) { e.textContent = 'La clave nueva debe ser distinta de la actual.'; return; }
+      b.disabled = true; b.innerHTML = '<span class="cbspin"></span> Guardando…';
+      CB.llamar('cambiar_clave', { claveActual: a0, claveNueva: a }).then(function (r2) {
+        guardar(r2); aplicar(r2);
+        o.textContent = 'Listo: tu clave nueva ya está activa.'; b.hidden = true; document.getElementById('cbc').textContent = 'Cerrar';
+        setTimeout(ocultar, 1800);
+      }).catch(function (er) { b.disabled = false; b.textContent = 'Guardar clave nueva'; e.textContent = er.message || 'No pude guardar. Revisa tu conexión.'; });
+    });
+  }
   function vistaSinAcceso(p) {
     pintar('<img class="cblogo" src="' + logo() + '" alt=""><h1>Sin acceso a este módulo</h1><p class="cbsub">Tu perfil (' + (p.rolEtiqueta || p.rol) + ') no incluye esta sección.</p><a class="cblink" href="' + BASE + '">Volver al inicio</a>');
     document.documentElement.classList.remove('cb-pend');
@@ -206,8 +234,14 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
   window.addEventListener('pagehide', function () { if (!lockVisible && lockActivo()) marcar(); });
 
   /* ---------- llamadas ---------- */
+  /* «iPhone · Safari»: solo sistema y navegador, nunca datos personales. Va a la bitácora de Actividad. */
+  function disp() {
+    var u = navigator.userAgent || '', so = /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ? 'iPad' : /Android/.test(u) ? 'Android' : /Windows/.test(u) ? 'Windows' : /Mac OS X/.test(u) ? 'Mac' : /Linux/.test(u) ? 'Linux' : 'Otro';
+    var nv = /Edg\//.test(u) ? 'Edge' : /OPR\/|Opera/.test(u) ? 'Opera' : /Firefox|FxiOS/.test(u) ? 'Firefox' : /Chrome|CriOS/.test(u) ? 'Chrome' : /Safari/.test(u) ? 'Safari' : 'Navegador';
+    return so + ' · ' + nv;
+  }
   function llamarSin(accion, datos) {
-    var body = JSON.stringify(Object.assign({ accion: accion }, datos || {}));
+    var body = JSON.stringify(Object.assign({ accion: accion, dispositivo: disp() }, datos || {}));
     return fetch(CB_ACCESO_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: body }).then(function (r) { return r.json(); }).then(function (j) {
       if (!j.ok) { var er = new Error(j.error || 'Error'); er.servidor = true; throw er; } return j;
     });
@@ -216,6 +250,7 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
     var s = leerSes(); if (!s) return Promise.reject(new Error('Sin sesión'));
     return llamarSin(accion, Object.assign({ token: s.token }, datos || {}));
   };
+  CB.cambiarClave = function () { vistaMiClave(); };
   CB.puede = function (m) { return !!(CB.perfil && CB.perfil.modulos.indexOf(m) !== -1); };
   CB.loader = function (on, msg) { if (on) vistaCarga(msg); else ocultar(); };
   CB.salir = function () { ls(K_SES, null); ls(K_CLAVE, null); ls(K_LOCK, null); ls(K_NOLOCK, null); location.href = BASE; };
