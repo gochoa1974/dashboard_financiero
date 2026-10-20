@@ -54,6 +54,7 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
 .dl input:focus,.dl select:focus{outline:none;border-color:var(--acc)}
 .dl input[readonly]{opacity:.65}
 .dl .h{margin:-8px 0 14px;font-size:12.5px;font-weight:600;color:var(--mut)}
+.dl .au{margin:0 0 14px;padding:10px 12px;border-radius:12px;background:var(--bg2,rgba(127,127,127,.1));font-size:12.5px;font-weight:600;color:var(--mut);line-height:1.6}.dl .au b{color:var(--ink);font-weight:800}
 .dl .er{min-height:18px;margin:-6px 0 8px;font-size:13px;font-weight:700;color:var(--bad)}
 .dl .bt{display:flex;gap:8px}.dl .bt button{flex:1;min-height:48px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:800;font-size:14.5px;cursor:pointer}
 .dl .bt button.pr{background:var(--acc);color:var(--accent-ink);border-color:var(--acc)}
@@ -117,6 +118,7 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
   <label for="dR">Rol</label><select id="dR"></select>
   <label for="dC" id="dCL">Clave</label><input id="dC" type="password" autocomplete="new-password">
   <p class="h" id="dH">Mínimo 8 caracteres.</p>
+  <div class="au" id="dAu" hidden></div>
   <div class="er" id="dE" role="alert"></div>
   <div class="bt"><button type="button" id="dX">Cancelar</button><button type="submit" class="pr" id="dS">Guardar</button></div>
   <button type="button" class="est" id="dA" hidden></button>
@@ -137,7 +139,8 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
   function fila(f){
     var e=ET[f[3]]||[String(f[3]),'','•'],det=[];
     if(f[4])det.push(MOD[f[4]]||f[4]);if(f[5])det.push(f[5]);
-    return '<div class="row"><div class="dot '+e[1]+'" aria-hidden="true">'+e[2]+'</div><div class="tx"><b>'+esc(f[1]||'—')+' · '+esc(e[0])+'</b><span>'+esc(det.join(' · ')||(f[2]?'Rol: '+f[2]:''))+'</span></div><div class="hr">'+esc(String(f[0]).slice(11,16))+'</div></div>';
+    var mal=f[6]==='fallido';if(mal&&e[1]!=='bad')det.push('No se completó');if(f[7])det.push(f[7]);
+    return '<div class="row"><div class="dot '+(mal?'bad':e[1])+'" aria-hidden="true">'+e[2]+'</div><div class="tx"><b>'+esc(f[1]||'—')+' · '+esc(e[0])+'</b><span>'+esc(det.join(' · ')||(f[2]?'Rol: '+f[2]:''))+'</span></div><div class="hr">'+esc(String(f[0]).slice(11,16))+'</div></div>';
   }
   function pintarLista(){
     var todas=FILAS.filter(function(f){return !filtro||String(f[1]).toLowerCase()===filtro});
@@ -208,6 +211,7 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
     if(u)$('dR').value=u.rol;
     $('dC').value='';$('dC').required=!u;$('dCL').textContent=u?'Clave nueva (opcional)':'Clave';
     $('dH').textContent=u?'Déjala vacía para no cambiarla. Si escribes una, la persona entra con esa clave desde ya.':'Mínimo 8 caracteres. Díselo a la persona en privado.';
+    var au=$('dAu');if(u){var L=function(t,v){return v?'<div>'+t+': <b>'+esc(v)+'</b></div>':''};au.innerHTML=L('Creado por',u.creadoPor)+L('Creado',u.creado)+L('Última edición',u.editado)+L('Último acceso',u.ultimo)+L('Desactivado',u.desactivado);au.hidden=!au.innerHTML}else au.hidden=true;
     var a=$('dA');a.hidden=!u||u.usuario===YO;if(u){a.textContent=u.activo?'Desactivar a esta persona':'Reactivar a esta persona';a.style.color=u.activo?'':'var(--ok)'}
     dlg.showModal();setTimeout(function(){(u?$('dN'):$('dU')).focus()},40);
   }
