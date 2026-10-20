@@ -196,6 +196,7 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
   document.addEventListener('click',function(e){var b=e.target.closest('[data-r]');if(!b)return;$('lista').innerHTML='<div class="sp"></div>';$('usr').innerHTML='<div class="sp"></div>';cargar()});
   function tab(a){$('pA').hidden=!a;$('pU').hidden=a;$('tA').setAttribute('aria-selected',a);$('tU').setAttribute('aria-selected',!a)}
   $('tA').onclick=function(){tab(true)};$('tU').onclick=function(){tab(false)};
+  if(/[?&]ver=accesos/.test(location.search))tab(false);
 
   var dlg=$('dlg');
   function abrir(u){
