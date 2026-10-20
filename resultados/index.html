@@ -16,7 +16,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <!-- v6b (18 oct 2026 14:30): etiqueta «Gastos (fijo+var.)» en cascada y estado de resultados. -->
-<!-- v6 (18 oct 2026): filtro Comparar, recuperación de la inversión, nota de Flujo de caja, intereses/seguros separados, gráfico mensual dinámico, gastos por familia. -->
+<!-- v7 (20 oct 2026 13:30): selector de período en dos filas (control segmentado de 4 rangos + «Otro período» y «Comparar»), sin chips escondidos.
+v6 (18 oct 2026): filtro Comparar, recuperación de la inversión, nota de Flujo de caja, intereses/seguros separados, gráfico mensual dinámico, gastos por familia. -->
 <!-- v5: cascada «De los ingresos a la caja»; corrige selector Período. -->
 <!-- v4: calificación Malo→Excelente por indicador (umbrales de Configuración), margen mensual en tabla y gráfico. -->
 <!-- v3: carga sola Ingresos y Gastos (iframes ocultos) + gráfico de resultado neto mensual arriba. -->
@@ -32,11 +33,16 @@ body{margin:0;background:var(--fondo);color:var(--texto);font:14px/1.45 var(--fu
 h1{margin:10px 0 0;font-size:24px;font-weight:800;letter-spacing:-.02em}
 .sub{margin:2px 0 12px;color:var(--texto-2);font-size:13px;font-weight:600}
 h2{font-size:15px;margin:0 0 2px;font-weight:800}
-.pchips{display:flex;gap:5px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}
-.pchip{flex:none;min-height:40px;padding:0 9px;border-radius:99px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font:700 13px var(--fuente);white-space:nowrap;display:inline-flex;align-items:center;gap:4px;cursor:pointer;text-decoration:none}
-.pchip[aria-pressed=true]{background:var(--texto);color:var(--fondo);border-color:var(--texto)}
-.pchip.mas[aria-pressed=true]{background:transparent;color:var(--acento-t);border-color:var(--acento)}
-.pchip svg{width:14px;height:14px}
+.pchips{display:grid;gap:8px;padding:2px 0 8px}
+.sgm{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:color-mix(in srgb,var(--texto) 8%,transparent);border-radius:99px;padding:3px}
+.sgm button{min-height:44px;border:0;background:transparent;border-radius:99px;color:var(--texto);font:700 13px var(--fuente);white-space:nowrap;padding:0 2px;cursor:pointer}
+.sgm button[aria-pressed=true]{background:var(--texto);color:var(--fondo)}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.act{min-height:44px;border-radius:99px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font:700 13px var(--fuente);display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:0 10px;white-space:nowrap}
+.act[aria-pressed=true]{border:1.5px solid var(--acento);color:var(--acento-t)}
+.act svg{width:14px;height:14px}
+@media(max-width:380px){.sgm button{font-size:12.5px}}
+@media(min-width:760px){.pchips{display:flex;align-items:center;flex-wrap:wrap}.sgm{grid-template-columns:repeat(4,auto)}.sgm button{padding:0 18px}.acts{display:flex}.act{padding:0 16px}}
 .rng{font-size:12.5px;color:var(--texto-2);font-weight:600;margin:0 0 10px}
 .mnav{display:flex;align-items:center;justify-content:center;gap:8px;margin:2px 0 10px}
 .mnav button{width:44px;height:40px;border-radius:12px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font-size:14px;cursor:pointer}
@@ -254,7 +260,7 @@ function rango(){
 }
 var ICO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
 function chips(){var enQ=QUICK.some(function(q){return q[0]===per;});
-  $("pChips").innerHTML=QUICK.map(function(q){return '<button class="pchip" data-p="'+q[0]+'" aria-pressed="'+(per===q[0])+'">'+q[1]+'</button>';}).join("")+'<button class="pchip mas" id="masB" aria-pressed="'+(!enQ)+'">'+(enQ?"Período":LBL[per])+' '+ICO+'</button>'+CBC.chipHtml();}
+  $("pChips").innerHTML='<div class="sgm" role="group" aria-label="Período">'+QUICK.map(function(q){return '<button type="button" data-p="'+q[0]+'" aria-pressed="'+(per===q[0])+'">'+q[1]+'</button>';}).join("")+'</div><div class="acts"><button type="button" class="act" id="masB" aria-pressed="'+(!enQ)+'">'+(enQ?"Otro período":LBL[per])+' '+ICO+'</button>'+CBC.chipHtml("act")+'</div>';}
 function sheet(){$("oAllN").textContent="Desde "+ab(FIRST)+" hasta hoy.";
   function ob(l){return l.map(function(p){var s=NN[p[0]]?'<small>'+(NN[p[0]]===1?ab(sm(CM,-1)):ab(sm(CM,-NN[p[0]]))+"–"+ab(sm(CM,-1)))+'</small>':"";return '<button class="opt" data-p="'+p[0]+'" aria-pressed="'+(per===p[0])+'">'+p[1]+s+'</button>';}).join("");}
   $("oCal").innerHTML=ob(CAL);$("oRec").innerHTML=ob(REC);$("oAll").innerHTML=ob(ALL);}
