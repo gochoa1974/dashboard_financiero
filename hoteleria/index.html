@@ -17,6 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <!-- v3.3 (20 oct 2026 10:35): noches de cortesía (extensiones SIN PAGO) = bloqueadas: salen de disponibles y vendidas; regla escrita en «Cómo se calcula». -->
+<!-- v4.5 (20 oct 2026 13:20): selector de período sin chips escondidos: los 5 rangos (Mes, 7, 30, 365 días y el año) van en un solo control segmentado de ancho completo y «Otro período» y «Comparar» son dos botones en una segunda fila; en pantallas anchas todo en una línea. Según Apple HIG (máx. 5 segmentos en iPhone), REI Cedar (máx. 2 filas) y Nielsen Norman Group (lo que se desliza fuera de pantalla no se ve). -->
 <!-- v4.4 (20 oct 2026 13:00): Hotelería verifica sola con Drive (sin iframe): al abrir pide el maestro y reemplaza su copia si cambió o es vieja; el subtítulo dice «al día», «hay archivos nuevos sin procesar» o «sin verificar»; el aviso «Datos incompletos» trae el botón «Actualizar datos» de 44 px. Requiere Ingresos v19. -->
 <!-- v4.3 (20 oct 2026 12:40): diagnóstico de datos: «Datos del maestro» con su fecha real (ya no «actualizados ahora»), conteo de reservas con limpieza en «Cómo se calcula», aviso «Datos incompletos» cuando a este aparato le llegan reservas sin tarifa de limpieza, y un intento automático de pedir el maestro completo a Drive (una vez por sesión). -->
 <!-- v4.2 (20 oct 2026 12:30): colores por base (Mi ingreso verde, PriceLabs azul, AirDNA violeta) en franja, tarjeta principal, ADR/RevPAR, chips, hoja y gráfico; rangos de 7, 30 y 365 días a la vista junto a Mes y el año; nueva tarjeta «Las tres miradas» (Mi ingreso, PriceLabs y AirDNA en columnas, mismo período); etiquetas «ADR bruto/neto» en gráfico y tabla; la lectura del mes en curso dice que compara los dos últimos meses cerrados; nota de marcas; apunta a glosario v1.6. -->
@@ -37,7 +38,16 @@ body{margin:0;background:var(--fondo);color:var(--texto);font:14px/1.45 var(--fu
 h1{margin:10px 0 0;font-size:24px;font-weight:800;letter-spacing:-.02em}
 .sub{margin:2px 0 12px;color:var(--texto-2);font-size:13px;font-weight:600}
 h2{font-size:15px;margin:0 0 2px;font-weight:800}
-.pchips{display:flex;gap:5px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}
+.pchips{display:grid;gap:8px;padding:2px 0 8px}
+.sgm{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:color-mix(in srgb,var(--texto) 8%,transparent);border-radius:99px;padding:3px}
+.sgm button{min-height:44px;border:0;background:transparent;border-radius:99px;color:var(--texto);font:700 13px var(--fuente);white-space:nowrap;padding:0 2px;cursor:pointer}
+.sgm button[aria-pressed=true]{background:var(--texto);color:var(--fondo)}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.act{min-height:44px;border-radius:99px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font:700 13px var(--fuente);display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:0 10px;white-space:nowrap}
+.act[aria-pressed=true]{border:1.5px solid var(--acento);color:var(--acento-t)}
+.act svg{width:14px;height:14px}
+@media(max-width:380px){.sgm button{font-size:12.5px}}
+@media(min-width:760px){.pchips{display:flex;align-items:center;flex-wrap:wrap}.sgm{grid-template-columns:repeat(5,auto)}.sgm button{padding:0 16px}.acts{display:flex}.act{padding:0 16px}}
 .pchip{flex:none;min-height:44px;padding:0 9px;border-radius:99px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font:700 13px var(--fuente);white-space:nowrap;display:inline-flex;align-items:center;gap:4px;cursor:pointer;text-decoration:none}
 .pchip[aria-pressed=true]{background:var(--texto);color:var(--fondo);border-color:var(--texto)}
 .pchip.mas[aria-pressed=true]{background:transparent;color:var(--acento-t);border-color:var(--acento)}
@@ -147,6 +157,7 @@ body[data-base=adna]{--acento:#8b4bd1;--acento-t:#6d28d9;--on-ac:#fff;--hero-a:#
 body[data-base=pl] .card.bc{border-top:4px solid var(--acento)}body[data-base=adna] .card.bc{border-top:4px solid var(--acento)}
 body[data-base=pl] .tg span.n{background:#1d4ed8;border-color:#1d4ed8;color:#fff}body[data-base=adna] .tg span.n{background:#6d28d9;border-color:#6d28d9;color:#fff}
 body[data-base=pl] .pchip[aria-pressed=true],body[data-base=adna] .pchip[aria-pressed=true]{background:var(--acento);border-color:var(--acento);color:#fff}
+body[data-base=pl] .sgm button[aria-pressed=true],body[data-base=adna] .sgm button[aria-pressed=true]{background:var(--acento);color:#fff}
 body[data-base=pl] .bstrip,body[data-base=adna] .bstrip{border-width:1.5px}
 .t3{margin-top:10px}.t3 table{width:100%;table-layout:fixed}.t3 th,.t3 td{text-align:center}
 .t3 thead th{padding:0 2px 8px;vertical-align:bottom;border-bottom:0}
@@ -348,7 +359,7 @@ function rango(){
 }
 var ICO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
 function chips(){var enQ=QUICK.some(function(q){return q[0]===per;});
-  $("pChips").innerHTML=QUICK.map(function(q){return '<button class="pchip" data-p="'+q[0]+'" aria-pressed="'+(per===q[0])+'">'+q[1]+'</button>';}).join("")+'<button class="pchip mas" id="masB" aria-pressed="'+(!enQ)+'">'+(enQ?"Período":LBL[per])+' '+ICO+'</button>'+CBC.chipHtml();}
+  $("pChips").innerHTML='<div class="sgm" role="group" aria-label="Período">'+QUICK.map(function(q){return '<button type="button" data-p="'+q[0]+'" aria-pressed="'+(per===q[0])+'">'+q[1]+'</button>';}).join("")+'</div><div class="acts"><button type="button" class="act" id="masB" aria-pressed="'+(!enQ)+'">'+(enQ?"Otro período":LBL[per])+' '+ICO+'</button>'+CBC.chipHtml("act")+'</div>';}
 function sheet(){$("oAllN").textContent="Desde "+ab(FIRST)+" hasta hoy.";
   function ob(l){return l.map(function(p){var s=NN[p[0]]?'<small>'+(NN[p[0]]===1?ab(sm(CM,-1)):ab(sm(CM,-NN[p[0]]))+"–"+ab(sm(CM,-1)))+'</small>':"";return '<button class="opt" data-p="'+p[0]+'" aria-pressed="'+(per===p[0])+'">'+p[1]+s+'</button>';}).join("");}
   $("oCal").innerHTML=ob(CAL);$("oMov").innerHTML=MOV.map(function(p){return '<button class="opt" data-p="'+p[0]+'" aria-pressed="'+(per===p[0])+'" style="justify-content:center">'+p[1]+'</button>';}).join("");$("oMovN").textContent="Hasta ayer, "+fd(addD(HOY,-1))+". Se compara con el período anterior de igual duración.";$("oRec").innerHTML=ob(REC);$("oAll").innerHTML=ob(ALL);}
