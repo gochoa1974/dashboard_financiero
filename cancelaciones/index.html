@@ -805,11 +805,12 @@ function uid() { return 'c' + Date.now().toString(36) + Math.random().toString(3
 function saveCfg() { if (CFG.clave) setClave(CFG.clave); }
 function saveData() { try { localStorage.setItem(DATAKEY, JSON.stringify({ cancelaciones: CANC, bloqueos: BLOQ })); } catch (e) {} }
 
+function usuarioCB() { try { var p = window.CB && window.CB.perfil; return p ? String(p.usuario || p.nombre || '') : ''; } catch (e) { return ''; } }
 async function call(body) {
   const r = await fetch(CFG.url, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(Object.assign({ clave: CFG.clave }, body))
+    body: JSON.stringify(Object.assign({ clave: CFG.clave, usuario: usuarioCB() }, body))
   });
   const j = await r.json();
   if (!j.ok) {
