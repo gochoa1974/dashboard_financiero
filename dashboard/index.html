@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="cb-modulo" content="dashboard">
 <script src="../auth.js"></script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
+<!-- v25 (20 oct 2026, 10:05): tarjeta «KPIs · Hotelería» (antes «Hotelería»), tarjeta nueva «Glosario», se permite ampliar la pantalla (sin maximum-scale) y se retira la puerta de clave antigua con su dirección del servidor. -->
 <!-- v24 (19 oct 2026, 08:20): tarjeta propia «Sincronización» (antes se hacía desde Configuración) con la hora de la última sincronización (ámbar si pasaron más de 24 h o no hay); Configuración queda solo con sus valores. El enlace «Actualizar» del pie se mantiene como atajo. -->
 <!-- v23 (18 oct 2026, 21:00): tarjeta Hotelería. -->
 <!-- v21 (15 oct 2026, 22:10): estilo unificado (Guía v1.1): tema compartido claro/oscuro, rejilla responsive (1, 2 y 3 columnas), tarjetas con borde de luz y verde unificado. -->
@@ -87,14 +88,9 @@ body{margin:0;min-height:100vh;display:flex;align-items:flex-start;justify-conte
     <p>Cima Blanca · Punta Blanca</p>
   </div>
   <div class="gate" id="gate">
-    <h2>Escribe tu clave</h2>
-    <p>Una sola vez en este dispositivo. Sirve para todos los módulos, actuales y futuros.</p>
-    <div class="pw">
-      <input type="password" id="gateKey" placeholder="Tu clave" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" aria-label="Clave">
-      <button type="button" class="eye" id="gateEye">Ver</button>
-    </div>
-    <button type="button" class="btn" id="gateGo">Entrar</button>
-    <div class="msg" id="gateMsg" role="status"></div>
+    <h2 id="gateT">No se pudo abrir el acceso</h2>
+    <p>No se cargó el control de acceso. Comprueba tu conexión y recarga la página.</p>
+    <button type="button" class="btn" id="gateGo">Recargar</button>
   </div>
   <div id="menuBox">
   <div class="menu">
@@ -111,7 +107,7 @@ body{margin:0;min-height:100vh;display:flex;align-items:flex-start;justify-conte
       <div class="tile">
         <svg viewBox="0 0 24 24"><path d="M3 20V9l9-5 9 5v11M3 20h18M9 20v-6h6v6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
-      <div class="txt"><b>Hotelería</b><span>Ocupación, ADR, RevPAR, estadía media y cancelaciones</span></div>
+      <div class="txt"><b>KPIs · Hotelería</b><span>Ocupación, ADR, RevPAR, duración de estadía y cancelaciones</span></div>
       <div class="arr">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
@@ -179,29 +175,22 @@ body{margin:0;min-height:100vh;display:flex;align-items:flex-start;justify-conte
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
     </a>
+    <a class="card" href="../glosario/">
+      <div class="tile">
+        <svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4zM5 17a3 3 0 013-3h11M9 8h6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="txt"><b>Glosario</b><span>Qué significa cada indicador y cómo compararlo</span></div>
+      <div class="arr">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </a>
   </div>
   <div class="syncline" id="syncLine" role="status"></div>
   <button type="button" class="out" id="outBtn">Cerrar sesión / cambiar clave</button>
   </div>
 </div>
 <script>
-const SHARED_KEY = 'cimablanca_clave';
-const LEGACY_KEYS = ['cimablanca_canc_cfg', 'cimablanca_dir_cfg', 'cb_gastos_cfg_v1'];
-const CHECK_URL = 'https://script.google.com/macros/s/AKfycbw_iMuMSlc-dfdeXI71xk4x6Zir53mC93uPwZpHS-iInB4-OqvKLZIf57gAKIVkS8BbfA/exec';
 const $ = id => document.getElementById(id);
-function getClave() {
-  try {
-    const k = localStorage.getItem(SHARED_KEY);
-    if (k) return k;
-    for (const lk of LEGACY_KEYS) {
-      const o = JSON.parse(localStorage.getItem(lk) || 'null');
-      if (o && o.clave) { localStorage.setItem(SHARED_KEY, o.clave); return o.clave; }
-    }
-  } catch (e) {}
-  return '';
-}
-function setClave(k) { try { localStorage.setItem(SHARED_KEY, k); LEGACY_KEYS.forEach(x => localStorage.removeItem(x)); } catch (e) {} }
-function clearClave() { try { localStorage.removeItem(SHARED_KEY); LEGACY_KEYS.forEach(x => localStorage.removeItem(x)); } catch (e) {} }
 function pintarSync() {
   const el = $('syncLine'); if (!el) return;
   let info = null; try { info = JSON.parse(localStorage.getItem('cimablanca_sync_info') || 'null'); } catch (e) {}
@@ -222,54 +211,15 @@ function pintarSync() {
   if (q) { try { history.replaceState(null, '', location.pathname); } catch (e) {} }
 }
 function showMenu() { $('gate').style.display = 'none'; $('menuBox').style.display = 'block'; pintarSync(); }
-function showGate(msg) {
-  $('menuBox').style.display = 'none'; $('gate').style.display = 'block';
-  $('gateKey').value = ''; $('gateMsg').className = 'msg err'; $('gateMsg').textContent = msg || '';
-  if (!msg) $('gateMsg').className = 'msg';
-}
-/* devuelve 'ok' | 'mala' | 'red' */
-async function validar(clave) {
-  try {
-    const r = await fetch(CHECK_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ clave: clave, accion: 'listar' }) });
-    const j = await r.json();
-    if (j && j.ok) return 'ok';
-    if (j && /Clave incorrecta/.test(String(j.error))) return 'mala';
-    return 'red';
-  } catch (e) { return 'red'; }
-}
-$('gateGo').onclick = async () => {
-  const k = $('gateKey').value.trim();
-  if (!k) { $('gateMsg').className = 'msg err'; $('gateMsg').textContent = 'Escribe tu clave.'; return; }
-  $('gateGo').disabled = true; $('gateGo').textContent = 'Verificando...'; $('gateMsg').className = 'msg'; $('gateMsg').textContent = '';
-  const v = await validar(k);
-  $('gateGo').disabled = false; $('gateGo').textContent = 'Entrar';
-  if (v !== 'ok') { $('gateMsg').className = 'msg err'; $('gateMsg').textContent = v === 'mala' ? 'Clave incorrecta. Revisa e intenta de nuevo.' : 'No se pudo verificar la clave. Comprueba tu conexión e inténtalo otra vez.'; return; }
-  setClave(k);
-  // al entrar con la clave: ir a revisar/actualizar los datos de Airbnb y volver aquí
-  location.href = '../sincronizar/?auto=1';
-};
-$('gateEye').onclick = () => { const i = $('gateKey'); i.type = i.type === 'password' ? 'text' : 'password'; };
-$('gateKey').addEventListener('keydown', e => { if (e.key === 'Enter') $('gateGo').click(); });
-$('outBtn').onclick = () => { clearClave(); showGate(''); };
+function showGate() { $('menuBox').style.display = 'none'; $('gate').style.display = 'block'; }
+$('gateGo').onclick = () => location.reload();
 
 /* Con el acceso por usuario (auth.js) la persona ya se identificó: este menú no vuelve a pedir ni a verificar la clave de los módulos. */
 if (window.CB && CB.activo) {
   $('outBtn').textContent = 'Cerrar sesión';
   $('outBtn').onclick = () => CB.salir();
   CB.ready.then(() => { if (!CB.bloqueado) showMenu(); });
-} else {
-  const K0 = getClave();
-  if (K0) {
-    showGate('');
-    $('gateMsg').className = 'msg';
-    $('gateMsg').textContent = 'Verificando la clave guardada...';
-    validar(K0).then(v => {
-      if (v === 'ok') showMenu();
-      else if (v === 'mala') { clearClave(); showGate('La clave cambió. Escríbela de nuevo.'); }
-      else { showGate('No se pudo verificar la clave guardada. Comprueba tu conexión e inténtalo otra vez.'); }
-    });
-  } else { showGate(''); }
-}
+} else { showGate(); $('outBtn').style.display = 'none'; }
 </script>
 </body>
 </html>
