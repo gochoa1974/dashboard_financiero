@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
+<!-- v19 (20 oct 2026 13:00): la copia guardada en el aparato se renueva sola si es de un esquema anterior o no trae la tarifa de limpieza (antes solo se renovaba cuando cambiaba la fecha del archivo en Drive). Ninguna cifra cambia. -->
 <!-- v18 (18 oct 2026): listas Airbnb/Directas/Extras agrupadas por mes (acordeón con total al final) y filtro Comparar. Ningún valor cambia. -->
 <!-- v16 (17 oct 2026): filtros de período (Mes, Año, Todo y panel Período con año pasado, 30/60/90/180 días y 12 meses) con comparación contra el mismo período del año anterior. -->
 <!-- v15 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): acento verde (antes turquesa; el turquesa queda solo en la serie Airbnb), gráfico de evolución en el acento, tema compartido claro/oscuro. Sin cambios de lógica. -->
@@ -355,7 +356,8 @@ var CLIENT_ID="284452253474-nkn76cksdd6hu41f79t7kfnp47iag878.apps.googleusercont
 var SCOPES="https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file";
 var F_ROOT="CIMA BLANCA",F_ING="1. INGRESOS",F_RES="1.1 Reservas",F_RAW="RAW_sin_procesar",F_PROC="PROCESADO";
 var MAESTRO_NAME="MAESTRO_INGRESOS_CIMA_BLANCA.json";
-var ING_VER="10";
+var ING_VER="10",ING_SCHEMA="13";
+function copiaVieja(d){return !d||(+d.schema_version||0)<+ING_SCHEMA||!(d.reservas||[]).some(function(r){return r.tarifa_limpieza!=null;});}
 var K_CACHE="cimablanca_ing_maestro",K_TOPE="cimablanca_tope_liquidacion",K_GUARD="cimablanca_ing_autosync",K_VER="cimablanca_ing_ver";
 var TOPE_DEF=1800;
 var MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
@@ -790,7 +792,7 @@ $("tReset").addEventListener("click",function(){lsSet(K_TOPE,String(TOPE_DEF));$
 function revisar(){
   setState("busy","Revisando datos…","");
   var cached=null;try{cached=JSON.parse(lsGet(K_CACHE)||"null");}catch(e){}
-  var mod=cached&&typeof cached.mod==="number"?cached.mod:0;
+  var mod=cached&&typeof cached.mod==="number"&&!copiaVieja(cached.data)?cached.mod:0;
   return CB.llamar("maestro",{modificado:mod}).then(function(r){
     var admin=CB.perfil&&CB.perfil.esAdmin;
     var verOk=lsGet(K_VER)===ING_VER;
