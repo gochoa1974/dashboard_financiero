@@ -110,7 +110,8 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
 <dialog id="dlg" aria-labelledby="dT"><form class="dl" id="dF" method="dialog" autocomplete="off">
   <h2 id="dT">Persona</h2>
   <label for="dU">Usuario</label><input id="dU" autocapitalize="none" autocorrect="off" spellcheck="false" required>
-  <label for="dN">Nombre</label><input id="dN" required>
+  <label for="dN">Nombre</label><input id="dN" autocomplete="given-name" required>
+  <label for="dL">Apellido</label><input id="dL" autocomplete="family-name" required>
   <label for="dM">Correo (para recuperar la clave)</label><input id="dM" type="email" inputmode="email" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="nombre@correo.com">
   <p class="h" id="dMH">Si olvida su clave, la app le envía una clave provisional a este correo. Sin correo no puede recuperarla sola.</p>
   <label for="dR">Rol</label><select id="dR"></select>
@@ -202,7 +203,7 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
   function abrir(u){
     editando=u||null;$('dE').textContent='';
     $('dT').textContent=u?(u.nombre||u.usuario):'Nueva persona';
-    $('dU').value=u?u.usuario:'';$('dU').readOnly=!!u;$('dN').value=u?(u.nombre||''):'';$('dM').value=u?(u.email||''):'';
+    $('dU').value=u?u.usuario:'';$('dU').readOnly=!!u;(function(t){var i=t.indexOf(' ');$('dN').value=i<0?t:t.slice(0,i);$('dL').value=i<0?'':t.slice(i+1)})(u?String(u.nombre||'').trim():'');$('dM').value=u?(u.email||''):'';
     $('dR').innerHTML=ROL.map(function(r){return '<option value="'+esc(r.rol)+'">'+esc(r.etiqueta)+'</option>'}).join('');
     if(u)$('dR').value=u.rol;
     $('dC').value='';$('dC').required=!u;$('dCL').textContent=u?'Clave nueva (opcional)':'Clave';
@@ -217,7 +218,7 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
   function ocupado(on,txt){$('dS').disabled=on;$('dA').disabled=on;$('dS').textContent=on?(txt||'Guardando…'):'Guardar'}
   $('dF').addEventListener('submit',function(e){
     e.preventDefault();$('dE').textContent='';ocupado(true);
-    CB.llamar('guardar_usuario',{usuario:$('dU').value,nombre:$('dN').value,rol:$('dR').value,clave:$('dC').value,email:$('dM').value}).then(function(){dlg.close();ocupado(false);cargar()}).catch(function(er){ocupado(false);$('dE').textContent=er.message||'No pude guardar'});
+    CB.llamar('guardar_usuario',{usuario:$('dU').value,nombre:($('dN').value.trim()+' '+$('dL').value.trim()).trim(),rol:$('dR').value,clave:$('dC').value,email:$('dM').value}).then(function(){dlg.close();ocupado(false);cargar()}).catch(function(er){ocupado(false);$('dE').textContent=er.message||'No pude guardar'});
   });
   $('dA').onclick=function(){
     if(!editando)return;var nuevo=!editando.activo;
