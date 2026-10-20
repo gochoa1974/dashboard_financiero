@@ -13,10 +13,11 @@
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
-<script src="../glosario_cb_v1_5_2026-10-20_1145.js"></script>
+<script src="../glosario_cb_v1_6_2026-10-20_1230.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <!-- v3.3 (20 oct 2026 10:35): noches de cortesía (extensiones SIN PAGO) = bloqueadas: salen de disponibles y vendidas; regla escrita en «Cómo se calcula». -->
+<!-- v4.2 (20 oct 2026 12:30): colores por base (Mi ingreso verde, PriceLabs azul, AirDNA violeta) en franja, tarjeta principal, ADR/RevPAR, chips, hoja y gráfico; rangos de 7, 30 y 365 días a la vista junto a Mes y el año; nueva tarjeta «Las tres miradas» (Mi ingreso, PriceLabs y AirDNA en columnas, mismo período); etiquetas «ADR bruto/neto» en gráfico y tabla; la lectura del mes en curso dice que compara los dos últimos meses cerrados; nota de marcas; apunta a glosario v1.6. -->
 <!-- v4.1 (20 oct 2026 11:45): el rango móvil lleva su ⓘ al glosario; apunta a glosario v1.5. -->
 <!-- v4 (20 oct 2026 11:30): ficha «Base» (Mi ingreso / PriceLabs / AirDNA) que cambia ADR, RevPAR, etiquetas y notas; rangos móviles de 7, 30 y 365 días con variación contra el período anterior; con la base PriceLabs, ventana, duración y reservas por fecha de reserva (mediana); textos de rango y cancelaciones corregidos. -->
 <!-- v3.1 (20 oct 2026 10:05): el módulo pasa a llamarse «KPIs · Hotelería», igual que su tarjeta del Dashboard. -->
@@ -24,7 +25,7 @@
 <!-- v2 (18 oct 2026 21:45): usa los campos nuevos del maestro (Sincronizar v12): anticipación real (fecha de reserva), ADR sin limpieza, ADR bruto y noches de las extensiones de estadía. -->
 <!-- v1 (18 oct 2026 21:00): módulo Hotelería «Esencial»: ocupación, ADR, RevPAR, estadía media, anticipación, cancelaciones, mes a mes y Comparar. Todas las noches como disponibles; sin bloqueos. -->
 <style>
-:root{--acento-t:var(--acento-texto);--hero-a:#0a2233;--hero-b:#123a52;--err:var(--error);--gasto:var(--pendiente);--r3:18px;--r4:24px;--pill:999px}
+:root{--on-ac:#04261a;--acento-t:var(--acento-texto);--hero-a:#0a2233;--hero-b:#123a52;--err:var(--error);--gasto:var(--pendiente);--r3:18px;--r4:24px;--pill:999px}
 *{box-sizing:border-box}
 body{margin:0;background:var(--fondo);color:var(--texto);font:14px/1.45 var(--fuente);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1100px;margin:0 auto;padding:0 16px 96px}
@@ -137,8 +138,23 @@ body.cmpOn .sg,body.cmpOn .lec{display:none!important}
 .how .rg .rt{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--texto-2);font-weight:800;margin-bottom:6px}
 .how .rg ul{margin:0;padding-left:18px;font-size:13px;line-height:1.5}
 .how .lk{display:inline-flex;align-items:center;min-height:44px;margin-top:8px;color:var(--acento-texto);font-weight:800;text-decoration:none}
+body[data-base=pl]{--acento:#3b6df0;--acento-t:#1d4ed8;--on-ac:#fff;--hero-a:#1e3a8a;--hero-b:#2f55c8;border-top:6px solid #3b6df0}
+body[data-base=adna]{--acento:#8b4bd1;--acento-t:#6d28d9;--on-ac:#fff;--hero-a:#4c1d95;--hero-b:#6d28d9;border-top:6px solid #8b4bd1}
+body[data-base=pl] .card.bc{border-top:4px solid var(--acento)}body[data-base=adna] .card.bc{border-top:4px solid var(--acento)}
+body[data-base=pl] .tg span.n{background:#1d4ed8;border-color:#1d4ed8;color:#fff}body[data-base=adna] .tg span.n{background:#6d28d9;border-color:#6d28d9;color:#fff}
+body[data-base=pl] .pchip[aria-pressed=true],body[data-base=adna] .pchip[aria-pressed=true]{background:var(--acento);border-color:var(--acento);color:#fff}
+body[data-base=pl] .bstrip,body[data-base=adna] .bstrip{border-width:1.5px}
+.t3{margin-top:10px}.t3 table{width:100%;table-layout:fixed}.t3 th,.t3 td{text-align:center}
+.t3 thead th{padding:0 2px 8px;vertical-align:bottom;border-bottom:0}
+.t3 .ch{border-top:4px solid var(--c);background:color-mix(in srgb,var(--c) 13%,transparent);border-radius:8px 8px 0 0;padding:6px 2px;text-transform:none;letter-spacing:0}
+.t3 .ch b{display:block;font-size:12px;font-weight:800;color:var(--texto)}.t3 .ch small{display:block;font-size:10.5px;font-weight:700;color:var(--texto-2);line-height:1.25;margin-top:2px}
+.t3 th.rh{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0;color:var(--texto-2);font-weight:800;width:32%;padding:10px 4px 10px 0;line-height:1.2;vertical-align:middle}
+.t3 .rh .gl-t{min-height:44px;gap:4px;text-align:left;font-weight:800;flex-wrap:wrap;align-content:center}.t3 .rh .gl-i{width:18px;height:18px;font-size:10px}
+.t3 td{padding:10px 2px;font-weight:800;font-size:13.5px}.t3 td small{display:block;font-size:10.5px;font-weight:600;color:var(--texto-2);line-height:1.25}
+.t3 td.on{background:color-mix(in srgb,var(--c) 11%,transparent)}
+.t3 td.occ{color:var(--texto-2);font-weight:700}
 .basech{border:1.5px solid var(--acento);color:var(--acento-t)}
-.basech.on{background:var(--acento);color:#04261a}
+.basech.on{background:var(--acento);color:var(--on-ac)}
 .bstrip{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--acento) 12%,var(--tarjeta));border:1px solid var(--acento);border-radius:14px;padding:6px 6px 6px 12px;margin:2px 0 10px;font-size:12.5px;line-height:1.4}
 .bstrip.ne{background:var(--tarjeta);border-color:var(--linea)}
 .bstrip span{flex:1}.bstrip button{flex:none;min-height:44px;padding:0 10px;border:0;background:none;color:var(--acento-t);font:800 13px var(--fuente);text-decoration:underline;cursor:pointer}
@@ -148,7 +164,7 @@ body.cmpOn .sg,body.cmpOn .lec{display:none!important}
 .bopt .bt i{font-style:normal;font-weight:800;color:var(--acento-t)}
 .bopt .bd{display:block;font-size:13px;color:var(--texto-2);margin:4px 0 8px;line-height:1.4}
 .brow{display:flex;gap:10px;margin-top:12px}.brow .cl{margin-top:0;flex:0 0 110px;border-radius:14px}
-.ap{flex:1;min-height:48px;border:0;border-radius:14px;background:var(--acento);color:#04261a;font:800 15px var(--fuente);cursor:pointer}
+.ap{flex:1;min-height:48px;border:0;border-radius:14px;background:var(--acento);color:var(--on-ac);font:800 15px var(--fuente);cursor:pointer}
 body.cmpOn .bstrip{display:none!important}
 </style>
 </head>
@@ -184,9 +200,15 @@ body.cmpOn .bstrip{display:none!important}
       <svg class="chart" id="chart" viewBox="0 0 640 220" role="img" aria-label="Evolución mensual"></svg>
       <p class="note" id="mN"></p>
     </div>
+    <section class="card g3" id="tres" aria-labelledby="t3h">
+      <div class="gl-h" id="t3h"></div>
+      <div class="d" id="t3d"></div>
+      <div class="t3"><table><thead><tr><th></th><th><div class="ch" style="--c:#0b7a55"><b>Mi ingreso</b><small>Neto<br>sin limpieza</small></div></th><th><div class="ch" style="--c:#3b6df0"><b>PriceLabs</b><small>Bruto<br>sin limpieza</small></div></th><th><div class="ch" style="--c:#8b4bd1"><b>AirDNA</b><small>Bruto<br>con limpieza</small></div></th></tr></thead><tbody id="t3b"></tbody></table></div>
+      <p class="note" id="t3n"></p>
+    </section>
     <details class="card g3" id="detT">
       <summary>Detalle mensual</summary>
-      <div class="tw"><table><thead><tr><th>Mes</th><th>Ocup.</th><th>Noches</th><th>ADR</th><th>RevPAR</th><th>Duración</th><th>Ventana</th><th>Canc.</th></tr></thead><tbody id="tb"></tbody></table></div>
+      <div class="tw"><table><thead><tr><th>Mes</th><th>Ocup.</th><th>Noches</th><th id="thA">ADR</th><th id="thR">RevPAR</th><th>Duración</th><th>Ventana</th><th>Canc.</th></tr></thead><tbody id="tb"></tbody></table></div>
       <p class="note">«Sin datos» significa que falta la información, no que valga cero. Los meses en curso van marcados.</p>
     </details>
     <details class="card g3" id="detH">
@@ -305,7 +327,7 @@ function aggW(a,b){
 
 /* ===== filtros (mismas reglas que Ingresos, Gastos y Resultados) ===== */
 var per="mes",cur=CM;
-var QUICK=[["mes","Mes"],["anio",String(Y)],["pasado",String(Y-1)],["todo","Acumulado"]];
+var QUICK=[["mes","Mes"],["d7","7 días"],["d30","30 días"],["d365","365 días"],["anio",String(Y)]];
 var CAL=[["mes","Este mes"],["anio",String(Y)],["pasado",String(Y-1)]],REC=[["30","Último mes"],["60","2 meses"],["90","3 meses"],["180","6 meses"],["12m","12 meses"]],ALL=[["todo","Acumulado"]],MOV=[["d7","7 días"],["d30","30 días"],["d365","365 días"]];
 var WIN={d7:7,d30:30,d365:365};
 var LBL={};CAL.concat(REC,ALL,MOV).forEach(function(x){LBL[x[0]]=x[1];});
@@ -345,7 +367,7 @@ function cmpInit(){
 
 /* ===== render ===== */
 var mSel="occ";
-function tarjeta(t,v,f,o){o=o||{};return '<div class="card">'+(o.k?GLO.head(o.k,t):'<h3>'+t+'</h3>')+'<div class="v'+(v==null?' off':'')+'">'+nz(v)+'</div>'+(o.tg?'<div class="tg">'+o.tg.map(function(x){return '<span'+(x[1]?' class="'+x[1]+'"':'')+'>'+x[0]+'</span>';}).join("")+'</div>':'')+'<div class="d">'+f+'</div>'+(o.dl||"")+'</div>';}
+function tarjeta(t,v,f,o){o=o||{};return '<div class="card'+(o.cls||'')+'">'+(o.k?GLO.head(o.k,t):'<h3>'+t+'</h3>')+'<div class="v'+(v==null?' off':'')+'">'+nz(v)+'</div>'+(o.tg?'<div class="tg">'+o.tg.map(function(x){return '<span'+(x[1]?' class="'+x[1]+'"':'')+'>'+x[0]+'</span>';}).join("")+'</div>':'')+'<div class="d">'+f+'</div>'+(o.dl||"")+'</div>';}
 /* variación contra el período anterior (mes: el mes anterior; ventanas móviles: el bloque de igual tamaño justo antes) */
 function prevMs(){
   if(per==="mes"){var p=sm(cur,-1);return D[p]?[p]:null;}
@@ -363,6 +385,7 @@ function dlt(a,b,tipo){
 function render(){
   CBC.render();document.body.classList.toggle("cmpOn",CBC.active());
   var r=rango(),ms=months(r[0],r[1]);
+  document.body.setAttribute("data-base",BASE);var tc=document.querySelector("meta[name=theme-color]");if(tc)tc.content=BASE==="pl"?"#1e3a8a":BASE==="adna"?"#4c1d95":"#0a2233";
   MET.adr.label=BASE==="mi"?"ADR (neto por noche)":BASE==="pl"?"ADR (bruto, sin limpieza)":"ADR (bruto, con limpieza)";MET.rev.label=BASE==="mi"?"RevPAR (neto)":"RevPAR (bruto)";
   $("bstrip").className="bstrip"+(BASE==="mi"?" ne":"");$("bstripT").innerHTML=BASE==="mi"?"<b>Base: Mi ingreso real</b> · neto y sin limpieza.":BASE==="pl"?"<b>Calculado como PriceLabs:</b> bruto (antes de comisión) y sin limpieza.":"<b>Calculado como AirDNA:</b> bruto, con limpieza y sin tarifa de servicio.";
   $("mnav").style.display=per==="mes"?"flex":"none";
@@ -382,8 +405,8 @@ function render(){
   var revNote=BASE==="mi"?"Lo que rinde cada noche disponible, se venda o no":"ADR × ocupación · tu neto "+nz(f2(a.revn));
   var pl=BASE==="pl";
   $("sg").innerHTML=
-    tarjeta("ADR · tarifa por noche",f2(a.adr),adrNote,{k:"adr",tg:TG,dl:pa?dlt(a.adr,pa.adr):""})+
-    tarjeta("RevPAR",f2(a.rev),revNote,{k:"revpar",tg:TG,dl:pa?dlt(a.rev,pa.rev):""})+
+    tarjeta("ADR · tarifa por noche",f2(a.adr),adrNote,{cls:" bc",k:"adr",tg:TG,dl:pa?dlt(a.adr,pa.adr):""})+
+    tarjeta("RevPAR",f2(a.rev),revNote,{cls:" bc",k:"revpar",tg:TG,dl:pa?dlt(a.rev,pa.rev):""})+
     tarjeta("Noches vendidas",a.dp?String(a.v):null,"de "+a.dp+" disponibles",{k:"noche_vend"})+
     tarjeta("Duración de estadía",a.med==null?null:num(a.med,a.med%1?1:0)+(a.med===1?" noche":" noches"),a.med==null?"":(pl?"Mediana de las reservas hechas en el período · ":"Mediana · promedio "+num(a.alos,2)+" · ")+a.rs+(a.rs===1?" reserva":" reservas"),{k:"duracion"})+
     tarjeta("Ventana de reserva",a.leadSel==null?null:num(a.leadSel,0)+(Math.round(a.leadSel)===1?" día":" días"),a.leadSel==null?(a.rs?"Falta la fecha de reserva: actualiza con Sincronizar":"Días entre reservar y llegar"):(pl?"Mediana de días entre reservar y llegar · reservas hechas en el período · ":"Promedio de días entre reservar y llegar · ")+a.ln+" de "+a.rs+(a.rs===1?" reserva":" reservas"),{k:"ventana"})+
@@ -392,13 +415,15 @@ function render(){
   var tm=per==="mes"?months(sm(cur,-5),cur):ms;
   $("mT").textContent=per==="mes"?"Últimos meses":"Mes a mes";
   $("mD").textContent=per==="mes"?"Los 6 meses hasta "+ml(cur)+". Las barras claras son meses en curso (solo noches ya transcurridas).":etq.charAt(0).toUpperCase()+etq.slice(1)+" · cada barra es un mes.";
-  var SEG=[["occ","Ocupación"],["adr","ADR"],["rev","RevPAR"]];
+  var bw2=BASE==="mi"?"neto":"bruto",SEG=[["occ","Ocupación"],["adr","ADR "+bw2],["rev","RevPAR "+bw2]];
   $("mSeg").innerHTML=SEG.map(function(s){return '<button data-mt="'+s[0]+'" aria-pressed="'+(mSel===s[0])+'">'+s[1]+'</button>';}).join("");
   grafico(tm);
   lectura(tm);
   /* tabla */
   $("tb").innerHTML=tm.slice().reverse().map(function(m){var x=agg([m]);
     return '<tr class="'+(D[m].parcial?'par ':'')+(m===cur&&per==="mes"?'sel':'')+'"><td>'+ab(m)+'</td><td>'+nz(pc(x.occ))+'</td><td>'+(x.dp?x.v+"/"+x.dp:"Sin datos")+'</td><td>'+nz(f2(x.adr))+'</td><td>'+nz(f2(x.rev))+'</td><td>'+(function(){var dv=BASE==="pl"?x.med:x.alos;return dv==null?"Sin datos":num(dv,1);})()+'</td><td>'+(x.leadSel==null?"Sin datos":num(x.leadSel,0)+" d")+'</td><td>'+(x.canc==null?"Sin datos":x.canc)+'</td></tr>';}).join("");
+  $("thA").textContent="ADR "+bw2;$("thR").textContent="RevPAR "+bw2;
+  tres();
   var pl2=BASE==="pl",ad2=BASE==="adna";
   var IT=[["ocupacion","Ocupación","Noches vendidas ÷ noches disponibles",pc(a.occ)==null?"":"Ahora: "+a.v+" ÷ "+a.dp+" = "+pc(a.occ)],
    ["adr","ADR · tarifa por noche",pl2?"Ingreso bruto de hospedaje ÷ noches vendidas":ad2?"Ingreso bruto con limpieza ÷ noches vendidas":"Ingreso neto de hospedaje ÷ noches vendidas",
@@ -409,8 +434,29 @@ function render(){
    ["ventana","Ventana de reserva",pl2?"Mediana de días entre reservar y llegar, de las reservas hechas en el período":"Promedio de días entre reservar y llegar, de las reservas con check-in en el período",""],
    ["cancelaciones","Cancelaciones","Reservas canceladas, por fecha de check-in",""]];
   $("how").innerHTML=IT.map(function(i){return '<div class="it"><b>'+i[1]+'</b><div class="fx">'+i[2]+'</div>'+(i[3]?'<div class="ex">'+i[3]+'</div>':'')+'</div>';}).join("")
-   +'<div class="rg"><div class="rt">Reglas</div><ul><li>Disponible = cada día hasta ayer, menos las noches bloqueadas o de cortesía.</li><li>Una noche de cortesía (regalada, sin pago) se trata como bloqueada: no cuenta como vendida ni como disponible, y no tiene ingreso.'+(BLQ?' En este rango hay '+BLQ+'.':'')+'</li><li>La noche de salida no cuenta.</li>'+baseRules()+'<li>Comisión de Airbnb: 3% en reservas hechas hasta el 11 abr 2026 y 15,5% desde el 18 abr; por eso el ADR neto no es comparable entre ambas etapas.</li>'+(EXTN?'<li>Las extensiones de estadía pagadas suman sus noches y su ingreso.</li>':'')+'</ul></div>'
+   +'<div class="rg"><div class="rt">Reglas</div><ul><li>Disponible = cada día hasta ayer, menos las noches bloqueadas o de cortesía.</li><li>PriceLabs y AirDNA son marcas de sus respectivos dueños; Cima Blanca no está afiliada a ellas. Las bases replican sus metodologías públicas solo para comparar.</li><li>Una noche de cortesía (regalada, sin pago) se trata como bloqueada: no cuenta como vendida ni como disponible, y no tiene ingreso.'+(BLQ?' En este rango hay '+BLQ+'.':'')+'</li><li>La noche de salida no cuenta.</li>'+baseRules()+'<li>Comisión de Airbnb: 3% en reservas hechas hasta el 11 abr 2026 y 15,5% desde el 18 abr; por eso el ADR neto no es comparable entre ambas etapas.</li>'+(EXTN?'<li>Las extensiones de estadía pagadas suman sus noches y su ingreso.</li>':'')+'</ul></div>'
    +'<a class="lk" href="../glosario/">Ver el glosario completo →</a>';
+}
+/* ===== «Las tres miradas»: el mismo período calculado con las tres bases ===== */
+function tm0(){return null;}
+function tres(){
+  var r=rango(),ms=months(r[0],r[1]),win=WIN[per]?winOf():null,B0=BASE,o={},ks=["mi","pl","adna"];
+  ks.forEach(function(k){BASE=k;o[k]=win?aggW(win.a,win.b):agg(ms);});BASE=B0;
+  var C={mi:"#0b7a55",pl:"#3b6df0",adna:"#8b4bd1"};
+  function row(k,l,cells){return '<tr><th scope="row" class="rh">'+GLO.inline(k,l)+'</th>'+cells+'</tr>';}
+  function td(b,v,sub){return '<td class="'+(BASE===b?'on':'')+'" style="--c:'+C[b]+'">'+nz(v)+(sub&&v!=null?'<small>'+sub+'</small>':'')+'</td>';}
+  function three(fn){return ks.map(function(b){return td(b,fn(o[b],b)[0],fn(o[b],b)[1]);}).join("");}
+  var m=o.mi,occ=m.occ==null?'Sin datos':pc(m.occ)+' · '+m.v+' de '+m.dp+' noches<small>igual en las tres</small>';
+  var h=row("ocupacion","Ocupación",'<td colspan="3" class="occ">'+occ+'</td>');
+  h+=row("adr","ADR",three(function(x){return [f2(x.adr)];}));
+  h+=row("revpar","RevPAR",three(function(x){return [f2(x.rev)];}));
+  h+=row("duracion","Duración de estadía",three(function(x){return [x.med==null?null:num(x.med,x.med%1?1:0)+(x.med===1?" noche":" noches"),"mediana"];}));
+  h+=row("ventana","Ventana de reserva",three(function(x,b){return [x.leadSel==null?null:num(x.leadSel,0)+(Math.round(x.leadSel)===1?" día":" días"),b==="pl"?"mediana":"promedio"];}));
+  h+=row("fechas","Reservas",three(function(x,b){return [String(x.rs),b==="pl"?"por reserva hecha":"por llegada"];}));
+  $("t3b").innerHTML=h;
+  $("t3h").innerHTML=GLO.head("tres_miradas","Las tres miradas");
+  $("t3d").textContent=etqF().charAt(0).toUpperCase()+etqF().slice(1)+" · el mismo período calculado de tres formas.";
+  $("t3n").textContent="La columna de tu base activa va sombreada. PriceLabs y AirDNA son marcas de sus respectivos dueños; Cima Blanca no está afiliada a ellas y replica sus metodologías públicas solo para comparar.";
 }
 function rngTxt(r){
   if(WIN[per]){var w=winOf(),y1=w.a.slice(0,4),y2=w.b.slice(0,4);return fd(w.a)+(y1!==y2?" "+y1:"")+" al "+fd(w.b)+" "+y2+" · se compara con los "+w.n+" días anteriores"+(w.a<MINF?" · hay datos desde "+fd(MINF)+" "+MINF.slice(0,4):"");}
@@ -454,10 +500,11 @@ function lectura(tm){
   var a=agg([c[c.length-2]]),b=agg([c[c.length-1]]);
   if(a.occ==null||b.occ==null||a.adr==null||b.adr==null){el.hidden=true;return;}
   var dO=b.occ-a.occ,dA=(b.adr-a.adr)/a.adr*100,dR=a.rev?(b.rev-a.rev)/a.rev*100:0,t;
-  var mo=ml(c[c.length-1]),mp=ml(c[c.length-2]);
+  var mo=ml(c[c.length-1]),mp=ml(c[c.length-2]),lastT=tm[tm.length-1],pre=(per==="mes"&&D[lastT]&&D[lastT].parcial)||per!=="mes"?"Entre los dos últimos meses cerrados, ":"";
   if(dO>=1&&dA<=-1)t="En "+mo+" vendiste más noches que en "+mp+" ("+(dO>=0?"+":"")+num(dO,1)+" pts), pero a una tarifa menor ("+num(dA,1)+"%): el RevPAR "+(dR>=0?"subió":"bajó")+" "+num(Math.abs(dR),1)+"%.";
   else if(dO<=-1&&dA>=1)t="En "+mo+" vendiste menos noches que en "+mp+" ("+num(dO,1)+" pts), pero cobraste más por noche (+"+num(dA,1)+"%): el RevPAR "+(dR>=0?"subió":"bajó")+" "+num(Math.abs(dR),1)+"%.";
-  else t=(per==="mes"?"De ":"Entre los dos últimos meses cerrados, de ")+rangoMes(mp,mo)+" la ocupación "+(dO>=0?"subió ":"bajó ")+num(Math.abs(dO),1)+" pts, el ADR "+(dA>=0?"subió ":"bajó ")+num(Math.abs(dA),1)+"% y el RevPAR "+(dR>=0?"subió ":"bajó ")+num(Math.abs(dR),1)+"%.";
+  else t=(pre?pre+"de ":"De ")+rangoMes(mp,mo)+" la ocupación "+(dO>=0?"subió ":"bajó ")+num(Math.abs(dO),1)+" pts, el ADR "+(dA>=0?"subió ":"bajó ")+num(Math.abs(dA),1)+"% y el RevPAR "+(dR>=0?"subió ":"bajó ")+num(Math.abs(dR),1)+"%.";
+  if(pre&&t.indexOf("Entre")!==0)t=pre+t.charAt(0).toLowerCase()+t.slice(1);
   if(c[c.length-2]<"2026-04"&&c[c.length-1]>="2026-04")t+=" Ojo: la comisión de Airbnb fue 3% en reservas hechas hasta el 11 abr 2026 y 15,5% desde el 18 abr; baja el ADR neto de las estadías reservadas después.";
   el.textContent=t;el.hidden=false;
 }
