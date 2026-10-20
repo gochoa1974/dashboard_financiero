@@ -111,6 +111,8 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
   <h2 id="dT">Persona</h2>
   <label for="dU">Usuario</label><input id="dU" autocapitalize="none" autocorrect="off" spellcheck="false" required>
   <label for="dN">Nombre</label><input id="dN" required>
+  <label for="dM">Correo (para recuperar la clave)</label><input id="dM" type="email" inputmode="email" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="nombre@correo.com">
+  <p class="h" id="dMH">Si olvida su clave, la app le envía una clave provisional a este correo. Sin correo no puede recuperarla sola.</p>
   <label for="dR">Rol</label><select id="dR"></select>
   <label for="dC" id="dCL">Clave</label><input id="dC" type="password" autocomplete="new-password">
   <p class="h" id="dH">Mínimo 8 caracteres.</p>
@@ -122,7 +124,7 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
 (function(){
   var $=function(i){return document.getElementById(i)};
   var FILAS=[],USU=[],ROL=[],YO='',filtro='',editando=null;
-  var ET={login:['Entró','ok','→'],login_fallido:['Intento fallido de entrada','bad','!'],abrir:['Abrió el módulo','','▢'],usuario_creado:['Se creó un usuario','ok','+'],usuario_actualizado:['Se cambió un usuario','warn','✎'],usuario_desactivado:['Se desactivó un usuario','bad','×'],usuario_activado:['Se reactivó un usuario','ok','↺'],config_bloqueo:['Cambió el bloqueo de la app','warn','⚙']};
+  var ET={login:['Entró','ok','→'],login_fallido:['Intento fallido de entrada','bad','!'],abrir:['Abrió el módulo','','▢'],usuario_creado:['Se creó un usuario','ok','+'],usuario_actualizado:['Se cambió un usuario','warn','✎'],usuario_desactivado:['Se desactivó un usuario','bad','×'],usuario_activado:['Se reactivó un usuario','ok','↺'],config_bloqueo:['Cambió el bloqueo de la app','warn','⚙'],reset_enviado:['Se envió una clave provisional','warn','✉'],reset_ignorado:['Pidieron clave provisional (sin envío)','','✉'],reset_limite:['Pidieron demasiadas claves provisionales','bad','!'],reset_error_correo:['No se pudo enviar la clave provisional','bad','!'],login_provisional:['Entró con clave provisional','warn','→'],clave_cambiada_tras_reset:['Creó su clave nueva tras el reset','ok','✓'],clave_cambiada:['Cambió su clave','ok','✓']};
   var MOD={dashboard:'Dashboard',ingresos:'Ingresos',gastos:'Gastos',adicionales:'Adicionales',directas:'Directas',cancelaciones:'Cancelaciones',parametros:'Configuración',sincronizar:'Sincronizar',accesos:'Accesos',actividad:'Actividad'};
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
   var MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -171,7 +173,7 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
     if(!USU.length){$('usr').innerHTML='<div class="card"><div class="vacio">Aún no hay personas registradas.</div></div>';return}
     var RE={admin:'Administrador',completo:'Completo',pagos:'Pagos'};
     $('usr').innerHTML='<div class="card">'+USU.map(function(u){
-      return '<div class="row tap" role="button" tabindex="0" data-u="'+esc(u.usuario)+'"><div class="dot '+(u.activo?'ok':'bad')+'" aria-hidden="true">'+esc(String(u.nombre||u.usuario).charAt(0).toUpperCase())+'</div><div class="tx"><b>'+esc(u.nombre||u.usuario)+'</b><span>'+esc(u.usuario)+' · '+esc(RE[u.rol]||u.rol)+' · '+(u.ultimo?'Último acceso '+esc(fechaTxt(u.ultimo))+' '+esc(String(u.ultimo).slice(11,16)):'Aún no ha entrado')+'</span></div><span class="pill '+(u.activo?'ok':'bad')+'">'+(u.activo?'Activo':'Desactivado')+'</span></div>';
+      return '<div class="row tap" role="button" tabindex="0" data-u="'+esc(u.usuario)+'"><div class="dot '+(u.activo?'ok':'bad')+'" aria-hidden="true">'+esc(String(u.nombre||u.usuario).charAt(0).toUpperCase())+'</div><div class="tx"><b>'+esc(u.nombre||u.usuario)+'</b><span>'+esc(u.usuario)+' · '+esc(RE[u.rol]||u.rol)+' · '+(u.ultimo?'Último acceso '+esc(fechaTxt(u.ultimo))+' '+esc(String(u.ultimo).slice(11,16)):'Aún no ha entrado')+(u.email?'':' · Sin correo')+'</span></div><span class="pill '+(u.activo?'ok':'bad')+'">'+(u.activo?'Activo':'Desactivado')+'</span></div>';
     }).join('')+'</div>';
   }
   function err(id,e){$(id).innerHTML='<div class="card"><div class="vacio">No pude cargar ('+esc(e.message||e)+').<br><button class="btn" type="button" data-r="'+id+'">Reintentar</button></div></div>'}
@@ -199,7 +201,7 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
   function abrir(u){
     editando=u||null;$('dE').textContent='';
     $('dT').textContent=u?(u.nombre||u.usuario):'Nueva persona';
-    $('dU').value=u?u.usuario:'';$('dU').readOnly=!!u;$('dN').value=u?(u.nombre||''):'';
+    $('dU').value=u?u.usuario:'';$('dU').readOnly=!!u;$('dN').value=u?(u.nombre||''):'';$('dM').value=u?(u.email||''):'';
     $('dR').innerHTML=ROL.map(function(r){return '<option value="'+esc(r.rol)+'">'+esc(r.etiqueta)+'</option>'}).join('');
     if(u)$('dR').value=u.rol;
     $('dC').value='';$('dC').required=!u;$('dCL').textContent=u?'Clave nueva (opcional)':'Clave';
@@ -214,7 +216,7 @@ dialog::backdrop{background:rgba(7,23,34,.6)}
   function ocupado(on,txt){$('dS').disabled=on;$('dA').disabled=on;$('dS').textContent=on?(txt||'Guardando…'):'Guardar'}
   $('dF').addEventListener('submit',function(e){
     e.preventDefault();$('dE').textContent='';ocupado(true);
-    CB.llamar('guardar_usuario',{usuario:$('dU').value,nombre:$('dN').value,rol:$('dR').value,clave:$('dC').value}).then(function(){dlg.close();ocupado(false);cargar()}).catch(function(er){ocupado(false);$('dE').textContent=er.message||'No pude guardar'});
+    CB.llamar('guardar_usuario',{usuario:$('dU').value,nombre:$('dN').value,rol:$('dR').value,clave:$('dC').value,email:$('dM').value}).then(function(){dlg.close();ocupado(false);cargar()}).catch(function(er){ocupado(false);$('dE').textContent=er.message||'No pude guardar'});
   });
   $('dA').onclick=function(){
     if(!editando)return;var nuevo=!editando.activo;
