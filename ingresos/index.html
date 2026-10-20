@@ -13,7 +13,8 @@
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
-<!-- v19 (20 oct 2026 13:00): la copia guardada en el aparato se renueva sola si es de un esquema anterior o no trae la tarifa de limpieza (antes solo se renovaba cuando cambiaba la fecha del archivo en Drive). Ninguna cifra cambia. -->
+<!-- v20 (20 oct 2026 13:30): los meses de Airbnb, Directas y Extras nacen siempre recogidos y se recogen al cambiar de período, mes o pestaña; selector de período en dos filas (control segmentado de 4 rangos + «Otro período» y «Comparar»), sin chips escondidos.
+v19 (20 oct 2026 13:00): la copia guardada en el aparato se renueva sola si es de un esquema anterior o no trae la tarifa de limpieza (antes solo se renovaba cuando cambiaba la fecha del archivo en Drive). Ninguna cifra cambia. -->
 <!-- v18 (18 oct 2026): listas Airbnb/Directas/Extras agrupadas por mes (acordeón con total al final) y filtro Comparar. Ningún valor cambia. -->
 <!-- v16 (17 oct 2026): filtros de período (Mes, Año, Todo y panel Período con año pasado, 30/60/90/180 días y 12 meses) con comparación contra el mismo período del año anterior. -->
 <!-- v15 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): acento verde (antes turquesa; el turquesa queda solo en la serie Airbnb), gráfico de evolución en el acento, tema compartido claro/oscuro. Sin cambios de lógica. -->
@@ -197,12 +198,16 @@ details.ver li.bad b{color:var(--bad)}
   .sticky{position:static;background:none;padding-top:0;margin-top:0}
   .view{max-width:520px}
 }
-.pchips{display:flex;gap:5px;overflow-x:auto;padding:2px 0 6px;margin:0 0 4px;scrollbar-width:none}
-.pchips::-webkit-scrollbar{display:none}
-.pchip{flex:none;min-height:40px;padding:0 9px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13px;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
-.pchip svg{width:14px;height:14px}
-.pchip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.pchip.mas[aria-expanded="true"]{border-color:var(--accent);color:var(--accent-t)}
+.pchips{display:grid;gap:8px;padding:2px 0 8px}
+.sgm{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:color-mix(in srgb,var(--ink) 8%,transparent);border-radius:99px;padding:3px}
+.sgm button{min-height:44px;border:0;background:transparent;border-radius:99px;color:var(--ink);font:700 13px inherit;white-space:nowrap;padding:0 2px;cursor:pointer}
+.sgm button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.act{min-height:44px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 13px inherit;display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:0 10px;white-space:nowrap}
+.act[aria-pressed=true]{border:1.5px solid var(--accent);color:var(--accent-t)}
+.act svg{width:14px;height:14px}
+@media(max-width:380px){.sgm button{font-size:12.5px}}
+@media(min-width:760px){.pchips{display:flex;align-items:center;flex-wrap:wrap}.sgm{grid-template-columns:repeat(4,auto)}.sgm button{padding:0 18px}.acts{display:flex}.act{padding:0 16px}}
 .prange{font-size:12.5px;color:var(--mut);font-weight:700;margin:2px 0 10px}
 .sh-bg{position:fixed;inset:0;background:rgba(3,12,18,.55);z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}
 .sh-bg.on{opacity:1;pointer-events:auto}
@@ -466,8 +471,7 @@ function perCmp(){
 function pIco(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';}
 function pChips(){
   var enQ=P_QUICK.some(function(q){return q[0]===per;});
-  $("pChips").innerHTML=P_QUICK.map(function(q){return '<button type="button" class="pchip" data-p="'+q[0]+'" aria-pressed="'+(per===q[0])+'">'+q[1]+'</button>';}).join("")+
-    '<button type="button" class="pchip mas" id="masB" aria-haspopup="dialog" aria-expanded="false"'+(enQ?'':' aria-pressed="true"')+'>'+(enQ?'Período':P_LBL[per])+' '+pIco()+'</button>'+CBC.chipHtml();
+  $("pChips").innerHTML='<div class="sgm" role="group" aria-label="Período">'+P_QUICK.map(function(q){return '<button type="button" data-p="'+q[0]+'" aria-pressed="'+(per===q[0])+'">'+q[1]+'</button>';}).join("")+'</div><div class="acts"><button type="button" class="act" id="masB" aria-haspopup="dialog" aria-expanded="false"'+(enQ?'':' aria-pressed="true"')+'>'+(enQ?'Otro período':P_LBL[per])+' '+pIco()+'</button>'+CBC.chipHtml("act")+'</div>';
 }
 function pSheet(){
   var hm=HOY.slice(0,7),NN={"30":1,"60":2,"90":3,"180":6,"12m":12};
@@ -480,7 +484,7 @@ function pSheet(){
 var pFoco=null;
 function shAbre(){pSheet();pFoco=document.activeElement;$("shBg").classList.add("on");$("sheet").classList.add("on");$("sheet").setAttribute("aria-hidden","false");var b=$("masB");if(b)b.setAttribute("aria-expanded","true");var p=document.querySelector('#sheet .opt[aria-pressed="true"]')||$("shX");setTimeout(function(){p.focus();},60);}
 function shCierra(){$("shBg").classList.remove("on");$("sheet").classList.remove("on");$("sheet").setAttribute("aria-hidden","true");var b=$("masB");if(b)b.setAttribute("aria-expanded","false");if(pFoco&&pFoco.focus)try{pFoco.focus();}catch(e){}}
-function setPer(p){per=p;ssSet(PERK,p);pChips();if(M)renderR();}
+function setPer(p){OPENM={};per=p;ssSet(PERK,p);pChips();if(M)renderR();}
 function shiftMonth(mk,n){var p=mk.split("-");var d=new Date(Date.UTC(+p[0],+p[1]-1+n,1));return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1);}
 
 function calcLiq(){
@@ -573,7 +577,7 @@ function evoHTML(mk){
     '<div class="evlg"><span><i style="background:rgba(95,112,128,.4)"></i>'+(y-1)+'</span><span><i style="background:rgb(var(--evc))"></i>'+y+'</span><span><i style="background:repeating-linear-gradient(45deg,rgb(var(--evc)) 0 2px,rgba(var(--evc),.28) 2px 5px)"></i>Por dormir</span></div>'+
     svg+'<div class="evc'+(per==="mes"?'':' one')+'">'+(per==="mes"?c1+c2:tile)+'</div></div>';
 }
-function evGo(el){var g=el.closest&&el.closest("g.m");if(!g||g.classList.contains("off"))return;curMonth=g.getAttribute("data-m");per="mes";ssSet(PERK,"mes");pChips();if(M)renderR();}
+function evGo(el){var g=el.closest&&el.closest("g.m");if(!g||g.classList.contains("off"))return;OPENM={};curMonth=g.getAttribute("data-m");per="mes";ssSet(PERK,"mes");pChips();if(M)renderR();}
 function pubRes(){try{if(!M||!(M.reservas||[]).length)return;var rg=monthRange(),m=rg[0],end=HOY.slice(0,7),o={};while(m<=end){var c=calcMonth(m);o[m]=[Math.round(c.totD*100)/100,Math.round(c.totP*100)/100];m=shiftMonth(m,1);}localStorage.setItem("cb_res_ing_v1",JSON.stringify({t:Date.now(),m:o}));}catch(e){}}
 var CM_MEMO={};
 function cmM(m){if(CM_MEMO[m]&&CM_MEMO[m].t===HOY+(M&&M.reservas?M.reservas.length:0))return CM_MEMO[m].o;var o=calcMonth(m);CM_MEMO[m]={t:HOY+(M&&M.reservas?M.reservas.length:0),o:o};return o;}
@@ -682,7 +686,7 @@ function accList(key,months,pr){
   var ty=null,ys=0,grand=0,multiY=months[0].slice(0,4)!==months[months.length-1].slice(0,4);
   function ysub(){if(multiY&&ty!==null)h+='<div class="ysub"><span>Total '+ty+'</span><span>'+money(ys)+'</span></div>';ys=0;}
   D.forEach(function(d){var y=d.m.slice(0,4);if(ty!==null&&y!==ty)ysub();ty=y;
-    var id=key+":"+d.m,op=OPENM[id]===undefined?d.m===def:OPENM[id],body="";
+    var id=key+":"+d.m,op=!!OPENM[id],body="";
     if(key==="ext"){body=d.rows.slice().sort(function(a,b){return a.r.fecha_inicio<b.r.fecha_inicio?-1:1;}).map(function(e){return extRow(e,false);}).join("");
       if(d.o.ext.rowsSin.length)body+='<div class="group">Sin cobrar · no es caja<span>'+money(d.o.ext.sin)+'</span></div>'+d.o.ext.rowsSin.map(function(e){return extRow(e,true);}).join("");}
     else body=d.rows.length?resList(d.rows,key):"";
@@ -767,16 +771,16 @@ $("p-res").addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" 
 document.addEventListener("click",function(e){var b=e.target.closest("[data-mo]");
   if(b){var id=b.dataset.mo,mo=b.closest(".mo"),op=!mo.classList.contains("open");OPENM[id]=op;mo.classList.toggle("open",op);b.setAttribute("aria-expanded",op);b.querySelector(".pm").textContent=op?"−":"+";mo.querySelector(".mb").hidden=!op;return;}
   var x=e.target.closest("[data-mx]");if(x){var p=x.dataset.mx.split(":"),pane=x.closest(".pane");pane.querySelectorAll(".mo").forEach(function(mo){var id=mo.dataset.m;OPENM[id]=p[1]==="1";});renderR();}});
-$("pChips").addEventListener("click",function(e){var b=e.target.closest(".pchip");if(!b)return;if(b.id==="cmpB"){CBC.open();return;}if(b.id==="masB"){shAbre();return;}setPer(b.dataset.p);});
+$("pChips").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;if(b.id==="cmpB"){CBC.open();return;}if(b.id==="masB"){shAbre();return;}setPer(b.dataset.p);});
 $("sheet").addEventListener("click",function(e){var b=e.target.closest(".opt");if(!b)return;pFoco=null;shCierra();setPer(b.dataset.p);});
 $("shX").addEventListener("click",shCierra);$("shBg").addEventListener("click",shCierra);
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&$("sheet").classList.contains("on"))shCierra();});
 pChips();
-$("mPrev").addEventListener("click",function(){curMonth=shiftMonth(curMonth,-1);if(M)renderR();});
-$("mNext").addEventListener("click",function(){curMonth=shiftMonth(curMonth,1);if(M)renderR();});
-$("mHoy").addEventListener("click",function(){curMonth=HOY.slice(0,7);if(M)renderR();});
+$("mPrev").addEventListener("click",function(){OPENM={};curMonth=shiftMonth(curMonth,-1);if(M)renderR();});
+$("mNext").addEventListener("click",function(){OPENM={};curMonth=shiftMonth(curMonth,1);if(M)renderR();});
+$("mHoy").addEventListener("click",function(){OPENM={};curMonth=HOY.slice(0,7);if(M)renderR();});
 $("tabs").addEventListener("click",function(e){
-  var b=e.target.closest("button[data-t]");if(!b)return;tab=b.getAttribute("data-t");
+  var b=e.target.closest("button[data-t]");if(!b)return;tab=b.getAttribute("data-t");OPENM={};if(M)renderR();
   Array.prototype.forEach.call($("tabs").querySelectorAll("button"),function(x){var on=x===b;x.classList.toggle("on",on);x.setAttribute("aria-selected",on);});
   ["res","air","dir","ext"].forEach(function(t){$("p-"+t).classList.toggle("on",t===tab);});
 });
