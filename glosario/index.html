@@ -48,11 +48,11 @@ h1{margin:10px 0 0;font-size:24px;font-weight:800;letter-spacing:-.02em}
   <div id="lista"></div>
   <p class="vacio" id="vacio" hidden>No hay términos con esa búsqueda. Prueba con otra palabra.</p>
 </div>
-<script src="../glosario_cb_v1_3_2026-10-20_1050.js"></script>
+<script src="../glosario_cb_v1_5_2026-10-20_1145.js"></script>
 <script>
 function $(i){return document.getElementById(i);}
 var G="Todo",Q="";
-var GR=["Todo","Noches","Indicadores","Dinero"];
+var GR=["Todo","Noches","Indicadores","Dinero","Períodos y datos"];
 function chips(){$("chips").innerHTML=GR.map(function(g){return '<button type="button" class="chip" data-g="'+g+'" aria-pressed="'+(G===g)+'">'+g+'</button>';}).join("");}
 function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");}
 function lista(){
