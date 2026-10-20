@@ -15,7 +15,8 @@
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
-<!-- v18 (20 oct 2026 13:30): selector de período en dos filas (control segmentado de 4 rangos + «Otro período» y «Comparar»), sin chips escondidos.
+<!-- v19 (20 oct 2026 13:45): barra de total al final de Recurrentes y Variables del mes; con un período largo, lista de meses recogida (acordeón) con total al final.
+v18 (20 oct 2026 13:30): selector de período en dos filas (control segmentado de 4 rangos + «Otro período» y «Comparar»), sin chips escondidos.
 v17 (18 oct 2026): filtro Comparar (años, períodos, año anterior); publica intereses/seguros/otros de la hipoteca para Resultados. -->
 <!-- v15 (17 oct 2026): filtros de período en Resumen (Mes, Año, Todo y panel Período). -->
 <!-- v14 (17 oct 2026): la limpieza aparece como Por pagar desde el día siguiente al check-in (pedido de Gustavo, para juntar pagos y ahorrar la comisión). -->
@@ -213,6 +214,16 @@ input,select{font-family:inherit;color:inherit}
 .seg button.on{background:var(--tabon);color:var(--ink);box-shadow:0 1px 3px rgba(10,34,51,.16)}
 .pane .seg{margin-top:14px}
 .empty{text-align:center;color:var(--mut);font-size:14px;font-weight:600;padding:40px 20px;line-height:1.5}
+.mtot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px;margin:12px 0 0;border-radius:18px;background:var(--ink);color:var(--bg);font-weight:800;font-size:15px}.mtot b{font-size:21px;letter-spacing:-.02em}
+.mtn{text-align:center;font-size:12px;color:var(--mut);font-weight:600;margin:8px 0 12px}
+.macc{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.mo{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
+.mo .mh{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:12px 14px;min-height:60px;background:transparent;border:0;color:var(--ink);font:inherit;cursor:pointer}
+.mo .pm{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:20px;font-weight:700;color:var(--mut)}
+.mo.open .pm{background:var(--accent);border-color:var(--accent);color:#fff}
+.mo .mt{flex:1;min-width:0}.mo .mt b{display:block;font-size:15.5px}.mo .mt span{font-size:12.5px;color:var(--mut);font-weight:600}
+.mo .ma{font-weight:800;font-size:16px}
+.mo .mb{border-top:1px solid var(--line);padding:8px;display:flex;flex-direction:column;gap:6px}
 .pbar{margin:0 0 6px}
 .pchips{display:grid;gap:8px;padding:2px 0 8px}
 .sgm{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:color-mix(in srgb,var(--ink) 8%,transparent);border-radius:99px;padding:3px}
@@ -1022,6 +1033,7 @@ function renderRec(){
   if(hh.length)h+='<button type="button" class="hidrow" id="hid_'+esc(u)+'" data-hid="1"><span>Ocultos ('+hh.map(x=>esc(rname(x.r))).join(', ')+') · ya incluidos en el total</span><b>'+f2(th)+'</b></button>';
  });
  if(!xs.length)h+='<div class="empty">No hay recurrentes activos este mes.</div>';
+ else{const tAll=Object.keys(grp).reduce((t,u)=>t+SUMA(grp[u].flatMap(x=>x.ex))+SUMA((hid[u]||[]).flatMap(x=>x.ex)),0);h+='<div class="mtot"><span>Total recurrentes · '+esc(mLabel(MES))+'</span><b>'+f2(tAll)+'</b></div><p class="mtn">Incluye lo ya registrado de los recurrentes de este mes.</p>';}
  h+='<button type="button" class="addrec" id="addRecBtn">+ Nuevo recurrente</button><button type="button" class="addrec sec" id="admRecBtn">⚙ Administrar recurrentes</button>';
  $('recRows').innerHTML=h;
 }
@@ -1344,7 +1356,7 @@ function renderEv(){
  const lim=ev.filter(isLimp),otros=ev.filter(e=>!isLimp(e));
  $('evBox').innerHTML='<div class="pcol"><div class="kcard"><small>VARIABLES PAGADOS · '+esc(mLabel(MES).toUpperCase())+'</small><b>'+f2(SUMA(ev)-SUMA(ev.filter(isPorPagar)))+'</b><span>'+(ev.some(isPorPagar)?'Ya pagado · por pagar '+f2(SUMA(ev.filter(isPorPagar)))+' · total del mes '+f2(SUMA(ev)):'Ya pagado · dependen de estadías o imprevistos')+'</span></div></div>'+limSection(lim)+
   '<div class="group">Otros variables<span>'+f2(SUMA(otros))+'</span></div>'+
-  (otros.length?otros.map(regCard).join(''):(esPasado(MES)?'<div class="empty">No hubo otros gastos variables en '+esc(mLabel(MES))+'.</div>':'<div class="empty">Reparaciones, compras o imprevistos aparecen aquí.<br>Toca «+ Nuevo gasto» para agregar uno.</div>'))+'<button type="button" class="addrec sec" id="admVarBtn">⚙ Administrar variables</button>';
+  (otros.length?otros.map(regCard).join(''):(esPasado(MES)?'<div class="empty">No hubo otros gastos variables en '+esc(mLabel(MES))+'.</div>':'<div class="empty">Reparaciones, compras o imprevistos aparecen aquí.<br>Toca «+ Nuevo gasto» para agregar uno.</div>'))+(ev.length?'<div class="mtot"><span>Total variables · '+esc(mLabel(MES))+'</span><b>'+f2(SUMA(ev))+'</b></div><p class="mtn">Incluye la limpieza de estadía y los otros variables del mes.</p>':'')+'<button type="button" class="addrec sec" id="admVarBtn">⚙ Administrar variables</button>';
 }
 function pendByBlock(DS){
  const m={ope:0,deu:0,cap:0},v={};
@@ -1436,7 +1448,7 @@ function pShAbre(){
 }
 function pShCierra(){$('pBg').classList.remove('on');$('pSh').classList.remove('on');$('pSh').setAttribute('aria-hidden','true');const b=$('masB');if(b)b.setAttribute('aria-expanded','false');if(pFoco&&pFoco.focus)try{pFoco.focus();}catch(e){}}
 function applyPer(){document.body.classList.toggle('per-on',perOn());pChips();}
-function setPer(p){PER=p;try{sessionStorage.setItem(PERK,p);}catch(e){}if(SH)closeSheet();renderAll();}
+function setPer(p){OPENG={};PER=p;try{sessionStorage.setItem(PERK,p);}catch(e){}if(SH)closeSheet();renderAll();}
 function perPanels(DS){
  const w=perWin(DS),rows=selRows(DS,w),dev=rows.filter(e=>e.cuenta!=='No'),tr=SUMA(dev.filter(isRecRow)),td=SUMA(dev),tv=td-tr,lim=SUMA(dev.filter(isLimp));
  const p1=pcts([tr,tv]);let h='';
@@ -1528,9 +1540,23 @@ function evoCard(){
  }else c2='<div><small>Acumulado '+y+'</small><b>'+f2(A.reduce((t,x)=>t+x.t,0))+'</b><em>Sin año anterior para comparar</em></div>';
  return '<div class="evo"><h3>Evolución del gasto</h3><p class="evs">Por mes · '+(y-1)+' contra '+y+' · toca un mes para verlo</p><div class="evlg"><span><i style="background:rgba(95,112,128,.4)"></i>'+(y-1)+'</span><span><i style="background:rgb(var(--crec))"></i>'+y+'</span><span><i style="background:repeating-linear-gradient(45deg,rgb(var(--crec)) 0 2px,rgba(var(--crec),.3) 2px 5px)"></i>Por pagar</span></div>'+svg+'<div class="evc'+(po?' one':'')+'">'+(po?pTile(DS):c1+c2)+'</div></div>';
 }
+let OPENG={};
+function perAcc(DS){
+ const w=perWin(DS),rows=selRows(DS,w).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')),by={};
+ rows.forEach(e=>{(by[e.mes]=by[e.mes]||[]).push(e);});
+ const ms=Object.keys(by).sort();
+ if(!ms.length)return '';
+ const cm=todayISO().slice(0,7);let tot=0,h='<div class="group">Gastos por mes</div><div class="macc">';
+ ms.forEach(m=>{
+  const a=by[m],t=SUMA(a),nr=a.filter(isRecRow).length,nv=a.length-nr,pp=a.filter(isPorPagar).length,op=!!OPENG[m];tot+=t;
+  h+='<div class="mo'+(op?' open':'')+'"><button type="button" class="mh" data-mo="'+m+'" aria-expanded="'+op+'"><span class="pm" aria-hidden="true">'+(op?'\u2212':'+')+'</span><span class="mt"><b>'+esc(mLabel(m).replace(/^./,c=>c.toUpperCase()))+(m===cm?' \u00b7 en curso':'')+'</b><span>'+a.length+(a.length===1?' gasto':' gastos')+' \u00b7 '+nr+(nr===1?' recurrente':' recurrentes')+' \u00b7 '+nv+(nv===1?' variable':' variables')+(pp?' \u00b7 '+pp+' por pagar':'')+'</span></span><span class="ma">'+f2(t)+'</span></button>'+(op?'<div class="mb">'+a.map(regCard).join('')+'</div>':'')+'</div>';
+ });
+ h+='</div><div class="mtot"><span>Total gastos \u00b7 '+esc(wLabel(w))+'</span><b>'+f2(tot)+'</b></div><p class="mtn">Incluye lo ya pagado y lo por pagar. El resumen por tipo est\u00e1 arriba.</p>';
+ return h;
+}
 function renderReg(){
  const DS=dataset(),mon=DS.filter(e=>e.mes===MES),box=$('regBox'),tot=SUMA(mon),P=pendItems();
- if(perOn()){box.innerHTML='<div class="pcol">'+perPanels(DS)+evoCard()+'</div>';box.querySelectorAll('.evo g.m[data-m]').forEach(g=>{const go=()=>{if(!g.classList.contains('off'))goMonth(g.dataset.m);};g.onclick=go;g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});return;}
+ if(perOn()){box.innerHTML='<div class="pcol">'+perPanels(DS)+perAcc(DS)+evoCard()+'</div>';box.querySelectorAll('.evo g.m[data-m]').forEach(g=>{const go=()=>{if(!g.classList.contains('off'))goMonth(g.dataset.m);};g.onclick=go;g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});return;}
  let h='<div class="pcol">',porRes=null;
  if(P.n){
   const pt=[];
@@ -2199,6 +2225,7 @@ $('evBox').addEventListener('click',e=>{
  if(e.target.closest('#limRe')){autoLimpiezas(true);return;}
  const it=e.target.closest('.item[data-id],.lrow[data-id]');if(it)openReg(it.dataset.id);});
 $('regBox').addEventListener('click',e=>{
+ const mh=e.target.closest('.mh[data-mo]');if(mh){OPENG[mh.dataset.mo]=!OPENG[mh.dataset.mo];renderReg();return;}
  if(e.target.closest('[data-go]')){gotoTab(e.target.closest('[data-go]').dataset.go);window.scrollTo({top:0,behavior:'smooth'});return;}
  if(e.target.closest('[data-lg]')){LOPEN[MES]=!LOPEN[MES];renderEv();return;}
  const lr=e.target.closest('.lrow[data-id]');if(lr){openReg(lr.dataset.id);return;}
