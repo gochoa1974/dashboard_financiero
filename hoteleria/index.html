@@ -13,10 +13,12 @@
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
-<script src="../glosario_cb_v1_3_2026-10-20_1050.js"></script>
+<script src="../glosario_cb_v1_5_2026-10-20_1145.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <!-- v3.3 (20 oct 2026 10:35): noches de cortesía (extensiones SIN PAGO) = bloqueadas: salen de disponibles y vendidas; regla escrita en «Cómo se calcula». -->
+<!-- v4.1 (20 oct 2026 11:45): el rango móvil lleva su ⓘ al glosario; apunta a glosario v1.5. -->
+<!-- v4 (20 oct 2026 11:30): ficha «Base» (Mi ingreso / PriceLabs / AirDNA) que cambia ADR, RevPAR, etiquetas y notas; rangos móviles de 7, 30 y 365 días con variación contra el período anterior; con la base PriceLabs, ventana, duración y reservas por fecha de reserva (mediana); textos de rango y cancelaciones corregidos. -->
 <!-- v3.1 (20 oct 2026 10:05): el módulo pasa a llamarse «KPIs · Hotelería», igual que su tarjeta del Dashboard. -->
 <!-- v3 (20 oct 2026 10:00): glosario vivo (ⓘ en cada indicador, etiquetas Neto/Sin limpieza, «Cómo se aplica» en lista), «Ventana de reserva» y «Duración de estadía» (mediana y promedio) como PriceLabs, variación contra el período anterior, botones de 44 px. -->
 <!-- v2 (18 oct 2026 21:45): usa los campos nuevos del maestro (Sincronizar v12): anticipación real (fecha de reserva), ADR sin limpieza, ADR bruto y noches de las extensiones de estadía. -->
@@ -135,6 +137,19 @@ body.cmpOn .sg,body.cmpOn .lec{display:none!important}
 .how .rg .rt{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--texto-2);font-weight:800;margin-bottom:6px}
 .how .rg ul{margin:0;padding-left:18px;font-size:13px;line-height:1.5}
 .how .lk{display:inline-flex;align-items:center;min-height:44px;margin-top:8px;color:var(--acento-texto);font-weight:800;text-decoration:none}
+.basech{border:1.5px solid var(--acento);color:var(--acento-t)}
+.basech.on{background:var(--acento);color:#04261a}
+.bstrip{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--acento) 12%,var(--tarjeta));border:1px solid var(--acento);border-radius:14px;padding:6px 6px 6px 12px;margin:2px 0 10px;font-size:12.5px;line-height:1.4}
+.bstrip.ne{background:var(--tarjeta);border-color:var(--linea)}
+.bstrip span{flex:1}.bstrip button{flex:none;min-height:44px;padding:0 10px;border:0;background:none;color:var(--acento-t);font:800 13px var(--fuente);text-decoration:underline;cursor:pointer}
+.bopt{display:block;width:100%;text-align:left;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);border-radius:18px;padding:14px;margin-bottom:10px;cursor:pointer;font:inherit}
+.bopt[aria-pressed=true]{border:2px solid var(--acento);padding:13px;background:color-mix(in srgb,var(--acento) 12%,var(--tarjeta))}
+.bopt .bt{display:flex;justify-content:space-between;align-items:center;font-size:15px}
+.bopt .bt i{font-style:normal;font-weight:800;color:var(--acento-t)}
+.bopt .bd{display:block;font-size:13px;color:var(--texto-2);margin:4px 0 8px;line-height:1.4}
+.brow{display:flex;gap:10px;margin-top:12px}.brow .cl{margin-top:0;flex:0 0 110px;border-radius:14px}
+.ap{flex:1;min-height:48px;border:0;border-radius:14px;background:var(--acento);color:#04261a;font:800 15px var(--fuente);cursor:pointer}
+body.cmpOn .bstrip{display:none!important}
 </style>
 </head>
 <body>
@@ -145,6 +160,7 @@ body.cmpOn .sg,body.cmpOn .lec{display:none!important}
   <div id="vacio" class="card" hidden><h3>Faltan datos</h3><p style="margin:6px 0 10px">Este panel lee las reservas que ya calcula Ingresos. Abre Ingresos una vez en este aparato y vuelve aquí.</p><p id="diag" class="note" style="margin:0 0 10px;font-weight:700"></p><a class="pchip" href="../ingresos/">Abrir Ingresos</a></div>
 
   <div class="pchips" id="pChips"></div>
+  <div class="bstrip" id="bstrip"><span id="bstripT"></span><button type="button" id="bstripB">Cambiar</button></div>
   <div class="mnav" id="mnav"><button id="mPrev" aria-label="Mes anterior">◀</button><b id="mLbl"></b><button id="mNext" aria-label="Mes siguiente">▶</button></div>
   <p class="rng" id="rng"></p>
   <div id="cmpHost" hidden></div>
@@ -183,10 +199,18 @@ body.cmpOn .sg,body.cmpOn .lec{display:none!important}
 <div class="bg" id="bg"></div>
 <div class="sheet" id="sh" role="dialog" aria-modal="true" aria-labelledby="shT" aria-hidden="true">
   <h3 id="shT">Elegir período</h3>
+  <div class="gt">Rangos móviles · hasta ayer</div><div class="opts" id="oMov" style="grid-template-columns:repeat(3,1fr)"></div><p class="shn" id="oMovN"></p>
   <div class="gt">Calendario</div><div class="opts" id="oCal"></div>
   <div class="gt">Meses cerrados</div><div class="opts" id="oRec"></div><p class="shn">Solo meses completos, sin el mes en curso.</p>
   <div class="gt">Acumulado</div><div class="opts" id="oAll"></div><p class="shn" id="oAllN"></p>
   <button class="cl" id="shX">Cerrar</button>
+</div>
+<div class="sheet" id="sb" role="dialog" aria-modal="true" aria-labelledby="sbT" aria-hidden="true">
+  <h3 id="sbT">Base de cálculo</h3>
+  <p class="shn" style="margin:-4px 0 12px">Elige con qué reglas se calculan ADR y RevPAR. Cambian los números, los nombres y las etiquetas.</p>
+  <div id="bOpts"></div>
+  <p class="shn">La ocupación y las noches no cambian: se calculan igual en las tres bases. Se recuerda en este dispositivo.</p>
+  <div class="brow"><button type="button" class="cl" id="sbX">Cancelar</button><button type="button" class="ap" id="sbA">Aplicar base</button></div>
 </div>
 <script>
 function $(i){return document.getElementById(i);}
@@ -216,11 +240,11 @@ function leerMaestro(){
   var cd=ld("cimablanca_canc_data");CANC=cd&&Array.isArray(cd.cancelaciones)?cd.cancelaciones:null;
 }
 function build(){
-  D={};MINF=null;if(!RES.length)return;
+  D={};DY={};MINF=null;if(!RES.length)return;
   RES.forEach(function(r){if(r.fecha_inicio&&(!MINF||r.fecha_inicio<MINF))MINF=r.fecha_inicio;});
   FIRST=MINF.slice(0,7);
   var m=FIRST;
-  while(m<=CM){D[m]={vend:0,disp:0,neto:0,bru:0,res:0,nch:0,ls:0,ln:0,rl:0,canc:null,nl:[],parcial:m===CM,primero:m===FIRST};
+  while(m<=CM){D[m]={vend:0,disp:0,neto:0,bru:0,bl:0,res:0,nch:0,ls:0,ln:0,rl:0,canc:null,nl:[],parcial:m===CM,primero:m===FIRST};
     var a=m===FIRST?MINF:m+"-01",b=m===CM?addD(HOY,-1):m+"-"+String(dim(m)).padStart(2,"0");
     D[m].disp=b>=a?diff(a,b)+1:0;D[m]._a=a;D[m]._b=b;m=sm(m,1);}
   var seen={},blk={};BLQ=0;
@@ -229,36 +253,65 @@ function build(){
     var neto=(+r.monto||0)-lp*(+r.monto||0)/(bruR||1),bru=bruR-lp,ck=r.fecha_inicio.slice(0,7);
     if(D[ck]){D[ck].res++;D[ck].nch+=ns;D[ck].nl.push(ns);if(r.fecha_reserva){D[ck].rl++;D[ck].ls+=Math.max(diff(r.fecha_reserva,r.fecha_inicio),0);D[ck].ln++;}}
     for(var i=0;i<ns;i++){var d=addD(r.fecha_inicio,i),k=d.slice(0,7),x=D[k];if(!x||d>x._b||d<x._a)continue;
-      x.neto+=neto/ns;x.bru+=bru/ns;if(!seen[d]){seen[d]=1;x.vend++;}}});
+      x.neto+=neto/ns;x.bru+=bru/ns;x.bl+=bruR/ns;var y=DY[d]||(DY[d]={v:0,x:0,n:0,b:0,bl:0});y.n+=neto/ns;y.b+=bru/ns;y.bl+=bruR/ns;if(!seen[d]){seen[d]=1;x.vend++;y.v=1;}}});
   /* extensiones de estadía: noches extra pagadas aparte (Adicionales), con su check-in y noches */
   ADI.forEach(function(a){if(!/xtensi/i.test((a.concepto||"")+(a.item||""))||!a.checkin||!(+a.noches>0))return;
     if(a.medio_cobro==="SIN PAGO"){/* cortesía = noche bloqueada: sale de disponibles y vendidas, sin ingreso */
-      for(var j=0;j<+a.noches;j++){var dc=addD(a.checkin,j),xc=D[dc.slice(0,7)];if(!xc||dc>xc._b||dc<xc._a||seen[dc]||blk[dc])continue;blk[dc]=1;xc.disp--;BLQ++;}return;}
+      for(var j=0;j<+a.noches;j++){var dc=addD(a.checkin,j),xc=D[dc.slice(0,7)];if(!xc||dc>xc._b||dc<xc._a||seen[dc]||blk[dc])continue;blk[dc]=1;xc.disp--;BLQ++;(DY[dc]||(DY[dc]={v:0,x:0,n:0,b:0,bl:0})).x=1;}return;}
     var monto=+a.monto||0,n=+a.noches,ck=a.checkin.slice(0,7);
     if(D[ck]){D[ck].nch+=n;}
-    for(var i=0;i<n;i++){var d=addD(a.checkin,i),k=d.slice(0,7),x=D[k];if(!x||d>x._b||d<x._a)continue;x.neto+=monto/n;x.bru+=monto/n;if(!seen[d]){seen[d]=1;x.vend++;}}});
+    for(var i=0;i<n;i++){var d=addD(a.checkin,i),k=d.slice(0,7),x=D[k];if(!x||d>x._b||d<x._a)continue;x.neto+=monto/n;x.bru+=monto/n;x.bl+=monto/n;var y=DY[d]||(DY[d]={v:0,x:0,n:0,b:0,bl:0});y.n+=monto/n;y.b+=monto/n;y.bl+=monto/n;if(!seen[d]){seen[d]=1;x.vend++;y.v=1;}}});
   if(CANC){Object.keys(D).forEach(function(k){D[k].canc=0;});
     CANC.forEach(function(c){var k=String(c.checkin||"").slice(0,7);if(D[k])D[k].canc++;});}
 }
 function months(a,b){var o=[],m=a;while(m<=b){if(D[m])o.push(m);m=sm(m,1);}return o;}
 function sum(ms,fn){return ms.reduce(function(s,m){return s+fn(m);},0);}
+var DY={};
+var BASE=(function(){try{var b=localStorage.getItem("cb_base_hot");return b==="pl"||b==="adna"?b:"mi";}catch(e){return "mi";}})();
+var BS={mi:{n:"Mi ingreso"},pl:{n:"PriceLabs"},adna:{n:"AirDNA"}};
+function bas(){return BASE==="pl"?"booked":"checkin";}
+function medOf(a){if(!a.length)return null;var s=a.slice().sort(function(x,y){return x-y;}),n=s.length;return n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;}
+function fd(d){return (+d.slice(8))+" "+MN[+d.slice(5,7)-1].slice(0,3);}
+/* reservas de un rango: por fecha de llegada (check-in) o por fecha en que se hizo la reserva (booked) */
+function rstats(inR,basis){var nl=[],ld=[],nc=0;
+  RES.forEach(function(r){var ns=+r.noches||0;if(!ns||!r.fecha_inicio)return;var d=basis==="booked"?r.fecha_reserva:r.fecha_inicio;if(!d||!inR(d))return;
+    nl.push(ns);nc+=ns;if(r.fecha_reserva)ld.push(Math.max(diff(r.fecha_reserva,r.fecha_inicio),0));});
+  if(basis!=="booked")ADI.forEach(function(a){if(!/xtensi/i.test((a.concepto||"")+(a.item||""))||a.medio_cobro==="SIN PAGO"||!a.checkin||!(+a.noches>0))return;if(inR(a.checkin))nc+=+a.noches;});
+  return {rs:nl.length,nl:nl,nc:nc,ld:ld};}
+function fin(v,dp,nt,br,bl,st,cc,rsC){
+  var pk=BASE==="mi"?nt:BASE==="pl"?br:bl,rs=st.rs,ls=0;st.ld.forEach(function(x){ls+=x;});
+  var lead=st.ld.length?ls/st.ld.length:null,lm=medOf(st.ld);
+  return {v:v,dp:dp,nt:nt,rs:rs,occ:dp>0?v/dp*100:null,adr:v>0?pk/v:null,adrn:v>0?nt/v:null,adrb:v>0?br/v:null,adrl:v>0?bl/v:null,rev:dp>0?pk/dp:null,revn:dp>0?nt/dp:null,
+    alos:rs>0?st.nc/rs:null,med:medOf(st.nl),lead:lead,leadMed:lm,leadSel:BASE==="pl"?lm:lead,ln:st.ld.length,canc:cc,tasa:cc!=null&&(rsC+cc)>0?cc/(rsC+cc)*100:null};}
 function agg(ms){
-  var v=sum(ms,function(m){return D[m].vend;}),dp=sum(ms,function(m){return D[m].disp;}),nt=sum(ms,function(m){return D[m].neto;}),
-   rs=sum(ms,function(m){return D[m].res;}),nc=sum(ms,function(m){return D[m].nch;}),ls=sum(ms,function(m){return D[m].ls;}),ln=sum(ms,function(m){return D[m].ln;}),br=sum(ms,function(m){return D[m].bru;});
-  var nlAll=[];ms.forEach(function(m){nlAll=nlAll.concat(D[m].nl);});nlAll.sort(function(x,y){return x-y;});var med=nlAll.length?(nlAll.length%2?nlAll[(nlAll.length-1)/2]:(nlAll[nlAll.length/2-1]+nlAll[nlAll.length/2])/2):null;
+  var set={};ms.forEach(function(m){set[m]=1;});
+  function inR(d){return !!set[d.slice(0,7)];}
+  var v=sum(ms,function(m){return D[m].vend;}),dp=sum(ms,function(m){return D[m].disp;}),nt=sum(ms,function(m){return D[m].neto;}),br=sum(ms,function(m){return D[m].bru;}),bl=sum(ms,function(m){return D[m].bl;});
+  var st=rstats(inR,bas()),stC=bas()==="booked"?rstats(inR,"checkin"):st;
   var cc=CANC&&ms.length&&ms.every(function(m){return D[m].canc!=null;})?sum(ms,function(m){return D[m].canc;}):null;
-  return {v:v,dp:dp,nt:nt,rs:rs,
-    occ:dp>0?v/dp*100:null,adr:v>0?nt/v:null,adrb:v>0?br/v:null,rev:dp>0?nt/dp:null,alos:rs>0?nc/rs:null,med:med,
-    lead:ln>0?ls/ln:null,ln:ln,canc:cc,tasa:cc!=null&&(rs+cc)>0?cc/(rs+cc)*100:null};
+  return fin(v,dp,nt,br,bl,st,cc,stC.rs);
+}
+/* ventana móvil de fechas (7, 30, 365 días), siempre hasta ayer */
+function winOf(){var n=WIN[per],b=addD(HOY,-1);return {n:n,a:addD(b,-(n-1)),b:b};}
+function prevWinOf(){var w=winOf(),b=addD(w.a,-1);return {n:w.n,a:addD(b,-(w.n-1)),b:b};}
+function aggW(a,b){
+  var a0=a<MINF?MINF:a,v=0,dp=0,nt=0,br=0,bl=0;
+  for(var d=a0;d<=b;d=addD(d,1)){var y=DY[d];if(!(y&&y.x))dp++;if(y){v+=y.v;nt+=y.n;br+=y.b;bl+=y.bl;}}
+  function inR(d){return d>=a&&d<=b;}
+  var st=rstats(inR,bas()),stC=bas()==="booked"?rstats(inR,"checkin"):st;
+  var cc=CANC?CANC.filter(function(c){var k=String(c.checkin||"").slice(0,10);return k>=a&&k<=b;}).length:null;
+  return fin(v,dp,nt,br,bl,st,cc,stC.rs);
 }
 
 /* ===== filtros (mismas reglas que Ingresos, Gastos y Resultados) ===== */
 var per="mes",cur=CM;
 var QUICK=[["mes","Mes"],["anio",String(Y)],["pasado",String(Y-1)],["todo","Acumulado"]];
-var CAL=[["mes","Este mes"],["anio",String(Y)],["pasado",String(Y-1)]],REC=[["30","30 días"],["60","60 días"],["90","90 días"],["180","180 días"],["12m","12 meses"]],ALL=[["todo","Acumulado"]];
-var LBL={};CAL.concat(REC,ALL).forEach(function(x){LBL[x[0]]=x[1];});
+var CAL=[["mes","Este mes"],["anio",String(Y)],["pasado",String(Y-1)]],REC=[["30","Último mes"],["60","2 meses"],["90","3 meses"],["180","6 meses"],["12m","12 meses"]],ALL=[["todo","Acumulado"]],MOV=[["d7","7 días"],["d30","30 días"],["d365","365 días"]];
+var WIN={d7:7,d30:30,d365:365};
+var LBL={};CAL.concat(REC,ALL,MOV).forEach(function(x){LBL[x[0]]=x[1];});
 var NN={"30":1,"60":2,"90":3,"180":6,"12m":12};
 function rango(){
+  if(WIN[per]){var w0=winOf().a.slice(0,7);return[w0<FIRST?FIRST:w0,CM];}
   if(per==="mes")return[cur,cur];
   if(per==="anio")return[Y+"-01",CM];
   if(per==="pasado")return[(Y-1)+"-01",(Y-1)+"-12"];
@@ -270,10 +323,10 @@ function chips(){var enQ=QUICK.some(function(q){return q[0]===per;});
   $("pChips").innerHTML=QUICK.map(function(q){return '<button class="pchip" data-p="'+q[0]+'" aria-pressed="'+(per===q[0])+'">'+q[1]+'</button>';}).join("")+'<button class="pchip mas" id="masB" aria-pressed="'+(!enQ)+'">'+(enQ?"Período":LBL[per])+' '+ICO+'</button>'+CBC.chipHtml();}
 function sheet(){$("oAllN").textContent="Desde "+ab(FIRST)+" hasta hoy.";
   function ob(l){return l.map(function(p){var s=NN[p[0]]?'<small>'+(NN[p[0]]===1?ab(sm(CM,-1)):ab(sm(CM,-NN[p[0]]))+"–"+ab(sm(CM,-1)))+'</small>':"";return '<button class="opt" data-p="'+p[0]+'" aria-pressed="'+(per===p[0])+'">'+p[1]+s+'</button>';}).join("");}
-  $("oCal").innerHTML=ob(CAL);$("oRec").innerHTML=ob(REC);$("oAll").innerHTML=ob(ALL);}
+  $("oCal").innerHTML=ob(CAL);$("oMov").innerHTML=MOV.map(function(p){return '<button class="opt" data-p="'+p[0]+'" aria-pressed="'+(per===p[0])+'" style="justify-content:center">'+p[1]+'</button>';}).join("");$("oMovN").textContent="Hasta ayer, "+fd(addD(HOY,-1))+". Se compara con el período anterior de igual duración.";$("oRec").innerHTML=ob(REC);$("oAll").innerHTML=ob(ALL);}
 function openSh(){sheet();$("bg").classList.add("on");$("sh").classList.add("on");$("sh").setAttribute("aria-hidden","false");}
 function closeSh(){$("bg").classList.remove("on");$("sh").classList.remove("on");$("sh").setAttribute("aria-hidden","true");}
-function etqF(){return per==="mes"?ml(cur):per==="todo"?"acumulado":(NN[per]?"últimos "+LBL[per]+" cerrados":LBL[per]);}
+function etqF(){return per==="mes"?ml(cur):per==="todo"?"acumulado":WIN[per]?"últimos "+WIN[per]+" días":per==="30"?"último mes cerrado":(NN[per]?"últimos "+LBL[per]+" cerrados":LBL[per]);}
 
 /* ===== métricas para Comparar ===== */
 var MET={
@@ -285,7 +338,7 @@ var MET={
 function cmpInit(){
   CBC.init({key:"hot",host:"cmpHost",first:FIRST,cur:CM,has:function(m){return !!D[m]&&D[m].disp>0;},metrics:MET,
     kpis:["occ","adr","rev","ven"],chart:["occ","adr","rev","ven"],rows:[["occ",1],["ven"],["adr",1],["rev",1]],
-    primary:function(){if(per==="todo")return [];var r=rango();return months(r[0],r[1]);},
+    primary:function(){if(per==="todo"||WIN[per])return [];var r=rango();return months(r[0],r[1]);},
     primaryLabel:function(){var e=etqF();return e.charAt(0).toUpperCase()+e.slice(1);},
     onChange:function(){chips();render();}});
 }
@@ -299,7 +352,7 @@ function prevMs(){
   if(NN[per]){var r=rango(),n=NN[per],ps=[];for(var i=n;i>=1;i--){var m=sm(r[0],-i);if(!D[m])return null;ps.push(m);}return ps;}
   return null;
 }
-function prevEtq(){if(per==="mes")return "vs "+MN[+sm(cur,-1).slice(5)-1];return "vs período anterior";}
+function prevEtq(){if(per==="mes")return "vs "+MN[+sm(cur,-1).slice(5)-1];if(WIN[per])return "vs los "+WIN[per]+" días anteriores";return "vs período anterior";}
 function dlt(a,b,tipo){
   if(a==null||b==null)return "";
   var d=a-b;if(Math.abs(d)<(tipo==="pts"?.05:.005))return '<div class="dl neu">Sin cambio '+prevEtq()+'</div>';
@@ -310,26 +363,31 @@ function dlt(a,b,tipo){
 function render(){
   CBC.render();document.body.classList.toggle("cmpOn",CBC.active());
   var r=rango(),ms=months(r[0],r[1]);
+  MET.adr.label=BASE==="mi"?"ADR (neto por noche)":BASE==="pl"?"ADR (bruto, sin limpieza)":"ADR (bruto, con limpieza)";MET.rev.label=BASE==="mi"?"RevPAR (neto)":"RevPAR (bruto)";
+  $("bstrip").className="bstrip"+(BASE==="mi"?" ne":"");$("bstripT").innerHTML=BASE==="mi"?"<b>Base: Mi ingreso real</b> · neto y sin limpieza.":BASE==="pl"?"<b>Calculado como PriceLabs:</b> bruto (antes de comisión) y sin limpieza.":"<b>Calculado como AirDNA:</b> bruto, con limpieza y sin tarifa de servicio.";
   $("mnav").style.display=per==="mes"?"flex":"none";
   $("mLbl").textContent=ml(cur);
   $("mNext").disabled=cur>=CM;$("mPrev").disabled=cur<=FIRST;$("mNext").style.opacity=$("mNext").disabled?.35:1;$("mPrev").style.opacity=$("mPrev").disabled?.35:1;
-  $("rng").textContent=per==="mes"?(D[cur].parcial?"Mes en curso · hasta ayer, "+(+addD(HOY,-1).slice(8))+" de "+MN[+cur.slice(5)-1]:"Mes cerrado"):(ml(r[0])+" al "+ml(r[1])+(per==="anio"||per==="todo"?" · hasta ayer":""));
-  var a=agg(ms),etq=etqF();
+  if(WIN[per])$("rng").innerHTML=GLO.inline("rangos_moviles",rngTxt(r));else $("rng").textContent=rngTxt(r);
+  var win=WIN[per]?winOf():null,a=win?aggW(win.a,win.b):agg(ms),etq=etqF();
   $("hL").innerHTML=GLO.inline("ocupacion","Ocupación")+" · "+etq;
   $("hN").className="n";$("hN").innerHTML=a.occ==null?'<span style="font-size:.5em">Sin datos</span>':num(a.occ,1)+'<sup style="margin-left:2px">%</sup>';
   $("hS").textContent=a.dp?(a.v+" de "+a.dp+" noches disponibles vendidas"):"Este período aún no tiene noches transcurridas";
-  $("hM").innerHTML='<span class="pill">ADR '+nz(f2(a.adr))+'</span><span class="pill">RevPAR '+nz(f2(a.rev))+'</span>';
+  var bn=BASE==="mi"?"neto":"bruto";$("hM").innerHTML='<span class="pill">ADR '+bn+' '+nz(f2(a.adr))+'</span><span class="pill">RevPAR '+bn+' '+nz(f2(a.rev))+'</span>';
   var CT=a.canc==null?null:String(a.canc);
-  var pm=prevMs(),pa=pm?agg(pm):null;
-  var TG=[["Neto","n"],[HASLP?"Sin limpieza":"Incluye limpieza"]];
+  var pa=null;if(win){var pw=prevWinOf();if(pw.a>=MINF)pa=aggW(pw.a,pw.b);}else{var pm=prevMs();pa=pm?agg(pm):null;}
+  var TG=BASE==="mi"?[["Neto","n"],[HASLP?"Sin limpieza":"Incluye limpieza"]]:BASE==="pl"?[["Bruto","n"],[HASLP?"Sin limpieza":"Incluye limpieza"]]:[["Bruto","n"],["Con limpieza"]];
   $("hD").innerHTML=pa?dlt(a.occ,pa.occ,"pts").replace("class=\"dl up\"","class=\"dl\"").replace("class=\"dl dn\"","class=\"dl\""):"";
+  var adrNote=BASE==="mi"?"Lo que recibes por noche vendida, sin comisión de plataforma · bruto "+nz(f2(a.adrb)):(BASE==="pl"?"Lo que paga el huésped, antes de comisión":"Lo que paga el huésped, con limpieza")+" · tu neto "+nz(f2(a.adrn));
+  var revNote=BASE==="mi"?"Lo que rinde cada noche disponible, se venda o no":"ADR × ocupación · tu neto "+nz(f2(a.revn));
+  var pl=BASE==="pl";
   $("sg").innerHTML=
-    tarjeta("ADR · tarifa por noche",f2(a.adr),"Lo que recibes por noche vendida, sin comisión de plataforma · bruto "+nz(f2(a.adrb)),{k:"adr",tg:TG,dl:pa?dlt(a.adr,pa.adr):""})+
-    tarjeta("RevPAR",f2(a.rev),"Lo que rinde cada noche disponible, se venda o no",{k:"revpar",tg:TG,dl:pa?dlt(a.rev,pa.rev):""})+
+    tarjeta("ADR · tarifa por noche",f2(a.adr),adrNote,{k:"adr",tg:TG,dl:pa?dlt(a.adr,pa.adr):""})+
+    tarjeta("RevPAR",f2(a.rev),revNote,{k:"revpar",tg:TG,dl:pa?dlt(a.rev,pa.rev):""})+
     tarjeta("Noches vendidas",a.dp?String(a.v):null,"de "+a.dp+" disponibles",{k:"noche_vend"})+
-    tarjeta("Duración de estadía",a.med==null?null:num(a.med,a.med%1?1:0)+(a.med===1?" noche":" noches"),a.med==null?"":"Mediana · promedio "+num(a.alos,2)+" · "+a.rs+(a.rs===1?" reserva":" reservas"),{k:"duracion"})+
-    tarjeta("Ventana de reserva",a.lead==null?null:num(a.lead,0)+(Math.round(a.lead)===1?" día":" días"),a.lead==null?(a.rs?"Falta la fecha de reserva: actualiza con Sincronizar":"Días entre reservar y llegar"):"Días entre reservar y llegar · "+a.ln+" de "+a.rs+(a.rs===1?" reserva":" reservas"),{k:"ventana"})+
-    tarjeta("Cancelaciones",CT,CT==null?"Abre Cancelaciones una vez en este aparato":(a.tasa==null?"":pc(a.tasa)+" de las reservas · ")+"por fecha de check-in",{k:"cancelaciones"});
+    tarjeta("Duración de estadía",a.med==null?null:num(a.med,a.med%1?1:0)+(a.med===1?" noche":" noches"),a.med==null?"":(pl?"Mediana de las reservas hechas en el período · ":"Mediana · promedio "+num(a.alos,2)+" · ")+a.rs+(a.rs===1?" reserva":" reservas"),{k:"duracion"})+
+    tarjeta("Ventana de reserva",a.leadSel==null?null:num(a.leadSel,0)+(Math.round(a.leadSel)===1?" día":" días"),a.leadSel==null?(a.rs?"Falta la fecha de reserva: actualiza con Sincronizar":"Días entre reservar y llegar"):(pl?"Mediana de días entre reservar y llegar · reservas hechas en el período · ":"Promedio de días entre reservar y llegar · ")+a.ln+" de "+a.rs+(a.rs===1?" reserva":" reservas"),{k:"ventana"})+
+    tarjeta("Cancelaciones",CT,CT==null?"Aún no hay datos de cancelaciones. Abre el panel Cancelaciones y vuelve.":(a.tasa==null?"":pc(a.tasa)+" de las reservas · ")+"por fecha de check-in",{k:"cancelaciones"});
   /* mes a mes */
   var tm=per==="mes"?months(sm(cur,-5),cur):ms;
   $("mT").textContent=per==="mes"?"Últimos meses":"Mes a mes";
@@ -340,17 +398,43 @@ function render(){
   lectura(tm);
   /* tabla */
   $("tb").innerHTML=tm.slice().reverse().map(function(m){var x=agg([m]);
-    return '<tr class="'+(D[m].parcial?'par ':'')+(m===cur&&per==="mes"?'sel':'')+'"><td>'+ab(m)+'</td><td>'+nz(pc(x.occ))+'</td><td>'+(x.dp?x.v+"/"+x.dp:"Sin datos")+'</td><td>'+nz(f2(x.adr))+'</td><td>'+nz(f2(x.rev))+'</td><td>'+(x.alos==null?"Sin datos":num(x.alos,1))+'</td><td>'+(x.lead==null?"Sin datos":num(x.lead,0)+" d")+'</td><td>'+(x.canc==null?"Sin datos":x.canc)+'</td></tr>';}).join("");
+    return '<tr class="'+(D[m].parcial?'par ':'')+(m===cur&&per==="mes"?'sel':'')+'"><td>'+ab(m)+'</td><td>'+nz(pc(x.occ))+'</td><td>'+(x.dp?x.v+"/"+x.dp:"Sin datos")+'</td><td>'+nz(f2(x.adr))+'</td><td>'+nz(f2(x.rev))+'</td><td>'+(function(){var dv=BASE==="pl"?x.med:x.alos;return dv==null?"Sin datos":num(dv,1);})()+'</td><td>'+(x.leadSel==null?"Sin datos":num(x.leadSel,0)+" d")+'</td><td>'+(x.canc==null?"Sin datos":x.canc)+'</td></tr>';}).join("");
+  var pl2=BASE==="pl",ad2=BASE==="adna";
   var IT=[["ocupacion","Ocupación","Noches vendidas ÷ noches disponibles",pc(a.occ)==null?"":"Ahora: "+a.v+" ÷ "+a.dp+" = "+pc(a.occ)],
-   ["adr","ADR · tarifa por noche","Ingreso neto de hospedaje ÷ noches vendidas","Neto: se calcula sin la comisión de Airbnb ni de otras plataformas (OTA)"+(HASLP?" y sin la tarifa de limpieza.":", pero incluye la limpieza (el maestro aún no la trae).")],
-   ["revpar","RevPAR","Ingreso neto ÷ noches disponibles","Es lo mismo que ADR × ocupación"],
-   ["duracion","Duración de estadía","Noches por reserva con check-in en el período","Mediana y promedio"],
-   ["ventana","Ventana de reserva","Días entre reservar y llegar",""],
+   ["adr","ADR · tarifa por noche",pl2?"Ingreso bruto de hospedaje ÷ noches vendidas":ad2?"Ingreso bruto con limpieza ÷ noches vendidas":"Ingreso neto de hospedaje ÷ noches vendidas",
+     pl2?"Bruto: antes de la comisión de Airbnb u otra plataforma (OTA)"+(HASLP?", y sin la tarifa de limpieza.":", pero incluye la limpieza (el maestro aún no la trae).")
+     :ad2?"Bruto con la limpieza incluida y sin la tarifa de servicio al huésped.":"Neto: se calcula sin la comisión de Airbnb ni de otras plataformas (OTA)"+(HASLP?" y sin la tarifa de limpieza.":", pero incluye la limpieza (el maestro aún no la trae).")],
+   ["revpar","RevPAR",(pl2||ad2?"Ingreso bruto":"Ingreso neto")+" ÷ noches disponibles","Es lo mismo que ADR × ocupación"],
+   ["duracion","Duración de estadía",pl2?"Mediana de noches de las reservas hechas en el período":"Noches por reserva con check-in en el período",pl2?"Como PriceLabs: por fecha de reserva":"Mediana y promedio"],
+   ["ventana","Ventana de reserva",pl2?"Mediana de días entre reservar y llegar, de las reservas hechas en el período":"Promedio de días entre reservar y llegar, de las reservas con check-in en el período",""],
    ["cancelaciones","Cancelaciones","Reservas canceladas, por fecha de check-in",""]];
   $("how").innerHTML=IT.map(function(i){return '<div class="it"><b>'+i[1]+'</b><div class="fx">'+i[2]+'</div>'+(i[3]?'<div class="ex">'+i[3]+'</div>':'')+'</div>';}).join("")
-   +'<div class="rg"><div class="rt">Reglas</div><ul><li>Disponible = cada día hasta ayer, menos las noches bloqueadas o de cortesía.</li><li>Una noche de cortesía (regalada, sin pago) se trata como bloqueada: no cuenta como vendida ni como disponible, y no tiene ingreso.'+(BLQ?' En este rango hay '+BLQ+'.':'')+'</li><li>La noche de salida no cuenta.</li><li>Comisión de Airbnb: 3% en reservas hechas hasta el 11 abr 2026 y 15,5% desde el 18 abr; por eso el ADR neto no es comparable entre ambas etapas.</li>'+(EXTN?'<li>Las extensiones de estadía pagadas suman sus noches y su ingreso.</li>':'')+'</ul></div>'
+   +'<div class="rg"><div class="rt">Reglas</div><ul><li>Disponible = cada día hasta ayer, menos las noches bloqueadas o de cortesía.</li><li>Una noche de cortesía (regalada, sin pago) se trata como bloqueada: no cuenta como vendida ni como disponible, y no tiene ingreso.'+(BLQ?' En este rango hay '+BLQ+'.':'')+'</li><li>La noche de salida no cuenta.</li>'+baseRules()+'<li>Comisión de Airbnb: 3% en reservas hechas hasta el 11 abr 2026 y 15,5% desde el 18 abr; por eso el ADR neto no es comparable entre ambas etapas.</li>'+(EXTN?'<li>Las extensiones de estadía pagadas suman sus noches y su ingreso.</li>':'')+'</ul></div>'
    +'<a class="lk" href="../glosario/">Ver el glosario completo →</a>';
 }
+function rngTxt(r){
+  if(WIN[per]){var w=winOf(),y1=w.a.slice(0,4),y2=w.b.slice(0,4);return fd(w.a)+(y1!==y2?" "+y1:"")+" al "+fd(w.b)+" "+y2+" · se compara con los "+w.n+" días anteriores"+(w.a<MINF?" · hay datos desde "+fd(MINF)+" "+MINF.slice(0,4):"");}
+  if(per==="mes")return D[cur].parcial?"Mes en curso · hasta ayer, "+(+addD(HOY,-1).slice(8))+" de "+MN[+cur.slice(5)-1]:"Mes cerrado";
+  var a1=r[0].slice(0,4),a2=r[1].slice(0,4);
+  return (a1===a2?MN[+r[0].slice(5)-1]+" a "+MN[+r[1].slice(5)-1]+" "+a1:ml(r[0])+" a "+ml(r[1]))+(per==="anio"||per==="todo"?" · hasta ayer":"");}
+function baseRules(){
+  if(BASE==="pl")return '<li><b>Base PriceLabs:</b> ADR y RevPAR brutos (antes de comisión) y sin limpieza. Ventana de reserva, duración de estadía y reservas: mediana de las reservas hechas en el período. Según la documentación pública de PriceLabs, consultada el 20 oct 2026; no está confirmado si incluye impuestos (es probable que no).</li><li>En las reservas directas la limpieza todavía no se descuenta del bruto. Un día de diferencia con PriceLabs se nota en 7 días y casi nada en 365. Los datos de mercado de PriceLabs son estimados.</li>';
+  if(BASE==="adna")return '<li><b>Base AirDNA:</b> ADR y RevPAR brutos, con la limpieza incluida y sin la tarifa de servicio al huésped. Según la ayuda pública de AirDNA, consultada el 20 oct 2026, que no aclara si el ingreso es antes o después de la comisión del anfitrión.</li>';
+  return "";}
+var BP="mi";
+function bopts(){
+  var BO=[["mi","Mi ingreso real","Lo que de verdad recibes: después de la comisión de la plataforma y sin la limpieza.",[["Neto","n"],["Sin limpieza"]]],
+   ["pl","Estilo PriceLabs","Para compararte con el Market Dashboard: lo que paga el huésped por dormir, antes de comisión y sin limpieza. Ventana, duración y reservas, por fecha de reserva.",[["Bruto","n"],["Sin limpieza"]]],
+   ["adna","Estilo AirDNA","Para compararte con AirDNA: bruto, con la limpieza incluida y sin la tarifa de servicio al huésped.",[["Bruto","n"],["Con limpieza"]]]];
+  $("bOpts").innerHTML=BO.map(function(o){return '<button type="button" class="bopt" data-bo="'+o[0]+'" aria-pressed="'+(BP===o[0])+'"><span class="bt"><b>'+o[1]+'</b><i>'+(BP===o[0]?"✓":"")+'</i></span><span class="bd">'+o[2]+'</span><div class="tg">'+o[3].map(function(x){return '<span'+(x[1]?' class="'+x[1]+'"':'')+'>'+x[0]+'</span>';}).join("")+'</div></button>';}).join("");}
+function openBase(){BP=BASE;bopts();$("bg").classList.add("on");$("sb").classList.add("on");$("sb").setAttribute("aria-hidden","false");}
+function closeBase(){$("sb").classList.remove("on");$("sb").setAttribute("aria-hidden","true");if(!$("sh").classList.contains("on"))$("bg").classList.remove("on");}
+function baseClick(e){
+  if(e.target.closest("#baseB,#bstripB")){openBase();return true;}
+  var bo=e.target.closest("[data-bo]");if(bo){BP=bo.dataset.bo;bopts();return true;}
+  if(e.target.id==="sbA"){BASE=BP;try{localStorage.setItem("cb_base_hot",BASE);}catch(_){}closeBase();chips();render();return true;}
+  if(e.target.id==="sbX"||e.target.id==="bg"){closeBase();}
+  return false;}
 function grafico(tm){
   var el=$("chart"),W=640,H=220,L=36,B=34,T=18,vals=tm.map(function(m){var x=agg([m]);return x[mSel];});
   var mx=Math.max.apply(null,vals.filter(function(v){return v!=null;}).concat([1]));mx=mSel==="occ"?100:mx*1.15;
@@ -373,15 +457,15 @@ function lectura(tm){
   var mo=ml(c[c.length-1]),mp=ml(c[c.length-2]);
   if(dO>=1&&dA<=-1)t="En "+mo+" vendiste más noches que en "+mp+" ("+(dO>=0?"+":"")+num(dO,1)+" pts), pero a una tarifa menor ("+num(dA,1)+"%): el RevPAR "+(dR>=0?"subió":"bajó")+" "+num(Math.abs(dR),1)+"%.";
   else if(dO<=-1&&dA>=1)t="En "+mo+" vendiste menos noches que en "+mp+" ("+num(dO,1)+" pts), pero cobraste más por noche (+"+num(dA,1)+"%): el RevPAR "+(dR>=0?"subió":"bajó")+" "+num(Math.abs(dR),1)+"%.";
-  else t="De "+rangoMes(mp,mo)+" la ocupación "+(dO>=0?"subió ":"bajó ")+num(Math.abs(dO),1)+" pts, el ADR "+(dA>=0?"subió ":"bajó ")+num(Math.abs(dA),1)+"% y el RevPAR "+(dR>=0?"subió ":"bajó ")+num(Math.abs(dR),1)+"%.";
+  else t=(per==="mes"?"De ":"Entre los dos últimos meses cerrados, de ")+rangoMes(mp,mo)+" la ocupación "+(dO>=0?"subió ":"bajó ")+num(Math.abs(dO),1)+" pts, el ADR "+(dA>=0?"subió ":"bajó ")+num(Math.abs(dA),1)+"% y el RevPAR "+(dR>=0?"subió ":"bajó ")+num(Math.abs(dR),1)+"%.";
   if(c[c.length-2]<"2026-04"&&c[c.length-1]>="2026-04")t+=" Ojo: la comisión de Airbnb fue 3% en reservas hechas hasta el 11 abr 2026 y 15,5% desde el 18 abr; baja el ADR neto de las estadías reservadas después.";
   el.textContent=t;el.hidden=false;
 }
 function set(p){per=p;chips();render();}
-document.addEventListener("click",function(e){var mt=e.target.closest("[data-mt]");if(mt){mSel=mt.dataset.mt;render();return;}var b=e.target.closest("[data-p]");if(b){set(b.dataset.p);closeSh();return;}
+document.addEventListener("click",function(e){if(baseClick(e))return;var mt=e.target.closest("[data-mt]");if(mt){mSel=mt.dataset.mt;render();return;}var b=e.target.closest("[data-p]");if(b){set(b.dataset.p);closeSh();return;}
   if(e.target.closest("#cmpB")){CBC.open();return;}if(e.target.closest("#masB"))openSh();if(e.target.id==="shX"||e.target.id==="bg")closeSh();
   if(e.target.id==="mPrev"&&cur>FIRST){cur=sm(cur,-1);render();}if(e.target.id==="mNext"&&cur<CM){cur=sm(cur,1);render();}});
-document.addEventListener("keydown",function(e){if(e.key==="Escape")closeSh();});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"){closeSh();closeBase();}});
 
 /* ===== carga ===== */
 function rangoMes(a,b){var ya=a.slice(-4),yb=b.slice(-4);return ya===yb?a.slice(0,-5)+" a "+b.slice(0,-5)+" de "+yb:a.replace(" "," de ")+" a "+b.replace(" "," de ");}
