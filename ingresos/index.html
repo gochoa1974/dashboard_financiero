@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
-<!-- v20 (20 oct 2026 13:30): los meses de Airbnb, Directas y Extras nacen siempre recogidos y se recogen al cambiar de período, mes o pestaña; selector de período en dos filas (control segmentado de 4 rangos + «Otro período» y «Comparar»), sin chips escondidos.
+<!-- v20 (20 oct 2026 13:30): los meses de Airbnb, Directas y Extras nacen siempre recogidos, y en un solo mes cada pestaña muestra su total al final; y se recogen al cambiar de período, mes o pestaña; selector de período en dos filas (control segmentado de 4 rangos + «Otro período» y «Comparar»), sin chips escondidos.
 v19 (20 oct 2026 13:00): la copia guardada en el aparato se renueva sola si es de un esquema anterior o no trae la tarifa de limpieza (antes solo se renovaba cuando cambiaba la fecha del archivo en Drive). Ninguna cifra cambia. -->
 <!-- v18 (18 oct 2026): listas Airbnb/Directas/Extras agrupadas por mes (acordeón con total al final) y filtro Comparar. Ningún valor cambia. -->
 <!-- v16 (17 oct 2026): filtros de período (Mes, Año, Todo y panel Período con año pasado, 30/60/90/180 días y 12 meses) con comparación contra el mismo período del año anterior. -->
@@ -652,8 +652,11 @@ function renderR0(){
   /* listas */
   var acc=perMonths(pr);
   if(acc.length>1){$("p-air").innerHTML=accList("air",acc,pr);$("p-dir").innerHTML=accList("dir",acc,pr);$("p-ext").innerHTML=accList("ext",acc,pr);}
-  else{$("p-air").innerHTML=resList(o.air.rows,"air");
-  $("p-dir").innerHTML=resList(o.dir.rows,"dir");}
+  else{
+    var tAir=0,tDir=0;o.air.rows.forEach(function(e){tAir+=e.share;});o.dir.rows.forEach(function(e){tDir+=e.share;});
+    var tNota='<p class="mtn">Incluye lo ya dormido y lo que falta por dormir. El total generado del período está en el Resumen.</p>';
+    $("p-air").innerHTML=resList(o.air.rows,"air")+(o.air.rows.length?'<div class="mtot"><span>Total Airbnb · '+mLabel(acc[0])+'</span><b>'+money(tAir)+'</b></div>'+tNota:"");
+    $("p-dir").innerHTML=resList(o.dir.rows,"dir")+(o.dir.rows.length?'<div class="mtot"><span>Total Directas · '+mLabel(acc[0])+'</span><b>'+money(tDir)+'</b></div>'+tNota:"");}
   var ex="";
   if(o.ext.rows.length){
     ex+='<div class="group">Cobrados<span>'+money(o.ext.cD+o.ext.cP)+'</span></div>';
@@ -664,6 +667,7 @@ function renderR0(){
     o.ext.rowsSin.forEach(function(e){ex+=extRow(e,true);});
   }
   if(!ex)ex='<div class="empty">Sin extras en '+Pm+'.</div>';
+  if(o.ext.rows.length&&acc.length<=1)ex+='<div class="mtot"><span>Total Extras cobrados · '+mLabel(acc[0])+'</span><b>'+money(o.ext.cD+o.ext.cP)+'</b></div>'+(o.ext.rowsSin.length?'<p class="mtn">No incluye los extras sin cobrar.</p>':"");
   ex+='<div class="rmk" style="margin-top:10px">Los extras se cuentan en el mes de entrada de su reserva.</div>';
   if(acc.length<=1)$("p-ext").innerHTML=ex;
   $("tabs").querySelector('[data-t="air"]').textContent="Airbnb · "+o.air.rows.length;
