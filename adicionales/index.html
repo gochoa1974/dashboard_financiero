@@ -1244,9 +1244,10 @@ async function valorLigado(parametro, fecha) {
 }
 
 /* ---------- comunicación con el Sheet ---------- */
+function usuarioCB() { try { var p = window.CB && window.CB.perfil; return p ? String(p.usuario || p.nombre || '') : ''; } catch (e) { return ''; } }
 async function call(body) {
   if (!CFG.url || CFG.url.indexOf('PEGA-AQUI') >= 0) throw new Error('Falta pegar la URL del Apps Script en el archivo.');
-  const r = await fetch(CFG.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ clave: CFG.clave }, body)) });
+  const r = await fetch(CFG.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ clave: CFG.clave, usuario: usuarioCB() }, body)) });
   const j = await r.json();
   if (!j.ok) {
     if (/Clave incorrecta/.test(String(j.error))) claveRechazada('Ingresos adicionales');
