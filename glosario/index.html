@@ -1,1 +1,73 @@
-
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="cb-modulo" content="dashboard">
+<script src="../auth.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0a2233">
+<title>Glosario · Cima Blanca</title>
+<link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
+<link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
+<link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
+<script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- v1 (20 oct 2026 10:00): Glosario vivo. Lee las definiciones de glosario_cb_v1 (fuente única), con buscador y grupos. -->
+<style>
+:root{--acento-t:var(--acento-texto)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--texto);font:14px/1.45 var(--fuente);-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 96px}
+.top{display:flex;align-items:center;gap:12px;padding:14px 0 6px}
+.back{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;width:44px;height:44px;border-radius:14px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font-size:20px}
+.top b{font-size:15px}.top small{display:block;color:var(--texto-2);font-size:12px}
+h1{margin:10px 0 0;font-size:24px;font-weight:800;letter-spacing:-.02em}
+.sub{margin:2px 0 12px;color:var(--texto-2);font-size:13px;font-weight:600}
+.q{width:100%;min-height:48px;border-radius:14px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font:600 14px var(--fuente);padding:0 14px}
+.q:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:10px 0 6px;scrollbar-width:none}
+.chip{flex:none;min-height:44px;padding:0 16px;border-radius:99px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font:700 13px var(--fuente);cursor:pointer;white-space:nowrap}
+.chip[aria-pressed=true]{background:var(--texto);color:var(--fondo);border-color:var(--texto)}
+.card{background:var(--tarjeta);border:1px solid var(--linea);border-radius:18px;padding:16px;margin-top:12px;scroll-margin-top:12px}
+.card.hit{border-color:var(--acento);box-shadow:0 0 0 3px color-mix(in srgb,var(--acento) 25%,transparent)}
+.card .g{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--texto-2);font-weight:800}
+.card h2{margin:4px 0 0;font-size:18px;font-weight:800}
+.vacio{margin-top:16px;color:var(--texto-2);font-weight:600}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="back" href="../dashboard/" aria-label="Volver al dashboard">‹</a><div><b>Cima Blanca</b><small>Configuración</small></div></div>
+  <h1>Glosario</h1>
+  <p class="sub">Qué significa cada indicador y cómo compararlo con PriceLabs y AirDNA</p>
+  <input id="q" class="q" type="search" aria-label="Buscar en el glosario" placeholder="Buscar: ADR, neto, limpieza…" autocomplete="off">
+  <div class="chips" id="chips" role="group" aria-label="Filtrar por grupo"></div>
+  <div id="lista"></div>
+  <p class="vacio" id="vacio" hidden>No hay términos con esa búsqueda. Prueba con otra palabra.</p>
+</div>
+<script src="../glosario_cb_v1_2026-10-20_1000.js"></script>
+<script>
+function $(i){return document.getElementById(i);}
+var G="Todo",Q="";
+var GR=["Todo","Noches","Indicadores","Dinero"];
+function chips(){$("chips").innerHTML=GR.map(function(g){return '<button type="button" class="chip" data-g="'+g+'" aria-pressed="'+(G===g)+'">'+g+'</button>';}).join("");}
+function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");}
+function lista(){
+  var h="",n=0;
+  GLO.ORDER.forEach(function(k){var d=GLO.T[k];
+    if(G!=="Todo"&&d.g!==G)return;
+    if(Q){var tx=norm(d.t+" "+d.q+" "+(d.f||"")+" "+(d.e||"")+" "+(d.c||[]).join(" ")+" "+(d.o||""));if(tx.indexOf(Q)<0)return;}
+    n++;h+='<article class="card" id="'+k+'"><div class="g">'+GLO.esc(d.g)+'</div><h2>'+GLO.esc(d.t)+'</h2>'+GLO.body(k)+'</article>';});
+  $("lista").innerHTML=h;$("vacio").hidden=n>0;
+}
+function ir(){var k=(location.hash||"").slice(1),el=k&&$(k);if(!el)return;G="Todo";Q="";$("q").value="";chips();lista();el=$(k);if(el){el.classList.add("hit");el.scrollIntoView({block:"start"});}}
+document.addEventListener("click",function(e){var b=e.target.closest("[data-g]");if(b){G=b.dataset.g;chips();lista();}});
+$("q").addEventListener("input",function(){Q=norm(this.value.trim());lista();});
+window.addEventListener("hashchange",ir);
+chips();lista();ir();
+</script>
+</body>
+</html>
