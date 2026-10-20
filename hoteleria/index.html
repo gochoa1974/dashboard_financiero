@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
-<script src="../glosario_cb_v1_2026-10-20_1000.js"></script>
+<script src="../glosario_cb_v1_1_2026-10-20_1010.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <!-- v3.1 (20 oct 2026 10:05): el módulo pasa a llamarse «KPIs · Hotelería», igual que su tarjeta del Dashboard. -->
@@ -321,7 +321,7 @@ function render(){
   var TG=[["Neto","n"],[HASLP?"Sin limpieza":"Incluye limpieza"]];
   $("hD").innerHTML=pa?dlt(a.occ,pa.occ,"pts").replace("class=\"dl up\"","class=\"dl\"").replace("class=\"dl dn\"","class=\"dl\""):"";
   $("sg").innerHTML=
-    tarjeta("ADR · tarifa por noche",f2(a.adr),"Lo que te queda tras la comisión, por noche vendida · bruto "+nz(f2(a.adrb)),{k:"adr",tg:TG,dl:pa?dlt(a.adr,pa.adr):""})+
+    tarjeta("ADR · tarifa por noche",f2(a.adr),"Lo que recibes por noche vendida, sin comisión de plataforma · bruto "+nz(f2(a.adrb)),{k:"adr",tg:TG,dl:pa?dlt(a.adr,pa.adr):""})+
     tarjeta("RevPAR",f2(a.rev),"Lo que rinde cada noche disponible, se venda o no",{k:"revpar",tg:TG,dl:pa?dlt(a.rev,pa.rev):""})+
     tarjeta("Noches vendidas",a.dp?String(a.v):null,"de "+a.dp+" disponibles",{k:"noche_vend"})+
     tarjeta("Duración de estadía",a.med==null?null:num(a.med,a.med%1?1:0)+(a.med===1?" noche":" noches"),a.med==null?"":"Mediana · promedio "+num(a.alos,2)+" · "+a.rs+(a.rs===1?" reserva":" reservas"),{k:"duracion"})+
@@ -339,7 +339,7 @@ function render(){
   $("tb").innerHTML=tm.slice().reverse().map(function(m){var x=agg([m]);
     return '<tr class="'+(D[m].parcial?'par ':'')+(m===cur&&per==="mes"?'sel':'')+'"><td>'+ab(m)+'</td><td>'+nz(pc(x.occ))+'</td><td>'+(x.dp?x.v+"/"+x.dp:"Sin datos")+'</td><td>'+nz(f2(x.adr))+'</td><td>'+nz(f2(x.rev))+'</td><td>'+(x.alos==null?"Sin datos":num(x.alos,1))+'</td><td>'+(x.lead==null?"Sin datos":num(x.lead,0)+" d")+'</td><td>'+(x.canc==null?"Sin datos":x.canc)+'</td></tr>';}).join("");
   var IT=[["ocupacion","Ocupación","Noches vendidas ÷ noches disponibles",pc(a.occ)==null?"":"Ahora: "+a.v+" ÷ "+a.dp+" = "+pc(a.occ)],
-   ["adr","ADR · tarifa por noche","Ingreso neto de hospedaje ÷ noches vendidas","Neto: tras la comisión de Airbnb"+(HASLP?" · Sin limpieza":" · Incluye limpieza (el maestro aún no la trae)")],
+   ["adr","ADR · tarifa por noche","Ingreso neto de hospedaje ÷ noches vendidas","Neto: se calcula sin la comisión de Airbnb ni de otras plataformas (OTA)"+(HASLP?" y sin la tarifa de limpieza.":", pero incluye la limpieza (el maestro aún no la trae).")],
    ["revpar","RevPAR","Ingreso neto ÷ noches disponibles","Es lo mismo que ADR × ocupación"],
    ["duracion","Duración de estadía","Noches por reserva con check-in en el período","Mediana y promedio"],
    ["ventana","Ventana de reserva","Días entre reservar y llegar",""],
