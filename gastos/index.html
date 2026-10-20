@@ -2092,10 +2092,11 @@ function setSync(k,msg){
  }
 }
 
+function usuarioCB() { try { var p = window.CB && window.CB.perfil; return p ? String(p.usuario || p.nombre || '') : ''; } catch (e) { return ''; } }
 async function api(body){
  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),30000);
  try{
-  const r=await fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({clave:CFG.clave,...body}),signal:ctl.signal});
+  const r=await fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({clave:CFG.clave,usuario:usuarioCB(),...body}),signal:ctl.signal});
   if(!r.ok)throw new Error('El Sheet no respondió (código '+r.status+')');
   let j;try{j=await r.json();}catch(e){throw new Error('Respuesta inesperada: revisa que la URL sea la de la aplicación web');}
   if(!j.ok)throw new Error(j.error||'El Sheet respondió con error');
