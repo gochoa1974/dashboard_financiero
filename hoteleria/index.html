@@ -7,14 +7,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#0a2233">
-<title>Hotelería · Cima Blanca</title>
+<title>KPIs · Hotelería · Cima Blanca</title>
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
+<script src="../glosario_cb_v1_2026-10-20_1000.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- v3.1 (20 oct 2026 10:05): el módulo pasa a llamarse «KPIs · Hotelería», igual que su tarjeta del Dashboard. -->
+<!-- v3 (20 oct 2026 10:00): glosario vivo (ⓘ en cada indicador, etiquetas Neto/Sin limpieza, «Cómo se aplica» en lista), «Ventana de reserva» y «Duración de estadía» (mediana y promedio) como PriceLabs, variación contra el período anterior, botones de 44 px. -->
 <!-- v2 (18 oct 2026 21:45): usa los campos nuevos del maestro (Sincronizar v12): anticipación real (fecha de reserva), ADR sin limpieza, ADR bruto y noches de las extensiones de estadía. -->
 <!-- v1 (18 oct 2026 21:00): módulo Hotelería «Esencial»: ocupación, ADR, RevPAR, estadía media, anticipación, cancelaciones, mes a mes y Comparar. Todas las noches como disponibles; sin bloqueos. -->
 <style>
@@ -29,13 +32,13 @@ h1{margin:10px 0 0;font-size:24px;font-weight:800;letter-spacing:-.02em}
 .sub{margin:2px 0 12px;color:var(--texto-2);font-size:13px;font-weight:600}
 h2{font-size:15px;margin:0 0 2px;font-weight:800}
 .pchips{display:flex;gap:5px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}
-.pchip{flex:none;min-height:40px;padding:0 9px;border-radius:99px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font:700 13px var(--fuente);white-space:nowrap;display:inline-flex;align-items:center;gap:4px;cursor:pointer;text-decoration:none}
+.pchip{flex:none;min-height:44px;padding:0 9px;border-radius:99px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font:700 13px var(--fuente);white-space:nowrap;display:inline-flex;align-items:center;gap:4px;cursor:pointer;text-decoration:none}
 .pchip[aria-pressed=true]{background:var(--texto);color:var(--fondo);border-color:var(--texto)}
 .pchip.mas[aria-pressed=true]{background:transparent;color:var(--acento-t);border-color:var(--acento)}
 .pchip svg{width:14px;height:14px}
 .rng{font-size:12.5px;color:var(--texto-2);font-weight:600;margin:0 0 10px}
 .mnav{display:flex;align-items:center;justify-content:center;gap:8px;margin:2px 0 10px}
-.mnav button{width:44px;height:40px;border-radius:12px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font-size:14px;cursor:pointer}
+.mnav button{width:44px;height:44px;border-radius:12px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font-size:14px;cursor:pointer}
 .mnav b{min-width:150px;text-align:center;font-size:16px;text-transform:capitalize}
 .hero{background:linear-gradient(135deg,var(--hero-a),var(--hero-b));color:#fff;border-radius:var(--r4);padding:20px 18px}
 .hero .l{font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.8;font-weight:700}
@@ -106,7 +109,7 @@ td.pos{color:var(--ok);font-weight:800}td.neg{color:var(--err);font-weight:800}
 body.cmpOn .hero,body.cmpOn .grid,body.cmpOn .mnav,body.cmpOn .rng{display:none!important}
 .pbbar{height:14px;border-radius:99px;background:color-mix(in srgb,var(--texto) 9%,transparent);overflow:hidden;margin:10px 0 6px}.pbbar i{display:block;height:100%;background:var(--acento);border-radius:99px;min-width:3px}
 .fm{display:grid;gap:10px;margin-top:10px}.fm .r{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:13px;font-weight:600}.fm .r b{font-weight:800}.fm .r .bar{grid-column:1/-1;height:8px;border-radius:99px;background:color-mix(in srgb,var(--texto) 8%,transparent);overflow:hidden}.fm .r .bar i{display:block;height:100%;background:var(--gasto);border-radius:99px}
-.seg{display:flex;gap:6px;margin:10px 0 6px;overflow-x:auto;scrollbar-width:none}.seg button{flex:none;min-height:38px;padding:0 14px;border-radius:99px;border:1px solid var(--linea);background:var(--fondo);color:var(--texto);font:700 13px var(--fuente);cursor:pointer;white-space:nowrap}.seg button[aria-pressed=true]{background:var(--texto);color:var(--fondo);border-color:var(--texto)}
+.seg{display:flex;gap:6px;margin:10px 0 6px;overflow-x:auto;scrollbar-width:none}.seg button{flex:none;min-height:44px;padding:0 14px;border-radius:99px;border:1px solid var(--linea);background:var(--fondo);color:var(--texto);font:700 13px var(--fuente);cursor:pointer;white-space:nowrap}.seg button[aria-pressed=true]{background:var(--texto);color:var(--fondo);border-color:var(--texto)}
 </style><style>
 .hero.h2{margin-top:2px}
 .sg{display:grid;gap:10px;grid-template-columns:1fr 1fr;margin-top:12px}
@@ -119,12 +122,24 @@ details.card summary::-webkit-details-marker{display:none}
 details.card summary::after{content:"+";font-size:20px;color:var(--texto-2)}
 details[open].card summary::after{content:"−"}
 body.cmpOn .sg,body.cmpOn .lec{display:none!important}
+.tg{display:flex;gap:5px;flex-wrap:wrap;margin:2px 0 4px}
+.tg span{padding:3px 8px;border-radius:99px;font-size:11px;font-weight:800;border:1px solid var(--texto-2);color:var(--texto-2)}
+.tg span.n{background:var(--texto);border-color:var(--texto);color:var(--fondo)}
+.dl{font-size:12.5px;font-weight:800;margin-top:6px}
+.card .gl-h h3,.card .gl-h span{font-size:13px;color:var(--texto-2);font-weight:700;letter-spacing:.02em;text-transform:uppercase}
+.hero .gl-t{color:#fff}
+.how .it{padding:12px 0;border-bottom:1px solid var(--linea)}.how .it:last-of-type{border-bottom:0}
+.how .it b{font-size:14px;font-weight:800}.how .it .fx{font-size:13.5px;margin-top:2px}.how .it .ex{font-size:12.5px;color:var(--texto-2);margin-top:3px}
+.how .rg{margin-top:6px;background:color-mix(in srgb,var(--texto) 6%,transparent);border-radius:12px;padding:12px 14px}
+.how .rg .rt{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--texto-2);font-weight:800;margin-bottom:6px}
+.how .rg ul{margin:0;padding-left:18px;font-size:13px;line-height:1.5}
+.how .lk{display:inline-flex;align-items:center;min-height:44px;margin-top:8px;color:var(--acento-texto);font-weight:800;text-decoration:none}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><a class="back" href="../dashboard/" aria-label="Volver al dashboard">‹</a><div><b>Cima Blanca</b><small>Hotelería</small></div></div>
-  <h1>Hotelería</h1>
+  <div class="top"><a class="back" href="../dashboard/" aria-label="Volver al dashboard">‹</a><div><b>Cima Blanca</b><small>KPIs · Hotelería</small></div></div>
+  <h1>KPIs · Hotelería</h1>
   <p class="sub" id="fresh">Cuántas noches vendes, a qué precio y cuánto rinde cada noche disponible</p>
   <div id="vacio" class="card" hidden><h3>Faltan datos</h3><p style="margin:6px 0 10px">Este panel lee las reservas que ya calcula Ingresos. Abre Ingresos una vez en este aparato y vuelve aquí.</p><p id="diag" class="note" style="margin:0 0 10px;font-weight:700"></p><a class="pchip" href="../ingresos/">Abrir Ingresos</a></div>
 
@@ -137,6 +152,7 @@ body.cmpOn .sg,body.cmpOn .lec{display:none!important}
     <div class="l" id="hL"></div>
     <div class="n" id="hN"></div>
     <div id="hS" style="font-size:13px;opacity:.85"></div>
+    <div id="hD" class="dl" style="margin-top:4px;color:#fff"></div>
     <div class="m" id="hM"></div>
   </section>
 
@@ -153,11 +169,13 @@ body.cmpOn .sg,body.cmpOn .lec{display:none!important}
     </div>
     <details class="card g3" id="detT">
       <summary>Detalle mensual</summary>
-      <div class="tw"><table><thead><tr><th>Mes</th><th>Ocup.</th><th>Noches</th><th>ADR</th><th>RevPAR</th><th>Estadía</th><th>Antic.</th><th>Canc.</th></tr></thead><tbody id="tb"></tbody></table></div>
+      <div class="tw"><table><thead><tr><th>Mes</th><th>Ocup.</th><th>Noches</th><th>ADR</th><th>RevPAR</th><th>Duración</th><th>Ventana</th><th>Canc.</th></tr></thead><tbody id="tb"></tbody></table></div>
       <p class="note">«Sin datos» significa que falta la información, no que valga cero. Los meses en curso van marcados.</p>
     </details>
-    <div class="card g3"><h2>Cómo se calcula</h2>
-      <div class="note" id="how"></div></div>
+    <details class="card g3" id="detH">
+      <summary>Cómo se calcula</summary>
+      <div class="how" id="how"></div>
+    </details>
   </div>
 </div>
 
@@ -201,14 +219,14 @@ function build(){
   RES.forEach(function(r){if(r.fecha_inicio&&(!MINF||r.fecha_inicio<MINF))MINF=r.fecha_inicio;});
   FIRST=MINF.slice(0,7);
   var m=FIRST;
-  while(m<=CM){D[m]={vend:0,disp:0,neto:0,bru:0,res:0,nch:0,ls:0,ln:0,rl:0,canc:null,parcial:m===CM,primero:m===FIRST};
+  while(m<=CM){D[m]={vend:0,disp:0,neto:0,bru:0,res:0,nch:0,ls:0,ln:0,rl:0,canc:null,nl:[],parcial:m===CM,primero:m===FIRST};
     var a=m===FIRST?MINF:m+"-01",b=m===CM?addD(HOY,-1):m+"-"+String(dim(m)).padStart(2,"0");
     D[m].disp=b>=a?diff(a,b)+1:0;D[m]._a=a;D[m]._b=b;m=sm(m,1);}
   var seen={};
   RES.forEach(function(r){var ns=+r.noches||0;if(!ns||!r.fecha_inicio)return;
     var bruR=+r.ingresos_brutos||(+r.monto||0),lp=(r.origen==="Airbnb"&&bruR>0)?(+r.tarifa_limpieza||0):0;
     var neto=(+r.monto||0)-lp*(+r.monto||0)/(bruR||1),bru=bruR-lp,ck=r.fecha_inicio.slice(0,7);
-    if(D[ck]){D[ck].res++;D[ck].nch+=ns;if(r.fecha_reserva){D[ck].rl++;D[ck].ls+=Math.max(diff(r.fecha_reserva,r.fecha_inicio),0);D[ck].ln++;}}
+    if(D[ck]){D[ck].res++;D[ck].nch+=ns;D[ck].nl.push(ns);if(r.fecha_reserva){D[ck].rl++;D[ck].ls+=Math.max(diff(r.fecha_reserva,r.fecha_inicio),0);D[ck].ln++;}}
     for(var i=0;i<ns;i++){var d=addD(r.fecha_inicio,i),k=d.slice(0,7),x=D[k];if(!x||d>x._b||d<x._a)continue;
       x.neto+=neto/ns;x.bru+=bru/ns;if(!seen[d]){seen[d]=1;x.vend++;}}});
   /* extensiones de estadía: noches extra pagadas aparte (Adicionales), con su check-in y noches */
@@ -224,9 +242,10 @@ function sum(ms,fn){return ms.reduce(function(s,m){return s+fn(m);},0);}
 function agg(ms){
   var v=sum(ms,function(m){return D[m].vend;}),dp=sum(ms,function(m){return D[m].disp;}),nt=sum(ms,function(m){return D[m].neto;}),
    rs=sum(ms,function(m){return D[m].res;}),nc=sum(ms,function(m){return D[m].nch;}),ls=sum(ms,function(m){return D[m].ls;}),ln=sum(ms,function(m){return D[m].ln;}),br=sum(ms,function(m){return D[m].bru;});
+  var nlAll=[];ms.forEach(function(m){nlAll=nlAll.concat(D[m].nl);});nlAll.sort(function(x,y){return x-y;});var med=nlAll.length?(nlAll.length%2?nlAll[(nlAll.length-1)/2]:(nlAll[nlAll.length/2-1]+nlAll[nlAll.length/2])/2):null;
   var cc=CANC&&ms.length&&ms.every(function(m){return D[m].canc!=null;})?sum(ms,function(m){return D[m].canc;}):null;
   return {v:v,dp:dp,nt:nt,rs:rs,
-    occ:dp>0?v/dp*100:null,adr:v>0?nt/v:null,adrb:v>0?br/v:null,rev:dp>0?nt/dp:null,alos:rs>0?nc/rs:null,
+    occ:dp>0?v/dp*100:null,adr:v>0?nt/v:null,adrb:v>0?br/v:null,rev:dp>0?nt/dp:null,alos:rs>0?nc/rs:null,med:med,
     lead:ln>0?ls/ln:null,ln:ln,canc:cc,tasa:cc!=null&&(rs+cc)>0?cc/(rs+cc)*100:null};
 }
 
@@ -270,7 +289,21 @@ function cmpInit(){
 
 /* ===== render ===== */
 var mSel="occ";
-function tarjeta(t,v,f){return '<div class="card"><h3>'+t+'</h3><div class="v'+(v==null?' off':'')+'">'+nz(v)+'</div><div class="d">'+f+'</div></div>';}
+function tarjeta(t,v,f,o){o=o||{};return '<div class="card">'+(o.k?GLO.head(o.k,t):'<h3>'+t+'</h3>')+'<div class="v'+(v==null?' off':'')+'">'+nz(v)+'</div>'+(o.tg?'<div class="tg">'+o.tg.map(function(x){return '<span'+(x[1]?' class="'+x[1]+'"':'')+'>'+x[0]+'</span>';}).join("")+'</div>':'')+'<div class="d">'+f+'</div>'+(o.dl||"")+'</div>';}
+/* variación contra el período anterior (mes: el mes anterior; ventanas móviles: el bloque de igual tamaño justo antes) */
+function prevMs(){
+  if(per==="mes"){var p=sm(cur,-1);return D[p]?[p]:null;}
+  if(NN[per]){var r=rango(),n=NN[per],ps=[];for(var i=n;i>=1;i--){var m=sm(r[0],-i);if(!D[m])return null;ps.push(m);}return ps;}
+  return null;
+}
+function prevEtq(){if(per==="mes")return "vs "+MN[+sm(cur,-1).slice(5)-1];return "vs período anterior";}
+function dlt(a,b,tipo){
+  if(a==null||b==null)return "";
+  var d=a-b;if(Math.abs(d)<(tipo==="pts"?.05:.005))return '<div class="dl neu">Sin cambio '+prevEtq()+'</div>';
+  var s=d>0?"▲ +":"▼ −",c=d>0?"up":"dn",v=Math.abs(d);
+  var txt=tipo==="pts"?num(v,1)+" pts":"$"+num(v,2);
+  return '<div class="dl '+c+'">'+s+txt+' '+prevEtq()+'</div>';
+}
 function render(){
   CBC.render();document.body.classList.toggle("cmpOn",CBC.active());
   var r=rango(),ms=months(r[0],r[1]);
@@ -279,18 +312,21 @@ function render(){
   $("mNext").disabled=cur>=CM;$("mPrev").disabled=cur<=FIRST;$("mNext").style.opacity=$("mNext").disabled?.35:1;$("mPrev").style.opacity=$("mPrev").disabled?.35:1;
   $("rng").textContent=per==="mes"?(D[cur].parcial?"Mes en curso · hasta ayer, "+(+addD(HOY,-1).slice(8))+" de "+MN[+cur.slice(5)-1]:"Mes cerrado"):(ml(r[0])+" al "+ml(r[1])+(per==="anio"||per==="todo"?" · hasta ayer":""));
   var a=agg(ms),etq=etqF();
-  $("hL").textContent="Ocupación · "+etq;
+  $("hL").innerHTML=GLO.inline("ocupacion","Ocupación")+" · "+etq;
   $("hN").className="n";$("hN").innerHTML=a.occ==null?'<span style="font-size:.5em">Sin datos</span>':num(a.occ,1)+'<sup style="margin-left:2px">%</sup>';
   $("hS").textContent=a.dp?(a.v+" de "+a.dp+" noches disponibles vendidas"):"Este período aún no tiene noches transcurridas";
   $("hM").innerHTML='<span class="pill">ADR '+nz(f2(a.adr))+'</span><span class="pill">RevPAR '+nz(f2(a.rev))+'</span>';
   var CT=a.canc==null?null:String(a.canc);
+  var pm=prevMs(),pa=pm?agg(pm):null;
+  var TG=[["Neto","n"],[HASLP?"Sin limpieza":"Incluye limpieza"]];
+  $("hD").innerHTML=pa?dlt(a.occ,pa.occ,"pts").replace("class=\"dl up\"","class=\"dl\"").replace("class=\"dl dn\"","class=\"dl\""):"";
   $("sg").innerHTML=
-    tarjeta("ADR · tarifa por noche",f2(a.adr),"Neto tras comisión"+(HASLP?", sin limpieza":"")+" ÷ noches vendidas · bruto "+nz(f2(a.adrb)))+
-    tarjeta("RevPAR",f2(a.rev),"Ingreso neto ÷ noches disponibles")+
-    tarjeta("Noches vendidas",a.dp?String(a.v):null,"de "+a.dp+" disponibles")+
-    tarjeta("Estadía media",a.alos==null?null:num(a.alos,2)+" noches","Noches ÷ reservas · "+a.rs+(a.rs===1?" reserva":" reservas"))+
-    tarjeta("Anticipación de reserva",a.lead==null?null:num(a.lead,0)+(Math.round(a.lead)===1?" día":" días"),a.lead==null?(a.rs?"Falta la fecha de reserva: actualiza con Sincronizar":"Días entre reservar y llegar"):"Días entre reservar y llegar · "+a.ln+" de "+a.rs+(a.rs===1?" reserva":" reservas"))+
-    tarjeta("Cancelaciones",CT,CT==null?"Abre Cancelaciones una vez en este aparato":(a.tasa==null?"":pc(a.tasa)+" de las reservas · ")+"por fecha de check-in");
+    tarjeta("ADR · tarifa por noche",f2(a.adr),"Lo que te queda tras la comisión, por noche vendida · bruto "+nz(f2(a.adrb)),{k:"adr",tg:TG,dl:pa?dlt(a.adr,pa.adr):""})+
+    tarjeta("RevPAR",f2(a.rev),"Lo que rinde cada noche disponible, se venda o no",{k:"revpar",tg:TG,dl:pa?dlt(a.rev,pa.rev):""})+
+    tarjeta("Noches vendidas",a.dp?String(a.v):null,"de "+a.dp+" disponibles",{k:"noche_vend"})+
+    tarjeta("Duración de estadía",a.med==null?null:num(a.med,a.med%1?1:0)+(a.med===1?" noche":" noches"),a.med==null?"":"Mediana · promedio "+num(a.alos,2)+" · "+a.rs+(a.rs===1?" reserva":" reservas"),{k:"duracion"})+
+    tarjeta("Ventana de reserva",a.lead==null?null:num(a.lead,0)+(Math.round(a.lead)===1?" día":" días"),a.lead==null?(a.rs?"Falta la fecha de reserva: actualiza con Sincronizar":"Días entre reservar y llegar"):"Días entre reservar y llegar · "+a.ln+" de "+a.rs+(a.rs===1?" reserva":" reservas"),{k:"ventana"})+
+    tarjeta("Cancelaciones",CT,CT==null?"Abre Cancelaciones una vez en este aparato":(a.tasa==null?"":pc(a.tasa)+" de las reservas · ")+"por fecha de check-in",{k:"cancelaciones"});
   /* mes a mes */
   var tm=per==="mes"?months(sm(cur,-5),cur):ms;
   $("mT").textContent=per==="mes"?"Últimos meses":"Mes a mes";
@@ -302,11 +338,15 @@ function render(){
   /* tabla */
   $("tb").innerHTML=tm.slice().reverse().map(function(m){var x=agg([m]);
     return '<tr class="'+(D[m].parcial?'par ':'')+(m===cur&&per==="mes"?'sel':'')+'"><td>'+ab(m)+'</td><td>'+nz(pc(x.occ))+'</td><td>'+(x.dp?x.v+"/"+x.dp:"Sin datos")+'</td><td>'+nz(f2(x.adr))+'</td><td>'+nz(f2(x.rev))+'</td><td>'+(x.alos==null?"Sin datos":num(x.alos,1))+'</td><td>'+(x.lead==null?"Sin datos":num(x.lead,0)+" d")+'</td><td>'+(x.canc==null?"Sin datos":x.canc)+'</td></tr>';}).join("");
-  $("how").innerHTML="<b>Ocupación</b> = noches vendidas ÷ noches disponibles; disponible es cada día transcurrido desde la primera reserva, sin descontar bloqueos. "
-   +"<b>ADR</b> = ingreso neto de hospedaje ÷ noches vendidas (neto tras comisión de Airbnb"+(HASLP?"; sin la limpieza cobrada, que se resta con su parte de comisión":"; incluye la limpieza cobrada porque el maestro aún no la trae")+"). <b>RevPAR</b> = ingreso neto ÷ noches disponibles = ADR × ocupación. "
-   +"<b>Estadía media</b> = noches ÷ reservas con check-in en el período. La noche de salida no cuenta. Solo cuentan noches ya transcurridas (hasta ayer)."
-   +(EXTN?" Las extensiones de estadía ("+EXTN+") suman sus noches y su ingreso.":"")
-   +" Comisión de Airbnb: 3% antes del 18 abr 2026 y 15,5% desde esa fecha, por eso el ADR neto no es comparable entre ambas etapas.";
+  var IT=[["ocupacion","Ocupación","Noches vendidas ÷ noches disponibles",pc(a.occ)==null?"":"Ahora: "+a.v+" ÷ "+a.dp+" = "+pc(a.occ)],
+   ["adr","ADR · tarifa por noche","Ingreso neto de hospedaje ÷ noches vendidas","Neto: tras la comisión de Airbnb"+(HASLP?" · Sin limpieza":" · Incluye limpieza (el maestro aún no la trae)")],
+   ["revpar","RevPAR","Ingreso neto ÷ noches disponibles","Es lo mismo que ADR × ocupación"],
+   ["duracion","Duración de estadía","Noches por reserva con check-in en el período","Mediana y promedio"],
+   ["ventana","Ventana de reserva","Días entre reservar y llegar",""],
+   ["cancelaciones","Cancelaciones","Reservas canceladas, por fecha de check-in",""]];
+  $("how").innerHTML=IT.map(function(i){return '<div class="it"><b>'+i[1]+'</b><div class="fx">'+i[2]+'</div>'+(i[3]?'<div class="ex">'+i[3]+'</div>':'')+'</div>';}).join("")
+   +'<div class="rg"><div class="rt">Reglas</div><ul><li>Disponible = cada día hasta ayer. Hoy no se descuentan noches bloqueadas.</li><li>La noche de salida no cuenta.</li><li>Comisión de Airbnb: 3% en reservas hechas hasta el 11 abr 2026 y 15,5% desde el 18 abr; por eso el ADR neto no es comparable entre ambas etapas.</li>'+(EXTN?'<li>Las extensiones de estadía ('+EXTN+') suman sus noches y su ingreso.</li>':'')+'</ul></div>'
+   +'<a class="lk" href="../glosario/">Ver el glosario completo →</a>';
 }
 function grafico(tm){
   var el=$("chart"),W=640,H=220,L=36,B=34,T=18,vals=tm.map(function(m){var x=agg([m]);return x[mSel];});
@@ -331,7 +371,7 @@ function lectura(tm){
   if(dO>=1&&dA<=-1)t="En "+mo+" vendiste más noches que en "+mp+" ("+(dO>=0?"+":"")+num(dO,1)+" pts), pero a una tarifa menor ("+num(dA,1)+"%): el RevPAR "+(dR>=0?"subió":"bajó")+" "+num(Math.abs(dR),1)+"%.";
   else if(dO<=-1&&dA>=1)t="En "+mo+" vendiste menos noches que en "+mp+" ("+num(dO,1)+" pts), pero cobraste más por noche (+"+num(dA,1)+"%): el RevPAR "+(dR>=0?"subió":"bajó")+" "+num(Math.abs(dR),1)+"%.";
   else t="De "+rangoMes(mp,mo)+" la ocupación "+(dO>=0?"subió ":"bajó ")+num(Math.abs(dO),1)+" pts, el ADR "+(dA>=0?"subió ":"bajó ")+num(Math.abs(dA),1)+"% y el RevPAR "+(dR>=0?"subió ":"bajó ")+num(Math.abs(dR),1)+"%.";
-  if(c[c.length-2]<"2026-04"&&c[c.length-1]>="2026-04")t+=" Ojo: la comisión de Airbnb cambió de 3% a 15,5% en abril de 2026 y baja el ADR neto.";
+  if(c[c.length-2]<"2026-04"&&c[c.length-1]>="2026-04")t+=" Ojo: la comisión de Airbnb fue 3% en reservas hechas hasta el 11 abr 2026 y 15,5% desde el 18 abr; baja el ADR neto de las estadías reservadas después.";
   el.textContent=t;el.hidden=false;
 }
 function set(p){per=p;chips();render();}
