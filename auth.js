@@ -29,7 +29,7 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
 .cbbox p.cbsub{margin:0 0 20px;font-size:13.5px;font-weight:600;color:var(--cbmut)}\
 .cbcard{background:var(--cbsf);border:1px solid var(--cbline);border-radius:20px;padding:20px 18px;text-align:left;box-shadow:0 1px 2px rgba(10,34,51,.05),0 8px 20px -12px rgba(10,34,51,.2)}\
 .cbcard label{display:block;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--cbmut);margin:0 0 6px}\
-.cbcard input{width:100%;font:inherit;font-size:16px;font-weight:600;color:var(--cbink);background:transparent;border:1.5px solid var(--cbline);border-radius:12px;padding:13px 14px;margin:0 0 14px;min-height:48px}\
+.cbcard input{box-sizing:border-box;width:100%;font:inherit;font-size:16px;font-weight:600;color:var(--cbink);background:transparent;border:1.5px solid var(--cbline);border-radius:12px;padding:13px 14px;margin:0 0 14px;min-height:48px}\
 .cbcard input:focus{outline:none;border-color:var(--cbac);box-shadow:0 0 0 3px rgba(10,34,51,.12)}\
 .cbbtn{width:100%;min-height:50px;border:0;border-radius:14px;background:var(--cbac);color:var(--cbbg);font:inherit;font-size:15.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}\
 .cbbtn[disabled]{opacity:.7;cursor:default}\
@@ -43,6 +43,9 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
 .cbtxt{margin:0 0 18px;font-size:14px;font-weight:600;line-height:1.5;color:var(--cbmut)}\
 .cbl2{display:block;margin:12px auto 0;background:none;border:0;font:inherit;font-size:14px;font-weight:800;color:var(--cbink);min-height:44px;padding:8px 12px;cursor:pointer;text-decoration:underline}\
 @keyframes cbr{to{transform:rotate(360deg)}}\
+.cbok{min-height:20px;margin:-4px 0 12px;font-size:13.5px;font-weight:700;line-height:1.45;color:#067647}\
+.cbhint{margin:-6px 0 12px;font-size:12.5px;font-weight:600;color:var(--cbmut)}\
+@media (prefers-color-scheme:dark){.cbok{color:#6ee7b7}}\
 @media (prefers-reduced-motion:reduce){.cbspin{animation-duration:2.4s}}';
   var st = document.createElement('style'); st.textContent = css; (document.head || document.documentElement).appendChild(st);
   document.documentElement.classList.add('cb-pend');
@@ -63,16 +66,61 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
       '<form class="cbcard" id="cbf" autocomplete="on"><label for="cbu">Usuario</label><input id="cbu" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>' +
       '<label for="cbp">Clave</label><input id="cbp" name="password" type="password" autocomplete="current-password" required>' +
       '<div class="cberr" id="cbe" role="alert">' + (err || '') + '</div><button class="cbbtn" id="cbb" type="submit">Entrar</button></form>' +
+      '<button class="cbl2" id="cbolv" type="button">¿Olvidaste tu clave?</button>' +
       '<div class="cbfoot">Tu sesión queda guardada en este dispositivo.</div>');
+    document.getElementById('cbolv').onclick = function () { vistaOlvide(document.getElementById('cbu').value); };
     var f = document.getElementById('cbf'), b = document.getElementById('cbb'), e = document.getElementById('cbe');
     setTimeout(function () { var u = document.getElementById('cbu'); if (u) u.focus(); }, 50);
     f.addEventListener('submit', function (ev) {
       ev.preventDefault(); e.textContent = ''; b.disabled = true; b.innerHTML = '<span class="cbspin"></span> Entrando…';
       llamarSin('login', { usuario: document.getElementById('cbu').value, clave: document.getElementById('cbp').value }).then(function (r) {
-        guardar(r); aplicar(r); marcar();
-        var fin = function () { ocultar(); if (CB.alEntrar) CB.alEntrar(r); else resolver(r); };
-        if (CB.bloqueado) fin(); else ofrecerSi(fin);
+        if (r.cambiarClave) { vistaCambiar(r); return; }
+        entrar(r);
       }).catch(function (er) { b.disabled = false; b.textContent = 'Entrar'; e.textContent = er.message || 'No pude entrar. Revisa tu conexión.'; document.getElementById('cbp').value = ''; document.getElementById('cbp').focus(); });
+    });
+  }
+  function entrar(r) {
+    guardar(r); aplicar(r); marcar();
+    var fin = function () { ocultar(); if (CB.alEntrar) CB.alEntrar(r); else resolver(r); };
+    if (CB.bloqueado) fin(); else ofrecerSi(fin);
+  }
+  /* ¿Olvidaste tu clave?: el servidor responde siempre lo mismo, exista o no el usuario */
+  function vistaOlvide(u0) {
+    pintar('<img class="cblogo" src="' + logo() + '" alt="Cima Blanca"><h1>Recuperar clave</h1><p class="cbsub">Te enviamos una clave provisional al correo registrado</p>' +
+      '<form class="cbcard" id="cbf2" autocomplete="off"><label for="cbu2">Usuario</label><input id="cbu2" autocapitalize="none" autocorrect="off" spellcheck="false" required value="' + esc(u0 || '') + '">' +
+      '<div class="cberr" id="cbe" role="alert"></div><div class="cbok" id="cbo2" role="status"></div><button class="cbbtn" id="cbb" type="submit">Enviar clave provisional</button></form>' +
+      '<button class="cbl2" id="cbv" type="button">Volver a entrar</button>');
+    var f = document.getElementById('cbf2'), b = document.getElementById('cbb'), e = document.getElementById('cbe'), o = document.getElementById('cbo2');
+    document.getElementById('cbv').onclick = function () { vistaLogin(); };
+    setTimeout(function () { var u = document.getElementById('cbu2'); if (u) u.focus(); }, 50);
+    f.addEventListener('submit', function (ev) {
+      ev.preventDefault(); e.textContent = ''; o.textContent = ''; b.disabled = true; b.innerHTML = '<span class="cbspin"></span> Enviando…';
+      llamarSin('olvide', { usuario: document.getElementById('cbu2').value }).then(function (r) {
+        o.textContent = r.mensaje || 'Listo. Revisa tu correo.'; b.disabled = false; b.textContent = 'Enviar de nuevo';
+        document.getElementById('cbv').textContent = 'Ya la tengo: entrar';
+      }).catch(function (er) { b.disabled = false; b.textContent = 'Enviar clave provisional'; e.textContent = er.message || 'No pude enviar. Revisa tu conexión.'; });
+    });
+  }
+  /* Entró con la clave provisional: debe crear una propia antes de usar nada */
+  function vistaCambiar(r) {
+    pintar('<img class="cblogo" src="' + logo() + '" alt="Cima Blanca"><h1>Crea tu clave nueva</h1><p class="cbsub">' + (r.nombre ? 'Hola, ' + esc(r.nombre) + '. ' : '') + 'Entraste con una clave provisional.</p>' +
+      '<form class="cbcard" id="cbf3" autocomplete="on"><input type="text" name="username" autocomplete="username" value="' + esc(r.usuario || '') + '" hidden readonly>' +
+      '<label for="cbn1">Clave nueva</label><input id="cbn1" name="password" type="password" autocomplete="new-password" minlength="8" required>' +
+      '<label for="cbn2">Repite la clave nueva</label><input id="cbn2" type="password" autocomplete="new-password" minlength="8" required>' +
+      '<div class="cbhint">Mínimo 8 caracteres. Que solo la sepas tú.</div>' +
+      '<div class="cberr" id="cbe" role="alert"></div><button class="cbbtn" id="cbb" type="submit">Guardar y entrar</button></form>' +
+      '<button class="cbl2" id="cbc" type="button">Cancelar</button>');
+    var f = document.getElementById('cbf3'), b = document.getElementById('cbb'), e = document.getElementById('cbe');
+    document.getElementById('cbc').onclick = function () { vistaLogin(); };
+    setTimeout(function () { var u = document.getElementById('cbn1'); if (u) u.focus(); }, 50);
+    f.addEventListener('submit', function (ev) {
+      ev.preventDefault(); e.textContent = '';
+      var a = document.getElementById('cbn1').value, c = document.getElementById('cbn2').value;
+      if (a.length < 8) { e.textContent = 'La clave debe tener al menos 8 caracteres.'; return; }
+      if (a !== c) { e.textContent = 'Las dos claves no coinciden.'; return; }
+      b.disabled = true; b.innerHTML = '<span class="cbspin"></span> Guardando…';
+      llamarSin('cambiar_clave', { token: r.token, claveNueva: a }).then(function (r2) { entrar(r2); })
+        .catch(function (er) { b.disabled = false; b.textContent = 'Guardar y entrar'; e.textContent = er.message || 'No pude guardar. Revisa tu conexión.'; });
     });
   }
   function vistaSinAcceso(p) {
@@ -198,7 +246,7 @@ html.cb-pend body>*:not(#cbov){visibility:hidden}\
     seguir(s);
   }
   function seguir(s) {
-    aplicar({ token: s.token, expira: s.expira, claveModulos: ls(K_CLAVE), usuario: s.perfil.usuario, nombre: s.perfil.nombre, rol: s.perfil.rol, rolEtiqueta: s.perfil.rolEtiqueta, modulos: s.perfil.modulos, puedeBorrar: s.perfil.puedeBorrar, esAdmin: s.perfil.esAdmin });
+    aplicar({ token: s.token, expira: s.expira, claveModulos: 'cbs.' + s.token, usuario: s.perfil.usuario, nombre: s.perfil.nombre, rol: s.perfil.rol, rolEtiqueta: s.perfil.rolEtiqueta, modulos: s.perfil.modulos, puedeBorrar: s.perfil.puedeBorrar, esAdmin: s.perfil.esAdmin });
     if (!CB.bloqueado) document.documentElement.classList.remove('cb-pend');
     ocultar(); if (CB.bloqueado) vistaSinAcceso(CB.perfil);
     marcar(); resolver(CB.perfil);
