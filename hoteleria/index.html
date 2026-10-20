@@ -17,6 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <!-- v3.3 (20 oct 2026 10:35): noches de cortesía (extensiones SIN PAGO) = bloqueadas: salen de disponibles y vendidas; regla escrita en «Cómo se calcula». -->
+<!-- v4.4 (20 oct 2026 13:00): Hotelería verifica sola con Drive (sin iframe): al abrir pide el maestro y reemplaza su copia si cambió o es vieja; el subtítulo dice «al día», «hay archivos nuevos sin procesar» o «sin verificar»; el aviso «Datos incompletos» trae el botón «Actualizar datos» de 44 px. Requiere Ingresos v19. -->
 <!-- v4.3 (20 oct 2026 12:40): diagnóstico de datos: «Datos del maestro» con su fecha real (ya no «actualizados ahora»), conteo de reservas con limpieza en «Cómo se calcula», aviso «Datos incompletos» cuando a este aparato le llegan reservas sin tarifa de limpieza, y un intento automático de pedir el maestro completo a Drive (una vez por sesión). -->
 <!-- v4.2 (20 oct 2026 12:30): colores por base (Mi ingreso verde, PriceLabs azul, AirDNA violeta) en franja, tarjeta principal, ADR/RevPAR, chips, hoja y gráfico; rangos de 7, 30 y 365 días a la vista junto a Mes y el año; nueva tarjeta «Las tres miradas» (Mi ingreso, PriceLabs y AirDNA en columnas, mismo período); etiquetas «ADR bruto/neto» en gráfico y tabla; la lectura del mes en curso dice que compara los dos últimos meses cerrados; nota de marcas; apunta a glosario v1.6. -->
 <!-- v4.1 (20 oct 2026 11:45): el rango móvil lleva su ⓘ al glosario; apunta a glosario v1.5. -->
@@ -122,6 +123,7 @@ body.cmpOn .hero,body.cmpOn .grid,body.cmpOn .mnav,body.cmpOn .rng{display:none!
 .sg .card .v{font-size:26px}
 .sg .card .v.off{font-size:17px;color:var(--texto-2);font-weight:700}
 .aviso{border-left:4px solid var(--err);background:color-mix(in srgb,var(--err) 9%,var(--tarjeta));border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.5;margin:0 0 10px}
+.abtn{min-height:44px;margin-top:8px;padding:0 18px;border-radius:99px;border:1.5px solid var(--err);background:transparent;color:var(--texto);font:800 14px var(--fuente);cursor:pointer}
 .lec{border-left:4px solid var(--acento);background:color-mix(in srgb,var(--acento) 9%,var(--tarjeta));border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.5;margin-top:10px}
 details.card summary{cursor:pointer;font-weight:800;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center;min-height:32px}
 details.card summary::-webkit-details-marker{display:none}
@@ -392,7 +394,7 @@ function render(){
   document.body.setAttribute("data-base",BASE);var tc=document.querySelector("meta[name=theme-color]");if(tc)tc.content=BASE==="pl"?"#1e3a8a":BASE==="adna"?"#4c1d95":"#0a2233";
   MET.adr.label=BASE==="mi"?"ADR (neto por noche)":BASE==="pl"?"ADR (bruto, sin limpieza)":"ADR (bruto, con limpieza)";MET.rev.label=BASE==="mi"?"RevPAR (neto)":"RevPAR (bruto)";
   $("bstrip").className="bstrip"+(BASE==="mi"?" ne":"");$("bstripT").innerHTML=BASE==="mi"?"<b>Base: Mi ingreso real</b> · neto y sin limpieza.":BASE==="pl"?"<b>Calculado como PriceLabs:</b> bruto (antes de comisión) y sin limpieza.":"<b>Calculado como AirDNA:</b> bruto, con limpieza y sin tarifa de servicio.";
-  var av=$("aviso");if(INC){av.hidden=false;av.innerHTML="<b>Datos incompletos.</b> A este aparato le llegaron "+(NAIR-NLP)+" de "+NAIR+" reservas de Airbnb sin la tarifa de limpieza, por eso ADR y RevPAR incluyen la limpieza. Abre Ingresos y toca su estado (arriba a la derecha) para actualizar; si sigue igual, avísale a Luna.";}else av.hidden=true;
+  avisoR();
   $("mnav").style.display=per==="mes"?"flex":"none";
   $("mLbl").textContent=ml(cur);
   $("mNext").disabled=cur>=CM;$("mPrev").disabled=cur<=FIRST;$("mNext").style.opacity=$("mNext").disabled?.35:1;$("mPrev").style.opacity=$("mPrev").disabled?.35:1;
@@ -519,6 +521,27 @@ document.addEventListener("click",function(e){if(baseClick(e))return;var mt=e.ta
   if(e.target.id==="mPrev"&&cur>FIRST){cur=sm(cur,-1);render();}if(e.target.id==="mNext"&&cur<CM){cur=sm(cur,1);render();}});
 document.addEventListener("keydown",function(e){if(e.key==="Escape"){closeSh();closeBase();}});
 
+/* ===== verificación con Drive (misma consulta que usa Ingresos) ===== */
+var VER={sfx:"",busy:false,forz:false};
+function stamp(){$("fresh").textContent=genTxt()+(VER.busy?" · verificando…":VER.sfx);}
+function avisoR(){var av=$("aviso");
+  if(!INC||!RES.length){av.hidden=true;return;}
+  av.hidden=false;
+  av.innerHTML="<b>Datos incompletos.</b> A este aparato le llegaron "+(NAIR-NLP)+" de "+NAIR+" reservas de Airbnb sin la tarifa de limpieza, por eso ADR y RevPAR incluyen la limpieza."+
+    (VER.forz&&!VER.busy?" Ya se pidieron de nuevo a Drive y siguen sin ese dato: avísale a Luna.":" ")+
+    (VER.busy?" Actualizando…":'<br><button type="button" class="abtn" id="actB">Actualizar datos</button>');}
+function verificar(forzar){
+  if(!window.CB||!CB.activo)return Promise.resolve();
+  VER.busy=true;stamp();avisoR();
+  var c=ld("cimablanca_ing_maestro"),mod=(!forzar&&c&&typeof c.mod==="number")?c.mod:0;
+  return CB.llamar("maestro",{modificado:mod}).then(function(r){
+    if(forzar)VER.forz=true;
+    if(!r.igual&&r.data){try{localStorage.setItem("cimablanca_ing_maestro",JSON.stringify({mod:r.modificado,data:r.data}));}catch(e){}
+      VER.sfx=r.desactualizado?" · hay archivos nuevos sin procesar":" · al día";VER.busy=false;mostrar(true);return;}
+    VER.sfx=r.desactualizado?" · hay archivos nuevos sin procesar":" · al día";
+  }).catch(function(){VER.sfx=" · sin verificar";if(!RES.length){$("diag").textContent="No se pudieron cargar los datos. Revisa tu conexión y recarga.";}
+  }).then(function(){VER.busy=false;stamp();avisoR();});
+}
 /* ===== carga ===== */
 function rangoMes(a,b){var ya=a.slice(-4),yb=b.slice(-4);return ya===yb?a.slice(0,-5)+" a "+b.slice(0,-5)+" de "+yb:a.replace(" "," de ")+" a "+b.replace(" "," de ");}
 function genTxt(){if(!GEN)return "Fecha de los datos desconocida";var t=Date.parse(GEN);if(!isFinite(t))return "Fecha de los datos desconocida";var d=new Date(t-5*3600000);return "Datos del "+d.getUTCDate()+" "+MN[d.getUTCMonth()].slice(0,3)+" · "+String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0");}
@@ -526,22 +549,16 @@ function ago(t){if(!t)return"sin datos";var m=Math.round((Date.now()-t)/60000);r
 var PIDS=["pChips","mnav","rng","hero","sg","grid"];
 function mostrar(fin){
   leerMaestro();build();
-  if(Object.keys(D).length){cmpInit();$("vacio").hidden=true;PIDS.forEach(function(i){$(i).style.display="";});var si=ld("cb_res_ing_v1");$("fresh").textContent=genTxt();if(cur<FIRST||!D[cur])cur=CM;chips();render();return true;}
+  if(Object.keys(D).length){cmpInit();$("vacio").hidden=true;PIDS.forEach(function(i){$(i).style.display="";});var si=ld("cb_res_ing_v1");stamp();if(cur<FIRST||!D[cur])cur=CM;chips();render();return true;}
   if(fin){$("vacio").hidden=false;PIDS.concat(["lec"]).forEach(function(i){$(i).style.display="none";});$("diag").textContent="Ingresos no respondió. Revisa que esté subida la versión nueva.";}
   return false;
 }
-function cargarFuente(force){
-  var si=ld("cb_res_ing_v1"),t0=Date.now(),viejo=!(si&&si.t)||(t0-si.t)>600000||!RES.length;
-  if(!viejo&&!force)return;
-  if(!RES.length){$("vacio").hidden=false;$("diag").textContent="Cargando Ingresos… unos segundos.";PIDS.forEach(function(i){$(i).style.display="none";});}
-  var f=document.createElement("iframe");f.src="../ingresos/index.html";f.setAttribute("aria-hidden","true");f.tabIndex=-1;
-  f.style.cssText="position:fixed;left:-3000px;top:0;width:1100px;height:900px;border:0;opacity:0;pointer-events:none";document.body.appendChild(f);
-  var iv=setInterval(function(){var a=ld("cb_res_ing_v1"),ok=a&&a.t>=t0,fin=Date.now()-t0>45000;
-    if(ok||fin){clearInterval(iv);f.remove();mostrar(true);}},900);
-}
 mostrar(false);
-var forzar=false;try{if(INC&&!sessionStorage.getItem("cb_hot_fix")){sessionStorage.setItem("cb_hot_fix","1");var cc=ld("cimablanca_ing_maestro");if(cc&&typeof cc==="object"){cc.mod=0;localStorage.setItem("cimablanca_ing_maestro",JSON.stringify(cc));}forzar=true;}}catch(e){}
-cargarFuente(forzar);
+if(!RES.length){$("vacio").hidden=false;$("diag").textContent="Cargando datos de Ingresos…";PIDS.forEach(function(i){$(i).style.display="none";});}
+function arrancar(){var auto=false;try{if(INC&&!sessionStorage.getItem("cb_hot_fix")){sessionStorage.setItem("cb_hot_fix","1");auto=true;}}catch(e){}verificar(auto);}
+document.addEventListener("click",function(e){if(e.target.closest("#actB"))verificar(true);});
+if(window.CB&&CB.ready)CB.ready.then(function(p){if(p&&!CB.bloqueado)arrancar();else if(!p){CB.alEntrar=arrancar;}});else arrancar();
+window.addEventListener("online",function(){if(window.CB&&CB.perfil&&!CB.bloqueado)verificar(false);});
 </script>
 </body>
 </html>
