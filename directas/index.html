@@ -963,12 +963,13 @@ function anuncioNombre(v) { const a = anuncioObj(v); return a ? a.n + ' (' + a.a
 function saveCfg() { if (CFG.clave) setClave(CFG.clave); }
 function saveData() { try { localStorage.setItem(DATAKEY, JSON.stringify({ reservas: RESERVAS, alertas: ALERTAS, siguiente: SIGUIENTE })); } catch (e) {} }
 
+function usuarioCB() { try { var p = window.CB && window.CB.perfil; return p ? String(p.usuario || p.nombre || '') : ''; } catch (e) { return ''; } }
 async function call(body) {
   if (!CFG.url || CFG.url.indexOf('PEGA-AQUI') >= 0) throw new Error('Falta pegar la URL del Apps Script en el archivo.');
   const r = await fetch(CFG.url, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(Object.assign({ clave: CFG.clave }, body))
+    body: JSON.stringify(Object.assign({ clave: CFG.clave, usuario: usuarioCB() }, body))
   });
   const j = await r.json();
   if (!j.ok) {
