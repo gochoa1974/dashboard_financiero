@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v15 (24 nov 2026): aplica al maestro los nombres de huésped corregidos en Cancelaciones (por código de confirmación): huesped = nombre corregido, huesped_airbnb = nombre original del CSV, nombre_corregido = true; avisa si un código no existe o si Airbnb cambió el nombre; el Excel agrega «Huésped (Airbnb)». -->
 <!-- v14 (24 nov 2026): lee la columna «Estado de la reservación» del CSV de Airbnb (campos estado_airbnb y cancelada_airbnb en el maestro, columna «Estado Airbnb» en el Excel) y deja una copia de las reservas en este dispositivo para el aviso de cancelaciones por confirmar. No cambia ningún importe ni el estado Liquidado/Por liquidar. -->
 <!-- v13 (18 oct 2026, 21:25): las reservas directas copian «Fecha de la reserva» (columna Q de INGRESOS_RESERVAS_DIRECTAS) al maestro como fecha_reserva; si una fila no la trae queda null (nunca se inventa). Si la reserva tiene varios tramos se toma la fecha más temprana. -->
 <!-- v13 (10 nov 2026): el anuncio ya no se adivina por palabras. Cada nombre publicado de Airbnb se traduce con el catálogo HOMOLOGACION_LISTINGS (módulo «Anuncios»); un nombre desconocido queda «Sin asignar» (antes caía en LST-01 sin avisar). Al terminar, registra en el catálogo los nombres vistos y cuántas reservas tiene cada uno. Ningún otro campo cambia. -->
@@ -96,7 +97,7 @@
   <header class="apphead">
     <a class="backbtn" href="../parametros/" aria-label="Volver a Configuración"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     <img class="logo" src="../Cima-Blanca-logo.png" alt="Cima Blanca">
-    <div class="ttl"><b>Cima Blanca</b><span>Sincronizar con Drive · v14</span></div>
+    <div class="ttl"><b>Cima Blanca</b><span>Sincronizar con Drive · v15</span></div>
   </header>
   <p class="note" style="margin:0 0 16px">Lee Airbnb, reservas directas e ingresos adicionales desde Google Drive y actualiza sola el archivo consolidado en PROCESADO.</p>
 
@@ -816,6 +817,7 @@
         }
         try { validarMaestro(master, adicionales); } catch (ve) { ve.noPublicable = true; throw ve; }
       })
+      .then(function () { return aplicarNombresCorregidos(master); })
       .then(function () {
         var resumen = computeResumen(master, adicionales);
         var datos = { resumen: resumen, reservas: master, ingresos_adicionales: adicionales, resoluciones: buildPayload(master, adicionales, resumen).resoluciones };
@@ -838,6 +840,38 @@
       .then(function () {
         els.btnSync.disabled = false;
         return lastOk;
+      });
+  }
+
+  /* v15: nombres de huésped corregidos en Cancelaciones. La clave es el código de confirmación (nunca el nombre).
+     Si no se pueden leer, el maestro se publica con los nombres del CSV y el aviso lo dice: la siguiente sincronización los vuelve a aplicar. */
+  var CANC_URL = "https://script.google.com/macros/s/AKfycbxTCzl3Phwj8v9NkiMWB8imltqsz16fRzd5NYWx7-UDDsiRjGSkc7M77a5e45fCw--y/exec";
+  function limpiaNombre(s) { return String(s == null ? "" : s).replace(/\s+/g, " ").trim(); }
+  function aplicarNombresCorregidos(master) {
+    var k = ""; try { k = localStorage.getItem("cimablanca_clave") || ""; } catch (e) {}
+    if (!k) { log("Aviso: sin sesión activa; no se aplicaron los nombres corregidos."); return Promise.resolve(0); }
+    return fetch(CANC_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ clave: k, accion: "listar" }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) throw new Error((j && j.error) || "respuesta inválida");
+        var byCode = {};
+        master.forEach(function (r) { byCode[r.codigo_confirmacion] = r; });
+        var n = 0;
+        (j.cancelaciones || []).forEach(function (c) {
+          var orig = limpiaNombre(c.huespedAirbnb), nuevo = limpiaNombre(c.huesped);
+          if (!orig || !nuevo || orig === nuevo) return;           // sin corrección registrada
+          var r = byCode[c.codigo];
+          if (!r) { log("Aviso: el nombre corregido de " + c.codigo + " («" + nuevo + "») no tiene reserva en los CSV; no se aplicó."); return; }
+          var csv = limpiaNombre(r.huesped);
+          if (csv !== orig && csv !== nuevo) log("Aviso: Airbnb cambió el nombre de " + c.codigo + " («" + orig + "» → «" + csv + "»). Se conserva el nombre corregido: «" + nuevo + "».");
+          r.huesped_airbnb = orig; r.huesped = nuevo; r.nombre_corregido = true; n++;
+        });
+        log(n ? ("Nombres corregidos aplicados al maestro: " + n + " ✓") : "Nombres corregidos: ninguno pendiente de aplicar.");
+        return n;
+      })
+      .catch(function (e) {
+        log("Aviso: no pude leer los nombres corregidos (" + (e && e.message ? e.message : e) + "). El maestro se publica con los nombres del CSV; vuelve a sincronizar para aplicarlos.");
+        return 0;
       });
   }
 
@@ -978,6 +1012,7 @@
         "Código": r.codigo_confirmacion,
         "Origen": r.origen,
         "Huésped": r.huesped,
+        "Huésped (Airbnb)": r.huesped_airbnb || "",
         "Anuncio": r.anuncio,
         "Check-in": r.fecha_inicio,
         "Check-out": r.fecha_finalizacion,

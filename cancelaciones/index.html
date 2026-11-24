@@ -8,6 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Cancelaciones y bloqueos · Cima Blanca</title>
+<!-- v10.3 (24 nov 2026): «Corregir nombre» opcional en la tarjeta: guarda el nombre corregido en huesped y el original de Airbnb en huespedAirbnb, ligados por código de confirmación; Sincronizar lo aplica al maestro. -->
 <!-- v10.2 (24 nov 2026): tarjeta «Cancelaciones por confirmar» rediseñada (mockup v3 aprobado): una reserva abierta, desglose política/comisión/neto, «Confirmar cancelación» (Tipo 2), «Ya estaba hospedado y se fue antes» (Tipo 1), «No fue cancelación», Deshacer. No se mezcla con no-show (R6). -->
 <!-- v10.1 (24 nov 2026): tarjeta «Cancelaciones por confirmar»: las reservas que Airbnb marca como canceladas por el huésped y aún no tienen caso; un toque abre el formulario llenado como Tipo 2. -->
 <!-- v21 (15 oct 2026, 21:45): estilo unificado (Guía v1.1): variables del tema compartido, acento verde, claro/oscuro, tarjeta principal en dólares, Borrar oculto a quien no puede borrar. -->
@@ -277,6 +278,14 @@ html.cb-sin-borrar .list-item .btns [onclick^="borrar"]{display:none}
 .pc-f{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--mut);font-weight:600;padding:3px 0;font-variant-numeric:tabular-nums}.pc-f b{color:var(--ink)}
 .pc-t{display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-top:1px solid var(--line);margin-top:8px;padding-top:10px}
 .pc-t span{font-size:13px;color:var(--mut);font-weight:700}.pc-t b{font-size:32px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pc-ren{appearance:none;background:none;border:0;font:inherit;display:inline-flex;align-items:center;gap:6px;min-height:44px;margin:0 0 -6px -2px;padding:0 2px;color:var(--accent-t);font-size:13px;font-weight:700;cursor:pointer}
+.pc-ren svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pc-nm{display:grid;gap:8px;margin-top:10px}.pc-nm label{font-size:13px;font-weight:700;color:var(--mut)}
+.pc-nm input{min-height:48px;font-size:16px}
+.pc-nm .row{display:flex;gap:10px}.pc-nm .row button{flex:1;min-height:48px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:800;font-size:14px;cursor:pointer}
+.pc-nm .row button.ok{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.pc-nm .hint2{font-size:12px;color:var(--mut)}
+.pc-chip2{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:var(--accent-bg);color:var(--accent-t);font-size:11px;font-weight:800;vertical-align:middle}
 .pc-nota{font-size:12px;color:var(--mut);margin-top:8px}
 .pc-q{margin:18px 0 10px;font-size:16px;font-weight:800}
 .pc-ops{display:grid;gap:10px}
@@ -1014,7 +1023,8 @@ $('cGuardar').onclick = async () => {
     bruto: Number($('cBruto').value) || 0, neto: Number($('cNeto').value) || 0,
     devueltoPerdido: Number($('cDevuelto').value) || 0, netoQueCuenta: Number($('cNetoCuenta').value) || 0,
     gastoExtra: Number($('cGastoExtra').value) || 0, limpiezaReal: $('cLimpieza').checked ? 'Sí' : 'No',
-    estado: $('cEstado').value, nota: getNota(), editado: !!editC
+    estado: $('cEstado').value, nota: getNota(), editado: !!editC,
+    huespedAirbnb: (typeof PC_ORIG === 'string' && PC_ORIG && !editC) ? PC_ORIG : ''   // v10.3: nombre que entregó Airbnb cuando se corrigió (trazabilidad)
   };
   msg('Guardando...');
   try {
@@ -1241,6 +1251,18 @@ const PC_TXT = {
 };
 const PC_CFG = { estadoAlGuardar: 'Cerrado', segundosDeshacer: 10, claveDescartadas: 'cimablanca_canc_descartadas', parametroComision: 'comision_airbnb' };
 let PC_ABIERTA = '', PC_MODO = {}, PC_ERR = {}, PC_UNDO = null, PC_UNDO_T = null;
+/* v10.3: nombre corregido por reserva (clave = código de confirmación, nunca el nombre). PC_ORIG = nombre que trajo Airbnb; solo se envía al guardar si hubo corrección. */
+let PC_NOMBRE = {}, PC_ORIG = '';
+const PC_NOMBRE_MAX = 80, PC_NOMBRE_RE = /^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'’.\-]*$/;
+function pcLimpiaNombre(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); }
+function pcNombreOriginal(r) { return pcLimpiaNombre(r.huesped); }
+function pcNombreVigente(r) { return PC_NOMBRE[r.codigo_confirmacion] || pcNombreOriginal(r) || r.codigo_confirmacion; }
+function pcValidaNombre(s) {
+  if (!s) return 'Escribe el nombre completo o toca Cancelar.';
+  if (s.length > PC_NOMBRE_MAX) return 'Máximo ' + PC_NOMBRE_MAX + ' letras.';
+  if (!PC_NOMBRE_RE.test(s)) return 'Usa solo letras, espacios, punto, apóstrofo o guion.';
+  return '';
+}
 
 function pcDescartadas() { try { return JSON.parse(localStorage.getItem(PC_CFG.claveDescartadas) || '[]'); } catch (e) { return []; } }
 function pcDescartar(cod) { try { const d = pcDescartadas(); if (d.indexOf(cod) < 0) d.push(cod); localStorage.setItem(PC_CFG.claveDescartadas, JSON.stringify(d)); } catch (e) {} }
@@ -1283,7 +1305,7 @@ function pcFechas(a, b) {
 }
 const PC_SVG_OK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const PC_SVG_ARR = '<svg viewBox="0 0 24 24"><path d="M3 12h13M12 6l6 6-6 6"/></svg>';
-function pcNombre(r) { return r.huesped || r.codigo_confirmacion; }
+function pcNombre(r) { return pcNombreVigente(r); }
 
 function pintarPorConfirmar() {
   const box = $('cPorConf'); if (!box) return;
@@ -1299,11 +1321,13 @@ function pintarPorConfirmar() {
     const filas = d.bruto == null
       ? `<div class="pc-f"><span>Política de cancelación</span><b>Sin datos</b></div>`
       : `<div class="pc-f"><span>Política de cancelación</span><b>$${fnum(d.bruto, 2)}</b></div><div class="pc-f"><span>Comisión Airbnb (${pcPct(d.pct)})</span><b>−$${fnum(d.com, 2)}</b></div>`;
-    const modo = PC_MODO[cod], n = modo && modo.n != null ? modo.n : 1;
+    const modo = PC_MODO[cod], n = modo && modo.n != null ? modo.n : 1, modoN = !!(modo && modo.nombre);
     const cuerpo = modo && modo.antes
       ? `<div class="pc-q">¿Cuántas noches durmió?</div><div class="pc-step"><button type="button" data-pc-menos="${esc(cod)}" aria-label="Una noche menos">−</button><div class="v">${n}<small>de ${P} ${nn}</small></div><button type="button" data-pc-mas="${esc(cod)}" aria-label="Una noche más">+</button></div><button type="button" class="pc-go" data-pc-antes="${esc(cod)}">Guardar</button><button type="button" class="pc-no" data-pc-volver="${esc(cod)}">Volver</button>`
       : `<div class="pc-q">${esc(PC_TXT.pregunta)}</div><div class="pc-ops"><button type="button" class="pc-op pri" data-pc-confirmar="${esc(cod)}">${PC_SVG_OK}<div><b>${esc(PC_TXT.confirmar[0])}</b><span>${esc(PC_TXT.confirmar[1])}</span></div></button><button type="button" class="pc-op" data-pc-quiere-antes="${esc(cod)}"${P < 2 ? ' disabled' : ''}>${PC_SVG_ARR}<div><b>${esc(PC_TXT.antes[0])}</b><span>${esc(PC_TXT.antes[1])}</span></div></button><button type="button" class="pc-no" data-pc-noes="${esc(cod)}">${esc(PC_TXT.noEs)}</button></div>`;
-    return `<div class="pc-it open"><div class="pc-cab"><div><div class="pc-nom">${esc(pcNombre(r))}</div><div class="pc-cod">${esc(cod)}</div></div><span class="pc-chip"><i></i>Por confirmar</span></div>
+    return `<div class="pc-it open"><div class="pc-cab"><div><div class="pc-nom">${esc(pcNombre(r))}${PC_NOMBRE[cod] ? '<span class="pc-chip2">Corregido</span>' : ''}</div><div class="pc-cod">${esc(cod)}</div></div><span class="pc-chip"><i></i>Por confirmar</span></div>
+      ${modoN ? `<div class="pc-nm"><label for="pcN_${esc(cod)}">Nombre y apellido</label><input id="pcN_${esc(cod)}" type="text" maxlength="${PC_NOMBRE_MAX}" autocomplete="off" autocapitalize="words" value="${esc(PC_NOMBRE[cod] || pcNombreOriginal(r))}"><div class="hint2">Airbnb entregó: «${esc(pcNombreOriginal(r))}». El código ${esc(cod)} sigue siendo el mismo.</div><div class="row"><button type="button" class="ok" data-pc-nombre-ok="${esc(cod)}">Listo</button><button type="button" data-pc-nombre-no="${esc(cod)}">Cancelar</button></div></div>`
+        : `<button type="button" class="pc-ren" data-pc-nombre="${esc(cod)}"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Corregir nombre</button>`}
       <div class="pc-meta">${esc(pcFechas(r.fecha_inicio, r.fecha_finalizacion))} · ${P} ${nn}</div>
       <div class="pc-desg">${filas}<div class="pc-t"><span>Airbnb te pagó</span><b>${neto}</b></div>${d.calc ? '<div class="pc-nota">Bruto calculado con la comisión de Parámetros; el CSV no lo trae.</div>' : ''}</div>
       ${cuerpo}${PC_ERR[cod] ? `<div class="pc-err" role="alert">${esc(PC_ERR[cod])}</div>` : ''}</div>`;
@@ -1317,13 +1341,17 @@ async function pcGuardar(cod, tipo, nochesPresente) {
   PC_ERR[cod] = '';
   limpiarFormC();
   aplicarReservaAlForm(r); setTipo(tipo, true);
+  const corregido = PC_NOMBRE[cod] || '';
+  $('cHuesped').value = corregido || pcNombreOriginal(r);
+  PC_ORIG = corregido ? pcNombreOriginal(r) : '';
   if (tipo === 1) { $('cNochesPresente').value = nochesPresente; recalcular(); }
   setEstado(PC_CFG.estadoAlGuardar); setNota(PC_TXT.nota); renderMotivos();
-  await $('cGuardar').onclick();
+  try { await $('cGuardar').onclick(); } finally { PC_ORIG = ''; }
   const c = CANC.find(x => x.codigo === cod);
   if (!c) { PC_ERR[cod] = $('cMsg').textContent || 'No se pudo guardar. Revisa el registro completo.'; pintarPorConfirmar(); return; }
-  delete PC_MODO[cod];
-  pcAviso(tipo === 1 ? PC_TXT.okMsgAntes(pcNombre(r)) : PC_TXT.okMsg(pcNombre(r)), c.id);
+  delete PC_MODO[cod]; delete PC_NOMBRE[cod];
+  const nf = corregido || pcNombreOriginal(r) || cod;
+  pcAviso(tipo === 1 ? PC_TXT.okMsgAntes(nf) : PC_TXT.okMsg(nf), c.id);
   render();
 }
 function pcAviso(texto, id) {
@@ -1343,6 +1371,15 @@ function pcClick(e) {
   const t = e.target.closest('button'); if (!t) return;
   const g = n => t.getAttribute(n);
   if (g('data-pc-abrir')) { PC_ABIERTA = g('data-pc-abrir'); pintarPorConfirmar(); return; }
+  if (g('data-pc-nombre')) { const c = g('data-pc-nombre'); PC_MODO[c] = Object.assign(PC_MODO[c] || {}, { nombre: true }); PC_ERR[c] = ''; pintarPorConfirmar(); const i = $('pcN_' + c); if (i) { i.focus(); i.select(); } return; }
+  if (g('data-pc-nombre-no')) { const c = g('data-pc-nombre-no'); if (PC_MODO[c]) delete PC_MODO[c].nombre; PC_ERR[c] = ''; pintarPorConfirmar(); return; }
+  if (g('data-pc-nombre-ok')) {
+    const c = g('data-pc-nombre-ok'), i = $('pcN_' + c), r = (RESERVAS || []).find(x => x.codigo_confirmacion === c); if (!i || !r) return;
+    const v = pcLimpiaNombre(i.value), er = pcValidaNombre(v);
+    if (er) { PC_ERR[c] = er; pintarPorConfirmar(); const j = $('pcN_' + c); if (j) { j.value = i.value; j.focus(); } return; }
+    if (v === pcNombreOriginal(r)) delete PC_NOMBRE[c]; else PC_NOMBRE[c] = v;
+    if (PC_MODO[c]) delete PC_MODO[c].nombre; PC_ERR[c] = ''; pintarPorConfirmar(); return;
+  }
   if (g('data-pc-confirmar')) { t.disabled = true; pcGuardar(g('data-pc-confirmar'), 2, 0); return; }
   if (g('data-pc-quiere-antes')) { PC_MODO[g('data-pc-quiere-antes')] = { antes: true, n: 1 }; pintarPorConfirmar(); return; }
   if (g('data-pc-volver')) { delete PC_MODO[g('data-pc-volver')]; pintarPorConfirmar(); return; }
