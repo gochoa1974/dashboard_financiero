@@ -8,6 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Cancelaciones y bloqueos · Cima Blanca</title>
+<!-- v10.1 (24 nov 2026): tarjeta «Cancelaciones por confirmar»: las reservas que Airbnb marca como canceladas por el huésped y aún no tienen caso; un toque abre el formulario llenado como Tipo 2. -->
 <!-- v21 (15 oct 2026, 21:45): estilo unificado (Guía v1.1): variables del tema compartido, acento verde, claro/oscuro, tarjeta principal en dólares, Borrar oculto a quien no puede borrar. -->
 <!-- v11 (14 oct 2026, CB-014/CB-009): tipo No-show retirado y tipos renumerados sin saltos: 1 compensación, 2 sin compensación, 3 devolución, 4 overbooking, 5 contracargo. -->
 <meta name="theme-color" content="#0a2233">
@@ -299,6 +300,11 @@ html.cb-sin-borrar .list-item .btns [onclick^="borrar"]{display:none}
           <div class="sub"><div>Casos<b id="kN">0</b></div><div>En curso<b id="kCurso">0</b></div><div>Ingreso que se mantiene<b id="kMant">$0,00</b></div></div>
         </div>
       <div id="cFormWrap">
+      <div class="card" id="cPorConf" hidden>
+        <h3>Cancelaciones por confirmar <span class="tag" id="cPorConfN">0</span></h3>
+        <p class="hint">Airbnb marca estas reservas como canceladas por el huésped. Confirma lo que te pagó y que las noches quedaron libres.</p>
+        <div id="cPorConfL"></div>
+      </div>
       <div class="card">
         <h3 id="cFormTitle">Registro de evento / cancelaciones</h3>
         <p class="hint">Un caso por reserva. Si editas uno guardado, se corrige la misma fila.</p>
@@ -1071,6 +1077,7 @@ function kpis() {
 }
 function render() {
   kpis();
+  pintarPorConfirmar();
   const lc = $('cLista');
   if (!CANC.length) { lc.innerHTML = '<div class="empty">Todavía no hay casos registrados.</div>'; }
   else {
@@ -1159,6 +1166,7 @@ function cargarReservasDesdeDrive() {
 
 function indexarReservas() {
   RES_POR_LABEL = {};
+  try { pintarPorConfirmar(); } catch (e) {}
   DIRECTAS.forEach(d => {
     const t = d.tramos || [];
     const label = d.codigo + ' — ' + (d.huesped || 'sin nombre') + ' (' + ((t[0] && t[0].checkin) || '?') + ') · directa';
@@ -1176,6 +1184,32 @@ function indexarReservas() {
 
 // mapea el texto libre del "Anuncio" que viene de Airbnb/directas a uno de los 3 anuncios internos; si no reconoce ninguno, no cambia la selección actual
 function mapearAnuncio(txt) { return window.ListingsCB.alias(txt); }
+
+/* v14 (24 nov 2026): reservas que el CSV de Airbnb marca como canceladas y que aún no tienen un caso registrado. Nunca se registra solo: un toque abre el formulario ya llenado (Tipo 2) para que confirmes. */
+function porConfirmar() {
+  const ya = {}; CANC.forEach(c => { if (c.codigo) ya[c.codigo] = 1; });
+  return (RESERVAS || []).filter(r => r.cancelada_airbnb && r.origen !== 'Reserva directa' && r.codigo_confirmacion && !ya[r.codigo_confirmacion])
+    .sort((a, b) => (b.fecha_inicio || '').localeCompare(a.fecha_inicio || ''));
+}
+function pintarPorConfirmar() {
+  const box = $('cPorConf'); if (!box) return;
+  const p = porConfirmar();
+  box.hidden = !p.length; if (!p.length) return;
+  $('cPorConfN').textContent = p.length;
+  $('cPorConfL').innerHTML = p.map(r => `
+    <div class="list-item">
+      <div class="top"><b>${esc(r.codigo_confirmacion)}</b><span class="tag">Cancelada por el huésped</span></div>
+      <div class="meta">${esc(r.huesped || '—')} · ${r.fecha_inicio || '?'} → ${r.fecha_finalizacion || '?'} · ${r.noches || 0} noches</div>
+      <div class="meta">Airbnb pagó $${fnum(r.monto || 0, 2)} netos (bruto $${fnum(r.ingresos_brutos || 0, 2)})</div>
+      <div class="btns"><button type="button" class="btn btn-sm" style="min-height:44px" onclick="registrarPorConfirmar('${esc(r.codigo_confirmacion)}')">Registrar cobro por política</button></div>
+    </div>`).join('');
+}
+function registrarPorConfirmar(cod) {
+  const r = (RESERVAS || []).find(x => x.codigo_confirmacion === cod); if (!r) return;
+  aplicarReservaAlForm(r); setTipo(2, true);
+  $('cMsg').className = 'msg'; $('cMsg').textContent = 'Revisa los datos y guarda. Tipo 2: el dinero que Airbnb pagó se mantiene y ninguna noche cuenta como ocupada.';
+  const w = $('cFormWrap'); if (w && w.scrollIntoView) w.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 async function cargarDirectas() {
   if (!CFG.clave) return;

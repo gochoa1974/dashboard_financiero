@@ -14,6 +14,7 @@
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v29.1 (24 nov 2026): una reserva de Airbnb que el CSV marca «Cancelada por el huésped» ya no aparece en «Pendientes por cerrar» ni ofrece No-show (se trata igual que las canceladas de Cancelaciones). -->
 <!-- v28 (17 oct 2026): gráfico de evolución compara año anterior vs actual, igual que Ingresos. -->
 <!-- v27 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): encabezado navy y verde unificados (antes verde pino y teal), tema compartido claro/oscuro. Sin cambios de lógica. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1301,7 +1302,7 @@ function construirReservas() {
   const m = {};
   RESERVAS.filter(r => r.origen !== 'Reserva directa').forEach(r => {
     const c = String(r.codigo_confirmacion || '').trim(); if (!c) return;
-    m[c] = { codigo: c, huesped: r.huesped || '', anuncio: mapearAnuncio(r.anuncio) || mapearAnuncio(r.listing), checkin: r.fecha_inicio || '', checkout: r.fecha_finalizacion || '', noches: r.noches || 0, origen: 'Airbnb', estado: r.estado || '' };
+    m[c] = { codigo: c, huesped: r.huesped || '', anuncio: mapearAnuncio(r.anuncio) || mapearAnuncio(r.listing), checkin: r.fecha_inicio || '', checkout: r.fecha_finalizacion || '', noches: r.noches || 0, origen: 'Airbnb', estado: r.cancelada_airbnb ? 'Cancelada por el huésped' : (r.estado || '') };
   });
   DIRECTAS.forEach(d => {
     const t = d.tramos || []; if (!d.codigo || !t.length) return;

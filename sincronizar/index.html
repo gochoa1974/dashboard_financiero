@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v14 (24 nov 2026): lee la columna «Estado de la reservación» del CSV de Airbnb (campos estado_airbnb y cancelada_airbnb en el maestro, columna «Estado Airbnb» en el Excel) y deja una copia de las reservas en este dispositivo para el aviso de cancelaciones por confirmar. No cambia ningún importe ni el estado Liquidado/Por liquidar. -->
 <!-- v13 (18 oct 2026, 21:25): las reservas directas copian «Fecha de la reserva» (columna Q de INGRESOS_RESERVAS_DIRECTAS) al maestro como fecha_reserva; si una fila no la trae queda null (nunca se inventa). Si la reserva tiene varios tramos se toma la fecha más temprana. -->
 <!-- v13 (10 nov 2026): el anuncio ya no se adivina por palabras. Cada nombre publicado de Airbnb se traduce con el catálogo HOMOLOGACION_LISTINGS (módulo «Anuncios»); un nombre desconocido queda «Sin asignar» (antes caía en LST-01 sin avisar). Al terminar, registra en el catálogo los nombres vistos y cuántas reservas tiene cada uno. Ningún otro campo cambia. -->
 <!-- v12 (18 oct 2026, 21:30): el maestro ahora copia todo lo relevante de los archivos fuente: fecha de reserva, limpieza, mascotas, tarifa por servicio, anuncio interno (Airbnb); huéspedes y anuncio interno (directas); check-in, check-out, noches y anuncio interno (adicionales, para las extensiones de estadía). Solo agrega campos: ninguno existente cambia. -->
@@ -95,7 +96,7 @@
   <header class="apphead">
     <a class="backbtn" href="../parametros/" aria-label="Volver a Configuración"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     <img class="logo" src="../Cima-Blanca-logo.png" alt="Cima Blanca">
-    <div class="ttl"><b>Cima Blanca</b><span>Sincronizar con Drive · v10</span></div>
+    <div class="ttl"><b>Cima Blanca</b><span>Sincronizar con Drive · v14</span></div>
   </header>
   <p class="note" style="margin:0 0 16px">Lee Airbnb, reservas directas e ingresos adicionales desde Google Drive y actualiza sola el archivo consolidado en PROCESADO.</p>
 
@@ -173,7 +174,7 @@
   var VOLVER = ((location.search.match(/[?&]volver=([a-z]+)/) || [])[1]) || "";   // v2: a qué panel regresar (solo "ingresos"; cualquier otro valor vuelve al dashboard)
   var SYNC_KEY = "cimablanca_sync_info";            // { t: cuándo se sincronizó, csvMax: CSV más nuevo visto, n: reservas }
   var csvMaxMod = "";
-  var ING_VER = "10";            // v10 (CB-006): el concepto y el ítem de Adicionales se leen también de las columnas «Concepto» e «Ítem». v9 (CB-003): publicación todo o nada; si la versión guardada es otra, se vuelve a procesar una vez (v8: el resumen guarda también las resoluciones)
+  var ING_VER = "11";            // v10 (CB-006): el concepto y el ítem de Adicionales se leen también de las columnas «Concepto» e «Ítem». v9 (CB-003): publicación todo o nada; si la versión guardada es otra, se vuelve a procesar una vez (v8: el resumen guarda también las resoluciones)
   var SCHEMA_VERSION = "13";    // v9: schema_version, huella y manifiesto; v11 (CB-007/008): resumen separa bruto, comisiones, neto, cobros y ahorro
   var BACKUP_JSON_NAME = "MAESTRO_INGRESOS_CIMA_BLANCA_anterior.json";   // copia única del maestro previo
   var srcInfo = {};             // v9: archivos y conteos leídos de cada fuente (manifiesto)
@@ -461,6 +462,8 @@
           tarifa_servicio: 0,
           monto: 0,
           ingresos_brutos: 0,
+          estado_airbnb: null,
+          cancelada_airbnb: false,
           archivo_origen: file.fileName,
           actualizado: file.modifiedTime
         };
@@ -473,6 +476,9 @@
       rec.tarifa_servicio += toNumber(row["Tarifa por servicio"]);
       var fr = toIsoDate(row["Fecha de la reservación"]);
       if (fr && (!rec.fecha_reserva || fr < rec.fecha_reserva)) rec.fecha_reserva = fr;
+      // v14: el CSV nuevo de Airbnb trae «Estado de la reservación». Se copia tal cual; si dice cancelada se marca. Los CSV viejos no la traen: queda null (nunca se inventa).
+      var ea = String(row["Estado de la reservación"] || "").trim();
+      if (ea) { rec.estado_airbnb = ea; if (/cancel/i.test(ea)) rec.cancelada_airbnb = true; }
     });
     return byCode;
   }
@@ -821,6 +827,7 @@
         }).then(function () {
           lastOk = true;
           guardarInfoSync(master.length);
+          try { localStorage.setItem("cimablanca_canc_reservas_cache", JSON.stringify({ reservas: master, t: Date.now() })); } catch (e) {}
           // v13: registra en el catálogo los nombres de anuncio vistos (no bloquea: si falla, solo avisa)
           return window.ListingsCB.registrar(master, log);
         });
@@ -985,6 +992,7 @@
         "Ingresos brutos": r.ingresos_brutos,
         "Adicionales": r.adicionales_total || 0,
         "Estado": r.estado,
+        "Estado Airbnb": r.estado_airbnb || "",
         "Archivo origen": r.archivo_origen,
         "Actualizado": r.actualizado
       };
