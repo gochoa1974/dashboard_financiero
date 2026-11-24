@@ -8,6 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Cancelaciones y bloqueos · Cima Blanca</title>
+<!-- v10.2 (24 nov 2026): tarjeta «Cancelaciones por confirmar» rediseñada (mockup v3 aprobado): una reserva abierta, desglose política/comisión/neto, «Confirmar cancelación» (Tipo 2), «Ya estaba hospedado y se fue antes» (Tipo 1), «No fue cancelación», Deshacer. No se mezcla con no-show (R6). -->
 <!-- v10.1 (24 nov 2026): tarjeta «Cancelaciones por confirmar»: las reservas que Airbnb marca como canceladas por el huésped y aún no tienen caso; un toque abre el formulario llenado como Tipo 2. -->
 <!-- v21 (15 oct 2026, 21:45): estilo unificado (Guía v1.1): variables del tema compartido, acento verde, claro/oscuro, tarjeta principal en dólares, Borrar oculto a quien no puede borrar. -->
 <!-- v11 (14 oct 2026, CB-014/CB-009): tipo No-show retirado y tipos renumerados sin saltos: 1 compensación, 2 sin compensación, 3 devolución, 4 overbooking, 5 contracargo. -->
@@ -258,6 +259,44 @@ input[readonly]{opacity:.75;cursor:not-allowed}
 html.cb-sin-borrar .list-item .btns [onclick^="borrar"]{display:none}
 .btn-acc{box-shadow:0 0 0 0 transparent}
 .list-item,.stat,.resumen,.acc{background:var(--bg)}
+
+/* v10.2 (24 nov 2026): tarjeta «Cancelaciones por confirmar» — una reserva abierta, el resto compacto. Ámbar = por resolver (Guía de estilo v1.1). */
+.pc{padding:0;overflow:hidden}
+.pc-hero{display:flex;gap:14px;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--hero1),var(--hero2));color:#fff;padding:16px 18px}
+.pc-hero h3{margin:0;font-size:18px;font-weight:800;line-height:1.15;color:#fff}.pc-hero p{margin:6px 0 0;font-size:13px;opacity:.85;line-height:1.35}
+.pc-badge{flex:none;min-width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+#cPorConfL{padding:14px 14px 4px;display:grid;gap:10px}
+.pc-it{border:1px solid var(--line);border-radius:18px;background:var(--surface)}
+.pc-it.open{padding:16px;border:1.5px solid var(--pendiente)}
+.pc-cab{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.pc-nom{font-size:18px;font-weight:800;line-height:1.15;overflow-wrap:anywhere}.pc-cod{font-size:12px;color:var(--mut);margin-top:2px}
+.pc-chip{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 10px;border-radius:999px;background:color-mix(in srgb,var(--pendiente) 15%,transparent);color:var(--pendiente);font-size:12px;font-weight:800;white-space:nowrap}
+.pc-chip i{width:7px;height:7px;border-radius:50%;background:var(--pendiente)}
+.pc-meta{margin-top:12px;font-size:14px;color:var(--mut);font-weight:600}
+.pc-desg{margin-top:14px;padding:14px;border-radius:14px;background:var(--bg)}
+.pc-f{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--mut);font-weight:600;padding:3px 0;font-variant-numeric:tabular-nums}.pc-f b{color:var(--ink)}
+.pc-t{display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-top:1px solid var(--line);margin-top:8px;padding-top:10px}
+.pc-t span{font-size:13px;color:var(--mut);font-weight:700}.pc-t b{font-size:32px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pc-nota{font-size:12px;color:var(--mut);margin-top:8px}
+.pc-q{margin:18px 0 10px;font-size:16px;font-weight:800}
+.pc-ops{display:grid;gap:10px}
+.pc-op{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:10px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.pc-op.pri{border-color:var(--accent);background:var(--accent-bg)}
+.pc-op svg{flex:none;width:24px;height:24px;stroke:var(--accent-t);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pc-op b{display:block;font-size:15px}.pc-op span{display:block;font-size:12.5px;color:var(--mut);margin-top:1px}
+.pc-op:disabled{opacity:.55;cursor:default}
+.pc-no{appearance:none;background:none;border:0;font:inherit;display:flex;justify-content:center;align-items:center;width:100%;min-height:44px;color:var(--mut);font-size:13px;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.pc-step{display:flex;align-items:center;gap:14px;margin-top:10px}
+.pc-step button{width:52px;height:52px;border-radius:16px;border:1.5px solid var(--line);background:var(--surface);font:inherit;font-size:26px;font-weight:700;color:var(--ink);cursor:pointer}
+.pc-step .v{flex:1;text-align:center;font-size:30px;font-weight:800;font-variant-numeric:tabular-nums}.pc-step .v small{display:block;font-size:12.5px;color:var(--mut);font-weight:600}
+.pc-go{margin-top:14px;width:100%;min-height:52px;border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font:inherit;font-weight:800;font-size:15px;cursor:pointer}
+.pc-err{margin-top:10px;font-size:13px;font-weight:700;color:var(--bad)}
+.pc-cmp{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:12px 14px;text-align:left;font:inherit;color:var(--ink);cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:18px}
+.pc-cmp .x{flex:1;min-width:0}.pc-cmp .nom{font-size:16px;font-weight:800}.pc-cmp .m{font-size:13px;color:var(--mut);margin-top:2px}
+.pc-cmp .d{font-weight:800;font-size:15px;text-align:right;font-variant-numeric:tabular-nums}.pc-cmp .d small{display:block;color:var(--pendiente);font-size:11.5px;font-weight:800}
+.pc-toast{margin:10px 14px 0;background:var(--hero1);color:#fff;border-radius:14px;padding:6px 6px 6px 14px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600}
+.pc-toast span{flex:1}.pc-toast button{appearance:none;background:none;border:0;font:inherit;font-weight:800;color:#7ff0c6;min-height:44px;padding:0 12px;cursor:pointer}
+.pc-link{appearance:none;background:none;border:0;font:inherit;display:flex;justify-content:center;align-items:center;width:100%;min-height:44px;margin:6px 0 8px;color:var(--mut);font-size:13px;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 </style>
 <style>.bad-field{border-color:var(--bad)!important;box-shadow:0 0 0 2px rgba(220,38,38,.18)}.msg .btn{margin-top:8px;width:auto;padding:0 14px}</style>
 </head>
@@ -300,11 +339,13 @@ html.cb-sin-borrar .list-item .btns [onclick^="borrar"]{display:none}
           <div class="sub"><div>Casos<b id="kN">0</b></div><div>En curso<b id="kCurso">0</b></div><div>Ingreso que se mantiene<b id="kMant">$0,00</b></div></div>
         </div>
       <div id="cFormWrap">
-      <div class="card" id="cPorConf" hidden>
-        <h3>Cancelaciones por confirmar <span class="tag" id="cPorConfN">0</span></h3>
-        <p class="hint">Airbnb marca estas reservas como canceladas por el huésped. Confirma lo que te pagó y que las noches quedaron libres.</p>
+      <div class="card pc" id="cPorConf" hidden>
+        <div class="pc-hero"><div><h3>Cancelaciones por confirmar</h3><p id="cPorConfSub">Airbnb marcó estas reservas como canceladas por el huésped. Confirma cada una.</p></div><div class="pc-badge" id="cPorConfN" aria-label="Pendientes">0</div></div>
         <div id="cPorConfL"></div>
+        <div class="pc-toast" id="cPorConfToast" role="status" aria-live="polite" hidden><span id="cPorConfToastT"></span><button type="button" id="cPorConfUndo">Deshacer</button></div>
+        <button type="button" class="pc-link" id="cPorConfForm">Registro completo (casos especiales)</button>
       </div>
+      <div id="cFormBox">
       <div class="card">
         <h3 id="cFormTitle">Registro de evento / cancelaciones</h3>
         <p class="hint">Un caso por reserva. Si editas uno guardado, se corrige la misma fila.</p>
@@ -349,7 +390,7 @@ html.cb-sin-borrar .list-item .btns [onclick^="borrar"]{display:none}
         <div class="field"><label id="cTipoLbl">Tipo de caso</label>
           <div class="chips" role="radiogroup" aria-labelledby="cTipoLbl" id="cTipoChips">
             <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="1" aria-label="Tipo 1: Cancelación con compensación"><span class="num">1</span><span>Cancelación con compensación</span></button>
-            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="2" aria-label="Tipo 2: Cancelación sin compensación"><span class="num">2</span><span>Cancelación sin compensación</span></button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="2" aria-label="Tipo 2: Cancelada con cobro por política"><span class="num">2</span><span>Cancelada con cobro por política</span></button>
             <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="3" aria-label="Tipo 3: Devolución al huésped"><span class="num">3</span><span>Devolución al huésped</span></button>
             <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="4" aria-label="Tipo 4: Overbooking con reubicación"><span class="num">4</span><span>Overbooking con reubicación</span></button>
             <button type="button" class="chip" role="radio" aria-checked="false" data-tipo="5" aria-label="Tipo 5: Contracargo / disputa"><span class="num">5</span><span>Contracargo / disputa</span></button>
@@ -399,6 +440,7 @@ html.cb-sin-borrar .list-item .btns [onclick^="borrar"]{display:none}
           <button type="button" class="btn btn-acc" id="cGuardar">Guardar</button>
           <button type="button" class="btn btn-ghost" id="cCancelar" style="display:none">Cancelar edición</button>
         </div>
+      </div><!-- /cFormBox -->
       </div>
       </div>
       <div class="card">
@@ -805,7 +847,7 @@ try {
 
 let editC = null, editB = null;
 
-const TIPO_LABEL = { 1: 'Cancelación con compensación', 2: 'Cancelación sin compensación', 3: 'Devolución al huésped', 4: 'Overbooking con reubicación', 5: 'Contracargo / disputa' };
+const TIPO_LABEL = { 1: 'Cancelación con compensación', 2: 'Cancelada con cobro por política', 3: 'Devolución al huésped', 4: 'Overbooking con reubicación', 5: 'Contracargo / disputa' };
 
 function uid() { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
@@ -1185,31 +1227,135 @@ function indexarReservas() {
 // mapea el texto libre del "Anuncio" que viene de Airbnb/directas a uno de los 3 anuncios internos; si no reconoce ninguno, no cambia la selección actual
 function mapearAnuncio(txt) { return window.ListingsCB.alias(txt); }
 
-/* v14 (24 nov 2026): reservas que el CSV de Airbnb marca como canceladas y que aún no tienen un caso registrado. Nunca se registra solo: un toque abre el formulario ya llenado (Tipo 2) para que confirmes. */
+/* v10.2 (24 nov 2026): «Cancelaciones por confirmar». Airbnb ya marcó la reserva como cancelada por el huésped; aquí solo se confirma.
+   Nunca es no-show (R6): el no-show es otro caso y no pasa por esta tarjeta. Textos y valores juntos en PC_TXT / PC_CFG para cambiarlos sin tocar la lógica. */
+const PARAM_URL = 'https://script.google.com/macros/s/AKfycbxJX9a0T36KJWdDB4sGZ0FAGufRCTRwQgxmUwGQqZAlXu5754Jh2ghxv6nU8wkMmqV8xw/exec';
+const PC_TXT = {
+  pregunta: 'El huésped canceló en Airbnb. ¿La confirmas?',
+  confirmar: ['Confirmar cancelación', 'Las noches quedan libres y se registra el cobro por política'],
+  antes: ['Ya estaba hospedado y se fue antes', 'Te preguntamos cuántas noches durmió'],
+  noEs: 'No fue cancelación',
+  nota: 'Cancelada por el huésped en Airbnb',
+  okMsg: n => n + ': cancelación confirmada',
+  okMsgAntes: n => n + ': se fue antes, guardado'
+};
+const PC_CFG = { estadoAlGuardar: 'Cerrado', segundosDeshacer: 10, claveDescartadas: 'cimablanca_canc_descartadas', parametroComision: 'comision_airbnb' };
+let PC_ABIERTA = '', PC_MODO = {}, PC_ERR = {}, PC_UNDO = null, PC_UNDO_T = null;
+
+function pcDescartadas() { try { return JSON.parse(localStorage.getItem(PC_CFG.claveDescartadas) || '[]'); } catch (e) { return []; } }
+function pcDescartar(cod) { try { const d = pcDescartadas(); if (d.indexOf(cod) < 0) d.push(cod); localStorage.setItem(PC_CFG.claveDescartadas, JSON.stringify(d)); } catch (e) {} }
+
 function porConfirmar() {
   const ya = {}; CANC.forEach(c => { if (c.codigo) ya[c.codigo] = 1; });
-  return (RESERVAS || []).filter(r => r.cancelada_airbnb && r.origen !== 'Reserva directa' && r.codigo_confirmacion && !ya[r.codigo_confirmacion])
+  const no = pcDescartadas();
+  return (RESERVAS || []).filter(r => r.cancelada_airbnb && r.origen !== 'Reserva directa' && r.codigo_confirmacion && !ya[r.codigo_confirmacion] && no.indexOf(r.codigo_confirmacion) < 0)
     .sort((a, b) => (b.fecha_inicio || '').localeCompare(a.fecha_inicio || ''));
 }
+
+/* Comisión de Airbnb: bruto y neto reales vienen del CSV. El % de Parámetros (vigencia por fecha de reserva) solo se usa si el CSV no trae el bruto. */
+const PC_COM = {};
+async function pcComisionPct(fechaReserva) {
+  const k = fechaReserva || ''; if (PC_COM[k] !== undefined) return PC_COM[k];
+  PC_COM[k] = null;
+  try {
+    if (!CFG.clave || !fechaReserva) return null;
+    const r = await fetch(PARAM_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ clave: CFG.clave, accion: 'valorEn', parametro: PC_CFG.parametroComision, fecha: fechaReserva }) });
+    const j = await r.json();
+    if (j.ok && j.resultado && isFinite(Number(j.resultado.valor))) { let v = Number(j.resultado.valor); if (v > 0 && v <= 1) v = v * 100; PC_COM[k] = v; }
+  } catch (e) {}
+  return PC_COM[k];
+}
+function pcPct(n) { return (Math.round(n * 10) / 10).toString().replace('.', ',') + ' %'; }
+function pcDesglose(r) {
+  const neto = Number(r.monto) || 0, bruto = Number(r.ingresos_brutos) || 0;
+  if (bruto > 0 && bruto >= neto) { const com = bruto - neto; return { bruto, com, neto, pct: com / bruto * 100, calc: false }; }
+  const pct = PC_COM[r.fecha_reserva || ''];
+  if (neto > 0 && pct != null && pct < 100) { const b = neto / (1 - pct / 100); return { bruto: b, com: b - neto, neto, pct, calc: true }; }
+  return { bruto: null, com: null, neto, pct: null, calc: false };
+}
+function pcFechas(a, b) {
+  if (!a || !b) return 'Fechas sin datos';
+  const m = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'], x = a.split('-'), y = b.split('-');
+  const d1 = Number(x[2]), d2 = Number(y[2]), m1 = m[Number(x[1]) - 1], m2 = m[Number(y[1]) - 1];
+  if (x[0] === y[0] && x[1] === y[1]) return d1 + ' – ' + d2 + ' ' + m1 + ' ' + x[0];
+  if (x[0] === y[0]) return d1 + ' ' + m1 + ' – ' + d2 + ' ' + m2 + ' ' + x[0];
+  return d1 + ' ' + m1 + ' ' + x[0] + ' – ' + d2 + ' ' + m2 + ' ' + y[0];
+}
+const PC_SVG_OK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const PC_SVG_ARR = '<svg viewBox="0 0 24 24"><path d="M3 12h13M12 6l6 6-6 6"/></svg>';
+function pcNombre(r) { return r.huesped || r.codigo_confirmacion; }
+
 function pintarPorConfirmar() {
   const box = $('cPorConf'); if (!box) return;
   const p = porConfirmar();
-  box.hidden = !p.length; if (!p.length) return;
+  box.hidden = !p.length && $('cPorConfToast').hidden; if (box.hidden) return;
   $('cPorConfN').textContent = p.length;
-  $('cPorConfL').innerHTML = p.map(r => `
-    <div class="list-item">
-      <div class="top"><b>${esc(r.codigo_confirmacion)}</b><span class="tag">Cancelada por el huésped</span></div>
-      <div class="meta">${esc(r.huesped || '—')} · ${r.fecha_inicio || '?'} → ${r.fecha_finalizacion || '?'} · ${r.noches || 0} noches</div>
-      <div class="meta">Airbnb pagó $${fnum(r.monto || 0, 2)} netos (bruto $${fnum(r.ingresos_brutos || 0, 2)})</div>
-      <div class="btns"><button type="button" class="btn btn-sm" style="min-height:44px" onclick="registrarPorConfirmar('${esc(r.codigo_confirmacion)}')">Registrar cobro por política</button></div>
-    </div>`).join('');
+  $('cPorConfSub').textContent = p.length ? 'Airbnb marcó estas reservas como canceladas por el huésped. Confirma cada una.' : 'No quedan cancelaciones por confirmar.';
+  if (!p.some(r => r.codigo_confirmacion === PC_ABIERTA)) PC_ABIERTA = p.length ? p[0].codigo_confirmacion : '';
+  $('cPorConfL').innerHTML = p.map(r => {
+    const cod = r.codigo_confirmacion, d = pcDesglose(r), ab = cod === PC_ABIERTA;
+    const neto = '$' + fnum(d.neto, 2), P = Number(r.noches) || 0, nn = P === 1 ? 'noche' : 'noches';
+    if (!ab) return `<button type="button" class="pc-cmp" data-pc-abrir="${esc(cod)}"><div class="x"><div class="nom">${esc(pcNombre(r))}</div><div class="m">${esc(pcFechas(r.fecha_inicio, r.fecha_finalizacion))} · ${P} ${nn}</div></div><div class="d">${neto}<small>Por confirmar</small></div></button>`;
+    const filas = d.bruto == null
+      ? `<div class="pc-f"><span>Política de cancelación</span><b>Sin datos</b></div>`
+      : `<div class="pc-f"><span>Política de cancelación</span><b>$${fnum(d.bruto, 2)}</b></div><div class="pc-f"><span>Comisión Airbnb (${pcPct(d.pct)})</span><b>−$${fnum(d.com, 2)}</b></div>`;
+    const modo = PC_MODO[cod], n = modo && modo.n != null ? modo.n : 1;
+    const cuerpo = modo && modo.antes
+      ? `<div class="pc-q">¿Cuántas noches durmió?</div><div class="pc-step"><button type="button" data-pc-menos="${esc(cod)}" aria-label="Una noche menos">−</button><div class="v">${n}<small>de ${P} ${nn}</small></div><button type="button" data-pc-mas="${esc(cod)}" aria-label="Una noche más">+</button></div><button type="button" class="pc-go" data-pc-antes="${esc(cod)}">Guardar</button><button type="button" class="pc-no" data-pc-volver="${esc(cod)}">Volver</button>`
+      : `<div class="pc-q">${esc(PC_TXT.pregunta)}</div><div class="pc-ops"><button type="button" class="pc-op pri" data-pc-confirmar="${esc(cod)}">${PC_SVG_OK}<div><b>${esc(PC_TXT.confirmar[0])}</b><span>${esc(PC_TXT.confirmar[1])}</span></div></button><button type="button" class="pc-op" data-pc-quiere-antes="${esc(cod)}"${P < 2 ? ' disabled' : ''}>${PC_SVG_ARR}<div><b>${esc(PC_TXT.antes[0])}</b><span>${esc(PC_TXT.antes[1])}</span></div></button><button type="button" class="pc-no" data-pc-noes="${esc(cod)}">${esc(PC_TXT.noEs)}</button></div>`;
+    return `<div class="pc-it open"><div class="pc-cab"><div><div class="pc-nom">${esc(pcNombre(r))}</div><div class="pc-cod">${esc(cod)}</div></div><span class="pc-chip"><i></i>Por confirmar</span></div>
+      <div class="pc-meta">${esc(pcFechas(r.fecha_inicio, r.fecha_finalizacion))} · ${P} ${nn}</div>
+      <div class="pc-desg">${filas}<div class="pc-t"><span>Airbnb te pagó</span><b>${neto}</b></div>${d.calc ? '<div class="pc-nota">Bruto calculado con la comisión de Parámetros; el CSV no lo trae.</div>' : ''}</div>
+      ${cuerpo}${PC_ERR[cod] ? `<div class="pc-err" role="alert">${esc(PC_ERR[cod])}</div>` : ''}</div>`;
+  }).join('');
+  p.forEach(r => { if (!(Number(r.ingresos_brutos) > 0) && PC_COM[r.fecha_reserva || ''] === undefined) pcComisionPct(r.fecha_reserva).then(() => pintarPorConfirmar()); });
 }
-function registrarPorConfirmar(cod) {
+
+/* Guarda reutilizando el formulario y sus validaciones (la tarjeta no duplica reglas de negocio). */
+async function pcGuardar(cod, tipo, nochesPresente) {
   const r = (RESERVAS || []).find(x => x.codigo_confirmacion === cod); if (!r) return;
-  aplicarReservaAlForm(r); setTipo(2, true);
-  $('cMsg').className = 'msg'; $('cMsg').textContent = 'Revisa los datos y guarda. Tipo 2: el dinero que Airbnb pagó se mantiene y ninguna noche cuenta como ocupada.';
-  const w = $('cFormWrap'); if (w && w.scrollIntoView) w.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  PC_ERR[cod] = '';
+  limpiarFormC();
+  aplicarReservaAlForm(r); setTipo(tipo, true);
+  if (tipo === 1) { $('cNochesPresente').value = nochesPresente; recalcular(); }
+  setEstado(PC_CFG.estadoAlGuardar); setNota(PC_TXT.nota); renderMotivos();
+  await $('cGuardar').onclick();
+  const c = CANC.find(x => x.codigo === cod);
+  if (!c) { PC_ERR[cod] = $('cMsg').textContent || 'No se pudo guardar. Revisa el registro completo.'; pintarPorConfirmar(); return; }
+  delete PC_MODO[cod];
+  pcAviso(tipo === 1 ? PC_TXT.okMsgAntes(pcNombre(r)) : PC_TXT.okMsg(pcNombre(r)), c.id);
+  render();
 }
+function pcAviso(texto, id) {
+  clearTimeout(PC_UNDO_T); PC_UNDO = id;
+  $('cPorConfToastT').textContent = texto; $('cPorConfToast').hidden = false;
+  PC_UNDO_T = setTimeout(() => { $('cPorConfToast').hidden = true; PC_UNDO = null; pintarPorConfirmar(); }, PC_CFG.segundosDeshacer * 1000);
+}
+async function pcDeshacer() {
+  const id = PC_UNDO; if (!id) return;
+  clearTimeout(PC_UNDO_T); $('cPorConfToast').hidden = true; PC_UNDO = null;
+  try {
+    await call({ accion: 'sincronizar', upsertsCancelaciones: [], borrarCancelaciones: [id], upsertsBloqueos: [], borrarBloqueos: [] });
+    CANC = CANC.filter(x => x.id !== id); saveData(); render();
+  } catch (e) { const c = $('cMsg'); c.className = 'msg err'; c.textContent = 'No se pudo deshacer: ' + (e.message || e); }
+}
+function pcClick(e) {
+  const t = e.target.closest('button'); if (!t) return;
+  const g = n => t.getAttribute(n);
+  if (g('data-pc-abrir')) { PC_ABIERTA = g('data-pc-abrir'); pintarPorConfirmar(); return; }
+  if (g('data-pc-confirmar')) { t.disabled = true; pcGuardar(g('data-pc-confirmar'), 2, 0); return; }
+  if (g('data-pc-quiere-antes')) { PC_MODO[g('data-pc-quiere-antes')] = { antes: true, n: 1 }; pintarPorConfirmar(); return; }
+  if (g('data-pc-volver')) { delete PC_MODO[g('data-pc-volver')]; pintarPorConfirmar(); return; }
+  if (g('data-pc-menos') || g('data-pc-mas')) {
+    const cod = g('data-pc-menos') || g('data-pc-mas'), r = (RESERVAS || []).find(x => x.codigo_confirmacion === cod), P = r ? Number(r.noches) || 0 : 0, m = PC_MODO[cod]; if (!m) return;
+    m.n = Math.min(Math.max(1, (m.n || 1) + (g('data-pc-mas') ? 1 : -1)), Math.max(P - 1, 1)); pintarPorConfirmar(); return;
+  }
+  if (g('data-pc-antes')) { const cod = g('data-pc-antes'); t.disabled = true; pcGuardar(cod, 1, (PC_MODO[cod] || {}).n || 1); return; }
+  if (g('data-pc-noes')) { pcDescartar(g('data-pc-noes')); render(); return; }
+}
+$('cPorConfL').addEventListener('click', pcClick);
+$('cPorConfUndo').onclick = pcDeshacer;
+$('cPorConfForm').onclick = () => { const w = $('cFormTitle'); if (w && w.scrollIntoView) w.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 
 async function cargarDirectas() {
   if (!CFG.clave) return;

@@ -203,6 +203,7 @@ body{margin:0;min-height:100vh;display:flex;align-items:flex-start;justify-conte
 <script>
 const $ = id => document.getElementById(id);
 /* v26 (10 nov 2026): tarjeta «Anuncios» con aviso de nombres por homologar (copia guardada en este dispositivo) */
+/* v26.3 (24 nov 2026): el conteo de cancelaciones por confirmar excluye las marcadas «No fue cancelación» en este dispositivo */
 /* v26.2 (24 nov 2026): aviso de cancelaciones de Airbnb por confirmar (copia de reservas guardada por Sincronizar y casos de Cancelaciones en este dispositivo) */
 function pintarCancelaciones() {
   const el = document.getElementById('cancSub'); if (!el) return;
@@ -210,7 +211,8 @@ function pintarCancelaciones() {
   try {
     const rs = JSON.parse(localStorage.getItem('cimablanca_canc_reservas_cache') || 'null'), cd = JSON.parse(localStorage.getItem('cimablanca_canc_data') || 'null');
     const ya = {}; ((cd && cd.cancelaciones) || []).forEach(c => { if (c.codigo) ya[c.codigo] = 1; });
-    n = ((rs && rs.reservas) || []).filter(r => r.cancelada_airbnb && r.origen !== 'Reserva directa' && !ya[r.codigo_confirmacion]).length;
+    var no = []; try { no = JSON.parse(localStorage.getItem('cimablanca_canc_descartadas') || '[]'); } catch (e) {}
+    n = ((rs && rs.reservas) || []).filter(r => r.cancelada_airbnb && r.origen !== 'Reserva directa' && !ya[r.codigo_confirmacion] && no.indexOf(r.codigo_confirmacion) < 0).length;
   } catch (e) {}
   if (n > 0) { el.textContent = n + (n === 1 ? ' cancelación por confirmar' : ' cancelaciones por confirmar'); el.style.color = 'var(--pendiente)'; el.style.fontWeight = '800'; }
 }
