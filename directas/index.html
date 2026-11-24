@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="cb-modulo" content="directas">
 <script src="../auth.js"></script>
+<script src="../listings_cb_v1_2026-11-10_1330.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Reservas directas · Cima Blanca</title>
@@ -823,7 +824,7 @@ input[readonly]{opacity:.8;cursor:not-allowed}
   window.FechaUna = { montar, _abrir: () => cfg && abrir(cfg), _cerrar: cerrar };
 })();
 
-function mapA(t){t=(t||'').toLowerCase();if(t.indexOf('playa')!==-1||t.indexOf('8 pax')!==-1||t.indexOf('8 huésp')!==-1)return 'LST-02_8 pax';if(t.indexOf('miami')!==-1||t.indexOf('4 pax')!==-1||t.indexOf('4 huésp')!==-1)return 'LST-03_4 pax';if(t.indexOf('cima')!==-1||t.indexOf('6 pax')!==-1||t.indexOf('6 huésp')!==-1)return 'LST-01_6 pax';return null;}function libres(){var s={};try{var d=JSON.parse(localStorage.getItem('cimablanca_canc_data')||'null');((d&&d.cancelaciones)||[]).forEach(function(c){if(c.codigo&&Number(c.nochesCuentan)===0&&Number(c.nochesLiberadas)>0)s[c.codigo]=1;});}catch(e){}return s;}
+function mapA(t){return window.ListingsCB.alias(t);}function libres(){var s={};try{var d=JSON.parse(localStorage.getItem('cimablanca_canc_data')||'null');((d&&d.cancelaciones)||[]).forEach(function(c){if(c.codigo&&Number(c.nochesCuentan)===0&&Number(c.nochesLiberadas)>0)s[c.codigo]=1;});}catch(e){}return s;}
 function ocupDirectas(){
   var out=[],a=(typeof anuncio!=='undefined')?anuncio:'',lib=libres();
   (typeof RESERVAS!=='undefined'?RESERVAS:[]).forEach(function(r){

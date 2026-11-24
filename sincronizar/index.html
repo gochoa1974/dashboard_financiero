@@ -4,12 +4,14 @@
 <meta charset="UTF-8">
 <meta name="cb-modulo" content="sincronizar">
 <script src="../auth.js"></script>
+<script src="../listings_cb_v1_2026-11-10_1330.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cima Blanca · Sincronizar con Drive</title>
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <!-- v13 (18 oct 2026, 21:25): las reservas directas copian «Fecha de la reserva» (columna Q de INGRESOS_RESERVAS_DIRECTAS) al maestro como fecha_reserva; si una fila no la trae queda null (nunca se inventa). Si la reserva tiene varios tramos se toma la fecha más temprana. -->
+<!-- v13 (10 nov 2026): el anuncio ya no se adivina por palabras. Cada nombre publicado de Airbnb se traduce con el catálogo HOMOLOGACION_LISTINGS (módulo «Anuncios»); un nombre desconocido queda «Sin asignar» (antes caía en LST-01 sin avisar). Al terminar, registra en el catálogo los nombres vistos y cuántas reservas tiene cada uno. Ningún otro campo cambia. -->
 <!-- v12 (18 oct 2026, 21:30): el maestro ahora copia todo lo relevante de los archivos fuente: fecha de reserva, limpieza, mascotas, tarifa por servicio, anuncio interno (Airbnb); huéspedes y anuncio interno (directas); check-in, check-out, noches y anuncio interno (adicionales, para las extensiones de estadía). Solo agrega campos: ninguno existente cambia. -->
 <!-- v11 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): tema compartido claro/oscuro y verde unificado. Sin cambios de lógica (lectura de Drive, validación y publicación intactas). -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -379,10 +381,7 @@
   function listingDe(row, texto) {
     var l = String(row["Listing Interno"] || row["Listing"] || "").trim();
     if (l) return l;
-    var t = String(texto || "").toLowerCase();
-    if (t.indexOf("playa") !== -1 || t.indexOf("8 pax") !== -1) return "LST-02_8 pax";
-    if (t.indexOf("miami") !== -1 || t.indexOf("4 pax") !== -1 || t.indexOf("back up 01") !== -1) return "LST-03_4 pax";
-    return "LST-01_6 pax";
+    return window.ListingsCB.alias(texto) || "Sin asignar";
   }
   function cleanCode(c) {
     return (c || "").toString().trim();
@@ -757,7 +756,7 @@
     var master = null;
     var adicionales = [];
 
-    return findRootFolder(ROOT_FOLDER_NAME)
+    return window.ListingsCB.listo(log).then(function () { return findRootFolder(ROOT_FOLDER_NAME); })
       .then(function (root) {
         log("Raíz encontrada. Buscando \"" + INGRESOS_FOLDER_NAME + "\"...");
         return findChildFolder(root.id, INGRESOS_FOLDER_NAME);
@@ -822,6 +821,8 @@
         }).then(function () {
           lastOk = true;
           guardarInfoSync(master.length);
+          // v13: registra en el catálogo los nombres de anuncio vistos (no bloquea: si falla, solo avisa)
+          return window.ListingsCB.registrar(master, log);
         });
       })
       .catch(function (err) {

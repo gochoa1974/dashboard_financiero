@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="cb-modulo" content="adicionales">
 <script src="../auth.js"></script>
+<script src="../listings_cb_v1_2026-11-10_1330.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
@@ -1202,13 +1203,8 @@ function fechaBonita(iso) { if (!iso) return ''; const x = iso.split('-'); retur
 function fechaCorta(iso) { if (!iso) return ''; const x = iso.split('-'); return +x[2] + ' ' + MESES[+x[1] - 1] + ' ' + x[0].slice(2); }
 function anuncioObj(v) { return ANUNCIOS.filter(x => x.v === v)[0]; }
 function anuncioN(v) { const a = anuncioObj(v); return a ? a.n : (v || ''); }
-function mapearAnuncio(txt) {
-  const t = (txt || '').toLowerCase();
-  if (t.indexOf('lst-02') !== -1 || t.indexOf('playa') !== -1 || t.indexOf('8 pax') !== -1 || t.indexOf('8 huésp') !== -1) return 'LST-02_8 pax';
-  if (t.indexOf('lst-03') !== -1 || t.indexOf('miami') !== -1 || t.indexOf('4 pax') !== -1 || t.indexOf('4 huésp') !== -1) return 'LST-03_4 pax';
-  if (t.indexOf('lst-01') !== -1 || t.indexOf('cima') !== -1 || t.indexOf('6 pax') !== -1 || t.indexOf('6 huésp') !== -1) return 'LST-01_6 pax';
-  return null;
-}
+/* v29 (10 nov 2026): el anuncio sale del catálogo HOMOLOGACION_LISTINGS (módulo «Anuncios»), no de palabras sueltas. Nombre desconocido = null → «por homologar». */
+function mapearAnuncio(txt) { return window.ListingsCB.alias(txt); }
 function msg(t, c) { const m = $('msg'); m.className = 'msg' + (c ? ' ' + c : ''); m.textContent = t; }
 function numIn(v) { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : NaN; }
 
@@ -1305,7 +1301,7 @@ function construirReservas() {
   const m = {};
   RESERVAS.filter(r => r.origen !== 'Reserva directa').forEach(r => {
     const c = String(r.codigo_confirmacion || '').trim(); if (!c) return;
-    m[c] = { codigo: c, huesped: r.huesped || '', anuncio: mapearAnuncio(r.anuncio), checkin: r.fecha_inicio || '', checkout: r.fecha_finalizacion || '', noches: r.noches || 0, origen: 'Airbnb', estado: r.estado || '' };
+    m[c] = { codigo: c, huesped: r.huesped || '', anuncio: mapearAnuncio(r.anuncio) || mapearAnuncio(r.listing), checkin: r.fecha_inicio || '', checkout: r.fecha_finalizacion || '', noches: r.noches || 0, origen: 'Airbnb', estado: r.estado || '' };
   });
   DIRECTAS.forEach(d => {
     const t = d.tramos || []; if (!d.codigo || !t.length) return;
@@ -1903,7 +1899,7 @@ function pintarResSel() {
   el.innerHTML = '<div class="rt"><b>' + esc(RES.huesped || 'Sin nombre') + '</b>' + (editId ? '' : '<button type="button" class="btn btn-cancel btn-sm" id="resCambiar"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>Cancelar</button>') + '</div>' +
     '<div class="rm">' + esc(RES.codigo) + ' · ' + esc(RES.origen) + '<br>' + esc(fechaBonita(RES.checkin)) + ' → ' + esc(fechaBonita(RES.checkout)) + (RES.checkin && RES.checkout ? ' · ' + difDias(RES.checkin, RES.checkout) + ' noches' : '') +
     (esCancelada(RES) ? '<br><b class="est-av">Esta reserva figura como cancelada. Revisa antes de registrar cobros.</b>' : '') + '<br>' + (prev.length ? 'Ya tiene ' + prev.length + (prev.length === 1 ? ' cobro' : ' cobros') + ' adicionales (' + money(tot) + ').' : 'Sin cobros adicionales todavía.') + '</div>' +
-    (!RES.anuncio ? '<div class="small" style="margin-top:8px">No pude saber el anuncio. Elígelo:</div><div class="chips" role="radiogroup" aria-label="Anuncio" id="resAn"></div>' : '') +
+    (!RES.anuncio ? '<div class="small" style="margin-top:8px">Este nombre de anuncio aún no está homologado. <a href="../anuncios/" style="font-weight:800;color:inherit">Homológalo una vez</a> y no vuelve a preguntar. Mientras, elígelo aquí:</div><div class="chips" role="radiogroup" aria-label="Anuncio" id="resAn"></div>' : '') +
     (!editId && !esCancelada(RES) ? '<div class="rns"><button type="button" class="btn btn-sm cr-ns" id="resNS" aria-label="El huésped no llegó (No-show)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>No-show</button><span class="small">Si el huésped no llegó</span></div>' : '');
   if (!RES.anuncio) pintarChipsAnuncio($('resAn'), '', 'data-an');
 }
@@ -2469,7 +2465,7 @@ $('resolL').addEventListener('click', async e => {
     const it = DATA.catalogo.filter(c => c.item === ITEM_RESOL)[0];
     if (!it) { okBox('Falta el ítem «Resolución sin detalle»', 'Pulsa Actualizar para cargarlo.', true); return; }
     const base = RES_POR_COD[f.codigo] || {}, an = (base.anuncio && anuncioObj(base.anuncio)) ? base.anuncio : mapearAnuncio(f.anuncio);
-    if (!an) { okBox('No pude saber el anuncio de esta reserva', 'Usa «Registrar» y elígelo.', true); return; }
+    if (!an) { okBox('Este nombre de anuncio aún no está homologado', 'Homológalo en «Anuncios» (una sola vez) o usa «Registrar» y elígelo.', true); return; }
     sd.disabled = true;
     try {
       const j = await call({ accion: 'guardarLineas', reserva: { codigo: f.codigo, huesped: f.huesped || base.huesped || 'Sin nombre', anuncio: an, checkin: base.checkin || f.ini, checkout: base.checkout || f.fin },
@@ -2587,6 +2583,12 @@ $('rsBody').addEventListener('click', e => {
 });
 $('rsNuevo').onclick = () => { irTab('reg', true); $('resCard').scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => { try { $('rBuscar').focus({ preventScroll: true }); } catch (e) {} }, 350); };
 
+/* v29: nombres y capacidades de los 3 anuncios salen del catálogo (al abrir, con la copia guardada, y cuando llega una versión nueva) */
+function sincronizarAnuncios() {
+  try { window.ListingsCB.anuncios().forEach(function (a) { const x = ANUNCIOS.filter(function (y) { return y.v === a.v; })[0]; if (x) { if (a.nombre) x.n = a.nombre; if (a.cap) x.cap = a.cap; } }); } catch (e) {}
+}
+sincronizarAnuncios();
+window.addEventListener('cb-listings', function () { sincronizarAnuncios(); try { renderTodo(); } catch (e) {} });
 function renderTodo() {
   construirReservas();
   renderAlertas(); renderResol(); renderSD(); renderCierres(); renderLista(); renderCat(); renderResumen();

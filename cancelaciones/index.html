@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="cb-modulo" content="cancelaciones">
 <script src="../auth.js"></script>
+<script src="../listings_cb_v1_2026-11-10_1330.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Cancelaciones y bloqueos · Cima Blanca</title>
@@ -731,7 +732,7 @@ html.cb-sin-borrar .list-item .btns [onclick^="borrar"]{display:none}
   window.RangoFechas = { montar, _estado: () => st, _abrir: abrir, _cerrar: cerrar };
 })();
 
-function mapA(t){t=(t||'').toLowerCase();if(t.indexOf('playa')!==-1||t.indexOf('8 pax')!==-1||t.indexOf('8 huésp')!==-1)return 'LST-02_8 pax';if(t.indexOf('miami')!==-1||t.indexOf('4 pax')!==-1||t.indexOf('4 huésp')!==-1)return 'LST-03_4 pax';if(t.indexOf('cima')!==-1||t.indexOf('6 pax')!==-1||t.indexOf('6 huésp')!==-1)return 'LST-01_6 pax';return null;}function libres(){var s={};try{var d=JSON.parse(localStorage.getItem('cimablanca_canc_data')||'null');((d&&d.cancelaciones)||[]).forEach(function(c){if(c.codigo&&Number(c.nochesCuentan)===0&&Number(c.nochesLiberadas)>0)s[c.codigo]=1;});}catch(e){}return s;}
+function mapA(t){return window.ListingsCB.alias(t);}function libres(){var s={};try{var d=JSON.parse(localStorage.getItem('cimablanca_canc_data')||'null');((d&&d.cancelaciones)||[]).forEach(function(c){if(c.codigo&&Number(c.nochesCuentan)===0&&Number(c.nochesLiberadas)>0)s[c.codigo]=1;});}catch(e){}return s;}
 function ocupBloqueo(){
   var out=[],a=document.getElementById('bAnuncio').value||'Todos',lib=libres();
   function ok(x){return a==='Todos'||x==='Todos'||x===a;}
@@ -1174,13 +1175,7 @@ function indexarReservas() {
 }
 
 // mapea el texto libre del "Anuncio" que viene de Airbnb/directas a uno de los 3 anuncios internos; si no reconoce ninguno, no cambia la selección actual
-function mapearAnuncio(txt) {
-  const t = (txt || '').toLowerCase();
-  if (t.indexOf('playa') !== -1 || t.indexOf('8 pax') !== -1 || t.indexOf('8 huésp') !== -1) return 'LST-02_8 pax';
-  if (t.indexOf('miami') !== -1 || t.indexOf('4 pax') !== -1 || t.indexOf('4 huésp') !== -1) return 'LST-03_4 pax';
-  if (t.indexOf('cima') !== -1 || t.indexOf('6 pax') !== -1 || t.indexOf('6 huésp') !== -1) return 'LST-01_6 pax';
-  return null;
-}
+function mapearAnuncio(txt) { return window.ListingsCB.alias(txt); }
 
 async function cargarDirectas() {
   if (!CFG.clave) return;
