@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
-<!-- v19.2 (25 nov 2026): Extras: una tarjeta por reserva con el detalle de cada extra y un lápiz (44 px) por línea que abre la edición en Adicionales. Los totales no cambian. -->
+<!-- v19.2 (25 nov 2026): Extras: una tarjeta por reserva con el detalle de cada extra y un lápiz (44 px) por línea que abre la edición en Adicionales. Los totales no cambian. Siempre el huésped primero y debajo fecha · extra · medio (v19.2b). -->
 <!-- v20 (20 oct 2026 13:30): los meses de Airbnb, Directas y Extras nacen siempre recogidos, y en un solo mes cada pestaña muestra su total al final; y se recogen al cambiar de período, mes o pestaña; selector de período en dos filas (control segmentado de 4 rangos + «Otro período» y «Comparar»), sin chips escondidos.
 v19 (20 oct 2026 13:00): la copia guardada en el aparato se renueva sola si es de un esquema anterior o no trae la tarifa de limpieza (antes solo se renovaba cuando cambiaba la fecha del archivo en Drive). Ninguna cifra cambia. -->
 <!-- v18 (18 oct 2026): listas Airbnb/Directas/Extras agrupadas por mes (acordeón con total al final) y filtro Comparar. Ningún valor cambia. -->
@@ -737,7 +737,7 @@ function extGroups(list,sin){
     var L=g[c],r=L[0].r,tot=0,med={};L.forEach(function(e){tot+=+e.x.monto||0;med[medioTxt(e.x,sin)]=1;});
     var meds=Object.keys(med),mtxt=meds.length===1?meds[0]:"Varios medios";
     if(L.length===1){var x=L[0].x;
-      return '<div class="xg" style="--c:var(--ext)"><div class="xh"><div class="tile">'+esc(inits(r.huesped))+'</div><div class="mid"><b>'+esc(x.item||x.concepto||"Extra")+'</b><span>'+esc(r.huesped)+' · '+dShort(r.fecha_inicio)+' · '+esc(mtxt)+'</span></div><div class="right"><span class="amt">'+money(tot)+'</span>'+pencilA(L[0])+'</div></div></div>';}
+      return '<div class="xg" style="--c:var(--ext)"><div class="xh"><div class="tile">'+esc(inits(r.huesped))+'</div><div class="mid"><b>'+esc(r.huesped)+'</b><span>'+dShort(r.fecha_inicio)+' · '+esc(x.item||x.concepto||"Extra")+' · '+esc(mtxt)+'</span></div><div class="right"><span class="amt">'+money(tot)+'</span>'+pencilA(L[0])+'</div></div></div>';}
     return '<div class="xg" style="--c:var(--ext)"><div class="xh"><div class="tile">'+esc(inits(r.huesped))+'</div><div class="mid"><b>'+esc(r.huesped)+'</b><span>'+dShort(r.fecha_inicio)+' · '+L.length+' extras · '+esc(mtxt)+'</span></div><div class="right"><span class="amt">'+money(tot)+'</span></div></div><div class="xl">'+
       L.map(function(e){var x=e.x;return '<div class="ln"><span class="n">'+esc(x.item||x.concepto||"Extra")+(meds.length>1?' · '+esc(medioTxt(x,sin)):'')+'</span><b>'+money(x.monto)+'</b>'+pencilA(e)+'</div>';}).join("")+'</div></div>';
   }).join("");
