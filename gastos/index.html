@@ -15,6 +15,8 @@
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
+<!-- v20 (24 nov 2026 20:15): gasto proyectado (registrado + esperado) en meses incompletos; aviso «meses con pendientes» con acceso a cada mes; Recurrentes «de ≈ esperados»; períodos largos avisan los meses incompletos.
+     Nunca se mezcla con Resultados/Dashboard: solo lo registrado (publica pubRes sin cambios). -->
 <!-- v19 (20 oct 2026 13:45): barra de total al final de Recurrentes y Variables del mes; con un período largo, lista de meses recogida (acordeón) con total al final.
 v18 (20 oct 2026 13:30): selector de período en dos filas (control segmentado de 4 rangos + «Otro período» y «Comparar»), sin chips escondidos.
 v17 (18 oct 2026): filtro Comparar (años, períodos, año anterior); publica intereses/seguros/otros de la hipoteca para Resultados. -->
@@ -593,6 +595,24 @@ body.cmpOn[data-tab="reg"] .dash,body.cmpOn[data-tab="reg"] #regBox{display:none
 body:not([data-tab="reg"]) #cmpHost{display:none!important}
 #cmpHost{margin:10px 16px 0;grid-column:1/-1}
 @media(min-width:900px){#cmpHost{margin:10px 24px 0}}
+
+/* v20: gasto proyectado y meses con pendientes */
+.hprog{height:8px;border-radius:99px;background:rgba(255,255,255,.18);margin-top:12px;overflow:hidden}
+.hprog i{display:block;height:100%;background:#ffc980;border-radius:99px;transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.hero.proj .hero-l{color:#ffc980}
+.gapbox{margin:12px 16px 0;padding:6px;border-radius:16px;background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn)}
+.gapbox .gt{display:flex;gap:12px;align-items:center;padding:8px 10px}
+.gapbox .gt svg{flex:none}
+.gapbox .gt b{display:block;font-size:14.5px;font-weight:800}
+.gapbox .gt span{font-size:12.5px;font-weight:600}
+.gaprow{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;margin:4px 0 0;padding:6px 12px;border-radius:12px;border:0;background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.gaprow:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+.gaprow>div{flex:1;min-width:0}
+.gaprow b{display:block;font-size:14px;font-weight:800}
+.gaprow span{display:block;font-size:12px;color:var(--mut);font-weight:600;margin-top:1px;overflow-wrap:anywhere}
+.gaprow em{font-style:normal;font-weight:800;font-size:14px;color:var(--warn);white-space:nowrap}
+.gaprow.here{box-shadow:inset 0 0 0 2px var(--warn)}
+.gapmore{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;margin-top:2px;border:0;background:none;color:var(--warn);font:inherit;font-size:13px;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 </style>
 </head>
 <body data-tab="reg">
@@ -615,17 +635,19 @@ body:not([data-tab="reg"]) #cmpHost{display:none!important}
       <div class="hero-big" id="total"></div>
       <div class="hero-s" id="hMov"></div>
       <div class="hero-s2" id="hGasto"></div>
+      <div class="hprog" id="hProg" hidden><i></i></div>
       <div class="hero-c" id="hCmp" hidden></div>
       <div class="hstats">
-        <div><b id="kRec"></b><span>Recurrentes</span></div>
-        <div><b id="kEv"></b><span>Variables</span></div>
-        <div><b id="kPen"></b><span>Por pagar</span></div>
+        <div><b id="kRec"></b><span id="kRecL">Recurrentes</span></div>
+        <div><b id="kEv"></b><span id="kEvL">Variables</span></div>
+        <div><b id="kPen"></b><span id="kPenL">Por pagar</span></div>
       </div>
     </section>
     </div>
   </div>
 
   <div id="closeBox"></div>
+  <div id="gapBox"></div>
   <div id="limBox"></div>
   <div class="banner" id="stHint" style="display:none"></div>
 
@@ -808,6 +830,7 @@ const LIMP='Limpieza de estadía',PARAM_URL='https://script.google.com/macros/s/
 const isLimp=e=>e.concepto===LIMP,isPorPagar=e=>isLimp(e)&&e.estado==='Pendiente de pago';
 /* v14: la limpieza se debe desde el día siguiente al check-in (o el check-out si la estadía es de 1 noche); sin check-in del servidor, queda el check-out */
 const limDesde=it=>{const co=it.checkout;if(!it.checkin||!/^\d{4}-\d{2}-\d{2}$/.test(it.checkin))return co;const d=new Date(it.checkin+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+1);const x=d.toISOString().slice(0,10);return x<co?x:co;};
+const mesAnt=m=>{const y=+m.slice(0,4),k=+m.slice(5);return k===1?(y-1)+'-12':y+'-'+String(k-1).padStart(2,'0');};
 const mesSig=m=>{const y=+m.slice(0,4),k=+m.slice(5);return k===12?(y+1)+'-01':y+'-'+String(k+1).padStart(2,'0');};
 const pendVis=e=>isPorPagar(e)&&(e.mes<=MES||(MES===todayISO().slice(0,7)&&e.mes===mesSig(MES)));
 const ANUNCIOS=['Departamento completo','LST-01_6 pax','LST-02_8 pax','LST-03_4 pax'];
@@ -1022,7 +1045,7 @@ function renderRec(){
  const xs=REC().map(r=>{const ex=existing(r,DS),sug=suggestion(r,DS);return {r,ex,sug,st:ex.length?'reg':((sug&&sug.monto!==undefined)?'sug':'pen')};});
  const por=xs.filter(x=>x.st!=='reg'),ya=xs.filter(x=>x.st==='reg'),sg=xs.filter(x=>x.st==='sug');
  const tya=SUMA(ya.flatMap(x=>x.ex)),pct=xs.length?Math.round(ya.length/xs.length*100):0;
- let h='<div class="rcard"><div class="ringm" style="--p:'+pct+'"><i>'+ya.length+'/'+xs.length+'</i></div><div><b>'+(por.length?ya.length+' de '+xs.length+' al día':'Recurrentes al día')+'</b><span>'+(por.length?'Faltan '+por.length+' esperados sin anotar · ':'Todo registrado · ')+'ya llevas '+f2(tya)+' este mes</span></div></div>';
+ let h='<div class="rcard"><div class="ringm" style="--p:'+pct+'"><i>'+ya.length+'/'+xs.length+'</i></div><div><b>'+(por.length?ya.length+' de '+xs.length+' al día':'Recurrentes al día')+'</b><span>'+(por.length?'Faltan '+por.length+' esperados sin anotar · ':'Todo registrado · ')+'ya llevas '+f2(tya)+(por.length?' de ≈ '+f2(tya+(()=>{const g=gapsFor(MES,DS);return g.esp+g.cap;})())+' esperados':' este mes')+'</span></div></div>';
  if(sg.length)h+='<button type="button" class="confirm" id="accAll">✓ Confirmar '+sg.length+(sg.length===1?' sugerido':' sugeridos')+'</button>';
  const grp={},hid={};xs.forEach(x=>{const u=x.r.um||'Otros';(grp[u]=grp[u]||[]).push(x);});
  REC_ALL().filter(r=>!activeIn(r,MES)).forEach(r=>{const ex=existing(r,DS);if(SUMA(ex)<=0)return;const u=r.um||'Otros';(hid[u]=hid[u]||[]).push({r,ex});if(!grp[u])grp[u]=[];});
@@ -1603,10 +1626,11 @@ const VT={reg:['Resumen de gastos','Qué salió y por qué'],rec:['Gastos recurr
 function setVTitle(){const t=VT[document.body.dataset.tab||'reg']||VT.reg;const a=$('vTitle'),b=$('vSub');if(a)a.textContent=t[0];if(b)b.textContent=t[1];}
 function gotoTab(t){const b=document.querySelector('.tabs [data-t='+t+']');if(b)b.click();}
 
+let APROX=false;
 function setTotal(v){
  cancelAnimationFrame(raf);
  const t=$('total');
- const paint=n=>{t.innerHTML='<small>'+MONEDA+'</small>'+fnum(n,2);};
+ const paint=n=>{t.innerHTML='<small>'+(APROX?'≈ ':'')+MONEDA+'</small>'+fnum(n,2);};
  if(matchMedia('(prefers-reduced-motion:reduce)').matches){shown=v;paint(v);return;}
  const from=shown;let t0=null;
  const step=ts=>{
@@ -1628,13 +1652,34 @@ function renderTotals(){
   const s=suggestion(r,DS);if(s&&s.monto!==undefined)pend+=s.monto;
  });
  const falta=rl.length-saved,pct=rl.length?saved/rl.length:0;
- $('hLabel').textContent=po?'Salió del banco · '+(PER==='todo'?'acumulado':(['30','60','90','180','12m'].indexOf(PER)>=0?'últimos '+P_LBL[PER]+' cerrados':P_LBL[PER].toLowerCase())):'Salió del banco';
- setTotal(tot);
- $('hMov').textContent=mon.length+(mon.length===1?' movimiento registrado':' movimientos registrados');
- {const L=['Gasto del '+(po?'período':'mes')+': '+f2(gasto)];if(capi>0.005)L.push('+ Capital de la hipoteca (no es gasto): '+f2(capi));if(efe>0.005)L.push('− Pagado en efectivo (no sale del banco): '+f2(efe));if(ppag>0.005)L.push('− Por pagar (aún no sale): '+f2(ppag));$('hGasto').textContent=L.length>1?L.join('\n'):'';}
- $('kRec').textContent=f2(tRec);
- $('kEv').textContent=f2(tEv);
- $('kPen').textContent=f2(ppag);
+ const G=po?null:gapsFor(MES,DS),PJ=!!(G&&G.esp>0.004);
+ APROX=PJ;
+ $('hLabel').textContent=PJ?'Gasto del mes · proyectado':(po?'Salió del banco · '+(PER==='todo'?'acumulado':(['30','60','90','180','12m'].indexOf(PER)>=0?'últimos '+P_LBL[PER]+' cerrados':P_LBL[PER].toLowerCase())):'Salió del banco');
+ document.querySelector('.hero').classList.toggle('proj',PJ);
+ if(PJ){
+  const proj=gasto+G.esp;
+  setTotal(proj);
+  $('hMov').textContent=f2(gasto)+' registrado + ≈ '+f2(G.esp)+' esperado';
+  const L=[proj>0?Math.round(gasto/proj*100)+' % ya registrado':''];
+  if(capi+G.cap>0.005)L.push('+ Capital de la hipoteca ≈ '+f2(capi+G.cap)+' (no es gasto)');
+  if(G.sinEst)L.push(plu(G.sinEst,'recurrente sin monto estimado','recurrentes sin monto estimado')+' · no está sumado');
+  $('hGasto').textContent=L.filter(Boolean).join('\n');
+  const hp=$('hProg');hp.hidden=false;hp.firstElementChild.style.width=(proj>0?Math.round(gasto/proj*100):0)+'%';
+  $('kRec').textContent=tot>0.004?f2(tot):'Sin pagos';$('kRecL').textContent='Salió del banco';
+  $('kEv').textContent=f2(ppag);$('kEvL').textContent='Por pagar';
+  $('kPen').textContent='≈ '+f2(G.esp+G.cap);$('kPenL').textContent='Por anotar';
+ }else{
+  setTotal(tot);
+  $('hProg').hidden=true;
+  $('hMov').textContent=mon.length+(mon.length===1?' movimiento registrado':' movimientos registrados');
+  {const L=['Gasto del '+(po?'período':'mes')+': '+f2(gasto)];if(capi>0.005)L.push('+ Capital de la hipoteca (no es gasto): '+f2(capi));if(efe>0.005)L.push('− Pagado en efectivo (no sale del banco): '+f2(efe));if(ppag>0.005)L.push('− Por pagar (aún no sale): '+f2(ppag));
+   if(po){const w=perWin(DS);let m=w.s.slice(0,7),fin=w.e.slice(0,7),nm=0,fa=0;for(let i=0;i<400&&m<=fin;i++,m=mesSig(m)){const g=gapsFor(m,DS);if(g.esp>0.004||g.miss.length||g.lim){nm++;fa+=g.esp+g.cap;}}
+    if(nm)L.push('Incluye '+plu(nm,'mes incompleto','meses incompletos')+' · faltan ≈ '+f2(fa)+' por anotar');}
+   $('hGasto').textContent=L.length>1?L.join('\n'):'';}
+  $('kRec').textContent=f2(tRec);$('kRecL').textContent='Recurrentes';
+  $('kEv').textContent=f2(tEv);$('kEvL').textContent='Variables';
+  $('kPen').textContent=f2(ppag);$('kPenL').textContent='Por pagar';
+ }
  $('nRec').textContent=falta?falta:rl.length;$('nRec').classList.toggle('alert',falta>0);
  $('nEv').textContent=mon0.filter(e=>!isRecRow(e)).length;
  $('nReg').textContent=mon0.length;
@@ -1841,6 +1886,49 @@ function monthState(ym,DS){
  const limFalta=LMISS[ym]||0;
  return {st:(open.length||miss.length||limFalta)?'open':'closed',open,exc,miss,limFalta};
 }
+
+/* v20 (24 nov 2026): gasto proyectado (registrado + esperado) y aviso de meses con pendientes */
+function conMes(ym,fn){const o=MES;MES=ym;try{return fn();}finally{MES=o;}}
+function gapsFor(ym,DS){
+ return conMes(ym,()=>{
+  const cur=todayISO().slice(0,7),isExc=e=>/^Excepci[oó]n:/i.test(e.detalle||'');
+  const pagar=DS.filter(e=>e.mes===ym&&isPorPagar(e));
+  const conf=DS.filter(e=>e.mes===ym&&e.estado!=='Confirmado'&&!isPorPagar(e)&&!isExc(e));
+  const miss=ym<cur?(monthState(ym,DS).miss||[]):REC().filter(r=>!existing(r,DS).length);
+  let esp=0,cap=0,sinEst=0;
+  miss.forEach(r=>{
+   if(r.multi){const c=cuotaFor(ym);if(c){cap+=c.row[1];esp+=c.row[2]+c.row[3]+c.row[4];}else sinEst++;}
+   else{const sg=suggestion(r,DS);if(sg&&sg.monto!==undefined)esp+=sg.monto;else sinEst++;}
+  });
+  const lim=ym<cur?(LMISS[ym]||0):0;
+  return {ym,pagar,conf,miss,esp,cap,sinEst,lim,n:pagar.length+conf.length+miss.length+(lim?1:0)};
+ });
+}
+function gapMeses(DS){
+ const cur=todayISO().slice(0,7),first=DS.reduce((a,e)=>(e.mes&&(!a||e.mes<a))?e.mes:a,'');
+ const out=[];if(!first)return out;
+ for(let m=cur;m>=first;m=mesAnt(m)){const g=gapsFor(m,DS);if(g.n)out.push(g);}
+ return out;
+}
+function gapTxt(g){
+ const P=[];
+ if(g.miss.length){const nm=g.miss.slice(0,3).map(r=>esc(rname(r))).join(', ');P.push('Falta: '+nm+(g.miss.length>3?' y '+(g.miss.length-3)+' más':''));}
+ if(g.pagar.length)P.push(g.pagar.length===1?'Por pagar: '+esc(g.pagar[0].concepto)+' '+f2(g.pagar[0].monto):g.pagar.length+' por pagar ('+f2(SUMA(g.pagar))+')');
+ if(g.conf.length)P.push(plu(g.conf.length,'por confirmar','por confirmar'));
+ if(g.lim)P.push(plu(g.lim,'limpieza sin generar','limpiezas sin generar'));
+ return P.join(' · ');
+}
+let GAPALL=false;
+function renderGaps(){
+ const box=$('gapBox'),L=gapMeses(dataset());
+ if(!L.length){box.innerHTML='';return;}
+ const MAXR=GAPALL?L.length:3,vis=L.slice(0,MAXR),cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
+ box.innerHTML='<div class="gapbox" role="region" aria-label="Meses con pendientes"><div class="gt"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg><div><b>'+plu(L.length,'mes con pendientes','meses con pendientes')+'</b><span>Toca un mes para resolverlo</span></div></div>'+
+  vis.map(g=>'<button type="button" class="gaprow'+(g.ym===MES?' here':'')+'" data-m="'+g.ym+'"'+(g.ym===MES?' aria-current="true"':'')+'><div><b>'+esc(cap(mLabel(g.ym)))+(g.ym===MES?' · estás aquí':'')+'</b><span>'+gapTxt(g)+'</span></div><em>'+g.n+' ›</em></button>').join('')+
+  (L.length>3?'<button type="button" class="gapmore" id="gapTog" aria-expanded="'+GAPALL+'">'+(GAPALL?'Ver menos':'Ver los '+L.length+' meses')+'</button>':'')+'</div>';
+ const tg=$('gapTog');if(tg)tg.onclick=()=>{GAPALL=!GAPALL;renderGaps();};
+ box.querySelectorAll('.gaprow').forEach(b=>b.onclick=()=>{goMonth(b.dataset.m);window.scrollTo({top:0,behavior:'smooth'});});
+}
 function renderClose(){
  const ms=monthState(MES,dataset()),seal=$('mSeal'),box=$('closeBox');
  seal.style.display='none';box.innerHTML='';
@@ -1887,7 +1975,7 @@ function renderAll(){pubRes();cmpInit();if(window.CBC){CBC.render();document.bod
 function renderAll0(){
  $('mLbl').querySelector('.mfull').textContent=mLabel(MES);$('mLbl').querySelector('.mshort').textContent=mShort(MES).replace(/ (\d\d)$/,function(m,y){return ' 20'+y;});setVTitle();
  $('mHoy').style.display=MES===todayISO().slice(0,7)?'none':'';
- applyPer();renderRec();renderEv();renderReg();renderPen();renderTotals();renderClose();renderLimAlert();
+ applyPer();renderRec();renderEv();renderReg();renderPen();renderTotals();renderClose();renderGaps();renderLimAlert();
 }
 
 function toast(msg,withUndo){
