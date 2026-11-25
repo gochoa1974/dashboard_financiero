@@ -14,6 +14,7 @@
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v30 (25 nov 2026): abre directo la edición de un cobro desde el lápiz de Ingresos › Extras (?ed=codigo|item|monto). Sin cambios de datos. -->
 <!-- v29.1 (24 nov 2026): una reserva de Airbnb que el CSV marca «Cancelada por el huésped» ya no aparece en «Pendientes por cerrar» ni ofrece No-show (se trata igual que las canceladas de Cancelaciones). -->
 <!-- v28 (17 oct 2026): gráfico de evolución compara año anterior vs actual, igual que Ingresos. -->
 <!-- v27 (15 oct 2026, 22:40): estilo unificado (Guía v1.1): encabezado navy y verde unificados (antes verde pino y teal), tema compartido claro/oscuro. Sin cambios de lógica. -->
@@ -2598,11 +2599,27 @@ function renderTodo() {
 }
 
 /* ================= ARRANQUE ================= */
+/* v30: el lápiz de Ingresos › Extras abre aquí la línea a editar: ?ed=codigo|item|monto */
+let ED_PEND = null;
+try { const q = new URLSearchParams(location.search).get('ed'); if (q) { const p = q.split('|'); ED_PEND = { c: p[0], i: p[1] || '', m: Number(p[2]) }; } } catch (e) {}
+function intentarEdDirecto(final) {
+  if (!ED_PEND) return;
+  const d = ED_PEND;
+  const l = DATA.lineas.filter(x => x.codigo === d.c && (x.item || '') === d.i && Math.abs((x.monto || 0) - d.m) < 0.005)[0]
+    || DATA.lineas.filter(x => x.codigo === d.c && (x.item || '') === d.i)[0];
+  if (l) { ED_PEND = null; try { history.replaceState(null, '', location.pathname); } catch (e) {} irTab('reg', true); editarLinea(l.id); return; }
+  if (final) {
+    ED_PEND = null; try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    irTab('reg', true); try { $('buscar').value = d.c; renderLista(); } catch (e) {}
+    msg('No encontré ese cobro para editarlo. Te dejé la búsqueda de la reserva.', 'err');
+  }
+}
 (function boot() {
   irTab('res', true);   // v28: siempre abre en Resumen
   if (CFG.clave && CFG.url) {
     showApp(); renderTodo(); setHint(false);
-    call({ accion: 'listar' }).then(j => { aplicar(j); setHint(true); cargarDirectas(); iniciarDrive(); })
+    intentarEdDirecto(false);
+    call({ accion: 'listar' }).then(j => { aplicar(j); setHint(true); intentarEdDirecto(true); cargarDirectas(); iniciarDrive(); })
       .catch(e => { $('syncHint').textContent = 'Sin conexión: ' + (e.message || e); iniciarDrive(); });
   } else { $('app').style.display = 'none'; $('gate').style.display = 'block'; }
 })();
