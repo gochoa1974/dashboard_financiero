@@ -97,7 +97,7 @@
   <header class="apphead">
     <a class="backbtn" href="../parametros/" aria-label="Volver a Configuración"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     <img class="logo" src="../Cima-Blanca-logo.png" alt="Cima Blanca">
-    <div class="ttl"><b>Cima Blanca</b><span>Sincronizar con Drive · v15</span></div>
+    <div class="ttl"><b>Cima Blanca</b><span>Sincronizar con Drive · v15.1</span></div>
   </header>
   <p class="note" style="margin:0 0 16px">Lee Airbnb, reservas directas e ingresos adicionales desde Google Drive y actualiza sola el archivo consolidado en PROCESADO.</p>
 
@@ -154,6 +154,7 @@
 (function () {
   "use strict";
 
+  var GOOGLE_HINT = "gochoa1974@gmail.com";   // v15.1: cuenta dueña del Drive; cámbiala aquí si cambia
   var CLIENT_ID = "284452253474-nkn76cksdd6hu41f79t7kfnp47iag878.apps.googleusercontent.com";
   var SCOPES = "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file";
   var ROOT_FOLDER_NAME = "CIMA BLANCA";
@@ -239,6 +240,7 @@
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPES,
+      hint: GOOGLE_HINT,   // v15.1: salta «Elige una cuenta» (tienes 2 cuentas de Google en el navegador)
       callback: function (resp) {
         if (resp.error) {
           if (silentTry) { silentTry = false; return; }

@@ -361,7 +361,7 @@ var CLIENT_ID="284452253474-nkn76cksdd6hu41f79t7kfnp47iag878.apps.googleusercont
 var SCOPES="https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file";
 var F_ROOT="CIMA BLANCA",F_ING="1. INGRESOS",F_RES="1.1 Reservas",F_RAW="RAW_sin_procesar",F_PROC="PROCESADO";
 var MAESTRO_NAME="MAESTRO_INGRESOS_CIMA_BLANCA.json";
-var ING_VER="10",ING_SCHEMA="13";
+var ING_VER="11",ING_SCHEMA="13";
 function copiaVieja(d){return !d||(+d.schema_version||0)<+ING_SCHEMA||!(d.reservas||[]).some(function(r){return r.tarifa_limpieza!=null;});}
 var K_CACHE="cimablanca_ing_maestro",K_TOPE="cimablanca_tope_liquidacion",K_GUARD="cimablanca_ing_autosync",K_VER="cimablanca_ing_ver";
 var TOPE_DEF=1800;
