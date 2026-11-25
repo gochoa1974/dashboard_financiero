@@ -2324,6 +2324,8 @@ $('closeBox').addEventListener('click',e=>{
  if(e.target.closest('#clsLim')){autoLimpiezas(true);return;}
  if(e.target.closest('#clsGo')){gotoTab('rec');}
 });
+/* v20.5b: el gráfico «Evolución» se redibuja al ancho real del panel */
+(function(){const h=document.getElementById('regBox');let t=0;if(!h||!window.ResizeObserver)return;new ResizeObserver(()=>{clearTimeout(t);t=setTimeout(()=>{try{const sv=document.querySelector('#regBox .evo svg[role=group]');if(!sv||!(h.clientWidth>0))return;const want=Math.max(280,Math.min(h.clientWidth-60,900));if(Math.abs(want-(+sv.getAttribute('width')))>20)renderAll();}catch(e){}},120);}).observe(h);})();
 $('regBox').addEventListener('click',e=>{const tg=e.target.closest&&e.target.closest('#evTg');if(tg){try{CBC.open();}catch(x){}return;}
  if(e.target.closest('#limNew')){openLimNew();return;}
  if(e.target.closest('#limPay')){openLimPay();return;}

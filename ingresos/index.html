@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v2_2026-11-25_1710.js"></script>
+<!-- v19.4c (25 nov 2026): el gráfico «Evolución» se redibuja al ancho real del panel (antes podía quedar angosto si se dibujaba oculto o al girar/redimensionar). -->
 <!-- v19.4 (25 nov 2026): «Evolución del neto» obedece el filtro (2026, 2025, Mes, rangos, Acumulado); la comparación (años, fechas propias, año anterior) vive solo en «Comparar», también desde un botón dentro de la tarjeta. Nada se elimina. -->
 <!-- v19.3 (25 nov 2026): gráficos con valor sobre cada barra (vertical en celular cuando no cabe en horizontal); Comparar pasa a comparar_cb_v2_2026-11-25_1710.js. Nada se elimina. -->
 <!-- v19.2 (25 nov 2026): Extras: una tarjeta por reserva con el detalle de cada extra y un lápiz (44 px) por línea que abre la edición en Adicionales. Los totales no cambian. Siempre el huésped primero y debajo fecha · extra · medio (v19.2b). -->
@@ -816,6 +817,8 @@ $("vR").addEventListener("click",function(){setView("R");});
 $("vL").addEventListener("click",function(){setView("L");});
 $("vR").addEventListener("click",function(){setTimeout(function(){if(M)renderR();},0);});
 var evRT=null;window.addEventListener("resize",function(){clearTimeout(evRT);evRT=setTimeout(function(){if(M)renderR();},180);});
+/* v19.4c: si el panel cambia de ancho (o estaba oculto al dibujar), el gráfico se vuelve a dibujar a su ancho real */
+(function(){var h=$("p-res"),t=0;if(!h||!window.ResizeObserver)return;new ResizeObserver(function(){clearTimeout(t);t=setTimeout(function(){try{var sv=document.querySelector("#p-res .evo svg[role=group]");if(!sv||!(h.clientWidth>0))return;var want=Math.max(290,Math.min(h.clientWidth-30,900));if(Math.abs(want-(+sv.getAttribute("width")))>20&&M)renderR();}catch(e){}},120);}).observe(h);})();
 $("p-res").addEventListener("click",function(e){var tg=e.target.closest&&e.target.closest("#evTg");if(tg){try{CBC.open();}catch(x){}return;}evGo(e.target);});
 $("p-res").addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){var g=e.target.closest&&e.target.closest("g.m");if(g){e.preventDefault();evGo(g);var again=document.querySelector('#p-res g.m.on');if(again)again.focus();}}});
 document.addEventListener("click",function(e){var b=e.target.closest("[data-mo]");
