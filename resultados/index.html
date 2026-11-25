@@ -12,9 +12,10 @@
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
-<script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
+<script src="../comparar_cb_v2_2026-11-25_1710.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- v7b (25 nov 2026): gráficos con valor sobre cada barra (vertical en celular cuando no cabe en horizontal); Comparar pasa a comparar_cb_v2_2026-11-25_1710.js. Nada se elimina. -->
 <!-- v6b (18 oct 2026 14:30): etiqueta «Gastos (fijo+var.)» en cascada y estado de resultados. -->
 <!-- v7 (20 oct 2026 13:30): selector de período en dos filas (control segmentado de 4 rangos + «Otro período» y «Comparar»), sin chips escondidos.
 v6 (18 oct 2026): filtro Comparar, recuperación de la inversión, nota de Flujo de caja, intereses/seguros separados, gráfico mensual dinámico, gastos por familia. -->
@@ -371,12 +372,15 @@ function render(){
   cascada(a,etq);
 }
 var mSel="ing";
+function vlab(gx,y1,x,t,bw){var st="font-weight:700;stroke:var(--tarjeta);stroke-width:3px;paint-order:stroke";
+  if(bw<34)return '<text transform="translate('+gx+','+(x<0?y1+4:y1-4)+') rotate(-90)" text-anchor="'+(x<0?"end":"start")+'" style="'+st+';font-size:9.5px">'+t+'</text>';
+  return '<text x="'+gx+'" y="'+(x<0?y1+12:y1-4)+'" text-anchor="middle" style="'+st+'">'+t+'</text>';}
 function grafMet(cm){
   var el=$("chart"),M=MET[mSel],n=cm.length;
   $("mSeg").innerHTML=Object.keys(MET).map(function(k){return '<button type="button" data-mt="'+k+'" aria-pressed="'+(k===mSel)+'">'+MET[k].label+'</button>';}).join("");
   $("mT").textContent=M.label+" por mes";
   if(!n){el.innerHTML="";return;}
-  var W=(el.parentNode.clientWidth||700)<520?380:640,H=230,pl=40,pb=26,pt=22;el.setAttribute("viewBox","0 0 "+W+" "+H);
+  var W=(el.parentNode.clientWidth||700)<520?380:640,H=230,pl=40,pb=26,pt=((W-40)/n<34)?38:22;el.setAttribute("viewBox","0 0 "+W+" "+H);
   var v=cm.map(function(m){return M.val([m]);}),ok=v.filter(function(x){return x!=null;});
   var cl=cm.filter(function(m){return !D[m].parcial;}),ac=agg(cl),pe=(mSel==="ing"&&ac.n)?(ac.G+ac.C)/ac.n:null;
   var all=ok.slice();if(pe!=null)all.push(pe);
@@ -386,7 +390,7 @@ function grafMet(cm){
   [mn,0,mx].forEach(function(x){s+='<line x1="'+pl+'" x2="'+W+'" y1="'+yy(x)+'" y2="'+yy(x)+'" stroke="var(--linea)"/><text x="0" y="'+(yy(x)+3)+'">'+fv(x)+'</text>';});
   cm.forEach(function(m,i){var x=v[i];if(x==null)return;var gx=pl+i*bw+bw/2,y0=yy(0),y1=yy(x),bad=x<0||(pe!=null&&!D[m].parcial&&x<pe),col=bad?"var(--err)":(mSel==="gas"?"var(--gasto)":"var(--acento)");
     s+='<rect x="'+(gx-w/2)+'" y="'+Math.min(y0,y1)+'" width="'+w+'" height="'+Math.max(Math.abs(y0-y1),1)+'" rx="4" fill="'+col+'" opacity="'+(D[m].parcial?".5":"1")+'"/>';
-    if(n<=8)s+='<text x="'+gx+'" y="'+(x<0?y1+12:y1-4)+'" text-anchor="middle" style="font-weight:700">'+fv(x)+'</text>';
+    s+=vlab(gx,y1,x,fv(x),bw);
     if(n<=14||i%2===0)s+='<text x="'+gx+'" y="'+(H-8)+'" text-anchor="middle">'+MN[+m.slice(5)-1].slice(0,3)+(n>12&&(m.slice(5)==="01"||i===0)?" "+m.slice(2,4):"")+'</text>';});
   if(pe!=null)s+='<line x1="'+pl+'" x2="'+W+'" y1="'+yy(pe)+'" y2="'+yy(pe)+'" stroke="var(--texto)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="'+W+'" y="'+(yy(pe)-5)+'" text-anchor="end" style="font-weight:800;fill:var(--texto)">Equilibrio '+f0(pe)+'</text>';
   el.innerHTML=s;
@@ -412,13 +416,13 @@ function payback(){
   $("pbN").innerHTML="Flujo de caja acumulado: <b>"+f0(rec)+"</b>. "+(est!=null?("Al ritmo actual (≈"+f0(avg)+" al mes) faltan unos <b>"+est.toFixed(1).replace(".",",")+" años</b>."):"Con el flujo actual aún no se puede estimar.")+" Aparte, la plusvalía estimada es <b>"+f0(I.valor-I.precio)+"</b> (no entra en este cálculo).";
 }
 function grafNeto(cm){
-  var W=640,H=236,pl=40,pb=38,pt=14,n=cm.length,el=$("chNet");if(!n){el.innerHTML="";return;}
+  var W=640,H=236,pl=40,pb=38,n=cm.length,pt=((W-40)/n<34)?36:14,el=$("chNet");if(!n){el.innerHTML="";return;}
   var v=cm.map(function(m){return D[m].ing-D[m].gas;}),mx=Math.max(0,Math.max.apply(null,v))*1.15||1,mn=Math.min(0,Math.min.apply(null,v))*1.15;
   var yy=function(x){return pt+(H-pt-pb)*(1-(x-mn)/(mx-mn));},bw=(W-pl)/n,w=Math.min(bw*.6,34),s="";
   [mn,0,mx].forEach(function(x){s+='<line x1="'+pl+'" x2="'+W+'" y1="'+yy(x)+'" y2="'+yy(x)+'" stroke="var(--linea)"/><text x="0" y="'+(yy(x)+3)+'">'+f0(x)+'</text>';});
   cm.forEach(function(m,i){var gx=pl+i*bw+bw/2,x=v[i],y0=yy(0),y1=yy(x),col=x<0?"var(--err)":"var(--acento)",op=D[m].parcial?".5":"1";
     s+='<rect x="'+(gx-w/2)+'" y="'+Math.min(y0,y1)+'" width="'+w+'" height="'+Math.max(Math.abs(y0-y1),1)+'" rx="4" fill="'+col+'" opacity="'+op+'"/>';
-    if(n<=14)s+='<text x="'+gx+'" y="'+(x<0?y1+12:y1-4)+'" text-anchor="middle" style="font-weight:700">'+f0(x)+'</text>';
+    s+=vlab(gx,y1,x,f0(x),bw);
     if(n<=14||i%2===0)s+='<text x="'+gx+'" y="'+(H-20)+'" text-anchor="middle">'+MN[+m.slice(5)-1].slice(0,3)+(n>12&&(m.slice(5)==="01"||i===0)?" "+m.slice(2,4):"")+'</text>';
     if(D[m].ing>0&&(n<=14||i%2===0))s+='<text x="'+gx+'" y="'+(H-6)+'" text-anchor="middle" style="font-size:9px;font-weight:700;fill:'+(x<0?"var(--err)":"var(--texto-2)")+'">'+Math.round(x/D[m].ing*100)+'%</text>';});
   s+='<text x="0" y="'+(H-6)+'" style="font-size:9px">Margen</text>';
