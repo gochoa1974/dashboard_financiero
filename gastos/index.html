@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v1_2026-10-18_1330.js"></script>
+<!-- v20.2 (24 nov 2026 20:45): «Sin cobro este mes» solo para recurrentes que se pueden suspender (software); esenciales solo con excepción y motivo. Interruptor «Se puede suspender» en editar/nuevo recurrente. -->
 <!-- v20 (24 nov 2026 20:15): gasto proyectado (registrado + esperado) en meses incompletos; aviso «meses con pendientes» con acceso a cada mes; Recurrentes «de ≈ esperados»; períodos largos avisan los meses incompletos.
      Nunca se mezcla con Resultados/Dashboard: solo lo registrado (publica pubRes sin cambios). -->
 <!-- v19 (20 oct 2026 13:45): barra de total al final de Recurrentes y Variables del mes; con un período largo, lista de meses recogida (acordeón) con total al final.
@@ -613,6 +614,21 @@ body:not([data-tab="reg"]) #cmpHost{display:none!important}
 .gaprow em{font-style:normal;font-weight:800;font-size:14px;color:var(--warn);white-space:nowrap}
 .gaprow.here{box-shadow:inset 0 0 0 2px var(--warn)}
 .gapmore{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;margin-top:2px;border:0;background:none;color:var(--warn);font:inherit;font-size:13px;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+
+/* v20.2: sin cobro este mes (solo servicios que se pueden suspender) */
+.susp{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;margin-top:10px;padding:10px 14px;border:1.5px solid var(--line);background:var(--surface);border-radius:16px;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.susp svg{flex:none;color:var(--accent-t)}
+.susp b{display:block;font-size:14.5px;font-weight:800}
+.susp small{display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin-top:1px}
+.susp:active{background:var(--off-bg)}
+.exclink{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;margin-top:6px;border:0;background:none;color:var(--mut);font:inherit;font-size:13px;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.excbox{margin-top:10px;padding:12px;border-radius:14px;background:var(--off-bg)}
+.excbox label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+.excbox input{width:100%;min-height:48px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:15px}
+.swrow{display:flex;align-items:flex-start;gap:12px;min-height:56px;margin-top:12px;padding:8px 2px;cursor:pointer}
+.swrow input{flex:none;width:24px;height:24px;margin-top:2px;accent-color:var(--accent)}
+.swrow b{display:block;font-size:14.5px}
+.swrow small{display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin-top:2px}
 </style>
 </head>
 <body data-tab="reg">
@@ -761,7 +777,8 @@ const RECOVKEY='cb_gastos_recov_v1';
 let RECOV={};try{RECOV=JSON.parse(localStorage.getItem(RECOVKEY)||'{}')||{};}catch(e){}
 const saveRECOV=()=>{try{localStorage.setItem(RECOVKEY,JSON.stringify(RECOV));}catch(e){}};
 const UM_ORDER=['Servicios básicos','Software','Hipoteca','Mantenimiento'];
-const REC_ALL=()=>REC_BASE.concat(RECX.map(x=>({key:x.key,con:x.con,det:x.det,fam:x.fam,um:x.um||'Otros',desde:x.desde,hasta:x.hasta,monto0:x.monto,dia0:x.dia,sub:x.dia?'Cobra el día '+x.dia:'Agregado por ti · edítalo si cambia',src:'habitual',custom:true}))).map(r=>{const o=RECOV[r.key];if(!o)return r;const m=Object.assign({},r,o);if(r.custom&&m.dia0)m.sub='Cobra el día '+m.dia0;return m;});
+const REC_ALL=()=>REC_BASE.concat(RECX.map(x=>({key:x.key,con:x.con,det:x.det,fam:x.fam,um:x.um||'Otros',desde:x.desde,hasta:x.hasta,susp:x.susp,monto0:x.monto,dia0:x.dia,sub:x.dia?'Cobra el día '+x.dia:'Agregado por ti · edítalo si cambia',src:'habitual',custom:true}))).map(r=>{const o=RECOV[r.key];if(!o)return r;const m=Object.assign({},r,o);if(r.custom&&m.dia0)m.sub='Cobra el día '+m.dia0;return m;});
+const suspOk=r=>!r.multi&&(r.susp!==undefined&&r.susp!==null?!!r.susp:normTxt(r.um||'')==='software');
 const activeIn=(r,ym)=>(!r.desde||ym>=r.desde)&&(!r.hasta||ym<=r.hasta);
 const REC=()=>REC_ALL().filter(r=>activeIn(r,MES));
 const FAMILIAS={
@@ -1031,21 +1048,23 @@ function recCard(x){
   const doc=r.multi&&x.ex[0].doc?String(x.ex[0].doc).split('·')[0].trim():'';
   sub='Pagado '+fdia(x.ex[0].fecha)+(x.ex.length>1&&!r.multi?' · '+x.ex.length+' registros':'')+(doc?' · '+esc(doc):'');
   amt=f2(SUMA(x.ex));chip='Registrado';cc='ok';
+  if(SUMA(x.ex)===0&&/^(Sin cobro|Excepci)/.test(x.ex[0].origen||'')){sub=/^Excepci/.test(x.ex[0].origen)?'Sin cobro · '+esc(String(x.ex[0].detalle||'').replace(/^.*Excepci[oó]n:\s*/,'')):'Sin cobro este mes · suspendido';chip='Sin cobro';cc='off';}
  }else if(x.st==='sug'){
   sub=venceTxt(x.sug.fecha);amt=f2(x.sug.monto);chip='Sugerido';cc='warn';
  }else{
   const c=r.multi?cuotaFor(MES):null;
-  sub=(x.sug&&x.sug.fecha)?venceTxt(x.sug.fecha):esc(r.sub);
-  amt=c?'≈ '+f2(c.row[1]+c.row[2]+c.row[3]+c.row[4]):'—';chip='Pendiente';cc='off';
+  const sinC=r.multi&&!c;sub=sinC?'Este mes no vence cuota':((x.sug&&x.sug.fecha)?venceTxt(x.sug.fecha):esc(r.sub));
+  amt=c?'≈ '+f2(c.row[1]+c.row[2]+c.row[3]+c.row[4]):'—';chip=sinC?'Sin cuota':'Pendiente';cc='off';
  }
  return '<button type="button" class="item rec'+cls+'" data-k="'+esc(r.key)+'"><div class="tile">'+ic+'</div><div class="mid"><b>'+esc(nm)+'</b><span>'+sub+'</span></div><div class="right"><span class="amt">'+amt+'</span><span class="chip '+cc+'">'+chip+'</span></div></button>';
 }
 function renderRec(){
  const DS=dataset();
  const xs=REC().map(r=>{const ex=existing(r,DS),sug=suggestion(r,DS);return {r,ex,sug,st:ex.length?'reg':((sug&&sug.monto!==undefined)?'sug':'pen')};});
- const por=xs.filter(x=>x.st!=='reg'),ya=xs.filter(x=>x.st==='reg'),sg=xs.filter(x=>x.st==='sug');
- const tya=SUMA(ya.flatMap(x=>x.ex)),pct=xs.length?Math.round(ya.length/xs.length*100):0;
- let h='<div class="rcard"><div class="ringm" style="--p:'+pct+'"><i>'+ya.length+'/'+xs.length+'</i></div><div><b>'+(por.length?ya.length+' de '+xs.length+' al día':'Recurrentes al día')+'</b><span>'+(por.length?'Faltan '+por.length+' esperados sin anotar · ':'Todo registrado · ')+'ya llevas '+f2(tya)+(por.length?' de ≈ '+f2(tya+(()=>{const g=gapsFor(MES,DS);return g.esp+g.cap;})())+' esperados':' este mes')+'</span></div></div>';
+ const nvc=x=>x.r.multi&&!cuotaFor(MES)&&x.st!=='reg',xc=xs.filter(x=>!nvc(x));
+ const por=xc.filter(x=>x.st!=='reg'),ya=xc.filter(x=>x.st==='reg'),sg=xs.filter(x=>x.st==='sug');
+ const tya=SUMA(ya.flatMap(x=>x.ex)),pct=xc.length?Math.round(ya.length/xc.length*100):0;
+ let h='<div class="rcard"><div class="ringm" style="--p:'+pct+'"><i>'+ya.length+'/'+xc.length+'</i></div><div><b>'+(por.length?ya.length+' de '+xc.length+' al día':'Recurrentes al día')+'</b><span>'+(por.length?'Faltan '+por.length+' esperados sin anotar · ':'Todo registrado · ')+'ya llevas '+f2(tya)+(por.length?' de ≈ '+f2(tya+(()=>{const g=gapsFor(MES,DS);return g.esp+g.cap;})())+' esperados':' este mes')+'</span></div></div>';
  if(sg.length)h+='<button type="button" class="confirm" id="accAll">✓ Confirmar '+sg.length+(sg.length===1?' sugerido':' sugeridos')+'</button>';
  const grp={},hid={};xs.forEach(x=>{const u=x.r.um||'Otros';(grp[u]=grp[u]||[]).push(x);});
  REC_ALL().filter(r=>!activeIn(r,MES)).forEach(r=>{const ex=existing(r,DS);if(SUMA(ex)<=0)return;const u=r.um||'Otros';(hid[u]=hid[u]||[]).push({r,ex});if(!grp[u])grp[u]=[];});
@@ -1080,7 +1099,9 @@ function recSheetHTML(r,mode){
  (r.medido?'<div class="field"><label for="shMed">'+esc(r.medido)+' consumidos (opcional)</label><input type="text" id="shMed" inputmode="decimal" autocomplete="off" placeholder="Solo informativo"></div>':'')+
  '<button type="button" class="save" id="shGo">Guardar</button>'+
  ((mode==='edit'&&!r.multi)?'<button type="button" class="ghost2" id="shOther">+ Agregar otro pago este mes</button>':'')+
- ((mode==='new'&&!r.multi)?'<button type="button" class="ghost2" id="shNo">No hubo este mes · dejar en '+MONEDA+'0,00</button>':'');
+ ((mode==='new'&&!r.multi)?(suspOk(r)?
+  '<button type="button" class="susp" id="shNo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></svg><span><b>Sin cobro este mes</b><small>Servicio suspendido · no suma ni se espera</small></span></button>':
+  '<button type="button" class="exclink" id="shExcB">Excepción: este mes no hubo cobro</button><div class="excbox" id="shExc" hidden><label for="shExcM">Motivo (queda anotado)</label><input type="text" id="shExcM" maxlength="120" autocomplete="off" placeholder="Ej. Factura llegará el próximo mes"><button type="button" class="ghost2" id="shExcGo" disabled>Registrar '+MONEDA+'0,00 con este motivo</button></div>'):'');
 }
 function paintRec(){
  if(!SH||SH.t!=='rec')return;
@@ -1131,7 +1152,11 @@ function openRec(key,force){
  if(md)md.oninput=()=>{u.med=md.value;};
  $('shGo').onclick=()=>{if($('shGo').disabled)return;u.accepted=true;saveAll({rec:key});closeSheet();};
  const no=$('shNo');
- if(no)no.onclick=()=>{u.monto='0,00';u.touched=true;u.sinGasto=true;u.accepted=true;saveAll({rec:key});closeSheet();};
+ if(no)no.onclick=()=>{u.monto='0,00';u.touched=true;u.sinGasto=true;u.nota='Sin cobro este mes (servicio suspendido)';u.origen='Sin cobro (suspendido)';u.accepted=true;saveAll({rec:key});closeSheet();};
+ const eb=$('shExcB');
+ if(eb){eb.onclick=()=>{$('shExc').hidden=false;eb.hidden=true;$('shExcM').focus();};
+  $('shExcM').oninput=e=>{$('shExcGo').disabled=e.target.value.trim().length<5;};
+  $('shExcGo').onclick=()=>{const t=$('shExcM').value.trim();if(t.length<5)return;u.monto='0,00';u.touched=true;u.sinGasto=true;u.nota='Excepción: '+t.slice(0,120);u.origen='Excepción (sin cobro)';u.accepted=true;saveAll({rec:key});closeSheet();};}
  const ot=$('shOther');
  if(ot)ot.onclick=()=>{const k=key;closeSheet();openRec(k,'add');};
  paintRec();
@@ -1150,13 +1175,15 @@ function openNewRec(){
   '<div class="field" id="nrUmW" style="display:none"><label for="nrUmN">Nombre del paraguas nuevo</label><input type="text" id="nrUmN" placeholder="Ej. Seguros" autocomplete="off"></div>'+
   '<div class="row2"><div class="field"><label for="nrMonto">Valor aprox.</label><input type="text" id="nrMonto" inputmode="decimal" placeholder="0,00" autocomplete="off"></div><div class="field"><label for="nrDia">Día de cobro</label><select id="nrDia">'+diaOpts(1)+'</select></div></div>'+
   '<div class="field"><label for="nrDesde">Desde (mes en que empieza)</label><select id="nrDesde">'+mOpts(-3,12,MES)+'</select></div>'+
+  '<label class="swrow"><input type="checkbox" id="nrSusp"><span><b>Se puede suspender</b><small>Aparece «Sin cobro este mes». Para servicios no indispensables.</small></span></label>'+
   '<div class="shnote">Si ya existe con ese nombre (por ejemplo Precios Dinámicos), lo reactivo desde el mes que elijas.</div>'+
   '<button type="button" class="save" id="nrGo" disabled>Crear recurrente</button>');
  const chk=()=>{$('nrGo').disabled=!(NR.con.trim()&&(NR.um!=='__new'||NR.umNew.trim()));};
  $('nrCon').oninput=e=>{NR.con=e.target.value;chk();};
- $('nrUm').onchange=e=>{NR.um=e.target.value;$('nrUmW').style.display=NR.um==='__new'?'':'none';chk();};
+ $('nrUm').onchange=e=>{NR.um=e.target.value;if(!NR.suspTocado){$('nrSusp').checked=normTxt(NR.um)==='software';NR.susp=$('nrSusp').checked;}$('nrUmW').style.display=NR.um==='__new'?'':'none';chk();};
  $('nrUmN').oninput=e=>{NR.umNew=e.target.value;chk();};
  $('nrMonto').oninput=e=>{NR.monto=e.target.value;};
+ $('nrSusp').checked=normTxt(NR.um)==='software';NR.susp=$('nrSusp').checked;$('nrSusp').onchange=e=>{NR.susp=e.target.checked;NR.suspTocado=true;};
  $('nrDia').onchange=e=>{NR.dia=+e.target.value;};
  $('nrDesde').onchange=e=>{NR.desde=e.target.value;};
  draftOpen();
@@ -1173,7 +1200,7 @@ function openNewRec(){
   }
   const key='u'+Date.now().toString(36)+Math.random().toString(36).slice(2,4);
   const sw=normTxt(um)==='software';
-  RECX.push({key,con:sw?'Software y suscripciones':nm,det:sw?nm:undefined,um,fam:/^mantenimiento/i.test(um)?'3. Mantenimiento, reparaciones y reposición':'1. Fijos operativos',monto:mv,dia:NR.dia,desde:NR.desde});saveRECX();
+  RECX.push({key,con:sw?'Software y suscripciones':nm,det:sw?nm:undefined,um,fam:/^mantenimiento/i.test(um)?'3. Mantenimiento, reparaciones y reposición':'1. Fijos operativos',monto:mv,dia:NR.dia,desde:NR.desde,susp:!!NR.susp});saveRECX();
   NR=null;closeSheet();renderAll();toast('Recurrente creado: '+nm+' · en '+um,false);
  };
  setTimeout(()=>{if(SH&&SH.t==='newrec')$('nrCon').focus();},340);
@@ -1216,12 +1243,14 @@ function openRecEdit(key){
   '<div class="shnote">'+esc(r.um||'')+' · '+esc(recStatus(r))+'</div>'+
   '<div class="row2"><div class="field"><label for="reMonto">Valor aprox.</label><input type="text" id="reMonto" inputmode="decimal" placeholder="0,00" autocomplete="off"></div><div class="field"><label for="reDia">Día de cobro</label><select id="reDia">'+diaOpts(r.dia0||1)+'</select></div></div>'+
   '<div class="field"><label for="reDesde">Desde</label><select id="reDesde">'+mOpts(-24,12,r.desde||'','Desde siempre')+'</select></div>'+
+  '<label class="swrow"><input type="checkbox" id="reSusp"><span><b>Se puede suspender</b><small>Aparece «Sin cobro este mes». Para servicios no indispensables (software).</small></span></label>'+
   '<div class="field"><label for="reHasta">Hasta (baja)</label><select id="reHasta">'+mOpts(-24,12,r.hasta||'','Sin fecha de baja')+'</select></div>'+
   '<button type="button" class="save" id="reGo">Guardar</button>'+
-  ((act&&!r.hasta)?'<button type="button" class="ghost2" id="reOff">Dar de baja desde '+esc(mLabel(MES))+'</button>':'<button type="button" class="ghost2" id="reOn">Reactivar desde '+esc(mLabel(MES))+'</button>'));
+  ((act&&!r.hasta)?'<button type="button" class="ghost2" id="reOff">'+(suspOk(r)?'Pausar':'Dar de baja')+' desde '+esc(mLabel(MES))+'</button>':'<button type="button" class="ghost2" id="reOn">Reactivar desde '+esc(mLabel(MES))+'</button>'));
+ $('reSusp').checked=suspOk(r);if(r.multi)$('reSusp').closest('.swrow').hidden=true;
  $('reMonto').value=(r.monto0!==undefined&&r.monto0!==null&&r.monto0!=='')?fe(r.monto0):'';
  const put=o=>{RECOV[key]=Object.assign({},RECOV[key]||{},o);saveRECOV();closeSheet();renderAll();};
- $('reGo').onclick=()=>{const mv=$('reMonto').value.trim();put({monto0:(mv!==''&&!isNaN(pn(mv)))?pn(mv):undefined,dia0:+$('reDia').value,desde:$('reDesde').value||undefined,hasta:$('reHasta').value||null});toast('Guardado: '+rname(r),false);};
+ $('reGo').onclick=()=>{const mv=$('reMonto').value.trim();put({susp:$('reSusp').checked,monto0:(mv!==''&&!isNaN(pn(mv)))?pn(mv):undefined,dia0:+$('reDia').value,desde:$('reDesde').value||undefined,hasta:$('reHasta').value||null});toast('Guardado: '+rname(r),false);};
  const off=$('reOff');if(off)off.onclick=()=>{const m=hideRec(r);closeSheet();renderAll();toast(m,false);};
  const on=$('reOn');if(on)on.onclick=()=>{showRec(r);closeSheet();renderAll();toast('Reactivado desde '+mLabel(MES),false);};
 }
@@ -1396,7 +1425,7 @@ function pendItems(){
  const DS=dataset(),cur=todayISO().slice(0,7);
  const pagar=DS.filter(pendVis).sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
  let reg=[];
- if(MES<=cur){const ms=monthState(MES,DS);reg=esPasado(MES)?(ms.miss||[]):REC().filter(r=>!existing(r,DS).length);}
+ if(MES<=cur){const ms=monthState(MES,DS);reg=esPasado(MES)?(ms.miss||[]):REC().filter(r=>!existing(r,DS).length&&!(r.multi&&!cuotaFor(MES)));}
  const isExc=e=>/^Excepci[oó]n:/i.test(e.detalle||'');
  const conf=DS.filter(e=>e.mes===MES&&e.estado!=='Confirmado'&&!isPorPagar(e)&&!isExc(e));
  return {DS,pagar,reg,conf,n:pagar.length+reg.length+conf.length};
@@ -1882,7 +1911,7 @@ function monthState(ym,DS){
  if(ym>=cur||!first||ym<first)return {st:'na'};
  const mon=DS.filter(e=>e.mes===ym),isExc=e=>/^Excepci[oó]n:/i.test(e.detalle||'');
  const open=mon.filter(e=>e.estado!=='Confirmado'&&!isExc(e)&&!isPorPagar(e)),exc=mon.filter(e=>e.estado!=='Confirmado'&&isExc(e)&&!isPorPagar(e));
- const miss=REC().filter(r=>!existing(r,DS).length&&DS.some(e=>e.mes<ym&&matchRow(r,e)));
+ const miss=REC().filter(r=>!existing(r,DS).length&&!(r.multi&&!cuotaFor(ym))&&DS.some(e=>e.mes<ym&&matchRow(r,e)));
  const limFalta=LMISS[ym]||0;
  return {st:(open.length||miss.length||limFalta)?'open':'closed',open,exc,miss,limFalta};
 }
@@ -1894,7 +1923,7 @@ function gapsFor(ym,DS){
   const cur=todayISO().slice(0,7),isExc=e=>/^Excepci[oó]n:/i.test(e.detalle||'');
   const pagar=DS.filter(e=>e.mes===ym&&isPorPagar(e));
   const conf=DS.filter(e=>e.mes===ym&&e.estado!=='Confirmado'&&!isPorPagar(e)&&!isExc(e));
-  const miss=ym<cur?(monthState(ym,DS).miss||[]):REC().filter(r=>!existing(r,DS).length);
+  const miss=ym<cur?(monthState(ym,DS).miss||[]):REC().filter(r=>!existing(r,DS).length&&!(r.multi&&!cuotaFor(ym)));
   let esp=0,cap=0,sinEst=0;
   miss.forEach(r=>{
    if(r.multi){const c=cuotaFor(ym);if(c){cap+=c.row[1];esp+=c.row[2]+c.row[3]+c.row[4];}else sinEst++;}
@@ -2085,8 +2114,8 @@ function saveAll(only){
   else{
    const sug=suggestion(r,DS);
    const fromTabla=r.src==='tabla'&&sug&&pn(u.monto)===+sug.monto&&u.fecha===sug.fecha;
-   const detalle=(r.medido&&u.med)?(fmed(u.med)+' '+r.medido):(r.detalle||r.det||null);
-   OPS.push({b,k:'add',nm,e:{id:uid(),fecha:u.fecha,mes:MES,anuncio:'Departamento completo',concepto:r.con,familia:r.fam,cuenta:r.noGasto?'No':'Sí',etiqueta:null,detalle,monto:pn(u.monto),estado:'Confirmado',medio:null,doc:r.src==='tabla'&&sug?sug.doc:null,origen:fromTabla?'Tabla del banco':'Manual (formulario)'}});
+   const detalle=u.nota?((r.det?r.det+' · ':'')+u.nota):((r.medido&&u.med)?(fmed(u.med)+' '+r.medido):(r.detalle||r.det||null));
+   OPS.push({b,k:'add',nm,e:{id:uid(),fecha:u.fecha,mes:MES,anuncio:'Departamento completo',concepto:r.con,familia:r.fam,cuenta:r.noGasto?'No':'Sí',etiqueta:null,detalle,monto:pn(u.monto),estado:'Confirmado',medio:null,doc:r.src==='tabla'&&sug?sug.doc:null,origen:u.origen||(fromTabla?'Tabla del banco':'Manual (formulario)')}});
   }
  });
  pe.forEach(x=>{
