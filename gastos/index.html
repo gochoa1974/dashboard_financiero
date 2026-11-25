@@ -14,6 +14,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v20.5 (25 nov 2026): «Evolución del gasto» obedece el filtro (Mes, 2026, 2025, rangos, Acumulado); la comparación (años, fechas propias, año anterior) vive solo en «Comparar», también desde un botón dentro de la tarjeta. Nada se elimina. -->
 <!-- v20.4 (25 nov 2026): gráficos con valor sobre cada barra (vertical en celular cuando no cabe en horizontal); Comparar pasa a comparar_cb_v2_2026-11-25_1710.js. Nada se elimina. -->
 <script src="../comparar_cb_v2_2026-11-25_1710.js"></script>
 <!-- v20.2 (24 nov 2026 20:45): «Sin cobro este mes» solo para recurrentes que se pueden suspender (software); esenciales solo con excepción y motivo. Interruptor «Se puede suspender» en editar/nuevo recurrente. -->
@@ -567,6 +568,9 @@ body:not([data-tab="reg"]) .dash{display:none}
 .evo g.on .ml{fill:var(--ink);font-weight:800}
 .evo .ul{fill:rgb(var(--crec))}
 .evlg{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--mut);font-weight:700;margin:0 0 8px}
+.evlg .tg{margin-left:auto;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border:1px solid var(--linea);border-radius:99px;background:var(--tarjeta);color:var(--texto);font:700 12px var(--fuente,inherit);cursor:pointer}
+.evlg .tg:focus-visible{outline:3px solid rgb(var(--crec));outline-offset:2px}
+.evo .yl{fill:var(--mut);font-size:10px;font-weight:800;text-anchor:middle}
 .evlg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .evc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .evc>div{background:var(--bg);border-radius:12px;padding:10px 12px;min-width:0}
@@ -1561,23 +1565,25 @@ function evoCard(){
  const DS=dataset(),po=perOn(),cur=todayISO().slice(0,7),AN=po?(PER==='pasado'?((+cur.slice(0,4)-1)+'-12'):cur):MES,y=+AN.slice(0,4),m0=+AN.slice(5);
  const gm=(yy,i)=>{const k=yy+'-'+pad(i),ls=DS.filter(e=>e.mes===k&&e.cuenta!=='No');const pp=SUMA(ls.filter(isPorPagar));return {t:SUMA(ls),p:pp,has:ls.length>0};};
  const A=[],B=[];for(let i=1;i<=12;i++){A.push(gm(y,i));B.push(gm(y-1,i));}
- let mx=0;A.concat(B).forEach(x=>{mx=Math.max(mx,x.t);});
+ /* v20.5: el gráfico muestra lo que dice el filtro; la comparación vive solo en «Comparar» */
+ const seq=[];{if(!po||PER==='anio'||PER==='pasado'){for(let i=1;i<=12;i++)seq.push(y+'-'+pad(i));}else{const w=perWin(DS);let m=w.s;while(m<=w.e&&seq.length<200){seq.push(m);m=addM(m,1);}}if(!seq.length)for(let i=1;i<=12;i++)seq.push(y+'-'+pad(i));}
+ const n=seq.length,Q=seq.map(k=>{const yy=+k.slice(0,4),mm=+k.slice(5),a=gm(yy,mm);return {k,m:mm,a};});
+ let mx=0;Q.forEach(q=>{mx=Math.max(mx,q.a.t);});
  const step=mx<=1500?500:1000,top=Math.max(step,Math.ceil(mx/step)*step);
- const host=document.getElementById('regBox'),cw=host&&host.clientWidth>0?host.clientWidth-60:300,W=Math.max(280,Math.min(cw,900)),H=W>600?180:(W>420?150:130),PL=28,bw=(W-PL-4)/12,g=bw*0.78,b=g/2-1;
- let svg='<svg width="'+W+'" height="'+(H+34)+'" viewBox="0 0 '+W+' '+(H+34)+'" role="group" aria-label="Evolución mensual del gasto, '+(y-1)+' contra '+y+'"><defs><pattern id="evH" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="rgba(var(--crec),.3)"/><rect width="2" height="5" fill="rgb(var(--crec))"/></pattern></defs><g transform="translate(0,8)">';
- let VT=(g/2)<30,LP=VT?34:18;const fk=v=>'$'+(v>=1000?(Math.round(v/100)/10+'').replace('.',',')+'k':Math.round(v));
+ const host=document.getElementById('regBox'),cw=host&&host.clientWidth>0?host.clientWidth-60:300,W=Math.max(280,Math.min(cw,900)),H=W>600?180:(W>420?150:130),PL=28,bw=(W-PL-4)/n,g=Math.min(bw*0.78,64),b=g,yrs=seq[0].slice(0,4)!==seq[n-1].slice(0,4);
+ let svg='<svg width="'+W+'" height="'+(H+(yrs?44:34))+'" viewBox="0 0 '+W+' '+(H+(yrs?44:34))+'" role="group" aria-label="Evolución mensual del gasto, '+(po?(P_LBL[PER]||y):y)+'"><defs><pattern id="evH" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="rgba(var(--crec),.3)"/><rect width="2" height="5" fill="rgb(var(--crec))"/></pattern></defs><g transform="translate(0,8)">';
+ let VT=b<30,LP=VT?34:18;const fk=v=>'$'+(v>=1000?(Math.round(v/100)/10+'').replace('.',',')+'k':Math.round(v));
  const lb=(cx,y,v,cur)=>{if(!(v>0.004))return '';const st='font-size:'+(VT?9.5:10.5)+'px;font-weight:'+(cur?800:700)+';fill:'+(cur?'var(--texto)':'var(--texto-2)')+';stroke:var(--tarjeta);stroke-width:3px;paint-order:stroke';return VT?'<text transform="translate('+cx.toFixed(1)+','+(y-4).toFixed(1)+') rotate(-90)" text-anchor="start" style="'+st+'">'+fk(v)+'</text>':'<text x="'+cx.toFixed(1)+'" y="'+(y-4).toFixed(1)+'" text-anchor="middle" style="'+st+'">'+fk(v)+'</text>';};
  for(let gv=step;gv<=top;gv+=step){const gy=H-(H-LP)*gv/top;svg+='<line class="gl" x1="'+PL+'" x2="'+W+'" y1="'+gy.toFixed(1)+'" y2="'+gy.toFixed(1)+'"/><text class="gt" x="0" y="'+(gy+3).toFixed(1)+'">$'+(gv>=1000?(gv/1000)+'k':gv)+'</text>';}
- for(let i=0;i<12;i++){
-  const k=y+'-'+pad(i+1),x=PL+2+i*bw+(bw-g)/2,on=!po&&k===MES,inR=A[i].has||B[i].has||k<=cur;
-  const hp=(H-LP)*B[i].t/top,hd=(H-LP)*(A[i].t-A[i].p)/top,hh=(H-LP)*A[i].p/top;
-  svg+='<g class="m'+(on?' on':'')+(k>cur&&!A[i].has?' off':'')+'" data-m="'+k+'"'+(k>cur&&!A[i].has?' aria-hidden="true"':' role="button" tabindex="0"')+' aria-label="'+mLabel(k)+': '+f2(A[i].t)+(A[i].p>0.004?' (por pagar '+f2(A[i].p)+')':'')+'"'+(on?' aria-current="true"':'')+'>'+
+ for(let i=0;i<n;i++){
+  const q=Q[i],k=q.k,A_=q.a,x=PL+2+i*bw+(bw-g)/2,on=!po&&k===MES,inR=A_.has||k<=cur;
+  const hd=(H-LP)*(A_.t-A_.p)/top,hh=(H-LP)*A_.p/top;
+  svg+='<g class="m'+(on?' on':'')+(k>cur&&!A_.has?' off':'')+'" data-m="'+k+'"'+(k>cur&&!A_.has?' aria-hidden="true"':' role="button" tabindex="0"')+' aria-label="'+mLabel(k)+': '+f2(A_.t)+(A_.p>0.004?' (por pagar '+f2(A_.p)+')':'')+'"'+(on?' aria-current="true"':'')+'>'+
    '<rect class="hit" x="'+(x-3).toFixed(1)+'" y="0" width="'+(g+6).toFixed(1)+'" height="'+(H+24)+'"/>'+
-   '<rect class="bp" x="'+x.toFixed(1)+'" y="'+(H-hp).toFixed(1)+'" width="'+b.toFixed(1)+'" height="'+hp.toFixed(1)+'" rx="2"/>'+
-   '<rect class="bc" x="'+(x+b+2).toFixed(1)+'" y="'+(H-hd-hh).toFixed(1)+'" width="'+b.toFixed(1)+'" height="'+hd.toFixed(1)+'" rx="2"/>'+
-   (hh>0?'<rect class="bh" x="'+(x+b+2).toFixed(1)+'" y="'+(H-hh).toFixed(1)+'" width="'+b.toFixed(1)+'" height="'+hh.toFixed(1)+'" rx="2"/>':'')+
-   lb(x+b/2,H-hp,B[i].t,false)+lb(x+b+2+b/2,H-hd-hh,A[i].t,true)+
-   '<text class="ml" x="'+(x+g/2).toFixed(1)+'" y="'+(H+15)+'">'+MESES[i].charAt(0).toUpperCase()+'</text>'+(on?'<rect class="ul" x="'+(x-1).toFixed(1)+'" y="'+(H+19)+'" width="'+(g+2).toFixed(1)+'" height="3" rx="1.5"/>':'')+'</g>';
+   '<rect class="bc" x="'+x.toFixed(1)+'" y="'+(H-hd-hh).toFixed(1)+'" width="'+b.toFixed(1)+'" height="'+hd.toFixed(1)+'" rx="2"/>'+
+   (hh>0?'<rect class="bh" x="'+x.toFixed(1)+'" y="'+(H-hh).toFixed(1)+'" width="'+b.toFixed(1)+'" height="'+hh.toFixed(1)+'" rx="2"/>':'')+
+   lb(x+b/2,H-hd-hh,A_.t,true)+
+   '<text class="ml" x="'+(x+g/2).toFixed(1)+'" y="'+(H+15)+'">'+(g>=26?MESES[q.m-1].slice(0,3).replace(/^./,c=>c.toUpperCase()):MESES[q.m-1].charAt(0).toUpperCase())+'</text>'+(on?'<rect class="ul" x="'+(x-1).toFixed(1)+'" y="'+(H+19)+'" width="'+(g+2).toFixed(1)+'" height="3" rx="1.5"/>':'')+(yrs&&((i===0&&q.m<=9)||q.m===1)?'<text class="yl" x="'+(x+g/2).toFixed(1)+'" y="'+(H+34)+'">'+k.slice(0,4)+'</text>':'')+'</g>';
  }
  svg+='</g></svg>';
  const enCurso=AN>=cur,c=A[m0-1],pv=B[m0-1],nm=MESES[m0-1];
@@ -1594,7 +1600,8 @@ function evoCard(){
   const d2=sb>0?Math.round((sa-sb)/sb*100):null,rt=AB(ini,fin);
   c2='<div><small>'+rt.charAt(0).toUpperCase()+rt.slice(1)+' '+y+(enCurso?' (meses cerrados)':'')+'</small><b>'+f2(sa)+'</b><em'+(d2!==null?(d2>0?' class="up"':' class="dn"'):'')+'>'+(d2!==null&&d2!==0?(d2>0?'▲ '+d2+'% más que ':'▼ '+Math.abs(d2)+'% menos que '):'')+f2(sb)+' en '+rt+' '+(y-1)+'</em></div>';
  }else c2='<div><small>Acumulado '+y+'</small><b>'+f2(A.reduce((t,x)=>t+x.t,0))+'</b><em>Sin año anterior para comparar</em></div>';
- return '<div class="evo"><h3>Evolución del gasto</h3><p class="evs">Por mes · '+(y-1)+' contra '+y+' · toca un mes para verlo</p><div class="evlg"><span><i style="background:rgba(95,112,128,.4)"></i>'+(y-1)+'</span><span><i style="background:rgb(var(--crec))"></i>'+y+'</span><span><i style="background:repeating-linear-gradient(45deg,rgb(var(--crec)) 0 2px,rgba(var(--crec),.3) 2px 5px)"></i>Por pagar</span></div>'+svg+'<div class="evc'+(po?' one':'')+'">'+(po?pTile(DS):c1+c2)+'</div></div>';
+ const subT=(!po||PER==='anio'||PER==='pasado')?'Por mes · '+y+' · toca un mes para verlo':(PER==='todo'?'Todos los meses · '+mLabel(seq[0])+' – '+mLabel(seq[n-1]):(P_LBL[PER]||'Período')+' · por mes');
+ return '<div class="evo"><h3>Evolución del gasto</h3><p class="evs">'+subT+'</p><div class="evlg"><span><i style="background:rgb(var(--crec))"></i>'+(yrs||PER==='todo'?'Pagado':y)+'</span><span><i style="background:repeating-linear-gradient(45deg,rgb(var(--crec)) 0 2px,rgba(var(--crec),.3) 2px 5px)"></i>Por pagar</span><button type="button" class="tg" id="evTg" aria-haspopup="dialog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M7 4 3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"/></svg>Comparar…</button></div>'+svg+'<div class="evc'+(po?' one':'')+'">'+(po?pTile(DS):c1+c2)+'</div></div>';
 }
 let OPENG={};
 function perAcc(DS){
@@ -2317,7 +2324,7 @@ $('closeBox').addEventListener('click',e=>{
  if(e.target.closest('#clsLim')){autoLimpiezas(true);return;}
  if(e.target.closest('#clsGo')){gotoTab('rec');}
 });
-$('regBox').addEventListener('click',e=>{
+$('regBox').addEventListener('click',e=>{const tg=e.target.closest&&e.target.closest('#evTg');if(tg){try{CBC.open();}catch(x){}return;}
  if(e.target.closest('#limNew')){openLimNew();return;}
  if(e.target.closest('#limPay')){openLimPay();return;}
  if(e.target.closest('#limRe')){autoLimpiezas(true);}
