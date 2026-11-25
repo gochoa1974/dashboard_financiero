@@ -1048,7 +1048,7 @@ function recCard(x){
   const doc=r.multi&&x.ex[0].doc?String(x.ex[0].doc).split('·')[0].trim():'';
   sub='Pagado '+fdia(x.ex[0].fecha)+(x.ex.length>1&&!r.multi?' · '+x.ex.length+' registros':'')+(doc?' · '+esc(doc):'');
   amt=f2(SUMA(x.ex));chip='Registrado';cc='ok';
-  if(SUMA(x.ex)===0&&/^(Sin cobro|Excepci)/.test(x.ex[0].origen||'')){sub=/^Excepci/.test(x.ex[0].origen)?'Sin cobro · '+esc(String(x.ex[0].detalle||'').replace(/^.*Excepci[oó]n:\s*/,'')):'Sin cobro este mes · suspendido';chip='Sin cobro';cc='off';}
+  if(SUMA(x.ex)===0&&/Sin cobro este mes|Excepci[oó]n:/.test(x.ex[0].detalle||'')){sub=/Excepci[oó]n:/.test(x.ex[0].detalle)?'Sin cobro · '+esc(String(x.ex[0].detalle||'').replace(/^.*Excepci[oó]n:\s*/,'')):'Sin cobro este mes · suspendido';chip='Sin cobro';cc='off';}
  }else if(x.st==='sug'){
   sub=venceTxt(x.sug.fecha);amt=f2(x.sug.monto);chip='Sugerido';cc='warn';
  }else{
@@ -1152,11 +1152,11 @@ function openRec(key,force){
  if(md)md.oninput=()=>{u.med=md.value;};
  $('shGo').onclick=()=>{if($('shGo').disabled)return;u.accepted=true;saveAll({rec:key});closeSheet();};
  const no=$('shNo');
- if(no)no.onclick=()=>{u.monto='0,00';u.touched=true;u.sinGasto=true;u.nota='Sin cobro este mes (servicio suspendido)';u.origen='Sin cobro (suspendido)';u.accepted=true;saveAll({rec:key});closeSheet();};
+ if(no)no.onclick=()=>{u.monto='0,00';u.touched=true;u.sinGasto=true;u.nota='Sin cobro este mes (servicio suspendido)';u.accepted=true;saveAll({rec:key});closeSheet();};
  const eb=$('shExcB');
  if(eb){eb.onclick=()=>{$('shExc').hidden=false;eb.hidden=true;$('shExcM').focus();};
   $('shExcM').oninput=e=>{$('shExcGo').disabled=e.target.value.trim().length<5;};
-  $('shExcGo').onclick=()=>{const t=$('shExcM').value.trim();if(t.length<5)return;u.monto='0,00';u.touched=true;u.sinGasto=true;u.nota='Excepción: '+t.slice(0,120);u.origen='Excepción (sin cobro)';u.accepted=true;saveAll({rec:key});closeSheet();};}
+  $('shExcGo').onclick=()=>{const t=$('shExcM').value.trim();if(t.length<5)return;u.monto='0,00';u.touched=true;u.sinGasto=true;u.nota='Excepción: '+t.slice(0,120);u.accepted=true;saveAll({rec:key});closeSheet();};}
  const ot=$('shOther');
  if(ot)ot.onclick=()=>{const k=key;closeSheet();openRec(k,'add');};
  paintRec();
@@ -2157,7 +2157,7 @@ function csvDownload(){
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/csv;charset=utf-8'}));a.download='gastos_cima_blanca.csv';document.body.appendChild(a);a.click();a.remove();
 }
 const FLDS=['id','fecha','mes','anuncio','concepto','familia','cuenta','etiqueta','detalle','monto','estado','medio','doc','origen','editado'];
-function wire(e){const r={};FLDS.forEach(k=>{let v=e[k];if(v===undefined||v==='')v=null;r[k]=v;});r.monto=Math.round((Number(e.monto)||0)*100)/100;r.editado=!!e.editado;return r;}
+function wire(e){const r={};FLDS.forEach(k=>{let v=e[k];if(v===undefined||v==='')v=null;r[k]=v;});r.monto=Math.round((Number(e.monto)||0)*100)/100;r.editado=!!e.editado;if(typeof r.origen==='string'&&/^(Sin cobro|Excepci)/.test(r.origen))r.origen='Manual (formulario)';return r;}
 const canon=e=>JSON.stringify(wire(e));
 function snap(list){const o={};list.forEach(e=>{o[e.id]=canon(e);});return o;}
 function saveSync(){try{localStorage.setItem(SYNKEY,JSON.stringify(SYNCED));localStorage.setItem(BASEKEY,JSON.stringify(BASE));}catch(e){}}
