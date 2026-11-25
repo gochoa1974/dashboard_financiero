@@ -14,6 +14,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v20.6 (25 nov 2026): pantalla ancha (desde 1100 px; 2 niveles: 1100 y 1500): franja superior con el número grande, gráfico más ancho y alto, tarjetas en columnas, meses pendientes en 3 columnas, Pendientes en rejilla; ancho hasta 1680 px. Celular e iPad sin cambios. -->
 <!-- v20.5 (25 nov 2026): «Evolución del gasto» obedece el filtro (Mes, 2026, 2025, rangos, Acumulado); la comparación (años, fechas propias, año anterior) vive solo en «Comparar», también desde un botón dentro de la tarjeta. Nada se elimina. -->
 <!-- v20.4 (25 nov 2026): gráficos con valor sobre cada barra (vertical en celular cuando no cabe en horizontal); Comparar pasa a comparar_cb_v2_2026-11-25_1710.js. Nada se elimina. -->
 <script src="../comparar_cb_v2_2026-11-25_1710.js"></script>
@@ -634,6 +635,46 @@ body:not([data-tab="reg"]) #cmpHost{display:none!important}
 .swrow input{flex:none;width:24px;height:24px;margin-top:2px;accent-color:var(--accent)}
 .swrow b{display:block;font-size:14.5px}
 .swrow small{display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin-top:2px}
+/* v21 · pantalla ancha (desde 1100 px): franja superior, gráfico grande y tarjetas en columnas. Celular e iPad no cambian. */
+@media (min-width:1100px){
+ .app{max-width:1680px}
+ body[data-tab="reg"] .app{display:block}
+ body[data-tab="reg"] .app>*{grid-column:auto}
+ body[data-tab="reg"] .top{display:block}
+ body[data-tab="reg"] .top>.head,body[data-tab="reg"] .top>.stalebar,body[data-tab="reg"] .top>.month{margin-left:0;margin-right:0}
+ body[data-tab="reg"] .top>.head{margin-top:0}
+ body[data-tab="reg"] .top>.dash{position:static;margin:0 0 4px;display:block}
+ body[data-tab="reg"] .hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);column-gap:48px;align-items:center;padding:26px 34px}
+ body[data-tab="reg"] .hero>*:not(.hstats){grid-column:1;grid-row:auto;align-self:auto;padding-top:0}
+ body[data-tab="reg"] .hero>.hstats{grid-column:2;grid-row:1/span 7;margin:0;padding:0 0 0 40px;border-top:0;border-left:1px solid rgba(255,255,255,.14);align-self:center}
+ body[data-tab="reg"] .hstats b{font-size:22px}
+ body[data-tab="reg"] .sticky{padding-left:24px;padding-right:24px}
+ .gapbox{margin:12px 24px 0}
+ .gapbox{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ .gapbox .gt,.gapbox .gapmore{grid-column:1/-1}
+ .gapbox .gaprow{margin:0}
+ body[data-tab="reg"] #regBox.pane.on .pcol{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px;align-items:stretch;max-width:none}
+ body[data-tab="reg"] #regBox .pcol>*{margin-top:0}
+ body[data-tab="reg"] #regBox .pcol>.porres,body[data-tab="reg"] #regBox .pcol>.rsl,body[data-tab="reg"] #regBox .pcol>.alldone,body[data-tab="reg"] #regBox .pcol>.group,body[data-tab="reg"] #regBox .pcol>.hint{grid-column:1/-1;order:0}
+ body[data-tab="reg"] #regBox .pcol>.porres{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:40px;align-items:center}
+ body[data-tab="reg"] #regBox .pcol>.porres>b,body[data-tab="reg"] #regBox .pcol>.porres>small{grid-column:1/-1}
+ body[data-tab="reg"] #regBox .pcol>.evo{grid-column:1/-1;order:1;display:flex;flex-direction:column}
+ body[data-tab="reg"] #regBox .pcol>.evo .evc{margin-top:auto}
+ body[data-tab="reg"] #regBox .pcol>.rcx{grid-column:span 3;order:2}
+ .evo .gt{font-size:11px}.evo .ml{font-size:12px}.evo .yl{font-size:12px}
+ .evlg{align-items:center}
+ .fab{right:max(32px,calc((100vw - 1680px)/2 + 32px))}
+ #penBox .pcol,#evBox .pcol{max-width:none}
+ #penBox .pcol{display:grid;grid-template-columns:repeat(auto-fill,minmax(480px,1fr));gap:10px 16px;align-items:start}
+ #penBox .pcol>*{margin-top:0}
+ #penBox .pcol>*:not(.prow):not(.item){grid-column:1/-1}
+}
+@media (min-width:1500px){
+ body[data-tab="reg"] #regBox.pane.on .pcol{grid-template-columns:repeat(3,minmax(0,1fr))}
+ body[data-tab="reg"] #regBox .pcol>.porres{grid-template-columns:repeat(3,minmax(0,1fr))}
+ body[data-tab="reg"] #regBox .pcol>.evo{grid-column:1/span 2;grid-row:span 2}
+ body[data-tab="reg"] #regBox .pcol>.rcx{grid-column:3}
+}
 </style>
 </head>
 <body data-tab="reg">
@@ -1561,6 +1602,9 @@ function pTile(DS){
  if(c&&c.dp!=null)return '<div><small>'+esc(wLabel(c.w))+' · gasto sin capital</small><b>'+f2(c.cur)+'</b><em class="'+(c.dp>0?'up':(c.dp<0?'dn':''))+'">'+(c.dp>0?'▲ '+c.dp+'% más que ':(c.dp<0?'▼ '+Math.abs(c.dp)+'% menos que ':'Igual que '))+f2(c.prev)+' en las mismas fechas de '+(c.y-1)+'</em></div>';
  const w=perWin(DS);return '<div><small>'+esc(P_LBL[PER])+'</small><b>'+f2(SUMA(selRows(DS,w).filter(e=>e.cuenta!=='No')))+'</b><em>'+(PER==='todo'?'Acumulado: no se compara con otro año':'Sin año anterior completo para comparar')+'</em></div>';
 }
+/* ancho útil del gráfico: el de su propio panel; si aún no existe, lo que le tocará en la rejilla (2 de 3 columnas desde 1100 px) */
+function evoVW(){return !!(window.matchMedia&&matchMedia('(min-width:1100px)').matches);}
+function evoCw(){const h=document.getElementById('regBox');if(!h||!(h.clientWidth>0))return 300;if(!evoVW())return h.clientWidth-60;const ev=h.querySelector('.evo');if(ev&&ev.clientWidth>0)return ev.clientWidth-34;let w=h.clientWidth-48;if(window.matchMedia&&matchMedia('(min-width:1500px)').matches&&document.body.getAttribute('data-tab')==='reg')w=(w-32)*2/3+16;return w-34;}
 function evoCard(){
  const DS=dataset(),po=perOn(),cur=todayISO().slice(0,7),AN=po?(PER==='pasado'?((+cur.slice(0,4)-1)+'-12'):cur):MES,y=+AN.slice(0,4),m0=+AN.slice(5);
  const gm=(yy,i)=>{const k=yy+'-'+pad(i),ls=DS.filter(e=>e.mes===k&&e.cuenta!=='No');const pp=SUMA(ls.filter(isPorPagar));return {t:SUMA(ls),p:pp,has:ls.length>0};};
@@ -1570,10 +1614,10 @@ function evoCard(){
  const n=seq.length,Q=seq.map(k=>{const yy=+k.slice(0,4),mm=+k.slice(5),a=gm(yy,mm);return {k,m:mm,a};});
  let mx=0;Q.forEach(q=>{mx=Math.max(mx,q.a.t);});
  const step=mx<=1500?500:1000,top=Math.max(step,Math.ceil(mx/step)*step);
- const host=document.getElementById('regBox'),cw=host&&host.clientWidth>0?host.clientWidth-60:300,W=Math.max(280,Math.min(cw,900)),H=W>600?180:(W>420?150:130),PL=28,bw=(W-PL-4)/n,g=Math.min(bw*0.78,64),b=g,yrs=seq[0].slice(0,4)!==seq[n-1].slice(0,4);
+ const cw=evoCw(),VW=evoVW(),W=Math.max(280,Math.min(cw,VW?1700:900)),WD=VW&&W>900,TL=window.matchMedia&&matchMedia('(min-width:1500px)').matches,H=W>600?(VW?Math.round(Math.max(180,Math.min(TL?430:360,W*(TL?0.4:0.27)))):180):(W>420?150:130),PL=WD?38:28,bw=(W-PL-4)/n,g=Math.min(bw*0.78,WD?96:64),b=g,yrs=seq[0].slice(0,4)!==seq[n-1].slice(0,4);
  let svg='<svg width="'+W+'" height="'+(H+(yrs?44:34))+'" viewBox="0 0 '+W+' '+(H+(yrs?44:34))+'" role="group" aria-label="Evolución mensual del gasto, '+(po?(P_LBL[PER]||y):y)+'"><defs><pattern id="evH" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="rgba(var(--crec),.3)"/><rect width="2" height="5" fill="rgb(var(--crec))"/></pattern></defs><g transform="translate(0,8)">';
  let VT=b<30,LP=VT?34:18;const fk=v=>'$'+(v>=1000?(Math.round(v/100)/10+'').replace('.',',')+'k':Math.round(v));
- const lb=(cx,y,v,cur)=>{if(!(v>0.004))return '';const st='font-size:'+(VT?9.5:10.5)+'px;font-weight:'+(cur?800:700)+';fill:'+(cur?'var(--texto)':'var(--texto-2)')+';stroke:var(--tarjeta);stroke-width:3px;paint-order:stroke';return VT?'<text transform="translate('+cx.toFixed(1)+','+(y-4).toFixed(1)+') rotate(-90)" text-anchor="start" style="'+st+'">'+fk(v)+'</text>':'<text x="'+cx.toFixed(1)+'" y="'+(y-4).toFixed(1)+'" text-anchor="middle" style="'+st+'">'+fk(v)+'</text>';};
+ const lb=(cx,y,v,cur)=>{if(!(v>0.004))return '';const st='font-size:'+(WD?(VT?11:12.5):(VT?9.5:10.5))+'px;font-weight:'+(cur?800:700)+';fill:'+(cur?'var(--texto)':'var(--texto-2)')+';stroke:var(--tarjeta);stroke-width:3px;paint-order:stroke';return VT?'<text transform="translate('+cx.toFixed(1)+','+(y-4).toFixed(1)+') rotate(-90)" text-anchor="start" style="'+st+'">'+fk(v)+'</text>':'<text x="'+cx.toFixed(1)+'" y="'+(y-4).toFixed(1)+'" text-anchor="middle" style="'+st+'">'+fk(v)+'</text>';};
  for(let gv=step;gv<=top;gv+=step){const gy=H-(H-LP)*gv/top;svg+='<line class="gl" x1="'+PL+'" x2="'+W+'" y1="'+gy.toFixed(1)+'" y2="'+gy.toFixed(1)+'"/><text class="gt" x="0" y="'+(gy+3).toFixed(1)+'">$'+(gv>=1000?(gv/1000)+'k':gv)+'</text>';}
  for(let i=0;i<n;i++){
   const q=Q[i],k=q.k,A_=q.a,x=PL+2+i*bw+(bw-g)/2,on=!po&&k===MES,inR=A_.has||k<=cur;
@@ -2325,7 +2369,7 @@ $('closeBox').addEventListener('click',e=>{
  if(e.target.closest('#clsGo')){gotoTab('rec');}
 });
 /* v20.5b: el gráfico «Evolución» se redibuja al ancho real del panel */
-(function(){const h=document.getElementById('regBox');let t=0;if(!h||!window.ResizeObserver)return;new ResizeObserver(()=>{clearTimeout(t);t=setTimeout(()=>{try{const sv=document.querySelector('#regBox .evo svg[role=group]');if(!sv||!(h.clientWidth>0))return;const want=Math.max(280,Math.min(h.clientWidth-60,900));if(Math.abs(want-(+sv.getAttribute('width')))>20)renderAll();}catch(e){}},120);}).observe(h);})();
+(function(){const h=document.getElementById('regBox');let t=0;if(!h||!window.ResizeObserver)return;new ResizeObserver(()=>{clearTimeout(t);t=setTimeout(()=>{try{const sv=document.querySelector('#regBox .evo svg[role=group]');if(!sv||!(h.clientWidth>0))return;const want=Math.max(280,Math.min(evoCw(),evoVW()?1700:900));if(Math.abs(want-(+sv.getAttribute('width')))>20)renderAll();}catch(e){}},120);}).observe(h);})();
 $('regBox').addEventListener('click',e=>{const tg=e.target.closest&&e.target.closest('#evTg');if(tg){try{CBC.open();}catch(x){}return;}
  if(e.target.closest('#limNew')){openLimNew();return;}
  if(e.target.closest('#limPay')){openLimPay();return;}

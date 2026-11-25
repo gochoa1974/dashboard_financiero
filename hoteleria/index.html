@@ -16,6 +16,7 @@
 <script src="../glosario_cb_v1_7_2026-10-20_1305.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- v4.9 (25 nov 2026): pantalla ancha (desde 1100 px; 2 niveles: 1100 y 1500): ocupación en franja, 6 indicadores en una fila desde 1500 px, gráfico y «Las tres miradas» lado a lado; ancho hasta 1680 px. Celular e iPad sin cambios. -->
 <!-- v3.3 (20 oct 2026 10:35): noches de cortesía (extensiones SIN PAGO) = bloqueadas: salen de disponibles y vendidas; regla escrita en «Cómo se calcula». -->
 <!-- v4.8 (25 nov 2026): gráficos con valor sobre cada barra (vertical en celular cuando no cabe en horizontal); Comparar pasa a comparar_cb_v2_2026-11-25_1710.js. Nada se elimina. -->
 <!-- v4.7 (25 nov 2026): barra de período alineada con Ingresos y Gastos: Mes · 7 días · 30 días · año en curso · año anterior. 365 días pasa a «Otro período» (Rangos móviles). Nada se elimina. -->
@@ -184,6 +185,23 @@ body[data-base=pl] .bstrip,body[data-base=adna] .bstrip{border-width:1.5px}
 .brow{display:flex;gap:10px;margin-top:12px}.brow .cl{margin-top:0;flex:0 0 110px;border-radius:14px}
 .ap{flex:1;min-height:48px;border:0;border-radius:14px;background:var(--acento);color:var(--on-ac);font:800 15px var(--fuente);cursor:pointer}
 body.cmpOn .bstrip{display:none!important}
+/* v21 · pantalla ancha (desde 1100 px): paneles en columnas y gráficos más grandes. Celular e iPad no cambian. */
+@media (min-width:1100px){
+  .wrap{max-width:1680px;padding-left:32px;padding-right:32px}
+  .hero{padding:26px 32px}
+  .hero.h2{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);column-gap:48px;align-items:center}
+  .hero.h2>#hL,.hero.h2>#hN,.hero.h2>#hS,.hero.h2>#hD{grid-column:1}
+  .hero.h2>#hM{grid-column:2;grid-row:1/span 4;margin:0;padding-left:40px;border-left:1px solid rgba(255,255,255,.14);align-content:center}
+  .hero .n{font-size:58px}
+  .grid{grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;align-items:stretch}
+  .grid>.card{grid-column:span 12}
+  .grid>details.card{grid-column:span 6;align-self:start}
+}
+@media (min-width:1500px){
+  .sg{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .grid>.card:nth-child(1){grid-column:span 7}
+  .grid>#tres{grid-column:span 5}
+}
 </style>
 </head>
 <body>

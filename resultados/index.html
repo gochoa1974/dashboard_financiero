@@ -15,6 +15,7 @@
 <script src="../comparar_cb_v2_2026-11-25_1710.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- v7c (25 nov 2026): pantalla ancha (desde 1100 px; 2 niveles: 1100 y 1500): resultado en franja, gráficos y tablas lado a lado, indicadores en 5 columnas; ancho hasta 1680 px. Celular e iPad sin cambios. -->
 <!-- v7b (25 nov 2026): gráficos con valor sobre cada barra (vertical en celular cuando no cabe en horizontal); Comparar pasa a comparar_cb_v2_2026-11-25_1710.js. Nada se elimina. -->
 <!-- v6b (18 oct 2026 14:30): etiqueta «Gastos (fijo+var.)» en cascada y estado de resultados. -->
 <!-- v7 (20 oct 2026 13:30): selector de período en dos filas (control segmentado de 4 rangos + «Otro período» y «Comparar»), sin chips escondidos.
@@ -118,6 +119,31 @@ body.cmpOn .hero,body.cmpOn .grid,body.cmpOn .mnav,body.cmpOn .rng{display:none!
 .pbbar{height:14px;border-radius:99px;background:color-mix(in srgb,var(--texto) 9%,transparent);overflow:hidden;margin:10px 0 6px}.pbbar i{display:block;height:100%;background:var(--acento);border-radius:99px;min-width:3px}
 .fm{display:grid;gap:10px;margin-top:10px}.fm .r{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:13px;font-weight:600}.fm .r b{font-weight:800}.fm .r .bar{grid-column:1/-1;height:8px;border-radius:99px;background:color-mix(in srgb,var(--texto) 8%,transparent);overflow:hidden}.fm .r .bar i{display:block;height:100%;background:var(--gasto);border-radius:99px}
 .seg{display:flex;gap:6px;margin:10px 0 6px;overflow-x:auto;scrollbar-width:none}.seg button{flex:none;min-height:38px;padding:0 14px;border-radius:99px;border:1px solid var(--linea);background:var(--fondo);color:var(--texto);font:700 13px var(--fuente);cursor:pointer;white-space:nowrap}.seg button[aria-pressed=true]{background:var(--texto);color:var(--fondo);border-color:var(--texto)}
+/* v21 · pantalla ancha (desde 1100 px): paneles en columnas y gráficos más grandes. Celular e iPad no cambian. */
+@media (min-width:1100px){
+  .wrap{max-width:1680px;padding-left:32px;padding-right:32px}
+  .grid{grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;align-items:stretch}
+  .grid>.card{grid-column:span 12}
+  .grid>.card:nth-child(1){grid-column:span 7}
+  .grid>.card:nth-child(2){grid-column:span 5}
+  .grid>.card:nth-child(3){grid-column:span 7}
+  .grid>.card:nth-child(4){grid-column:span 5}
+  .grid>.card:nth-child(5),.grid>.card:nth-child(6){grid-column:span 6}
+  .grid>.card:nth-child(7){order:3}
+  .grid>.card:nth-child(9){order:2}
+  .kp{grid-template-columns:repeat(5,minmax(0,1fr))}
+  #hero.hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);column-gap:48px;align-items:center;padding:26px 32px}
+  #hero.hero>*{grid-column:1}
+  #hero.hero>.eq{grid-column:2;grid-row:1/span 4;margin:0;border-top:0;border-left:1px solid rgba(255,255,255,.15);padding:0 0 0 40px}
+  #hero.hero .n{font-size:58px}
+}
+@media (min-width:1500px){
+  .grid>.card:nth-child(3){grid-column:span 8}
+  .grid>.card:nth-child(4),.grid>.card:nth-child(5),.grid>.card:nth-child(6),.grid>.card:nth-child(8){grid-column:span 4}
+  .grid>.card:nth-child(9){grid-column:span 7}
+  .grid>.card:nth-child(7){grid-column:span 5}
+  .grid>.card:nth-child(7) .kp{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 </style>
 </head>
 <body>

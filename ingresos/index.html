@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../comparar_cb_v2_2026-11-25_1710.js"></script>
+<!-- v19.5 (25 nov 2026): pantalla ancha (desde 1100 px): franja superior con el número grande, gráfico de evolución más ancho y alto (se dibuja al ancho de su panel, hasta 1700 px), paneles en columnas, ancho hasta 1680 px. Celular e iPad sin cambios. -->
 <!-- v19.4c (25 nov 2026): el gráfico «Evolución» se redibuja al ancho real del panel (antes podía quedar angosto si se dibujaba oculto o al girar/redimensionar). -->
 <!-- v19.4 (25 nov 2026): «Evolución del neto» obedece el filtro (2026, 2025, Mes, rangos, Acumulado); la comparación (años, fechas propias, año anterior) vive solo en «Comparar», también desde un botón dentro de la tarjeta. Nada se elimina. -->
 <!-- v19.3 (25 nov 2026): gráficos con valor sobre cada barra (vertical en celular cuando no cabe en horizontal); Comparar pasa a comparar_cb_v2_2026-11-25_1710.js. Nada se elimina. -->
@@ -276,6 +277,28 @@ details.ver li.bad b{color:var(--bad)}
 .evc em.up{color:var(--ok)}.evc em.dn{color:var(--bad)}
 @media (max-width:360px){.evc{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){.evo .bc{transition:none}}
+/* v21 · pantalla ancha (desde 1100 px): franja superior, gráfico grande y paneles en columnas. Celular e iPad no cambian. */
+@media (min-width:1100px){
+  .app{max-width:1680px;padding-left:32px;padding-right:32px}
+  .dash{display:block}
+  .dash>.left{position:static;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:stretch;margin-bottom:8px}
+  .dash>.left .hero{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:48px;align-items:center;padding:26px 32px}
+  .dash>.left .hero>.hero-l,.dash>.left .hero>.hero-big,.dash>.left .hero>.hero-s,.dash>.left .hero>.hero-c{grid-column:1}
+  .dash>.left .hero>.hero-row{grid-column:2;grid-row:1/span 4;margin:0;padding:0 0 0 40px;border-top:0;border-left:1px solid rgba(255,255,255,.14);min-width:280px}
+  .dash>.left{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+  .dash>.left .kpis{grid-template-columns:1fr 1fr;grid-auto-rows:1fr;margin-top:0;gap:12px}
+  .dash>.left .kpi{padding:18px 20px;display:flex;flex-direction:column;justify-content:center}
+  .dash>.left .kpi small{font-size:12.5px}.dash>.left .kpi b{font-size:26px;margin-top:6px}
+  .tabs{max-width:620px}
+  #p-res.on{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
+  #p-res.on>.evo{display:flex;flex-direction:column}#p-res.on>.evo .evc{margin-top:auto}
+  .evlg{align-items:center}
+  #p-res.on>.panel{margin:0}
+  #p-res.on>.evo{grid-column:1/span 2;grid-row:1/span 2}
+  #p-res.on>.panel:not(.evo){grid-column:3}
+  .evo .gt{font-size:11px}.evo .ml{font-size:12px}.evo .yl{font-size:12px}
+  .evo .evc{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 </style>
 </head>
 <body>
@@ -550,6 +573,9 @@ function bar(segs,total){
 /* ===== v14: evolución mensual (neto generado) 2 años ===== */
 var EVC_ANIO="";
 function evMes(y,m){var o=calcMonth(y+"-"+pad(m));return {d:o.totD,p:o.totP,t:o.totD+o.totP};}
+/* ancho útil del gráfico: el de su propio panel; si aún no existe, lo que le tocará en la rejilla (2 de 3 columnas desde 1100 px) */
+function evoVW(){return !!(window.matchMedia&&matchMedia("(min-width:1100px)").matches);}
+function evoCw(){var h=$("p-res");if(!h||!(h.clientWidth>0))return 330;if(!evoVW())return h.clientWidth-30;var ev=h.querySelector(".evo");if(ev&&ev.clientWidth>0)return ev.clientWidth-30;var w=h.clientWidth;w=(w-32)*2/3+16;return w-30;}
 function evoHTML(mk){
   var y=+mk.slice(0,4),m0=+mk.slice(5),hoyM=HOY.slice(0,7),rg=monthRange();
   var A=[],B=[],i;
@@ -564,9 +590,9 @@ function evoHTML(mk){
   seq.forEach(function(k){var yy=+k.slice(0,4),mm=+k.slice(5);Q.push({k:k,m:mm,a:evMes(yy,mm),b:cmp?evMes(yy-1,mm):null});});
   var mx=0;Q.forEach(function(q){mx=Math.max(mx,q.a.t,q.b?q.b.t:0);});
   var step=mx<=1500?500:1000,top=Math.max(step,Math.ceil(mx/step)*step);
-  var host=$("p-res"),cw=host&&host.clientWidth>0?host.clientWidth-30:330,W=Math.max(290,Math.min(cw,900)),H=W>600?180:(W>420?150:130),PL=28,bw=(W-PL-4)/n,g=Math.min(bw*0.78,cmp?84:64),b=cmp?g/2-1:g,yrs=(seq[0].slice(0,4)!==seq[n-1].slice(0,4)),svg='<svg width="'+W+'" height="'+(H+(yrs?44:34))+'" viewBox="0 0 '+W+' '+(H+(yrs?44:34))+'" role="group" aria-label="Evolución mensual del neto, '+(cmp?(y-1)+' contra '+y:(P_LBL[per]||y))+'"><defs><pattern id="evH" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="rgba(var(--evc),.28)"/><rect width="2" height="5" fill="rgb(var(--evc))"/></pattern></defs><g transform="translate(0,8)">';
+  var host=$("p-res"),cw=evoCw(),VW=evoVW(),W=Math.max(290,Math.min(cw,VW?1700:900)),WD=VW&&W>900,H=W>600?(VW?Math.round(Math.max(180,Math.min(360,W*0.27))):180):(W>420?150:130),PL=WD?38:28,bw=(W-PL-4)/n,g=Math.min(bw*0.78,cmp?84:(WD?96:64)),b=cmp?g/2-1:g,yrs=(seq[0].slice(0,4)!==seq[n-1].slice(0,4)),svg='<svg width="'+W+'" height="'+(H+(yrs?44:34))+'" viewBox="0 0 '+W+' '+(H+(yrs?44:34))+'" role="group" aria-label="Evolución mensual del neto, '+(cmp?(y-1)+' contra '+y:(P_LBL[per]||y))+'"><defs><pattern id="evH" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="rgba(var(--evc),.28)"/><rect width="2" height="5" fill="rgb(var(--evc))"/></pattern></defs><g transform="translate(0,8)">';
   var VT=b<30,LP=VT?34:18,fk=function(v){return "$"+(v>=1000?(Math.round(v/100)/10+"").replace(".",",")+"k":Math.round(v));},
-    lb=function(cx,y,v,cur){if(!(v>0.004))return "";var st="font-size:"+(VT?9.5:10.5)+"px;font-weight:"+(cur?800:700)+";fill:"+(cur?"var(--texto)":"var(--texto-2)")+";stroke:var(--surface,var(--tarjeta));stroke-width:3px;paint-order:stroke";return VT?'<text transform="translate('+cx.toFixed(1)+','+(y-4).toFixed(1)+') rotate(-90)" text-anchor="start" style="'+st+'">'+fk(v)+'</text>':'<text x="'+cx.toFixed(1)+'" y="'+(y-4).toFixed(1)+'" text-anchor="middle" style="'+st+'">'+fk(v)+'</text>';};
+    lb=function(cx,y,v,cur){if(!(v>0.004))return "";var st="font-size:"+(WD?(VT?11:12.5):(VT?9.5:10.5))+"px;font-weight:"+(cur?800:700)+";fill:"+(cur?"var(--texto)":"var(--texto-2)")+";stroke:var(--surface,var(--tarjeta));stroke-width:3px;paint-order:stroke";return VT?'<text transform="translate('+cx.toFixed(1)+','+(y-4).toFixed(1)+') rotate(-90)" text-anchor="start" style="'+st+'">'+fk(v)+'</text>':'<text x="'+cx.toFixed(1)+'" y="'+(y-4).toFixed(1)+'" text-anchor="middle" style="'+st+'">'+fk(v)+'</text>';};
   for(var gv=step;gv<=top;gv+=step){var gy=H-(H-LP)*gv/top;svg+='<line class="gl" x1="'+PL+'" x2="'+W+'" y1="'+gy.toFixed(1)+'" y2="'+gy.toFixed(1)+'"/><text class="gt" x="0" y="'+(gy+3).toFixed(1)+'">$'+(gv>=1000?(gv/1000)+"k":gv)+'</text>';}
   var off0=(W-PL-4-n*bw)/2;
   for(i=0;i<n;i++){
@@ -818,7 +844,7 @@ $("vL").addEventListener("click",function(){setView("L");});
 $("vR").addEventListener("click",function(){setTimeout(function(){if(M)renderR();},0);});
 var evRT=null;window.addEventListener("resize",function(){clearTimeout(evRT);evRT=setTimeout(function(){if(M)renderR();},180);});
 /* v19.4c: si el panel cambia de ancho (o estaba oculto al dibujar), el gráfico se vuelve a dibujar a su ancho real */
-(function(){var h=$("p-res"),t=0;if(!h||!window.ResizeObserver)return;new ResizeObserver(function(){clearTimeout(t);t=setTimeout(function(){try{var sv=document.querySelector("#p-res .evo svg[role=group]");if(!sv||!(h.clientWidth>0))return;var want=Math.max(290,Math.min(h.clientWidth-30,900));if(Math.abs(want-(+sv.getAttribute("width")))>20&&M)renderR();}catch(e){}},120);}).observe(h);})();
+(function(){var h=$("p-res"),t=0;if(!h||!window.ResizeObserver)return;new ResizeObserver(function(){clearTimeout(t);t=setTimeout(function(){try{var sv=document.querySelector("#p-res .evo svg[role=group]");if(!sv||!(h.clientWidth>0))return;var want=Math.max(290,Math.min(evoCw(),evoVW()?1700:900));if(Math.abs(want-(+sv.getAttribute("width")))>20&&M)renderR();}catch(e){}},120);}).observe(h);})();
 $("p-res").addEventListener("click",function(e){var tg=e.target.closest&&e.target.closest("#evTg");if(tg){try{CBC.open();}catch(x){}return;}evGo(e.target);});
 $("p-res").addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){var g=e.target.closest&&e.target.closest("g.m");if(g){e.preventDefault();evGo(g);var again=document.querySelector('#p-res g.m.on');if(again)again.focus();}}});
 document.addEventListener("click",function(e){var b=e.target.closest("[data-mo]");
