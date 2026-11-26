@@ -12,8 +12,9 @@
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
-<script src="../graficos_cb_v1_2026-11-25_1930.js"></script>
+<script src="../graficos_cb_v1.1_2026-11-25_2235.js"></script>
 <script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
+<!-- v4.9e (25 nov 2026 22:43): Fase 2 de gráficos. «Mes a mes» (ocupación, ADR, RevPAR) usa graficos_cb_v1.1: valores nunca girados, mes elegido en el encabezado con su variación (pts o %), Gráfico | Lista, línea de promedio, tarjeta al pasar el cursor. Cifras sin cambios. Vuelta atrás: poner v4.9d. -->
 <!-- v4.9d (25 nov 2026 20:48): barra de período unificada con Ingresos, Gastos y Resultados (hoja compartida barra_cb_v1): encabezado «Panel de hotelería» con el mismo estado (Al día / Desactualizado / Sin verificar), filtros y mes en una sola barra, la franja «Base» debajo. Se quita el título grande. Solo estilo y orden: no cambia ninguna cuenta ni filtro. Vuelta atrás: poner v4.9c. -->
 <!-- v4.9c (25 nov 2026 19:50): «Comparación» usa comparar_cb_v2.2 con el diseño nuevo (valores nunca girados, mes elegido en el encabezado, tarjeta al pasar el cursor, línea de promedio). Los gráficos propios de esta pantalla no cambian en esta fase. Nada se elimina. -->
 <!-- v4.9b (25 nov 2026 18:45): usa comparar_cb_v2.1 (los estilos de «Comparación» se cargan siempre; en pantalla ancha el gráfico se dibuja a su ancho real y la tabla queda junto a «Lo que se ve»). Nada se elimina. -->
@@ -249,7 +250,7 @@ body.cmpOn .bstrip{display:none!important}
       <h2 id="mT">Mes a mes</h2>
       <div class="d" id="mD"></div>
       <div class="seg" id="mSeg" role="group" aria-label="Elegir qué ver"></div>
-      <svg class="chart" id="chart" viewBox="0 0 640 220" role="img" aria-label="Evolución mensual"></svg>
+      <div class="cbg-host" id="chart"></div>
       <p class="note" id="mN"></p>
     </div>
     <section class="card g3" id="tres" aria-labelledby="t3h">
@@ -469,7 +470,7 @@ function render(){
   /* mes a mes */
   var tm=per==="mes"?months(sm(cur,-5),cur):ms;
   $("mT").textContent=per==="mes"?"Últimos meses":"Mes a mes";
-  $("mD").textContent=per==="mes"?"Los 6 meses hasta "+ml(cur)+". Las barras claras son meses en curso (solo noches ya transcurridas).":etq.charAt(0).toUpperCase()+etq.slice(1)+" · cada barra es un mes.";
+  $("mD").textContent=per==="mes"?"Los 6 meses hasta "+ml(cur)+". Las barras rayadas son meses en curso (solo noches ya transcurridas).":etq.charAt(0).toUpperCase()+etq.slice(1)+" · cada barra es un mes.";
   var bw2=BASE==="mi"?"neto":"bruto",SEG=[["occ","Ocupación"],["adr","ADR "+bw2],["rev","RevPAR "+bw2]];
   $("mSeg").innerHTML=SEG.map(function(s){return '<button data-mt="'+s[0]+'" aria-pressed="'+(mSel===s[0])+'">'+s[1]+'</button>';}).join("");
   grafico(tm);
@@ -536,18 +537,55 @@ function baseClick(e){
   if(e.target.id==="sbA"){BASE=BP;try{localStorage.setItem("cb_base_hot",BASE);}catch(_){}closeBase();chips();render();return true;}
   if(e.target.id==="sbX"||e.target.id==="bg"){closeBase();}
   return false;}
+/* ===== v4.9e · gráfico «Mes a mes» con el componente común (graficos_cb_v1.1): valores nunca girados, mes elegido en el encabezado, Gráfico/Lista, promedio, tarjeta al pasar el cursor ===== */
+var SEL={},LST={met:false},LAST={};
+function sig(){return per+"|"+cur+"|"+mSel+"|"+BASE;}
+function capM(m){var t=MN[+m.slice(5)-1];return t.charAt(0).toUpperCase()+t.slice(1);}
+function pickSel(key,keys,ok){var q=SEL[key];if(q&&q.sig===sig()&&keys.indexOf(q.k)>=0)return q.k;
+  var d=null;if(per==="mes"&&keys.indexOf(cur)>=0)d=cur;
+  if(d==null){for(var i=keys.length-1;i>=0;i--){if(ok(keys[i])){d=keys[i];break;}}}
+  return d==null?keys[keys.length-1]:d;}
+function redrawAll(){if(LAST.met)LAST.met();}
+function chartEvents(host,key,tipSel,tipFn){
+  if(host._cbgEv)return;host._cbgEv=1;
+  host.addEventListener("click",function(e){var sg=e.target.closest("[data-cbg]");
+    if(sg&&host.contains(sg)){var a=sg.getAttribute("data-cbg");CBG.tipHide();
+      if(a==="graf"||a==="lista"){LST[key]=(a==="lista");LAST[key]&&LAST[key]();}else if(a==="prom"){CBG.promSet(!CBG.promOn());redrawAll();}return;}
+    var g=e.target.closest("g.m,.cbg-row");
+    if(g&&host.contains(g)&&!g.classList.contains("off")&&!g.disabled){SEL[key]={k:g.getAttribute("data-m"),sig:sig()};CBG.tipHide();LAST[key]&&LAST[key]();}});
+  host.addEventListener("keydown",function(e){if(e.key!=="Enter"&&e.key!==" ")return;var g=e.target.closest&&e.target.closest("g.m");if(!g||!host.contains(g))return;
+    e.preventDefault();var k=g.getAttribute("data-m");SEL[key]={k:k,sig:sig()};LAST[key]&&LAST[key]();var n=host.querySelector('g.m[data-m="'+k+'"]');if(n)n.focus();});
+  CBG.tip(host,tipSel,tipFn);
+}
+function sizes(host){var wide=CBG.isWide(),W=CBG.width(host);return {wide:wide,W:W,H:wide?Math.round(Math.max(200,Math.min(380,W*.36))):180};}
+function fmtM(v,full){if(v==null)return "Sin datos";return mSel==="occ"?(full?pc(v,1):Math.round(v)+"%"):(full?f2(v):"$"+Math.round(v));}
+function chipH(x,pv,lbl){if(x==null||pv==null)return null;
+  if(mSel==="occ"){var d=x-pv;if(Math.abs(d)<0.05)return {t:"= vs "+lbl,c:""};return {t:(d>=0?"▲ +":"▼ −")+num(Math.abs(d),1)+" pts vs "+lbl,c:d>=0?"g":"b"};}
+  if(!pv)return null;var q=(x-pv)/Math.abs(pv)*100,r=Math.round(Math.abs(q));if(r===0)return {t:"= vs "+lbl,c:""};return {t:(q>=0?"▲ ":"▼ ")+r+"% vs "+lbl,c:q>=0?"g":"b"};}
+function tipH(el){var m=el.getAttribute("data-m"),d=D[m];if(!d)return "";var a=agg([m]),x=a[mSel];
+  var h='<div class="t">'+capM(m)+' '+m.slice(0,4)+(d.parcial?' · en curso':'')+'</div><div class="l"><span>'+(MET[mSel]||{}).label+'</span><b>'+fmtM(x,true)+'</b></div>';
+  if(a.v!=null&&a.dp>0)h+='<div class="l f"><span>Noches vendidas</span><b>'+a.v+' de '+a.dp+'</b></div>';
+  return h;}
 function grafico(tm){
-  var el=$("chart"),W=640,H=220,L=36,B=34,T=18,vals=tm.map(function(m){var x=agg([m]);return x[mSel];});
-  var mx=Math.max.apply(null,vals.filter(function(v){return v!=null;}).concat([1]));mx=mSel==="occ"?100:mx*1.15;
-  var n=tm.length,bw=(W-L-8)/n,s="";
-  for(var g=0;g<=2;g++){var yy=T+(H-T-B)*(1-g/2);s+='<line x1="'+L+'" x2="'+W+'" y1="'+yy+'" y2="'+yy+'" stroke="var(--linea)"/><text x="'+(L-4)+'" y="'+(yy+3)+'" text-anchor="end">'+(mSel==="occ"?Math.round(mx*g/2)+"%":"$"+Math.round(mx*g/2))+'</text>';}
-  tm.forEach(function(m,i){var v=vals[i],x=L+i*bw+bw*.15,w=bw*.7;
-    if(v!=null){var h=(H-T-B)*v/mx;s+='<rect x="'+x+'" y="'+(H-B-h)+'" width="'+w+'" height="'+Math.max(h,1)+'" rx="5" fill="var(--acento)" opacity="'+(D[m].parcial?.4:1)+'"/>';
-      s+='<text x="'+(x+w/2)+'" y="'+(H-B-h-5)+'" text-anchor="middle" style="font-weight:800;fill:var(--texto);font-size:'+(n>8?9:11)+'px">'+(mSel==="occ"?Math.round(v)+"%":"$"+Math.round(v))+'</text>';}
-    else s+='<text x="'+(x+w/2)+'" y="'+(H-B-6)+'" text-anchor="middle" style="font-size:9px">s/d</text>';
-    s+='<text x="'+(x+w/2)+'" y="'+(H-B+14)+'" text-anchor="middle">'+ab(m)+'</text>';});
-  el.innerHTML=s;
-  $("mN").textContent="s/d = sin datos (el mes no tiene noches transcurridas).";
+  var host=$("chart"),n=tm.length;LAST.met=function(){grafico(tm);};
+  if(!n){host.innerHTML="";return;}
+  CBG.css();CBG.watch(host,function(){LAST.met&&LAST.met();});chartEvents(host,"met","g.m:not(.off)",tipH);
+  var sk=pickSel("met",tm,function(m){return !D[m].parcial;}),z=sizes(host),occ=(mSel==="occ"),span=tm[0].slice(0,4)!==tm[n-1].slice(0,4);
+  var vals=tm.map(function(m){return agg([m])[mSel];});
+  var items=tm.map(function(m,i){var x=vals[i];return {k:m,ax:capM(m).slice(0,3),ax1:capM(m).charAt(0),yr:(span&&(m.slice(5)==="01"||i===0))?m.slice(0,4):null,val:x,nd:x==null,c:"var(--acento)",partial:D[m].parcial,txt:x==null?null:fmtM(x),txtS:x==null?null:(occ?fmtM(x):CBG.fk(x)),aria:capM(m)+" "+m.slice(0,4)+": "+(MET[mSel].label)+" "+fmtM(x,true)};});
+  var av=CBG.avgAll(vals.filter(function(x,i){return !D[tm[i]].parcial;})),avOn=av!=null&&CBG.promOn();
+  var svg=CBG.bars({items:items,W:z.W,H:z.H,wide:z.wide,sel:sk,lines:avOn?[{v:av}]:[],max:occ?100:null,min:0,ticks:occ?[0,25,50,75,100]:null,axf:occ?function(x){return Math.round(x)+"%";}:CBG.fk,label:MET[mSel].label+" por mes"});
+  var ix=tm.indexOf(sk),x=vals[ix],pm=sm(sk,-1),pa=D[pm]&&D[pm].disp>0?agg([pm])[mSel]:null,dd=D[sk],bw2=BASE==="mi"?"neto":"bruto";
+  var SEGL={occ:"Ocupación",adr:"ADR "+bw2,rev:"RevPAR "+bw2};
+  var a0=agg([sk]);
+  var hdr=CBG.hd({lbl:SEGL[mSel]+" · "+capM(sk)+" "+sk.slice(0,4)+(dd.parcial?" (en curso)":""),big:fmtM(x,true),chip:dd.parcial?null:chipH(x,pa,capM(pm).slice(0,3).toLowerCase()),sub:(a0.dp>0&&a0.v!=null)?a0.v+" de "+a0.dp+" noches vendidas"+(dd.parcial?" · solo noches transcurridas":""):""});
+  var parts=[];if(items.some(function(q){return q.partial;}))parts.push('<span><i class="cbg-k h"></i>Mes en curso</span>');if(items.some(function(q){return q.nd;}))parts.push('<span>s/d = sin datos</span>');
+  var mxA=Math.max.apply(null,vals.map(function(q){return q==null?0:Math.abs(q);}).concat([1]));
+  var rows=tm.slice().reverse().map(function(m){var aa=agg([m]),xx=aa[mSel],p0=sm(m,-1),pv0=D[p0]&&D[p0].disp>0?agg([p0])[mSel]:null,pr=D[m].parcial;
+    return {k:m,lbl:capM(m).slice(0,3)+" "+m.slice(2,4),tag:pr?"en curso":"",amt:fmtM(xx,true),sub:(aa.dp>0&&aa.v!=null)?aa.v+" de "+aa.dp+" noches":"",w:xx==null?0:(occ?xx:Math.abs(xx)/mxA*100),on:m===sk,chip:pr?null:chipH(xx,pv0,capM(p0).slice(0,3).toLowerCase())};});
+  host.innerHTML='<div class="cbg-top"><span class="rmk">'+(per==="mes"?"Últimos 6 meses":etqF().charAt(0).toUpperCase()+etqF().slice(1))+'</span>'+CBG.seg(LST.met)+'</div>'+hdr+
+    (LST.met?CBG.list(rows):svg+'<div class="cbg-keys">'+parts.join("")+(av!=null?CBG.promBtn("Promedio "+fmtM(av,true)):"")+'</div><p class="cbg-hint">Toca una barra para ver su mes · «Lista» muestra todo</p>');
+  $("mN").textContent="Barras rayadas = mes en curso (solo noches ya transcurridas). s/d = sin datos (el mes no tiene noches transcurridas).";
 }
 function lectura(tm){
   var c=tm.filter(function(m){return !D[m].parcial&&D[m].disp>0;}),el=$("lec");

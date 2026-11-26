@@ -12,8 +12,9 @@
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
-<script src="../graficos_cb_v1_2026-11-25_1930.js"></script>
+<script src="../graficos_cb_v1.1_2026-11-25_2235.js"></script>
 <script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
+<!-- v7g (25 nov 2026 22:43): Fase 2 de gráficos. «Resultado neto por mes», «De los ingresos a la caja» y «Evolución mensual» usan graficos_cb_v1.1: valores nunca girados, mes (o paso) elegido en el encabezado con su variación/margen/% del ingreso, Gráfico | Lista, línea de promedio (o Equilibrio), tarjeta al pasar el cursor, «Cada $100 que entran». El margen sale de debajo de las barras. Cifras sin cambios. Vuelta atrás: poner v7f y quitar graficos_cb_v1.1. -->
 <!-- v7f (25 nov 2026 20:48): barra de período unificada con Ingresos, Gastos y Hotelería (hoja compartida barra_cb_v1): encabezado «Panel de resultados» con el mismo estado, filtros y mes en una sola barra, mes con su línea «Mes en curso · al…» debajo. Se quita el título grande. Solo estilo y orden: no cambia ninguna cuenta ni filtro. Vuelta atrás: poner v7e. -->
 <!-- v7e (25 nov 2026 19:50): «Comparación» usa comparar_cb_v2.2 con el diseño nuevo (valores nunca girados, mes elegido en el encabezado, tarjeta al pasar el cursor, línea de promedio). Los gráficos propios de esta pantalla no cambian en esta fase. Nada se elimina. -->
 <!-- v7d (25 nov 2026 18:45): usa comparar_cb_v2.1 (los estilos de «Comparación» se cargan siempre; en pantalla ancha el gráfico se dibuja a su ancho real y la tabla queda junto a «Lo que se ve»). Nada se elimina. -->
@@ -184,13 +185,13 @@ body.cmpOn .hero,body.cmpOn .grid,body.cmpOn .mnav,body.cmpOn .rng{display:none!
   <div class="grid" id="grid">
     <div class="card g3">
       <h2>Resultado neto por mes</h2>
-      <div class="d">Ingresos menos gastos de cada mes. Verde = ganancia, rojo = pérdida. Abajo, el margen: cuánto de cada $1 que entró quedó.</div>
-      <svg class="chart" id="chNet" viewBox="0 0 640 236" role="img" aria-label="Resultado neto por mes"></svg>
+      <div class="d">Ingresos menos gastos de cada mes. Verde = ganancia, rojo = pérdida. El margen (cuánto de cada $1 que entró quedó) va junto al mes elegido.</div>
+      <div class="cbg-host" id="chNet"></div>
     </div>
     <div class="card g3">
       <h2>De los ingresos a la caja</h2>
       <div class="d" id="casP"></div>
-      <svg class="chart" id="chCas" viewBox="0 0 640 270" role="img" aria-label="Cascada de ingresos a flujo de caja"></svg>
+      <div class="cbg-host" id="chCas"></div>
       <p class="note" id="casN"></p>
     </div>
     <div class="card g3">
@@ -238,7 +239,7 @@ body.cmpOn .hero,body.cmpOn .grid,body.cmpOn .mnav,body.cmpOn .rng{display:none!
       <h2 id="mT">Evolución mensual</h2>
       <div class="d" id="mD"></div>
       <div class="seg" id="mSeg" role="group" aria-label="Elegir qué ver"></div>
-      <svg class="chart" id="chart" viewBox="0 0 640 220" role="img" aria-label="Evolución mensual"></svg>
+      <div class="cbg-host" id="chart"></div>
       <p class="note" id="mN"></p>
     </div>
   </div>
@@ -414,30 +415,114 @@ function render(){
   cascada(a,etq);
 }
 var mSel="ing";
-function vlab(gx,y1,x,t,bw){var st="font-weight:700;stroke:var(--tarjeta);stroke-width:3px;paint-order:stroke";
-  if(bw<34)return '<text transform="translate('+gx+','+(x<0?y1+4:y1-4)+') rotate(-90)" text-anchor="'+(x<0?"end":"start")+'" style="'+st+';font-size:9.5px">'+t+'</text>';
-  return '<text x="'+gx+'" y="'+(x<0?y1+12:y1-4)+'" text-anchor="middle" style="'+st+'">'+t+'</text>';}
+/* ===== v7g · gráficos con el componente común (graficos_cb_v1.1): valores nunca girados, mes elegido en el encabezado, Gráfico/Lista, promedio, tarjeta al pasar el cursor ===== */
+var SEL={},LST={net:false,cas:false,met:false},LAST={};
+function sig(){return per+"|"+cur;}
+function capM(m){var t=MN[+m.slice(5)-1];return t.charAt(0).toUpperCase()+t.slice(1);}
+function pickSel(key,keys,ok,last){var q=SEL[key];if(q&&q.sig===sig()&&keys.indexOf(q.k)>=0)return q.k;
+  if(last)return keys[keys.length-1];
+  var d=null;if(per==="mes"&&keys.indexOf(cur)>=0)d=cur;
+  if(d==null){for(var i=keys.length-1;i>=0;i--){if(ok(keys[i])){d=keys[i];break;}}}
+  return d==null?keys[keys.length-1]:d;}
+function redrawAll(){["net","cas","met"].forEach(function(k){if(LAST[k])LAST[k]();});}
+function chartEvents(host,key,tipSel,tipFn){
+  if(host._cbgEv)return;host._cbgEv=1;
+  host.addEventListener("click",function(e){var sg=e.target.closest("[data-cbg]");
+    if(sg&&host.contains(sg)){var a=sg.getAttribute("data-cbg");CBG.tipHide();
+      if(a==="graf"||a==="lista"){LST[key]=(a==="lista");LAST[key]&&LAST[key]();}else if(a==="prom"){CBG.promSet(!CBG.promOn());redrawAll();}return;}
+    var g=e.target.closest("g.m,.cbg-row");
+    if(g&&host.contains(g)&&!g.classList.contains("off")&&!g.disabled){SEL[key]={k:g.getAttribute("data-m"),sig:sig()};CBG.tipHide();LAST[key]&&LAST[key]();}});
+  host.addEventListener("keydown",function(e){if(e.key!=="Enter"&&e.key!==" ")return;var g=e.target.closest&&e.target.closest("g.m");if(!g||!host.contains(g))return;
+    e.preventDefault();var k=g.getAttribute("data-m");SEL[key]={k:k,sig:sig()};LAST[key]&&LAST[key]();var n=host.querySelector('g.m[data-m="'+k+'"]');if(n)n.focus();});
+  CBG.tip(host,tipSel,tipFn);
+}
+function sizes(host){var wide=CBG.isWide(),W=CBG.width(host);return {wide:wide,W:W,H:wide?Math.round(Math.max(200,Math.min(340,W*.3))):180};}
+function keysRow(parts,prom){return '<div class="cbg-keys">'+parts.join("")+(prom||"")+'</div>';}
+function kd(c,t){return '<span><i class="cbg-k" style="background:'+c+'"></i>'+t+'</span>';}
+function chipVs(x,pv,good,pts,lblPrev){if(x==null||pv==null||(!pts&&!pv))return null;var d=pts?x-pv:(x-pv)/Math.abs(pv)*100,up=d>=0,g=good==="down"?!up:up,r=Math.round(Math.abs(d));
+  if(r===0)return {t:"= vs "+lblPrev,c:""};return {t:(up?"▲ ":"▼ ")+r+(pts?" pts":"%")+" vs "+lblPrev,c:g?"g":"b"};}
 function grafMet(cm){
-  var el=$("chart"),M=MET[mSel],n=cm.length;
+  var host=$("chart"),M=MET[mSel],n=cm.length;LAST.met=function(){grafMet(cm);};
   $("mSeg").innerHTML=Object.keys(MET).map(function(k){return '<button type="button" data-mt="'+k+'" aria-pressed="'+(k===mSel)+'">'+MET[k].label+'</button>';}).join("");
   $("mT").textContent=M.label+" por mes";
-  if(!n){el.innerHTML="";return;}
-  var W=(el.parentNode.clientWidth||700)<520?380:640,H=230,pl=40,pb=26,pt=((W-40)/n<34)?38:22;el.setAttribute("viewBox","0 0 "+W+" "+H);
-  var v=cm.map(function(m){return M.val([m]);}),ok=v.filter(function(x){return x!=null;});
+  if(!n){host.innerHTML="";return;}
+  CBG.css();CBG.watch(host,function(){LAST.met&&LAST.met();});chartEvents(host,"met","g.m:not(.off)",tipMet);
+  var sk=pickSel("met",cm,function(m){return !D[m].parcial;}),z=sizes(host);
+  var v=cm.map(function(m){return M.val([m]);}),pc0=M.fmt==="%";
   var cl=cm.filter(function(m){return !D[m].parcial;}),ac=agg(cl),pe=(mSel==="ing"&&ac.n)?(ac.G+ac.C)/ac.n:null;
-  var all=ok.slice();if(pe!=null)all.push(pe);
-  var mx=Math.max(0,Math.max.apply(null,all))*1.15||1,mn=Math.min(0,Math.min.apply(null,all));if(mn<0)mn*=1.15;
-  var yy=function(x){return pt+(H-pt-pb)*(1-(x-mn)/(mx-mn));},bw=(W-pl)/n,w=Math.min(bw*.62,34),s="";
-  var fv=function(x){return M.fmt==="%"?Math.round(x)+"%":f0(x);};
-  [mn,0,mx].forEach(function(x){s+='<line x1="'+pl+'" x2="'+W+'" y1="'+yy(x)+'" y2="'+yy(x)+'" stroke="var(--linea)"/><text x="0" y="'+(yy(x)+3)+'">'+fv(x)+'</text>';});
-  cm.forEach(function(m,i){var x=v[i];if(x==null)return;var gx=pl+i*bw+bw/2,y0=yy(0),y1=yy(x),bad=x<0||(pe!=null&&!D[m].parcial&&x<pe),col=bad?"var(--err)":(mSel==="gas"?"var(--gasto)":"var(--acento)");
-    s+='<rect x="'+(gx-w/2)+'" y="'+Math.min(y0,y1)+'" width="'+w+'" height="'+Math.max(Math.abs(y0-y1),1)+'" rx="4" fill="'+col+'" opacity="'+(D[m].parcial?".5":"1")+'"/>';
-    s+=vlab(gx,y1,x,fv(x),bw);
-    if(n<=14||i%2===0)s+='<text x="'+gx+'" y="'+(H-8)+'" text-anchor="middle">'+MN[+m.slice(5)-1].slice(0,3)+(n>12&&(m.slice(5)==="01"||i===0)?" "+m.slice(2,4):"")+'</text>';});
-  if(pe!=null)s+='<line x1="'+pl+'" x2="'+W+'" y1="'+yy(pe)+'" y2="'+yy(pe)+'" stroke="var(--texto)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="'+W+'" y="'+(yy(pe)-5)+'" text-anchor="end" style="font-weight:800;fill:var(--texto)">Equilibrio '+f0(pe)+'</text>';
-  el.innerHTML=s;
+  var fv=function(x){return pc0?Math.round(x)+"%":f0(x);},fvS=function(x){return pc0?Math.round(x)+"%":CBG.fk(x);};
+  var span=cm[0].slice(0,4)!==cm[n-1].slice(0,4);
+  var items=cm.map(function(m,i){var x=v[i],bad=x!=null&&(x<0||(pe!=null&&!D[m].parcial&&x<pe));
+    return {k:m,ax:capM(m).slice(0,3),ax1:capM(m).charAt(0),yr:(span&&(m.slice(5)==="01"||i===0))?m.slice(0,4):null,val:x,nd:x==null,c:bad?"var(--err)":(mSel==="gas"?"var(--gasto)":"var(--acento)"),partial:D[m].parcial,txt:x==null?null:fv(x),txtS:x==null?null:fvS(x),aria:capM(m)+" "+m.slice(0,4)+": "+M.label+" "+(x==null?"sin datos":fv(x))};});
+  var av=(pe==null)?CBG.avgAll(v.filter(function(x,i){return !D[cm[i]].parcial;})):null,avOn=av!=null&&CBG.promOn();
+  var svg=CBG.bars({items:items,W:z.W,H:z.H,wide:z.wide,sel:sk,lines:pe!=null?[{v:pe,cls:"cbg-ref"}]:(avOn?[{v:av}]:[]),axf:pc0?function(x){return Math.round(x)+"%";}:CBG.fk,label:M.label+" por mes"});
+  var ix=cm.indexOf(sk),x=v[ix],pm=sm(sk,-1),pv=D[pm]?M.val([pm]):null,dd=D[sk];
+  var hdr=CBG.hd({lbl:M.label+" · "+capM(sk)+" "+sk.slice(0,4)+(dd.parcial?" (en curso)":""),big:x==null?"Sin datos":fv(x),chip:dd.parcial?null:chipVs(x,pv,M.good,pc0,capM(pm).slice(0,3).toLowerCase())});
+  var parts=[],hasBad=items.some(function(q){return q.c==="var(--err)";});
+  if(pe!=null)parts.push('<span><svg width="18" height="8" aria-hidden="true"><line x1="0" x2="18" y1="4" y2="4" stroke="var(--texto)" stroke-width="1.5" stroke-dasharray="5 4"/></svg>Equilibrio '+f0(pe)+'</span>');
+  var prom=(pe==null&&av!=null)?CBG.promBtn("Promedio "+fv(av)):"";
+  if(hasBad)parts.unshift(kd("var(--err)",pe!=null?"Bajo el equilibrio":"Pérdida"));
+  var rows=cm.slice().reverse().map(function(m){var xx=M.val([m]),p0=sm(m,-1),pv0=D[p0]?M.val([p0]):null,pr=D[m].parcial;
+    return {k:m,lbl:capM(m).slice(0,3)+" "+m.slice(2,4),tag:pr?"en curso":"",amt:xx==null?"Sin datos":fv(xx),w:xx==null?0:Math.abs(xx)/Math.max.apply(null,v.map(function(q){return q==null?0:Math.abs(q);}).concat([1]))*100,on:m===sk,chip:pr?null:chipVs(xx,pv0,M.good,pc0,capM(p0).slice(0,3).toLowerCase())};});
+  host.innerHTML='<div class="cbg-top"><span class="rmk">'+(per==="mes"?"Últimos 6 meses":etqF().charAt(0).toUpperCase()+etqF().slice(1))+'</span>'+CBG.seg(LST.met)+'</div>'+hdr+
+    (LST.met?CBG.list(rows):svg+keysRow(parts,prom)+'<p class="cbg-hint">Toca una barra para ver su mes · «Lista» muestra todo</p>');
   $("mD").textContent=(per==="mes"?"Últimos 6 meses":etqF().charAt(0).toUpperCase()+etqF().slice(1))+" · sigue el filtro de arriba";
-  $("mN").textContent=pe!=null?"Línea = ingreso mensual que necesitas para cubrir gastos y capital. Rojo = mes por debajo. Barras claras = mes en curso.":(mSel==="gas"?"Gasto de cada mes, sin el capital de la hipoteca.":"Rojo = mes en pérdida.");
+  $("mN").textContent=pe!=null?"Línea = ingreso mensual que necesitas para cubrir gastos y capital. Rojo = mes por debajo. Barras rayadas = mes en curso.":(mSel==="gas"?"Gasto de cada mes, sin el capital de la hipoteca. Barras rayadas = mes en curso.":"Rojo = mes en pérdida. Barras rayadas = mes en curso.");
+}
+function tipMet(el){var m=el.getAttribute("data-m"),M=MET[mSel],x=M.val([m]),d=D[m];if(!d)return "";var fv=function(q){return M.fmt==="%"?Math.round(q)+"%":f0(q);};
+  var h='<div class="t">'+capM(m)+' '+m.slice(0,4)+(d.parcial?' · en curso':'')+'</div><div class="l"><span>'+M.label+'</span><b>'+(x==null?"Sin datos":fv(x))+'</b></div>';
+  var cl=Object.keys(D).filter(function(k){return !D[k].parcial;});
+  if(mSel==="ing"&&x!=null){var ac=agg(cl.filter(function(k){return months(rango()[0],rango()[1]).indexOf(k)>=0;})),pe=ac.n?(ac.G+ac.C)/ac.n:null;if(pe!=null)h+='<div class="l f"><span>Equilibrio</span><b>'+f0(pe)+'</b></div><div class="l"><span>Diferencia</span><b>'+f0(x-pe)+'</b></div>';}
+  return h;}
+function tipNet(el){var m=el.getAttribute("data-m"),d=D[m];if(!d)return "";var v=d.ing-d.gas,mg=d.ing>0?v/d.ing*100:null;
+  return '<div class="t">'+capM(m)+' '+m.slice(0,4)+(d.parcial?' · en curso':'')+'</div><div class="l"><span>Entró</span><b>'+f0(d.ing)+'</b></div><div class="l"><span>Salió</span><b>'+f0(d.gas)+'</b></div><div class="l f"><span>Resultado</span><b>'+f0(v)+'</b></div>'+(mg!=null?'<div class="l"><span>Margen</span><b>'+pc(mg,0)+'</b></div>':'');}
+function grafNeto(cm){
+  var host=$("chNet"),n=cm.length;LAST.net=function(){grafNeto(cm);};
+  if(!n){host.innerHTML="";return;}
+  CBG.css();CBG.watch(host,function(){LAST.net&&LAST.net();});chartEvents(host,"net","g.m:not(.off)",tipNet);
+  var sk=pickSel("net",cm,function(m){return !D[m].parcial;}),z=sizes(host),span=cm[0].slice(0,4)!==cm[n-1].slice(0,4);
+  var res=function(m){return D[m].ing-D[m].gas;};
+  var items=cm.map(function(m,i){var d=D[m],v=res(m);return {k:m,ax:capM(m).slice(0,3),ax1:capM(m).charAt(0),yr:(span&&(m.slice(5)==="01"||i===0))?m.slice(0,4):null,val:v,c:v<0?"var(--err)":"var(--acento)",partial:d.parcial,txt:f0(v),txtS:CBG.fk(v),aria:capM(m)+" "+m.slice(0,4)+": resultado "+f0(v)+(d.ing>0?", margen "+pc(v/d.ing*100,0):"")};});
+  var av=CBG.avgAll(cm.filter(function(m){return !D[m].parcial;}).map(res)),avOn=av!=null&&CBG.promOn();
+  var svg=CBG.bars({items:items,W:z.W,H:z.H,wide:z.wide,sel:sk,lines:avOn?[{v:av}]:[],axf:CBG.fk,label:"Resultado neto por mes"});
+  var d=D[sk],v=res(sk),mg=d.ing>0?v/d.ing*100:null;
+  var hdr=CBG.hd({lbl:capM(sk)+" "+sk.slice(0,4)+(d.parcial?" (en curso)":""),big:f0(v),chip:mg!=null?{t:"Margen "+pc(mg,0),c:v<0?"b":"g"}:null,sub:"Entró "+f0(d.ing)+" · Salió "+f0(d.gas)});
+  var parts=[kd("var(--acento)","Ganancia")];if(items.some(function(q){return q.val<0;}))parts.push(kd("var(--err)","Pérdida"));if(items.some(function(q){return q.partial;}))parts.push('<span><i class="cbg-k h"></i>Mes en curso</span>');
+  var mxA=Math.max.apply(null,cm.map(function(m){return Math.abs(res(m));}).concat([1]));
+  var rows=cm.slice().reverse().map(function(m){var dm=D[m],vv=res(m),mm=dm.ing>0?vv/dm.ing*100:null;
+    return {k:m,lbl:capM(m).slice(0,3)+" "+m.slice(2,4),tag:dm.parcial?"en curso":"",amt:f0(vv),sub:"Entró "+f0(dm.ing)+" · Salió "+f0(dm.gas),w:Math.abs(vv)/mxA*100,on:m===sk,c:vv<0?"var(--err)":null,chip:mm!=null?{t:"Margen "+pc(mm,0),c:vv<0?"b":"g"}:null};});
+  host.innerHTML='<div class="cbg-top"><span class="rmk">'+(per==="mes"?"Últimos 6 meses":etqF().charAt(0).toUpperCase()+etqF().slice(1))+'</span>'+CBG.seg(LST.net)+'</div>'+hdr+
+    (LST.net?CBG.list(rows):svg+keysRow(parts,av!=null?CBG.promBtn("Promedio "+f0(av)):"")+'<p class="cbg-hint">Toca una barra para ver su mes · «Lista» muestra todo</p>');
+}
+function cascada(a,etq){
+  var host=$("chCas"),I=a.I;LAST.cas=function(){cascada(a,etq);};
+  if(!(I>0)){host.innerHTML="";$("casP").textContent="";$("casN").textContent="";return;}
+  var F=a.R+a.PP-a.C,it=[{n:"Ingresos",l:["Ingresos"],S:"Ingr.",v:I,t:"T",c:"var(--acento)"}];
+  var AB={"1":["Gastos","fijo+var."],"3":["Mantenim."],"4":["Logística"],"5":["Otros"]},ABS={"1":"Gast.","3":"Mant.","4":"Log.","5":"Otros"};
+  FAMOP.forEach(function(f){var x=a.fam[f[0]];if(x>.5)it.push({n:f[1],l:AB[f[0]],S:ABS[f[0]],v:-x,t:"D",c:"var(--gasto)"});});
+  it.push({n:"Resultado operativo",l:["Resultado","operativo"],S:"R.op.",v:a.Ro,t:"S",c:"var(--texto-2)"});
+  it.push({n:"Gastos financieros",l:["Financieros"],S:"Fin.",v:-a.Gfin,t:"D",c:"var(--gasto)"});
+  it.push({n:"Resultado",l:["Resultado"],S:"Res.",v:a.R,t:"S",c:a.R<0?"var(--err)":"var(--acento)"});
+  if(a.PP>.5)it.push({n:"Limpieza por pagar",l:["Limpieza","por pagar"],S:"Limp.",v:a.PP,t:"D",c:"var(--acento)"});
+  it.push({n:"Capital de la hipoteca",l:["Capital","hipoteca"],S:"Cap.",v:-a.C,t:"D",c:"var(--gasto)"});
+  it.push({n:"Caja del período",l:["Caja"],S:"Caja",v:F,t:"S",c:F<0?"var(--err)":"var(--acento)"});
+  var lv=0;it.forEach(function(x){var a0,b0;if(x.t==="D"){a0=lv;lv=lv+x.v;b0=lv;}else{a0=0;b0=x.v;lv=x.v;}x.a=a0;x.b=b0;});
+  CBG.css();CBG.watch(host,function(){LAST.cas&&LAST.cas();});chartEvents(host,"cas","g.m:not(.off)",function(el){var x=it[+el.getAttribute("data-m")];if(!x)return "";
+    return '<div class="t">'+x.n+'</div><div class="l"><span>'+(x.t==="D"?(x.v<0?"Sale":"Entra"):x.t==="T"?"Entró":"Subtotal")+'</span><b>'+f0(Math.abs(x.v))+'</b></div><div class="l f"><span>% del ingreso</span><b>'+pc(Math.abs(x.v)/I*100,0)+'</b></div>';});
+  var keys=it.map(function(x,i){return String(i);}),sk=pickSel("cas",keys,null,true),z=sizes(host),nar=((z.W-40)/it.length)<52;
+  var SH={"Resultado":"Result.","operativo":"oper.","Financieros":"Financ.","hipoteca":"hipot.","Mantenim.":"Mant.","fijo+var.":"fijo+var.","Logística":"Logíst."};
+  var items=it.map(function(x,i){var sg=x.t==="D"?(x.v<0?"−":"+"):"",full=sg+f0(Math.abs(x.v)),sh=sg+CBG.fk(Math.abs(x.v)).replace("−","");
+    return {k:String(i),ax:nar?x.l.map(function(t){return SH[t]||t;}):x.l,axS:x.S,lo:Math.min(x.a,x.b),hi:Math.max(x.a,x.b),val:x.v,end:x.b,c:x.c,txt:full,txtS:sh,aria:x.n+": "+full+", "+pc(Math.abs(x.v)/I*100,0)+" del ingreso"};});
+  var svg=CBG.bars({items:items,W:z.W,H:z.wide?Math.round(Math.max(240,Math.min(360,z.W*.34))):210,wide:z.wide,sel:sk,conn:true,noAxis:true,noDim:true,ticks:[0],label:"Cascada de ingresos a flujo de caja"});
+  var x=it[+sk],sgn=x.t==="D"?(x.v<0?"−":"+"):"";
+  var hdr=CBG.hd({lbl:x.n,big:sgn+f0(Math.abs(x.v)),chip:{t:pc(Math.abs(x.v)/I*100,0)+" del ingreso",c:x.t==="S"&&x.v<0?"b":(x.n==="Caja del período"?"g":"")},sub:x.t==="T"?"Todo lo que entró en el período":x.n==="Caja del período"?"Lo que queda en la caja del período":x.t==="S"?"Subtotal":(x.v<0?"Sale":"Entra a la caja (aún no sale)")});
+  var cien=it.filter(function(q){return (q.t==="D"&&Math.abs(q.v)>=.5)||q.n==="Caja del período";}).map(function(q){var i=it.indexOf(q),sg=q.t==="D"&&q.v>0?"+":"";
+    return {k:String(i),lbl:q.n,amt:sg+f0(Math.abs(q.v)),sub:pc(Math.abs(q.v)/I*100,0),w:Math.min(100,Math.abs(q.v)/I*100),on:String(i)===sk,c:q.c};});
+  var all=it.map(function(q,i){var sg=q.t==="D"?(q.v<0?"−":"+"):"";return {k:String(i),lbl:q.n,tag:q.t==="S"?"subtotal":"",amt:sg+f0(Math.abs(q.v)),sub:pc(Math.abs(q.v)/I*100,0)+" del ingreso",w:Math.min(100,Math.abs(q.v)/I*100),on:String(i)===sk,c:q.c};});
+  host.innerHTML='<div class="cbg-top"><span></span>'+CBG.seg(LST.cas)+'</div>'+hdr+
+    (LST.cas?CBG.list(all):svg+'<p class="cbg-hint">Toca una barra para ver su valor y su % del ingreso</p><div class="cbg-sec">Cada $100 que entran</div>'+CBG.list(cien));
+  $("casP").textContent=etq.charAt(0).toUpperCase()+etq.slice(1)+" · lo que entra, sale y queda";
+  $("casN").textContent="Verde = entra o queda, naranja = sale, gris = subtotal. El capital de la hipoteca no es gasto, pero sí sale de tu caja.";
 }
 function familias(a){
   var rows=FAMOP.concat([["2","Financieros (hipoteca)"]]),I=a.I,h="";
@@ -456,45 +541,6 @@ function payback(){
   $("pbF").style.width=Math.min(p,100)+"%";
   var falta=Math.max(cap-rec,0),est=avg>0?falta/avg/12:null;
   $("pbN").innerHTML="Flujo de caja acumulado: <b>"+f0(rec)+"</b>. "+(est!=null?("Al ritmo actual (≈"+f0(avg)+" al mes) faltan unos <b>"+est.toFixed(1).replace(".",",")+" años</b>."):"Con el flujo actual aún no se puede estimar.")+" Aparte, la plusvalía estimada es <b>"+f0(I.valor-I.precio)+"</b> (no entra en este cálculo).";
-}
-function grafNeto(cm){
-  var W=640,H=236,pl=40,pb=38,n=cm.length,pt=((W-40)/n<34)?36:14,el=$("chNet");if(!n){el.innerHTML="";return;}
-  var v=cm.map(function(m){return D[m].ing-D[m].gas;}),mx=Math.max(0,Math.max.apply(null,v))*1.15||1,mn=Math.min(0,Math.min.apply(null,v))*1.15;
-  var yy=function(x){return pt+(H-pt-pb)*(1-(x-mn)/(mx-mn));},bw=(W-pl)/n,w=Math.min(bw*.6,34),s="";
-  [mn,0,mx].forEach(function(x){s+='<line x1="'+pl+'" x2="'+W+'" y1="'+yy(x)+'" y2="'+yy(x)+'" stroke="var(--linea)"/><text x="0" y="'+(yy(x)+3)+'">'+f0(x)+'</text>';});
-  cm.forEach(function(m,i){var gx=pl+i*bw+bw/2,x=v[i],y0=yy(0),y1=yy(x),col=x<0?"var(--err)":"var(--acento)",op=D[m].parcial?".5":"1";
-    s+='<rect x="'+(gx-w/2)+'" y="'+Math.min(y0,y1)+'" width="'+w+'" height="'+Math.max(Math.abs(y0-y1),1)+'" rx="4" fill="'+col+'" opacity="'+op+'"/>';
-    s+=vlab(gx,y1,x,f0(x),bw);
-    if(n<=14||i%2===0)s+='<text x="'+gx+'" y="'+(H-20)+'" text-anchor="middle">'+MN[+m.slice(5)-1].slice(0,3)+(n>12&&(m.slice(5)==="01"||i===0)?" "+m.slice(2,4):"")+'</text>';
-    if(D[m].ing>0&&(n<=14||i%2===0))s+='<text x="'+gx+'" y="'+(H-6)+'" text-anchor="middle" style="font-size:9px;font-weight:700;fill:'+(x<0?"var(--err)":"var(--texto-2)")+'">'+Math.round(x/D[m].ing*100)+'%</text>';});
-  s+='<text x="0" y="'+(H-6)+'" style="font-size:9px">Margen</text>';
-  el.innerHTML=s;
-}
-function cascada(a,etq){
-  var el=$("chCas"),I=a.I;if(!(I>0)){el.innerHTML="";return;}
-  var F=a.R+a.PP-a.C,it=[{l:["Ingresos"],v:I,t:"T",c:"var(--acento)"}];
-  FAMOP.forEach(function(f){var x=a.fam[f[0]];if(x>.5)it.push({l:{"1":["Gastos","fijo+var."],"3":["Mantenim."],"4":["Logística"],"5":["Otros"]}[f[0]],v:-x,t:"D",c:"var(--gasto)"});});
-  it.push({l:["Resultado","operativo"],v:a.Ro,t:"S",c:"var(--texto-2)"});
-  it.push({l:["Financieros"],v:-a.Gfin,t:"D",c:"var(--gasto)"});
-  it.push({l:["Resultado"],v:a.R,t:"S",c:a.R<0?"var(--err)":"var(--acento)"});
-  if(a.PP>.5)it.push({l:["Limpieza","por pagar"],v:a.PP,t:"D",c:"var(--acento)"});
-  it.push({l:["Capital","hipoteca"],v:-a.C,t:"D",c:"var(--gasto)"});
-  it.push({l:["Caja"],v:F,t:"S",c:F<0?"var(--err)":"var(--acento)"});
-  var lv=0,pts=[],mx=0,mn=0;
-  it.forEach(function(x){var a0,b0;if(x.t==="D"){a0=lv;lv=lv+x.v;b0=lv;}else{a0=0;b0=x.v;lv=x.v;}x.a=a0;x.b=b0;mx=Math.max(mx,a0,b0);mn=Math.min(mn,a0,b0);});
-  mx*=1.12;mn=mn<0?mn*1.2:0;
-  var nar=(el.parentNode.clientWidth||700)<520,W=nar?380:640,H=270,pl=6,pt=30,pb=44,n=it.length;el.setAttribute("viewBox","0 0 "+W+" "+H);var bw=(W-pl)/n,w=Math.min(bw*.62,54),yy=function(v){return pt+(H-pt-pb)*(1-(v-mn)/(mx-mn));},s="";
-  s+='<line x1="'+pl+'" x2="'+W+'" y1="'+yy(0)+'" y2="'+yy(0)+'" stroke="var(--linea)"/>';
-  it.forEach(function(x,i){var gx=pl+i*bw+bw/2,y1=yy(Math.max(x.a,x.b)),y2=yy(Math.min(x.a,x.b)),h=Math.max(y2-y1,1.5);
-    s+='<rect x="'+(gx-w/2)+'" y="'+y1+'" width="'+w+'" height="'+h+'" rx="4" fill="'+x.c+'"/>';
-    if(i<n-1)s+='<line x1="'+(gx+w/2)+'" x2="'+(gx+bw-w/2)+'" y1="'+yy(x.b)+'" y2="'+yy(x.b)+'" stroke="var(--texto-2)" stroke-dasharray="2 3" opacity=".6"/>';
-    var vtxt=(x.t==="D"?(x.v<0?"−":"+"):"")+f0(Math.abs(x.v)),ty=y1-15;
-    s+='<text x="'+gx+'" y="'+ty+'" text-anchor="middle" style="font-weight:800;font-size:'+(nar?9.5:11)+'px;fill:var(--texto)">'+vtxt+'</text>';
-    s+='<text x="'+gx+'" y="'+(ty+11)+'" text-anchor="middle" style="font-size:'+(nar?8.5:9.5)+'px">'+pc(Math.abs(x.v)/I*100,0)+'</text>';
-    x.l.forEach(function(t,k){s+='<text x="'+gx+'" y="'+(H-30+k*12)+'" text-anchor="middle" style="font-size:'+(nar?9:10.5)+'px;fill:var(--texto-2)">'+(nar?({"Resultado":"Result.","operativo":"oper.","Financieros":"Financ.","hipoteca":"hipot.","Mantenim.":"Mant.","fijo+var.":"fijo+var."}[t]||t):t)+'</text>';});});
-  el.innerHTML=s;
-  $("casP").textContent=etq.charAt(0).toUpperCase()+etq.slice(1)+" · cada barra con su % sobre el ingreso";
-  $("casN").textContent="Verde = entra o queda, naranja = sale, gris = subtotal. El capital de la hipoteca no es gasto, pero sí sale de tu caja.";
 }
 function set(p){per=p;chips();render();}
 document.addEventListener("click",function(e){var mt=e.target.closest("[data-mt]");if(mt){mSel=mt.dataset.mt;render();return;}var b=e.target.closest("[data-p]");if(b){set(b.dataset.p);closeSh();return;}
