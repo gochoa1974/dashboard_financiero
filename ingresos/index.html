@@ -12,7 +12,10 @@
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
-<script src="../comparar_cb_v2_2026-11-25_1710.js"></script>
+<script src="../graficos_cb_v1_2026-11-25_1930.js"></script>
+<script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
+<!-- v19.6 (25 nov 2026 19:50): «Evolución» y «Comparación» con el diseño nuevo de gráficos (graficos_cb_v1 + comparar_cb_v2.2): valores nunca girados, encabezado con el mes elegido y su variación, tarjeta al pasar el cursor, lista del mes, línea de promedio apagable. Nada se elimina. -->
+<!-- v19.5b (25 nov 2026 18:45): usa comparar_cb_v2.1 (los estilos de «Comparación» se cargan siempre; en pantalla ancha el gráfico se dibuja a su ancho real y la tabla queda junto a «Lo que se ve»). Nada se elimina. -->
 <!-- v19.5 (25 nov 2026): pantalla ancha (desde 1100 px): franja superior con el número grande, gráfico de evolución más ancho y alto (se dibuja al ancho de su panel, hasta 1700 px), paneles en columnas, ancho hasta 1680 px. Celular e iPad sin cambios. -->
 <!-- v19.4c (25 nov 2026): el gráfico «Evolución» se redibuja al ancho real del panel (antes podía quedar angosto si se dibujaba oculto o al girar/redimensionar). -->
 <!-- v19.4 (25 nov 2026): «Evolución del neto» obedece el filtro (2026, 2025, Mes, rangos, Acumulado); la comparación (años, fechas propias, año anterior) vive solo en «Comparar», también desde un botón dentro de la tarjeta. Nada se elimina. -->
@@ -249,7 +252,7 @@ details.ver li.bad b{color:var(--bad)}
 
 /* v14 · evolución mensual (mismo componente que Adicionales) */
 .evo svg{display:block;max-width:100%;height:auto;overflow:visible}
-.evo .gl{stroke:var(--line);stroke-dasharray:3 4;stroke-width:1}
+.evo .gl{stroke:var(--line);stroke-width:1}
 .evo .gt{fill:var(--mut);font-size:9px;font-weight:600}
 .evo .bp{fill:var(--mut);opacity:.32}
 .evo .bc{fill:rgb(var(--evc));opacity:.55;transition:opacity .15s}
@@ -265,8 +268,9 @@ details.ver li.bad b{color:var(--bad)}
 .evo g.on .ml{fill:var(--ink);font-weight:800}
 .evo .ul{fill:rgb(var(--evc))}
 .evlg{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--mut);font-weight:700;margin:0 0 8px}
-.evlg .tg{margin-left:auto;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:99px;background:var(--surface);color:var(--ink);font:700 12px var(--fuente,inherit);cursor:pointer}
-.evlg .tg:focus-visible{outline:3px solid rgb(var(--evc));outline-offset:2px;border-radius:99px}
+.evo .panel-h{align-items:center}.evo .panel-h span{font-size:inherit}.evo .cbg-sr{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 4px}.evo .cbg-sr .rmk{margin:0}.evo .cbg-hd{margin-top:10px}.evo .cbg-sub{margin:4px 0 8px}.evo .cbg-list{margin-top:4px}.evlg{align-items:center}.evlg .cbg-pr{font-size:11.5px}.evo .evlg{margin:8px 0 0}.cbg-hint{margin:8px 0 0;font-size:12px;font-weight:600;color:var(--mut)}
+.evo .tg{margin-left:auto;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:99px;background:var(--surface);color:var(--ink);font:700 12px var(--fuente,inherit);cursor:pointer}
+.evo .tg:focus-visible{outline:3px solid rgb(var(--evc));outline-offset:2px;border-radius:99px}
 .evo .yl{fill:var(--mut);font-size:10px;font-weight:800;text-anchor:middle}
 .evlg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .evc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
@@ -297,7 +301,7 @@ details.ver li.bad b{color:var(--bad)}
   #p-res.on>.evo{grid-column:1/span 2;grid-row:1/span 2}
   #p-res.on>.panel:not(.evo){grid-column:3}
   .evo .gt{font-size:11px}.evo .ml{font-size:12px}.evo .yl{font-size:12px}
-  .evo .evc{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .evo .evc{grid-template-columns:repeat(2,minmax(0,1fr))}.evo .evc.one{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -576,7 +580,9 @@ function evMes(y,m){var o=calcMonth(y+"-"+pad(m));return {d:o.totD,p:o.totP,t:o.
 /* ancho útil del gráfico: el de su propio panel; si aún no existe, lo que le tocará en la rejilla (2 de 3 columnas desde 1100 px) */
 function evoVW(){return !!(window.matchMedia&&matchMedia("(min-width:1100px)").matches);}
 function evoCw(){var h=$("p-res");if(!h||!(h.clientWidth>0))return 330;if(!evoVW())return h.clientWidth-30;var ev=h.querySelector(".evo");if(ev&&ev.clientWidth>0)return ev.clientWidth-30;var w=h.clientWidth;w=(w-32)*2/3+16;return w-30;}
+var EVLIST=false;
 function evoHTML(mk){
+  try{CBG.css();}catch(e){}
   var y=+mk.slice(0,4),m0=+mk.slice(5),hoyM=HOY.slice(0,7),rg=monthRange();
   var A=[],B=[],i;
   for(i=1;i<=12;i++){A.push(evMes(y,i));B.push(evMes(y-1,i));}
@@ -591,23 +597,28 @@ function evoHTML(mk){
   var mx=0;Q.forEach(function(q){mx=Math.max(mx,q.a.t,q.b?q.b.t:0);});
   var step=mx<=1500?500:1000,top=Math.max(step,Math.ceil(mx/step)*step);
   var host=$("p-res"),cw=evoCw(),VW=evoVW(),W=Math.max(290,Math.min(cw,VW?1700:900)),WD=VW&&W>900,H=W>600?(VW?Math.round(Math.max(180,Math.min(360,W*0.27))):180):(W>420?150:130),PL=WD?38:28,bw=(W-PL-4)/n,g=Math.min(bw*0.78,cmp?84:(WD?96:64)),b=cmp?g/2-1:g,yrs=(seq[0].slice(0,4)!==seq[n-1].slice(0,4)),svg='<svg width="'+W+'" height="'+(H+(yrs?44:34))+'" viewBox="0 0 '+W+' '+(H+(yrs?44:34))+'" role="group" aria-label="Evolución mensual del neto, '+(cmp?(y-1)+' contra '+y:(P_LBL[per]||y))+'"><defs><pattern id="evH" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="rgba(var(--evc),.28)"/><rect width="2" height="5" fill="rgb(var(--evc))"/></pattern></defs><g transform="translate(0,8)">';
-  var VT=b<30,LP=VT?34:18,fk=function(v){return "$"+(v>=1000?(Math.round(v/100)/10+"").replace(".",",")+"k":Math.round(v));},
-    lb=function(cx,y,v,cur){if(!(v>0.004))return "";var st="font-size:"+(WD?(VT?11:12.5):(VT?9.5:10.5))+"px;font-weight:"+(cur?800:700)+";fill:"+(cur?"var(--texto)":"var(--texto-2)")+";stroke:var(--surface,var(--tarjeta));stroke-width:3px;paint-order:stroke";return VT?'<text transform="translate('+cx.toFixed(1)+','+(y-4).toFixed(1)+') rotate(-90)" text-anchor="start" style="'+st+'">'+fk(v)+'</text>':'<text x="'+cx.toFixed(1)+'" y="'+(y-4).toFixed(1)+'" text-anchor="middle" style="'+st+'">'+fk(v)+'</text>';};
+  var VT=b<30,LP=18,fk=function(v){return "$"+(v>=1000?(Math.round(v/100)/10+"").replace(".",",")+"k":Math.round(v));},
+    lb=function(cx,y,v,cur,show){if(!(v>0.004)||!show)return "";var st="font-size:"+(WD?12.5:(VT?11:10.5))+"px;font-weight:"+(cur?800:700)+";fill:"+((cur||!VT)?"var(--texto)":"var(--texto-2)")+";stroke:var(--surface,var(--tarjeta));stroke-width:5px;paint-order:stroke";cx=Math.max(PL+16,Math.min(W-16,cx));return '<text x="'+cx.toFixed(1)+'" y="'+(y-4).toFixed(1)+'" text-anchor="middle" style="'+st+'">'+fk(v)+'</text>';},
+    rr=b>=24?6:(b>=14?5:4),iSel=-1,iMax=-1,LBL="",mv0=0;
+  Q.forEach(function(q,ii){if(per==="mes"&&q.k===mk)iSel=ii;if(q.a.t>mv0){mv0=q.a.t;iMax=ii;}});if(iMax>=0&&iSel>=0&&Math.abs(iMax-iSel)<2)iMax=-1;
   for(var gv=step;gv<=top;gv+=step){var gy=H-(H-LP)*gv/top;svg+='<line class="gl" x1="'+PL+'" x2="'+W+'" y1="'+gy.toFixed(1)+'" y2="'+gy.toFixed(1)+'"/><text class="gt" x="0" y="'+(gy+3).toFixed(1)+'">$'+(gv>=1000?(gv/1000)+"k":gv)+'</text>';}
   var off0=(W-PL-4-n*bw)/2;
   for(i=0;i<n;i++){
     var q=Q[i],mkk=q.k,x=PL+2+i*bw+(bw-g)/2,on=(per==="mes")&&mkk===mk,inR=mkk>=rg[0]&&mkk<=rg[1];
     var hd=(H-LP)*q.a.d/top,hh=(H-LP)*q.a.p/top,hp=q.b?(H-LP)*q.b.t/top:0,xc=cmp?x+b+2:x;
     svg+='<g class="m'+(on?' on':'')+(inR?'':' off')+'" data-m="'+mkk+'"'+(inR?' role="button" tabindex="0"':' aria-hidden="true"')+' aria-label="'+mLabel(mkk)+': '+money(q.a.d)+(q.a.p>0.004?' y '+money(q.a.p)+' por dormir':'')+(q.b?' · '+(+mkk.slice(0,4)-1)+': '+money(q.b.t):'')+'"'+(on?' aria-current="true"':'')+'>'+
-      '<rect class="hit" x="'+(x-3).toFixed(1)+'" y="0" width="'+(g+6).toFixed(1)+'" height="'+(H+24)+'"/>'+
-      (q.b?'<rect class="bp" x="'+x.toFixed(1)+'" y="'+(H-hp).toFixed(1)+'" width="'+b.toFixed(1)+'" height="'+hp.toFixed(1)+'" rx="2"/>':'')+
-      '<rect class="bc" x="'+xc.toFixed(1)+'" y="'+(H-hd).toFixed(1)+'" width="'+b.toFixed(1)+'" height="'+hd.toFixed(1)+'" rx="2"/>'+
-      (hh>0?'<rect class="bh" x="'+xc.toFixed(1)+'" y="'+(H-hd-hh).toFixed(1)+'" width="'+b.toFixed(1)+'" height="'+hh.toFixed(1)+'" rx="2"/>':'')+
-      (q.b?lb(x+b/2,H-hp,q.b.t,false):'')+lb(xc+b/2,H-hd-hh,q.a.d+q.a.p,true)+
+      '<rect class="hit" x="'+(PL+2+i*bw).toFixed(1)+'" y="0" width="'+bw.toFixed(1)+'" height="'+(H+24)+'"/>'+
+      (q.b?CBG.bar("bp",x,H-hp,b,hp,rr,true):'')+
+      CBG.bar("bc",xc,H-hd,b,hd,rr,!(hh>0.004))+
+      (hh>0.004?CBG.bar("bh",xc,H-hd-hh,b,hh,rr,true):'')+
       '<text class="ml" x="'+(x+g/2).toFixed(1)+'" y="'+(H+15)+'">'+(g>=26?MC[q.m-1].charAt(0).toUpperCase()+MC[q.m-1].slice(1):MC[q.m-1].charAt(0).toUpperCase())+'</text>'+(on?'<rect class="ul" x="'+(x-1).toFixed(1)+'" y="'+(H+19)+'" width="'+(g+2).toFixed(1)+'" height="3" rx="1.5"/>':'')+
       (yrs&&((i===0&&q.m<=9)||q.m===1)?'<text class="yl" x="'+(x+g/2).toFixed(1)+'" y="'+(H+34)+'">'+mkk.slice(0,4)+'</text>':'')+'</g>';
+    LBL+=(q.b?lb(x+b/2,H-hp,q.b.t,false,!VT||i===iSel||i===iMax):'')+lb(xc+b/2,H-hd-hh,q.a.d+q.a.p,i===iSel||(iSel<0&&i===iMax),!VT||i===iSel||i===iMax);
   }
-  svg+='</g></svg>';
+  /* promedio de los meses cerrados del rango (línea fina; se apaga con su botón) */
+  var avgRaw=CBG.avg(Q.filter(function(q){return q.k<hoyM&&q.k>=rg[0]&&q.k<=rg[1];}).map(function(q){return q.a.d+q.a.p;})),avgOn=avgRaw!=null&&CBG.promOn();
+  if(avgOn){var ay=(H-(H-LP)*avgRaw/top).toFixed(1);svg+='<line class="cbg-avg" x1="'+PL+'" x2="'+W+'" y1="'+ay+'" y2="'+ay+'"/>';}
+  svg+=LBL+'</g></svg>';
   // comparación del mes contra el mismo mes del año pasado
   var cur=A[m0-1],pv=B[m0-1],enCurso=(mk===hoyM)||(mk>hoyM);
   var c1='<div><small>'+(MESES[m0-1].charAt(0).toUpperCase()+MESES[m0-1].slice(1))+' '+y+(enCurso?' (en curso)':'')+'</small><b>'+money(cur.d)+'</b>';
@@ -616,6 +627,13 @@ function evoHTML(mk){
     c1+='<em'+(!enCurso&&dp!==null?(dp>=0?' class="up"':' class="dn"'):'')+'>'+(!enCurso&&dp!==null?(dp>=0?'▲ ':'▼ ')+Math.abs(dp)+'% vs ':'')+MESES[m0-1].slice(0,3)+' '+(y-1)+(enCurso?' cerró en ':': ')+money(pv.d)+'</em>';
   } else c1+='<em>Sin dato de '+(y-1)+'</em>';
   c1+='</div>';
+  var hdr="";
+  if(per==="mes"){
+    var nmU=MESES[m0-1].charAt(0).toUpperCase()+MESES[m0-1].slice(1),mcU=MC[m0-1].charAt(0).toUpperCase()+MC[m0-1].slice(1),dph=(pv.t>0.004&&pv.d>0)?Math.round((cur.d-pv.d)/pv.d*100):null,subs=[];
+    if(cur.p>0.004)subs.push("+ "+money(cur.p)+" por dormir");
+    subs.push(pv.t>0.004?mcU+" "+(y-1)+(enCurso?" cerró en ":": ")+money(pv.d):"Sin dato de "+(y-1));
+    hdr=CBG.hd({lbl:nmU+" "+y+(enCurso?" (en curso)":""),big:money(cur.d),chip:(!enCurso&&dph!==null)?{t:(dph>=0?"▲ ":"▼ ")+Math.abs(dph)+"% vs "+mcU+" "+(y-1),c:dph>=0?"g":"b"}:null,sub:subs.join(" · ")});
+  }
   // acumulado del año hasta el último mes cerrado, con los mismos meses en los dos años
   var fin=enCurso?(mk===hoyM?m0-1:+hoyM.slice(5)-1):m0; if(mk>hoyM&&y>+hoyM.slice(0,4))fin=0;
   var ini=0;for(i=0;i<12;i++){if(B[i].t>0.004){ini=i+1;break;}}
@@ -632,13 +650,25 @@ function evoHTML(mk){
     if(cpp&&cpp.dp!=null)tile='<div><small>'+dShort(cpp.cs)+' – '+dShort(cpp.e)+' '+cpp.e.slice(0,4)+' · ya dormido</small><b>'+money(cpp.cur)+'</b><em class="'+(cpp.dp>=0?'up':'dn')+'">'+(cpp.dp>=0?'▲ ':'▼ ')+Math.abs(cpp.dp)+'% vs '+money(cpp.prev)+' en las mismas fechas de '+(+cpp.e.slice(0,4)-1)+'</em></div>';
     else tile='<div><small>'+P_LBL[per]+'</small><b>'+money(calcRange(cs0[0],cs0[1]).totD)+'</b><em>Sin año anterior completo para comparar</em></div>';
   }
-  var subT=cmp?'Por mes · '+(y-1)+' contra '+y+' · toca un mes para verlo':(per==="todo"?'Todos los meses · '+mLabel(seq[0])+' – '+mLabel(seq[n-1]):(per==="mes"||per==="anio"||per==="pasado"?'Por mes · '+y+' · toca un mes para verlo':(P_LBL[per]||'Período')+' · por mes'));
+  var subT=cmp?'Por mes · '+(y-1)+' contra '+y:(per==="todo"?'Todos los meses · '+mLabel(seq[0])+' – '+mLabel(seq[n-1]):(per==="mes"||per==="anio"||per==="pasado"?'Por mes · '+y:(P_LBL[per]||'Período')+' · por mes'));
   var one=!yrs&&!(per==="todo"),lgA=one&&!cmp?y:'Ya durmió';
-  var legend='<div class="evlg">'+(cmp?'<span><i style="background:rgba(95,112,128,.4)"></i>'+(y-1)+'</span>':'')+'<span><i style="background:rgb(var(--evc))"></i>'+(cmp?y:lgA)+'</span><span><i style="background:repeating-linear-gradient(45deg,rgb(var(--evc)) 0 2px,rgba(var(--evc),.28) 2px 5px)"></i>Por dormir</span>'+'<button type="button" class="tg" id="evTg" aria-haspopup="dialog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M7 4 3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"/></svg>Comparar…</button>'+'</div>';
-  return '<div class="panel evo"><div class="panel-h"><b>Evolución del neto</b><span></span></div><div class="rmk">'+subT+'</div>'+legend+
-    svg+'<div class="evc'+(per==="mes"?'':' one')+'">'+(per==="mes"?c1+c2:tile)+'</div></div>';
+  var legend='<div class="evlg">'+(cmp?'<span><i style="background:rgba(95,112,128,.4)"></i>'+(y-1)+'</span>':'')+'<span><i style="background:rgb(var(--evc))"></i>'+(cmp?y:lgA)+'</span><span><i style="background:repeating-linear-gradient(45deg,rgb(var(--evc)) 0 2px,rgba(var(--evc),.28) 2px 5px)"></i>Por dormir</span>'+(avgRaw!=null?CBG.promBtn("Promedio $"+Math.round(avgRaw)):'')+'<button type="button" class="tg" id="evTg" aria-haspopup="dialog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M7 4 3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"/></svg>Comparar…</button>'+'</div>';
+  var cmpBtn=legend.slice(legend.indexOf('<button type="button" class="tg" id="evTg"'),legend.length-6),keys=legend.slice(0,legend.indexOf('<button type="button" class="tg" id="evTg"'))+'</div>',rowsL=[],hint=(per==="mes"||per==="anio"||per==="pasado")?'<p class="cbg-hint">Toca un mes para verlo</p>':'';
+  if(EVLIST){
+    var mxL=0;Q.forEach(function(q){mxL=Math.max(mxL,q.a.t);});
+    Q.slice().reverse().forEach(function(q){
+      if(!(q.k<=hoyM||q.a.t>0.004))return;
+      var pvm=evMes(+q.k.slice(0,4)-1,q.m),dpm=(q.k<hoyM&&pvm.d>0.004)?Math.round((q.a.d-pvm.d)/pvm.d*100):null,mc=MC[q.m-1].charAt(0).toUpperCase()+MC[q.m-1].slice(1);
+      rowsL.push({k:q.k,lbl:mc+" "+q.k.slice(2,4),tag:q.k===hoyM?"en curso":(q.k>hoyM?"por venir":""),amt:money(q.a.d),sub:q.a.p>0.004?"+ "+money(q.a.p)+" por dormir":"",w:mxL>0?q.a.t/mxL*100:0,on:per==="mes"&&q.k===mk,off:!(q.k>=rg[0]&&q.k<=rg[1]),chip:dpm!==null?{t:(dpm>=0?"▲ ":"▼ ")+Math.abs(dpm)+"% vs "+mc+" "+(+q.k.slice(0,4)-1),c:dpm>=0?"g":"b"}:null});
+    });
+  }
+  return '<div class="panel evo"><div class="panel-h"><b>Evolución del neto</b><span>'+cmpBtn+'</span></div><div class="cbg-sr"><div class="rmk">'+subT+'</div>'+CBG.seg(EVLIST)+'</div>'+hdr+
+    (EVLIST?CBG.list(rowsL):svg+keys)+hint+'<div class="evc one">'+(per==="mes"?c2:tile)+'</div></div>';
 }
-function evGo(el){var g=el.closest&&el.closest("g.m");if(!g||g.classList.contains("off"))return;OPENM={};curMonth=g.getAttribute("data-m");per="mes";ssSet(PERK,"mes");pChips();if(M)renderR();}
+function evPick(k){OPENM={};curMonth=k;per="mes";ssSet(PERK,"mes");pChips();if(M)renderR();}
+function evGo(el){var g=el.closest&&el.closest("g.m");if(!g||g.classList.contains("off"))return;evPick(g.getAttribute("data-m"));}
+/* tarjeta al pasar el cursor (laptop): valores del mes y diferencia con el mismo mes del año anterior */
+function evTipHtml(g){var k=g.getAttribute("data-m");if(!k)return "";var yy=+k.slice(0,4),mm=+k.slice(5),a=evMes(yy,mm),b=evMes(yy-1,mm);if(a.t<=0.004)return "";var h='<div class="t">'+mLabel(k).replace(/^./,function(c){return c.toUpperCase();})+'</div><div class="l"><span><i style="background:rgb(var(--evc))"></i>Ya durmió</span><b>'+money(a.d)+'</b></div>';if(a.p>0.004)h+='<div class="l"><span><i style="background:repeating-linear-gradient(45deg,rgb(var(--evc)) 0 2px,rgba(var(--evc),.28) 2px 5px)"></i>Por dormir</span><b>'+money(a.p)+'</b></div>';if(b.t>0.004){h+='<div class="l f"><span>'+MC[mm-1].charAt(0).toUpperCase()+MC[mm-1].slice(1)+" "+(yy-1)+'</span><b>'+money(b.d)+'</b></div>';if(k<HOY.slice(0,7)&&b.d>0.004){var d=Math.round((a.d-b.d)/b.d*100);h+='<div class="l"><span>Diferencia</span><span class="cbg-chip '+(d>=0?"g":"b")+'">'+(d>=0?"▲ ":"▼ ")+Math.abs(d)+"%</span></div>";}}return h;}
 function pubRes(){try{if(!M||!(M.reservas||[]).length)return;var rg=monthRange(),m=rg[0],end=HOY.slice(0,7),o={};while(m<=end){var c=calcMonth(m);o[m]=[Math.round(c.totD*100)/100,Math.round(c.totP*100)/100];m=shiftMonth(m,1);}localStorage.setItem("cb_res_ing_v1",JSON.stringify({t:Date.now(),m:o}));}catch(e){}}
 var CM_MEMO={};
 function cmM(m){if(CM_MEMO[m]&&CM_MEMO[m].t===HOY+(M&&M.reservas?M.reservas.length:0))return CM_MEMO[m].o;var o=calcMonth(m);CM_MEMO[m]={t:HOY+(M&&M.reservas?M.reservas.length:0),o:o};return o;}
@@ -845,7 +875,11 @@ $("vR").addEventListener("click",function(){setTimeout(function(){if(M)renderR()
 var evRT=null;window.addEventListener("resize",function(){clearTimeout(evRT);evRT=setTimeout(function(){if(M)renderR();},180);});
 /* v19.4c: si el panel cambia de ancho (o estaba oculto al dibujar), el gráfico se vuelve a dibujar a su ancho real */
 (function(){var h=$("p-res"),t=0;if(!h||!window.ResizeObserver)return;new ResizeObserver(function(){clearTimeout(t);t=setTimeout(function(){try{var sv=document.querySelector("#p-res .evo svg[role=group]");if(!sv||!(h.clientWidth>0))return;var want=Math.max(290,Math.min(evoCw(),evoVW()?1700:900));if(Math.abs(want-(+sv.getAttribute("width")))>20&&M)renderR();}catch(e){}},120);}).observe(h);})();
-$("p-res").addEventListener("click",function(e){var tg=e.target.closest&&e.target.closest("#evTg");if(tg){try{CBC.open();}catch(x){}return;}evGo(e.target);});
+$("p-res").addEventListener("click",function(e){var tg=e.target.closest&&e.target.closest("#evTg");if(tg){try{CBC.open();}catch(x){}return;}
+  var cb=e.target.closest&&e.target.closest("[data-cbg]");if(cb){var a=cb.getAttribute("data-cbg");if(a==="graf"||a==="lista"){EVLIST=(a==="lista");try{CBG.tipHide();}catch(x){}if(M)renderR();}else if(a==="prom"){CBG.promSet(!CBG.promOn());if(M)renderR();}return;}
+  var rw=e.target.closest&&e.target.closest(".cbg-row");if(rw){if(!rw.disabled)evPick(rw.getAttribute("data-m"));return;}
+  evGo(e.target);});
+try{CBG.css();CBG.tip($("p-res"),"g.m:not(.off)",evTipHtml);}catch(x){}
 $("p-res").addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){var g=e.target.closest&&e.target.closest("g.m");if(g){e.preventDefault();evGo(g);var again=document.querySelector('#p-res g.m.on');if(again)again.focus();}}});
 document.addEventListener("click",function(e){var b=e.target.closest("[data-mo]");
   if(b){var id=b.dataset.mo,mo=b.closest(".mo"),op=!mo.classList.contains("open");OPENM[id]=op;mo.classList.toggle("open",op);b.setAttribute("aria-expanded",op);b.querySelector(".pm").textContent=op?"−":"+";mo.querySelector(".mb").hidden=!op;return;}
