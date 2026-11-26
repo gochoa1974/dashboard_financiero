@@ -14,6 +14,8 @@
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../graficos_cb_v1_2026-11-25_1930.js"></script>
 <script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
+<script src="../escalera_cb_v1_2026-11-26_1525.js"></script>
+<!-- v19.10 (26 nov 2026): «Una sola historia del dinero» (Paquete A). «Generado»→«Ingresos» (netos), «Extras cobrados»→«Extras», «Total generado (neto)»→«= Ingresos». Escalera del dinero (escalera_cb_v1) bajo el número grande, línea «Base», fechas «1 ene – 26 nov 2026». NINGUNA cifra cambia. Vuelta atrás: poner v19.9 y quitar escalera_cb_v1. -->
 <!-- v19.9 (25 nov 2026 20:30): barra de período unificada con Gastos, Resultados y Hotelería (hoja compartida barra_cb_v1): filtros y mes en una sola barra, mes con su línea de apoyo («Mes en curso · al 25 de noviembre»), mismos márgenes (16/24/32). Solo estilo y orden; ningún filtro ni cuenta cambia. Nada se elimina. -->
 <!-- v19.8 (25 nov 2026 19:59): (1) el comparativo bajo el gráfico y el chip del número grande dicen desde cuándo comparan y por qué (el año anterior no tiene datos antes); se muestra el total del período junto al comparable. (2) El aviso «Desactualizado» ya no depende de la marca guardada en cada aparato: la versión del proceso viene dentro del maestro (Sincronizar v16); si el maestro no la trae todavía, se usa la marca local como antes. Nada se elimina. -->
 <!-- v19.7 (25 nov 2026 19:45): «¿De dónde viene?» y «Cómo se llega al total» cuentan la misma historia en neto y solo con lo ya dormido (Airbnb bruto − comisión = Airbnb neto + Directas + Extras = Total generado); lo por dormir va aparte; los totales de las pestañas Airbnb/Directas/Extras se amarran al Resumen. Nada se elimina. -->
@@ -355,10 +357,11 @@ details.ver li.bad b{color:var(--bad)}
         </div>
       </div>
       <div class="prange" id="pRng" hidden></div>
+      <p class="cbe-base" id="base"><b>Base:</b> noches ya dormidas · neto de comisión de Airbnb.</p>
       <div id="cmpHost" hidden></div>
       <div class="dash">
         <div class="left">
-          <div class="hero" aria-label="Generado en el mes">
+          <div class="hero" aria-label="Ingresos del período">
             <div class="hero-l" id="rLabel"></div>
             <div class="hero-big" id="rBig"></div>
             <div class="hero-s" id="rSub"></div>
@@ -372,6 +375,7 @@ details.ver li.bad b{color:var(--bad)}
             <div class="kpi"><small>Noches dormidas</small><b id="kN"></b></div>
             <div class="kpi"><small>Neto por noche</small><b id="kA"></b></div>
           </div>
+          <div id="esc"></div>
         </div>
         <div class="right-col">
           <div class="sticky"><div class="tabs" role="tablist" id="tabs">
@@ -554,7 +558,7 @@ function pSheet(){
   function sub(k){if(!NN[k])return "";var a=ab(shiftMonth(hm,-NN[k])),b=ab(shiftMonth(hm,-1));return '<small>'+(NN[k]===1?b:a+"\u2013"+b)+'</small>';}
   function ob(l){return l.map(function(p){return '<button type="button" class="opt" data-p="'+p[0]+'" aria-pressed="'+(per===p[0])+'">'+p[1]+sub(p[0])+'</button>';}).join("");}
   $("oCal").innerHTML=ob(P_CAL);$("oRec").innerHTML=ob(P_REC);$("oAll").innerHTML=ob(P_ALL);
-  var a0=M?monthRange()[0]:"";$("oAllN").textContent=a0?("Suma todo lo generado desde "+MC[+a0.slice(5)-1]+" "+a0.slice(0,4)+" hasta hoy."):"Suma todo lo generado hasta hoy.";
+  var a0=M?monthRange()[0]:"";$("oAllN").textContent=a0?("Suma todos los ingresos desde "+MC[+a0.slice(5)-1]+" "+a0.slice(0,4)+" hasta hoy."):"Suma todos los ingresos hasta hoy.";
 }
 var pFoco=null;
 function shAbre(){pSheet();pFoco=document.activeElement;$("shBg").classList.add("on");$("sheet").classList.add("on");$("sheet").setAttribute("aria-hidden","false");var b=$("masB");if(b)b.setAttribute("aria-expanded","true");var p=document.querySelector('#sheet .opt[aria-pressed="true"]')||$("shX");setTimeout(function(){p.focus();},60);}
@@ -717,7 +721,7 @@ function cmM(m){if(CM_MEMO[m]&&CM_MEMO[m].t===HOY+(M&&M.reservas?M.reservas.leng
 function dim(m){return new Date(+m.slice(0,4),+m.slice(5),0).getDate();}
 function csum(ms,f){return ms.reduce(function(s,m){return s+f(cmM(m));},0);}
 var CMET={
- ing:{label:"Generado",fmt:"$",val:function(ms){return csum(ms,function(o){return o.totD;});}},
+ ing:{label:"Ingresos",fmt:"$",val:function(ms){return csum(ms,function(o){return o.totD;});}},
  air:{label:"Airbnb",fmt:"$",val:function(ms){return csum(ms,function(o){return o.air.bD;});}},
  dir:{label:"Directas",fmt:"$",val:function(ms){return csum(ms,function(o){return o.dir.bD;});}},
  ext:{label:"Extras",fmt:"$",val:function(ms){return csum(ms,function(o){return o.ext.cD;});}},
@@ -738,13 +742,13 @@ function renderR0(){
   var mk=curMonth,rg=monthRange(),pr=perRange(),o=per==="mes"?calcMonth(mk):calcRange(pr[0],pr[1]),pm=per==="mes",Pm=pm?"este mes":"este período";
   $("mNav").hidden=!pm;$("pRng").hidden=pm;
   if(!pm){var ra=pr[0],rb=pr[1];
-    $("pRng").textContent=dShort(ra)+" "+ra.slice(0,4)+" al "+dShort(rb)+" "+rb.slice(0,4);}
+    $("pRng").textContent=rngY(ra,rb);}
   $("mLbl").textContent=mLabel(mk);
   $("mSub").textContent=mk===HOY.slice(0,7)?"Mes en curso · al "+(+HOY.slice(8))+" de "+MESES[+mk.slice(5)-1]:(mk<HOY.slice(0,7)?"Mes cerrado":"Mes por venir");
   $("mPrev").disabled=mk<=rg[0];$("mNext").disabled=mk>=rg[1];
   $("mHoy").hidden=(mk===HOY.slice(0,7));
   var totAll=o.totD+o.totP;
-  $("rLabel").textContent=pm?("Generado en "+MESES[+mk.slice(5)-1]+" · neto"):("Generado · "+(per==="todo"?"acumulado":(["30","60","90","180","12m"].indexOf(per)>=0?"últimos "+P_LBL[per]+" cerrados":P_LBL[per].toLowerCase()))+" · neto");
+  $("rLabel").textContent=pm?("Ingresos de "+MESES[+mk.slice(5)-1]+" · netos"):("Ingresos · "+(per==="todo"?"acumulado":(["30","60","90","180","12m"].indexOf(per)>=0?"últimos "+P_LBL[per]+" cerrados":P_LBL[per].toLowerCase()))+" · netos");
   $("rBig").innerHTML=moneyBig(o.totD);
   $("rSub").textContent=o.totP>0.004?("+ "+money(o.totP)+" por dormir en el resto "+(pm?"del mes":"del período")):(totAll>0?"Todo lo reservado de "+Pm+" ya se durmió":"Sin reservas en "+Pm);
   var pct=(o.nD+o.nP)>0?Math.round(o.nD/(o.nD+o.nP)*100):0;
@@ -769,7 +773,7 @@ function renderR0(){
     res+='<p class="nota">Todo en neto: ya descontada la comisión de Airbnb. Solo lo que ya durmió.</p>';
     var pc=pct100([aN,dN,eN]);
     if(tD>0.004)res+=bar(segs,tD);else res+='<p class="nota">Todavía no se duerme ninguna noche de este período.</p>';
-    [["air","Airbnb","neto, después de comisión",aN,pc[0]],["dir","Directas","sin comisión",dN,pc[1]],["ext","Extras cobrados","",eN,pc[2]]].forEach(function(l){
+    [["air","Airbnb","neto, después de comisión",aN,pc[0]],["dir","Directas","sin comisión",dN,pc[1]],["ext","Extras","",eN,pc[2]]].forEach(function(l){
       res+='<div class="lg" style="--c:var(--'+l[0]+')"><i></i><b>'+l[1]+(l[2]?'<small>'+l[2]+'</small>':'')+'</b><em>'+(tD>0.004&&l[3]>0?l[4]+'%':'')+'</em><strong>'+money(l[3])+'</strong></div>';
     });
     if(tP>0.004)res+='<div class="lg lgp"><i class="h"></i><b>Por dormir<small>aún no cuenta; suma cuando pasen las noches</small></b><em></em><strong>'+money(tP)+'</strong></div>';
@@ -781,8 +785,8 @@ function renderR0(){
     '<div class="cas"><span>Comisión de Airbnb</span><b class="neg">− '+money(Math.abs(aCm))+'</b></div>'+
     '<div class="cas key" style="--c:var(--air)"><span><i></i>Airbnb neto</span><b>'+money(aN)+'</b></div>':'')+
     '<div class="cas"><span>'+(hayA?'+ ':'')+'Directas<small>sin comisión</small></span><b>'+money(dN)+'</b></div>'+
-    '<div class="cas"><span>'+'+ Extras cobrados</span><b>'+money(eN)+'</b></div>'+
-    '<div class="cas tot"><span>Total generado (neto)</span><b>'+money(tD)+'</b></div>'+
+    '<div class="cas"><span>'+'+ Extras</span><b>'+money(eN)+'</b></div>'+
+    '<div class="cas tot"><span>= Ingresos<small>netos de comisión</small></span><b>'+money(tD)+'</b></div>'+
     (tP>0.004?'<div class="cas sub"><span>Por dormir · aún no cuenta</span><b>'+money(tP)+'</b></div>':'')+
     '<p class="fn">Hospedaje (Airbnb + directas): bruto '+money(o.brutoD)+' · neto '+money(o.netoD)+'</p></div>';
   if(o.ext.sin>0.004)res+='<div class="panel"><div class="panel-h"><b>Sin cobrar</b><span>'+money(o.ext.sin)+'</span></div><div class="rmk" style="margin:0">No-show de limpieza: ahorro que no entra a caja ni suma al total.</div></div>';
@@ -805,12 +809,14 @@ function renderR0(){
     ex+=extGroups(o.ext.rowsSin,true);
   }
   if(!ex)ex='<div class="empty">Sin extras en '+Pm+'.</div>';
-  if(o.ext.rows.length&&acc.length<=1)ex+='<div class="mtot"><span>Total Extras cobrados · '+mLabel(acc[0])+'</span><b>'+money(o.ext.cD+o.ext.cP)+'</b></div>'+tieNota(o.ext.cD,o.ext.cP)+(o.ext.rowsSin.length?'<p class="mtn">No incluye los extras sin cobrar.</p>':"");
+  if(o.ext.rows.length&&acc.length<=1)ex+='<div class="mtot"><span>Total Extras · '+mLabel(acc[0])+'</span><b>'+money(o.ext.cD+o.ext.cP)+'</b></div>'+tieNota(o.ext.cD,o.ext.cP)+(o.ext.rowsSin.length?'<p class="mtn">No incluye los extras sin cobrar.</p>':"");
   ex+='<div class="rmk" style="margin-top:10px">Los extras se cuentan en el mes de entrada de su reserva.</div>';
   if(acc.length<=1)$("p-ext").innerHTML=ex;
   $("tabs").querySelector('[data-t="air"]').textContent="Airbnb · "+o.air.rows.length;
   $("tabs").querySelector('[data-t="dir"]').textContent="Directas · "+o.dir.rows.length;
   $("tabs").querySelector('[data-t="ext"]').textContent="Extras · "+(o.ext.rows.length+o.ext.rowsSin.length);
+  /* v19.10 · escalera del dinero: mismas cachés que Resultados */
+  try{CBE.mount($("esc"),{ms:pm?[mk]:acc,here:["ing"],dec:2,label:pm?mLabel(mk).replace(/^./,function(c){return c.toUpperCase();}):undefined});}catch(e){}
 }
 var OPENM={};
 function perMonths(pr){var o=[],m=pr[0].slice(0,7),e=pr[1].slice(0,7);while(m<=e&&o.length<200){o.push(m);m=shiftMonth(m,1);}return o;}
@@ -836,7 +842,7 @@ function accList(key,months,pr){
     ys+=d.tot;grand+=d.tot;
     h+='<div class="mo'+(op?" open":"")+'" data-m="'+id+'"><button type="button" class="mh" aria-expanded="'+op+'" data-mo="'+id+'"><span class="pm" aria-hidden="true">'+(op?"−":"+")+'</span><span class="mt"><b>'+mLabel(d.m)+(d.m===hm?" · en curso":"")+'</b><span>'+(d.n?d.sum:"Sin movimientos")+'</span></span><span class="ma">'+money(d.tot)+'</span></button><div class="mb"'+(op?"":" hidden")+'>'+body+'</div></div>';});
   ysub();
-  var lbl=key==="air"?"Airbnb":key==="dir"?"Directas":"Extras cobrados";
+  var lbl=key==="air"?"Airbnb":key==="dir"?"Directas":"Extras";
   h+='<div class="mtot"><span>Total '+lbl+(pr[0].slice(0,4)===pr[1].slice(0,4)?" "+pr[0].slice(0,4):"")+'</span><b>'+money(grand)+'</b></div>'+(function(){var oo=calcRange(pr[0],pr[1]);return key==="ext"?tieNota(oo.ext.cD,oo.ext.cP):tieNota(oo[key].bD,oo[key].bP);})();
   return h;}
 function resList(rows,key){

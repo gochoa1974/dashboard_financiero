@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v31 · Evolución del cobro con el componente común de gráficos (CBG v1.2) · v26 · botón No-show también en la reserva elegida (sirve para reservas anteriores al 1 oct) · v25 · el Simulador usa las mismas reservas que las fichas y deja fijo el no-show · v24 · la línea No-show trae «Reabrir reserva» en vez de lápiz y papelera · v23 · fichas: Reservas, Con servicios adicionales, Total, Promedio por reserva · v22 · No-show automático con Deshacer y candado · v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
+<meta name="app-version" content="adicionales v32 · «Una sola historia del dinero»: la ficha «Total» pasa a llamarse «Extras» (misma cifra) · v31 · Evolución del cobro con el componente común de gráficos (CBG v1.2) · v26 · botón No-show también en la reserva elegida (sirve para reservas anteriores al 1 oct) · v25 · el Simulador usa las mismas reservas que las fichas y deja fijo el no-show · v24 · la línea No-show trae «Reabrir reserva» en vez de lápiz y papelera · v23 · fichas: Reservas, Con servicios adicionales, Total, Promedio por reserva · v22 · No-show automático con Deshacer y candado · v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <meta name="theme-color" content="#0a2233">
@@ -2102,7 +2102,7 @@ function renderLista() {
   $('regStats').innerHTML =
     '<div class="stat"><div class="k">Reservas</div><div class="v">' + nRes + '</div><div class="s">' + (q ? 'en la búsqueda' : 'ya iniciadas') + '</div></div>' +
     '<div class="stat"><div class="k">Con servicios adicionales</div><div class="v">' + conSrv + '</div><div class="s">' + (nRes ? 'de ' + nRes + (nRes === 1 ? ' reserva' : ' reservas') : '') + '</div></div>' +
-    '<div class="stat"><div class="k">Total</div><div class="v">' + money(tot) + '</div><div class="s">' + lin.length + (lin.length === 1 ? ' línea de cobro' : ' líneas de cobro') + '</div></div>' +
+    '<div class="stat"><div class="k">Extras</div><div class="v">' + money(tot) + '</div><div class="s">' + lin.length + (lin.length === 1 ? ' línea de cobro' : ' líneas de cobro') + '</div></div>' +
     '<div class="stat"><div class="k">Promedio por reserva</div><div class="v">' + (nRes ? money(tot / nRes) : '—') + '</div><div class="s">' + (nRes ? money(tot) + ' ÷ ' + nRes + (nRes === 1 ? ' reserva' : ' reservas') : '') + '</div></div>';
   if (!todos.length) { $('lista').innerHTML = '<div class="empty">' + (!DATA.lineas.length && !cer.length ? 'Aún no hay cobros registrados.' : (q ? 'Sin resultados.' : 'No hay cobros en este periodo. Prueba «Mes anterior» o «Todo».')) + '</div>'; return; }
   const ico = {

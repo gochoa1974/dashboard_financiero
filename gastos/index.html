@@ -19,6 +19,8 @@
 <!-- v20.4 (25 nov 2026): gráficos con valor sobre cada barra (vertical en celular cuando no cabe en horizontal); Comparar pasa a comparar_cb_v2_2026-11-25_1710.js. Nada se elimina. -->
 <script src="../graficos_cb_v1.2_2026-11-26_1319.js"></script>
 <script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
+<script src="../escalera_cb_v1_2026-11-26_1525.js"></script>
+<!-- v20.10 (26 nov 2026): «Una sola historia del dinero» (Paquete A). «Gasto del período»→«Gastos», «Total egreso»/«Total Egreso del mes»→«Gastos + capital», «Capital hipoteca»→«Capital de la hipoteca». Escalera del dinero (escalera_cb_v1) bajo la cabecera, línea «Base» y columna «Gastos» en «Detalle por mes» (pantalla ancha). NINGUNA cifra cambia. Arregla además el desalineo de 11 px entre los títulos/total y las filas de «Detalle por mes» (las filas tenían gap:0). Vuelta atrás: poner v20.9 y quitar escalera_cb_v1. -->
 <!-- v20.9 (26 nov 2026): vista ejecutiva del período (2026, 2025, rangos, Acumulado). Cabecera = puente (Gasto + Capital − Por pagar = Salió del banco), aviso de pendientes en una línea, gráfico mensual apilado (recurrentes / variables / por pagar) con encabezado del mes elegido, «¿En qué se va el dinero?», las dos tarjetas de siempre y «Detalle por mes» como tabla con total. Arregla el bloque azul gigante y el orden invertido de la pantalla ancha. La vista Mes no cambia. Carga graficos_cb_v1.2. -->
 <!-- v20.8 (25 nov 2026 20:30): barra de período unificada con Ingresos, Resultados y Hotelería (hoja compartida barra_cb_v1): se quita el título grande (el nombre de la sección pasa al subtítulo del encabezado: «Panel de gastos» / «Gastos · Recurrentes»…), filtros primero y mes debajo con su línea de apoyo; «Ir a este mes» y el sello «Mes cerrado» se conservan; botones de 44 px; laptop: una sola línea; márgenes 16/24/32. Solo estilo y orden; ninguna cuenta ni filtro cambia. Nada se elimina. -->
 <!-- v20.7 (25 nov 2026 19:50): «Evolución» y «Comparación» con el diseño nuevo de gráficos (graficos_cb_v1 + comparar_cb_v2.2): valores nunca girados, encabezado con el mes elegido y su variación, tarjeta al pasar el cursor, lista del mes, línea de promedio apagable. Nada se elimina. -->
@@ -727,7 +729,7 @@ body:not([data-tab="reg"]) #cmpHost{display:none!important}
 .xn{text-align:right;font-variant-numeric:tabular-nums}
 .xtab .macc{display:flex;flex-direction:column;gap:0;margin-top:0}
 .xtab .mo{background:transparent;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none}.xtab .mo:first-child{border-top:0}
-.xtab .mo .mh{padding:0 4px;min-height:56px;gap:0;width:100%;text-align:left;background:transparent;border:0;color:var(--ink);font:inherit;cursor:pointer}
+.xtab .mo .mh{padding:0 4px;min-height:56px;gap:0 10px;width:100%;text-align:left;background:transparent;border:0;color:var(--ink);font:inherit;cursor:pointer}
 .xtab .mo .mh:hover{background:color-mix(in srgb,var(--ink) 4%,transparent)}
 .xtab .mo.open .mh{background:color-mix(in srgb,var(--accent) 7%,transparent)}
 .xtab .mo .mh:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:8px}
@@ -738,8 +740,12 @@ body:not([data-tab="reg"]) #cmpHost{display:none!important}
 .xtab .mo .mb{border-top:1px solid var(--line);padding:8px 0}
 .xtf{padding:12px 4px;margin-top:2px;border-top:2px solid var(--ink);background:color-mix(in srgb,var(--ink) 4%,transparent);border-radius:0 0 12px 12px}
 .xtf .xtt small{display:none}
+/* v20.10 · escalera: solo en Resumen y fuera de «Comparar» */
+body:not([data-tab="reg"]) #esc,body.cmpOn #esc,body.cmpOn .cbe-base{display:none!important}
+#esc:empty{display:none}
+@media(min-width:1100px){#esc .cbe{max-width:820px}}
 @container (min-width:640px){
- .xth,.xtab .mo .mh,.xtf{grid-template-columns:minmax(110px,1.3fr) repeat(3,minmax(0,1fr)) minmax(0,1.25fr) minmax(92px,.9fr) 24px}
+ .xth,.xtab .mo .mh,.xtf{grid-template-columns:minmax(110px,1.3fr) repeat(4,minmax(0,1fr)) minmax(0,1.25fr) minmax(92px,.9fr) 24px}
  .xc3{display:block}.xtt small{display:block}.xtf .xtt small{display:block}.xtag{display:inline-block;margin:0 0 0 8px}
 }
 @media (min-width:1100px){
@@ -769,6 +775,7 @@ body:not([data-tab="reg"]) #cmpHost{display:none!important}
       </div>
     </div>
     <div id="cmpHost" hidden></div>
+    <p class="cbe-base" id="base"><b>Base:</b> mes del gasto · el capital de la hipoteca va aparte.</p>
     <div class="dash">
     <section class="hero" aria-label="Resumen del mes">
       <div class="hero-l" id="hLabel"></div>
@@ -784,6 +791,7 @@ body:not([data-tab="reg"]) #cmpHost{display:none!important}
         <div id="kEfW" hidden><b id="kEf"></b><span>Efectivo (no sale del banco)</span></div>
       </div>
     </section>
+    <div id="esc"></div>
     </div>
   </div>
 
@@ -1634,7 +1642,7 @@ function perPanels(DS){
   rcRow('Recurrentes','crec',tr,tr,p1[0],true,'período')+rcRow('Variables','cvar',tv,tv,p1[1],true,'período'),lim>0.004?'De los variables, la limpieza fue '+f2(lim)+'.':'',false,'período');
  const BL=[['ope','Operativo','cope'],['deu','Deuda y banca','cdeu'],['cap','Pago de capital','ccap']],sm={};BL.forEach(x=>sm[x[0]]=SUMA(rows.filter(e=>blkOf(e)===x[0])));
  const tot=SUMA(rows),p2=pcts(BL.map(x=>sm[x[0]]));
- h+=rcCard('pqf','Total egreso del período',tot,tot,true,BL.map((x,i)=>RSEG(sm[x[0]],x[2],0,LB(p2[i],sm[x[0]],tot),i>0)).join(''),
+ h+=rcCard('pqf','Gastos + capital del período',tot,tot,true,BL.map((x,i)=>RSEG(sm[x[0]],x[2],0,LB(p2[i],sm[x[0]],tot),i>0)).join(''),
   BL.map((x,i)=>'<span style="--c:var(--'+x[2]+')"><u></u>'+(x[0]==='cap'?'Capital':x[1])+' '+p2[i]+' %</span>').join(''),
   BL.map((x,i)=>rcRow(x[1],x[2],sm[x[0]],sm[x[0]],p2[i],true,'período')).join(''),sm.cap>0.004?'Incluye capital '+f2(sm.cap)+' (baja tu deuda, no es gasto).':'',false,'período');
  return h;
@@ -1658,7 +1666,7 @@ function resPanels(mon,DS){
  const tot=SUMA(mon),cierre2=tot+pm.ope+pm.deu+pm.cap;
  const p2=pcts(BL.map(x=>sm[x[0]]+pm[x[0]]));
  const capC=sm.cap+pm.cap;
- h+=rcCard('qf','Total Egreso del mes',tot-ppAll,cierre2,pas,
+ h+=rcCard('qf','Gastos + capital del mes',tot-ppAll,cierre2,pas,
    BL.map((x,i)=>RSEG(sm[x[0]]-ppB[x[0]],x[2],0,(pm[x[0]]+ppB[x[0]])>0.004?'':LB(p2[i],sm[x[0]]+pm[x[0]],cierre2),i>0)+RSEG(pm[x[0]]+ppB[x[0]],x[2],1,LB(p2[i],sm[x[0]]+pm[x[0]],cierre2),i>0&&(sm[x[0]]-ppB[x[0]])<=0.004)).join(''),
    BL.map((x,i)=>'<span style="--c:var(--'+x[2]+')"><u></u>'+(x[0]==='cap'?'Capital':x[1])+' '+p2[i]+' %</span>').join(''),
    BL.map((x,i)=>rcRow(x[1],x[2],sm[x[0]]-ppB[x[0]],sm[x[0]]+pm[x[0]],p2[i],pas)).join(''),
@@ -1840,12 +1848,12 @@ function perAcc(DS){
   const a=by[m],nc=a.filter(e=>e.cuenta!=='No'),rec=SUMA(nc.filter(isRecRow)),vr=SUMA(nc)-rec,cap=SUMA(a.filter(e=>e.cuenta==='No')),t=SUMA(a),pp=SUMA(a.filter(isPorPagar)),op=!!OPENG[m];
   tR+=rec;tV+=vr;tC+=cap;tT+=t;tP+=pp;
   const pm=xgm(DS,(+m.slice(0,4)-1)+m.slice(4)),dp=(m<cm&&pm.has&&pm.t>0)?Math.round((rec+vr-pm.t)/pm.t*100):null,mn=+m.slice(5);
-  body+='<div class="mo'+(op?' open':'')+'"><button type="button" class="mh" data-mo="'+m+'" aria-expanded="'+op+'" aria-label="'+esc(xCap(mLabel(m)))+': '+f2(t)+'. '+(op?'Ocultar':'Ver')+' movimientos"><span class="xmn"><b>'+MC3(mn)+' '+m.slice(0,4)+'</b>'+(m===cm?'<em class="xtag">en curso</em>':'')+'</span><span class="xn xc3">'+f2(rec)+'</span><span class="xn xc3">'+f2(vr)+'</span><span class="xn xc3">'+(cap>0.004?f2(cap):'—')+'</span><span class="xn xtt"><b>'+f2(t)+'</b>'+(pp>0.004?'<small>'+f2(pp)+' por pagar</small>':'')+'</span><span class="xdc">'+((dp!=null&&dp!==0)?'<span class="cbg-chip '+(dp>0?'w':'g')+'">'+(dp>0?'▲ ':'▼ ')+Math.abs(dp)+'%</span>':'')+'</span><span class="xar" aria-hidden="true">'+(op?'⌄':'›')+'</span></button>'+(op?'<div class="mb">'+a.map(regCard).join('')+'</div>':'')+'</div>';
+  body+='<div class="mo'+(op?' open':'')+'"><button type="button" class="mh" data-mo="'+m+'" aria-expanded="'+op+'" aria-label="'+esc(xCap(mLabel(m)))+': '+f2(t)+'. '+(op?'Ocultar':'Ver')+' movimientos"><span class="xmn"><b>'+MC3(mn)+' '+m.slice(0,4)+'</b>'+(m===cm?'<em class="xtag">en curso</em>':'')+'</span><span class="xn xc3">'+f2(rec)+'</span><span class="xn xc3">'+f2(vr)+'</span><span class="xn xc3">'+f2(rec+vr)+'</span><span class="xn xc3">'+(cap>0.004?f2(cap):'—')+'</span><span class="xn xtt"><b>'+f2(t)+'</b>'+(pp>0.004?'<small>'+f2(pp)+' por pagar</small>':'')+'</span><span class="xdc">'+((dp!=null&&dp!==0)?'<span class="cbg-chip '+(dp>0?'w':'g')+'">'+(dp>0?'▲ ':'▼ ')+Math.abs(dp)+'%</span>':'')+'</span><span class="xar" aria-hidden="true">'+(op?'⌄':'›')+'</span></button>'+(op?'<div class="mb">'+a.map(regCard).join('')+'</div>':'')+'</div>';
  });
  return '<section class="xcard xtab"><div class="cbg-t1"><h3>Detalle por mes</h3><span class="xs2">Toca un mes para ver sus movimientos</span></div>'+
-  '<div class="xth" aria-hidden="true"><span>Mes</span><span class="xn xc3">Recurrentes</span><span class="xn xc3">Variables</span><span class="xn xc3">Capital hipoteca</span><span class="xn">Total egreso</span><span class="xdc">vs año anterior</span><span></span></div>'+
+  '<div class="xth" aria-hidden="true"><span>Mes</span><span class="xn xc3">Recurrentes</span><span class="xn xc3">Variables</span><span class="xn xc3">Gastos</span><span class="xn xc3">Capital de la hipoteca</span><span class="xn">Gastos + capital</span><span class="xdc">vs año anterior</span><span></span></div>'+
   '<div class="macc">'+body+'</div>'+
-  '<div class="xtf"><span class="xmn"><b>Total</b></span><span class="xn xc3"><b>'+f2(tR)+'</b></span><span class="xn xc3"><b>'+f2(tV)+'</b></span><span class="xn xc3"><b>'+f2(tC)+'</b></span><span class="xn xtt"><b>'+f2(tT)+'</b>'+(tP>0.004?'<small>incluye '+f2(tP)+' por pagar</small>':'')+'</span><span></span><span></span></div></section>';
+  '<div class="xtf"><span class="xmn"><b>Total</b></span><span class="xn xc3"><b>'+f2(tR)+'</b></span><span class="xn xc3"><b>'+f2(tV)+'</b></span><span class="xn xc3"><b>'+f2(tR+tV)+'</b></span><span class="xn xc3"><b>'+f2(tC)+'</b></span><span class="xn xtt"><b>'+f2(tT)+'</b>'+(tP>0.004?'<small>incluye '+f2(tP)+' por pagar</small>':'')+'</span><span></span><span></span></div></section>';
 }
 /* eventos del gráfico del período (una sola vez; el contenedor no cambia) */
 function xEvents(box){
@@ -1945,7 +1953,7 @@ function heroStats(po,v){
  const hs=document.querySelector('.hstats'),kC=$('kEv').parentElement,kP=$('kPen').parentElement,kE=$('kEfW'),NB='\u00a0';
  kC.hidden=false;kP.hidden=false;kE.hidden=true;hs.removeAttribute('data-n');
  if(!po)return;
- $('kRec').textContent=f2(v.gasto);$('kRecL').textContent='Gasto del per\u00edodo';
+ $('kRec').textContent=f2(v.gasto);$('kRecL').textContent='Gastos';
  if(v.capi>0.005){$('kEv').textContent='+'+NB+f2(v.capi);$('kEvL').textContent='Capital de la hipoteca';}else kC.hidden=true;
  if(v.efe>0.005){$('kEf').textContent='\u2212'+NB+f2(v.efe);kE.hidden=false;}
  if(v.ppag>0.005){$('kPen').textContent='\u2212'+NB+f2(v.ppag);$('kPenL').textContent='Por pagar (a\u00fan no sale)';}else kP.hidden=true;
@@ -1964,7 +1972,7 @@ function renderTotals(){
  const falta=rl.length-saved,pct=rl.length?saved/rl.length:0;
  const G=po?null:gapsFor(MES,DS),PJ=!!(G&&G.esp>0.004);
  APROX=PJ;
- $('hLabel').textContent=PJ?'Gasto del mes · proyectado':(po?'Salió del banco · '+(PER==='todo'?'acumulado':(['30','60','90','180','12m'].indexOf(PER)>=0?'últimos '+P_LBL[PER]+' cerrados':P_LBL[PER].toLowerCase())):'Salió del banco');
+ $('hLabel').textContent=PJ?'Gastos del mes · proyectados':(po?'Salió del banco · '+(PER==='todo'?'acumulado':(['30','60','90','180','12m'].indexOf(PER)>=0?'últimos '+P_LBL[PER]+' cerrados':P_LBL[PER].toLowerCase())):'Salió del banco');
  document.querySelector('.hero').classList.toggle('proj',PJ);
  if(PJ){
   const proj=gasto+G.esp;
@@ -1982,7 +1990,7 @@ function renderTotals(){
   setTotal(tot);
   $('hProg').hidden=true;
   $('hMov').textContent=mon.length+(mon.length===1?' movimiento registrado':' movimientos registrados');
-  {const L=['Gasto del '+(po?'período':'mes')+': '+f2(gasto)];if(capi>0.005)L.push('+ Capital de la hipoteca (no es gasto): '+f2(capi));if(efe>0.005)L.push('− Pagado en efectivo (no sale del banco): '+f2(efe));if(ppag>0.005)L.push('− Por pagar (aún no sale): '+f2(ppag));
+  {const L=['Gastos del '+(po?'período':'mes')+': '+f2(gasto)];if(capi>0.005)L.push('+ Capital de la hipoteca (no es gasto): '+f2(capi));if(efe>0.005)L.push('− Pagado en efectivo (no sale del banco): '+f2(efe));if(ppag>0.005)L.push('− Por pagar (aún no sale): '+f2(ppag));
    if(po){const w=perWin(DS);let m=w.s.slice(0,7),fin=w.e.slice(0,7),nm=0,fa=0;for(let i=0;i<400&&m<=fin;i++,m=mesSig(m)){const g=gapsFor(m,DS);if(g.esp>0.004||g.miss.length||g.lim){nm++;fa+=g.esp+g.cap;}}
     if(nm)L.push('Incluye '+plu(nm,'mes incompleto','meses incompletos')+' · faltan ≈ '+f2(fa)+' por anotar');}
    $('hGasto').textContent=po?(L.filter(x=>/^Incluye /.test(x))[0]||''):(L.length>1?L.join('\n'):'');}
@@ -2285,7 +2293,7 @@ function closeExc(){
 let RESM={};
 function pubRes(){try{const m={};dataset().forEach(e=>{const k=e.mes;if(!k)return;const o=m[k]||(m[k]={g:0,c:0,p:0,f:{},x:{i:0,s:0,o:0}}),v=+e.monto||0;if(e.cuenta==='No'){o.c+=v;return;}o.g+=v;if(isPorPagar(e))o.p+=v;const f=String(e.familia||'5').charAt(0);o.f[f]=(o.f[f]||0)+v;if(f==='2'){const c=String(e.concepto||'');if(c.startsWith('Hipoteca – interés'))o.x.i+=v;else if(c.startsWith('Hipoteca – seguros'))o.x.s+=v;else o.x.o+=v;}});const r2=n=>Math.round(n*100)/100;Object.keys(m).forEach(k=>{const o=m[k];o.g=r2(o.g);o.c=r2(o.c);o.p=r2(o.p);Object.keys(o.f).forEach(f=>o.f[f]=r2(o.f[f]));Object.keys(o.x).forEach(f=>o.x[f]=r2(o.x[f]));});RESM=m;localStorage.setItem('cb_res_gas_v1',JSON.stringify({t:Date.now(),m}));}catch(e){}}
 const CF_LBL={'1':'Fijos operativos','2':'Financieros','3':'Mantenimiento y reposición','4':'Logística e imprevistos','5':'Otros / varios'};
-const CF_MET=(()=>{const M={gas:{label:'Gasto total',fmt:'$',good:'down',val:ms=>ms.reduce((s,m)=>s+((RESM[m]||{}).g||0),0)},cap:{label:'Capital hipoteca',fmt:'$',good:'down',val:ms=>ms.reduce((s,m)=>s+((RESM[m]||{}).c||0),0)}};Object.keys(CF_LBL).forEach(f=>{M['f'+f]={label:CF_LBL[f],fmt:'$',good:'down',val:ms=>ms.reduce((s,m)=>s+((((RESM[m]||{}).f)||{})[f]||0),0)};});return M;})();
+const CF_MET=(()=>{const M={gas:{label:'Gastos',fmt:'$',good:'down',val:ms=>ms.reduce((s,m)=>s+((RESM[m]||{}).g||0),0)},cap:{label:'Capital de la hipoteca',fmt:'$',good:'down',val:ms=>ms.reduce((s,m)=>s+((RESM[m]||{}).c||0),0)}};Object.keys(CF_LBL).forEach(f=>{M['f'+f]={label:CF_LBL[f],fmt:'$',good:'down',val:ms=>ms.reduce((s,m)=>s+((((RESM[m]||{}).f)||{})[f]||0),0)};});return M;})();
 function cfPrimary(){const cm=todayISO().slice(0,7),Y=+cm.slice(0,4),rg=(a,b)=>{const o=[];let m=a;while(m<=b&&o.length<400){o.push(m);m=addM(m,1);}return o;},_n={'30':1,'60':2,'90':3,'180':6,'12m':12};
  if(PER==='mes')return [MES];if(PER==='anio')return rg(Y+'-01',cm);if(PER==='pasado')return rg((Y-1)+'-01',(Y-1)+'-12');if(_n[PER])return rg(addM(cm,-_n[PER]),addM(cm,-1));return [];}
 function cmpInit(){const ks=Object.keys(RESM).sort(),cm=todayISO().slice(0,7);if(!ks.length)return;
@@ -2297,6 +2305,17 @@ function renderAll0(){
  {const hm=todayISO().slice(0,7),ms=$('mSub');if(ms)ms.textContent=MES===hm?'Mes en curso · al '+(+todayISO().slice(8))+' de '+['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][+MES.slice(5)-1]:(MES>hm?'Mes por venir':'');}
  $('mHoy').style.display=MES===todayISO().slice(0,7)?'none':'';
  applyPer();renderRec();renderEv();renderReg();renderPen();renderTotals();renderClose();renderGaps();renderLimAlert();
+ escMount();
+}
+/* v20.10 · escalera del dinero (mismas cachés que Resultados; pubRes ya corrió en renderAll) */
+function escMount(){
+ try{
+  const h=$('esc');if(!h||!window.CBE)return;
+  let ms=[MES],lab=xCap(mLabel(MES));
+  if(PER!=='mes'){const w=perWin(dataset());ms=[];let m=w.s.slice(0,7),fin=w.e.slice(0,7);for(let i=0;i<400&&m<=fin;i++,m=mesSig(m))ms.push(m);
+   lab=undefined;}
+  CBE.mount(h,{ms,here:['gas','cap','pp'],dec:2,label:lab});
+ }catch(e){}
 }
 
 function toast(msg,withUndo){

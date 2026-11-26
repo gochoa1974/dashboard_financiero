@@ -14,6 +14,8 @@
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../graficos_cb_v1.2_2026-11-26_1319.js"></script>
 <script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
+<script src="../escalera_cb_v1_2026-11-26_1525.js"></script>
+<!-- v7i (26 nov 2026): «Una sola historia del dinero» (Paquete A). Nombres únicos: «Entró»→«Ingresos», «Salió (gasto)»→«Gastos», «Caja del período» y «Flujo de caja»→«Queda después de la deuda». Escalera del dinero (escalera_cb_v1) bajo la cabecera, línea «Base», puente «Gastos + Capital = Gastos + capital» bajo Mes a mes, fechas «1 ene – 26 nov 2026». NINGUNA cifra cambia. Vuelta atrás: poner v7h y quitar escalera_cb_v1. -->
 <!-- v7h (26 nov 2026): carga graficos_cb_v1.2 (arregla el eje en mayúsculas «$3K»: la clase del eje ya no choca con «.gt» de la página). Nada más cambia.
      v7g (25 nov 2026 22:43): Fase 2 de gráficos. «Resultado neto por mes», «De los ingresos a la caja» y «Evolución mensual» usan graficos_cb_v1.1: valores nunca girados, mes (o paso) elegido en el encabezado con su variación/margen/% del ingreso, Gráfico | Lista, línea de promedio (o Equilibrio), tarjeta al pasar el cursor, «Cada $100 que entran». El margen sale de debajo de las barras. Cifras sin cambios. Vuelta atrás: poner v7f y quitar graficos_cb_v1.1. -->
 <!-- v7f (25 nov 2026 20:48): barra de período unificada con Ingresos, Gastos y Hotelería (hoja compartida barra_cb_v1): encabezado «Panel de resultados» con el mismo estado, filtros y mes en una sola barra, mes con su línea «Mes en curso · al…» debajo. Se quita el título grande. Solo estilo y orden: no cambia ninguna cuenta ni filtro. Vuelta atrás: poner v7e. -->
@@ -157,6 +159,10 @@ body.cmpOn .hero,body.cmpOn .grid,body.cmpOn .mnav,body.cmpOn .rng{display:none!
 @media(min-width:1100px){.wrap{padding-left:32px;padding-right:32px}}
 .rng[hidden]{display:none!important}
 .cbb+.rng{margin-top:-4px}
+/* v7i · escalera y línea Base */
+#esc:empty{display:none}
+body.cmpOn #esc,body.cmpOn .cbe-base{display:none!important}
+@media(min-width:1100px){#esc .cbe{max-width:820px}}
 </style>
 <link rel="stylesheet" href="../barra_cb_v1_2026-11-25_2030.css">
 </head>
@@ -173,6 +179,7 @@ body.cmpOn .hero,body.cmpOn .grid,body.cmpOn .mnav,body.cmpOn .rng{display:none!
     <div class="month mnav" id="mnav"><button class="nav" id="mPrev" aria-label="Mes anterior">◀</button><div class="mid-m"><b id="mLbl"></b><span class="msub" id="mSub"></span></div><button class="nav" id="mNext" aria-label="Mes siguiente">▶</button></div>
   </div>
   <p class="rng" id="rng"></p>
+  <p class="cbe-base" id="base"><b>Base:</b> noches ya dormidas − gastos del mes · antes de depreciación.</p>
   <div id="cmpHost" hidden></div>
 
   <section class="hero" id="hero" aria-label="Resultado del período">
@@ -180,8 +187,9 @@ body.cmpOn .hero,body.cmpOn .grid,body.cmpOn .mnav,body.cmpOn .rng{display:none!
     <div class="n" id="hN"></div>
     <div id="hS" style="font-size:13px;opacity:.85">Ingresos menos gastos (antes de depreciación)</div>
     <div class="m" id="hM"></div>
-    <div class="eq"><div>Entró<b id="eI"></b></div><div>Salió (gasto)<b id="eG"></b></div></div>
+    <div class="eq"><div>Ingresos<b id="eI"></b></div><div>Gastos<b id="eG"></b></div></div>
   </section>
+  <div id="esc"></div>
 
   <div class="grid" id="grid">
     <div class="card g3">
@@ -190,7 +198,7 @@ body.cmpOn .hero,body.cmpOn .grid,body.cmpOn .mnav,body.cmpOn .rng{display:none!
       <div class="cbg-host" id="chNet"></div>
     </div>
     <div class="card g3">
-      <h2>De los ingresos a la caja</h2>
+      <h2>De los ingresos a lo que queda</h2>
       <div class="d" id="casP"></div>
       <div class="cbg-host" id="chCas"></div>
       <p class="note" id="casN"></p>
@@ -199,6 +207,7 @@ body.cmpOn .hero,body.cmpOn .grid,body.cmpOn .mnav,body.cmpOn .rng{display:none!
       <h2 id="tT">Mes a mes</h2>
       <div class="tw"><table id="tbl"><thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Resultado</th><th>Margen</th></tr></thead><tbody id="tb"></tbody></table></div>
       <p class="note" id="tN"></p>
+      <p class="note" id="tB"></p>
     </div>
 
     <div class="card">
@@ -208,9 +217,9 @@ body.cmpOn .hero,body.cmpOn .grid,body.cmpOn .mnav,body.cmpOn .rng{display:none!
     </div>
 
     <div class="card">
-      <h2>Flujo de caja</h2>
+      <h2>Queda después de la deuda</h2>
       <div class="v" id="fN"></div>
-      <div class="d">Lo que generó el negocio. <b>No es el saldo de tu cuenta.</b> Es lo generado menos lo que ya salió, incluido el capital de la hipoteca.</div>
+      <div class="d">Lo que deja el negocio tras pagar la hipoteca. <b>No es el saldo de tu cuenta:</b> falta lo que Airbnb aún no te transfiere.</div>
       <div class="er" id="fLeg"></div>
       <div class="note" id="fC"></div>
     </div>
@@ -337,7 +346,7 @@ function indicadores(ms){
   var patr=I?I.valor-saldoEst:0;
   out+=rate("ROE",a.R,patr,"Resultado ÷ patrimonio actual en el departamento","roe");
   var flujo=a.R+a.PP-a.C;
-  out+=rate("Retorno sobre capital propio",flujo,cap,"Flujo de caja ÷ capital propio puesto","retorno_capital");
+  out+=rate("Retorno sobre capital propio",flujo,cap,"Queda después de la deuda ÷ capital propio puesto","retorno_capital");
   var pl=I?I.valor-I.precio:null;
   out+=kp("Plusvalía estimada",pl==null?null:f0(pl)+" · "+pc(pl/I.precio*100),"Valor estimado − precio de compra. No forma parte del resultado.");
   $("kp").innerHTML=out;
@@ -352,7 +361,7 @@ var MET={
  gas:{label:"Gastos",fmt:"$",good:"down",val:function(ms){return agg(ms).G;}},
  res:{label:"Resultado",fmt:"$",val:function(ms){return agg(ms).R;}},
  mgn:{label:"Margen neto",fmt:"%",val:function(ms){var a=agg(ms);return a.I>0?a.R/a.I*100:null;}},
- flu:{label:"Flujo de caja",fmt:"$",val:function(ms){var a=agg(ms);return a.R+a.PP-a.C;}}
+ flu:{label:"Queda después de la deuda",fmt:"$",val:function(ms){var a=agg(ms);return a.R+a.PP-a.C;}}
 };
 function cmpInit(){
   CBC.init({key:"res",host:"cmpHost",first:FIRST,cur:CM,has:function(m){return !!D[m];},metrics:MET,
@@ -362,13 +371,16 @@ function cmpInit(){
     ref:function(id,ms){if(id!=="ing")return null;var a=agg(ms.filter(function(m){return D[m];}));return a.n?{v:(a.G+a.C)/a.n,label:"Equilibrio",red:true}:null;},
     onChange:function(){chips();render();}});
 }
+/* v7i · fecha corta única: «1 ene – 26 nov 2026» (si cruza de año: «1 nov 2025 – 31 oct 2026») */
+function rngTxt(r){var a=r[0],b=r[1],fin=b===CM?+HOY.slice(8):new Date(+b.slice(0,4),+b.slice(5),0).getDate(),ya=a.slice(0,4),yb=b.slice(0,4);return "1 "+MN[+a.slice(5)-1].slice(0,3)+(ya!==yb?" "+ya:"")+" – "+fin+" "+MN[+b.slice(5)-1].slice(0,3)+" "+yb;}
+function escGo(id){location.href=({ing:"../ingresos/",gas:"../gastos/",cap:"../gastos/",pp:"../gastos/"})[id]||"../resultados/";}
 function render(){
   CBC.render();document.body.classList.toggle("cmpOn",CBC.active());
   var r=rango(),ms=months(r[0],r[1]);
   $("mnav").style.display=per==="mes"?"flex":"none";
   $("mLbl").textContent=ml(cur);
   $("mNext").disabled=cur>=CM;$("mPrev").disabled=cur<=FIRST;$("mNext").style.opacity=$("mNext").disabled?.35:1;$("mPrev").style.opacity=$("mPrev").disabled?.35:1;
-  var rt=per==="mes"?(D[cur].parcial?"Mes en curso · al "+HOY.slice(8)+" de "+MN[+cur.slice(5)-1]:"Mes cerrado"):(ml(r[0])+" al "+ml(r[1])+(per==="anio"||per==="todo"?" · hasta hoy":""));
+  var rt=per==="mes"?(D[cur].parcial?"Mes en curso · al "+HOY.slice(8)+" de "+MN[+cur.slice(5)-1]:"Mes cerrado"):rngTxt(r);
   $("mSub").textContent=per==="mes"?rt:"";$("rng").textContent=per==="mes"?"":rt;$("rng").hidden=per==="mes";
   var a=agg(ms),I=a.I,G=a.G,R=a.R,mg=I>0?R/I*100:0;
   var etq=etqF();
@@ -376,6 +388,7 @@ function render(){
   $("hN").className="n"+(R<0?" neg":"");$("hN").innerHTML=(R<-0.5?"−":"")+"<sup>$</sup>"+String(Math.abs(Math.round(R))).replace(/\B(?=(\d{3})+(?!\d))/g,".");
   $("hM").innerHTML='<span class="pill">Margen '+pc(mg)+'</span><span class="pill">Por cada $1 queda $'+(Math.max(mg,0)/100).toFixed(2).replace(".",",")+'</span>';
   $("eI").textContent=f0(I);$("eG").textContent=f0(G);
+  CBE.mount($("esc"),{ms:ms,here:["res","queda"],dec:0,label:per==="mes"?capM(cur)+" "+cur.slice(0,4):undefined,ing:SI,gas:SG,go:escGo});
 
   /* tabla mes a mes */
   var tm=per==="mes"?months(sm(cur,-5),cur):ms,rows="",ty=null,acc=[];
@@ -390,7 +403,8 @@ function render(){
   rows+='<tr class="tot"><td>Total</td><td>'+f0(at.I)+'</td><td>'+f0(at.G)+'</td><td class="'+(at.R<0?"neg":"pos")+'">'+f0(at.R)+'</td><td>'+mgn(at.I,at.R)+'</td></tr>';
   $("tb").innerHTML=rows;
   $("tT").textContent=per==="mes"?"Últimos 6 meses":"Mes a mes";
-  $("tN").textContent="Ingresos = lo generado (noches dormidas + adicionales). Gastos = todo gasto del mes, sin el capital de la hipoteca. Resultado = Ingresos − Gastos.";
+  $("tN").textContent="Ingresos = noches dormidas + extras cobrados. Gastos = todo gasto del mes, sin el capital de la hipoteca. Resultado = Ingresos − Gastos.";
+  $("tB").innerHTML="<b>"+(per==="mes"?"Últimos 6 meses":"Total de la tabla")+":</b> Gastos "+f0(at.G)+" + Capital "+f0(at.C)+" = <b>Gastos + capital "+f0(at.G+at.C)+"</b> · igual que en Gastos.";
 
   /* estado de resultados */
   $("erP").textContent=etq.charAt(0).toUpperCase()+etq.slice(1);
@@ -406,7 +420,7 @@ function render(){
   /* flujo */
   var F=a.R+a.PP-a.C;
   $("fN").textContent=f0(F);$("fN").style.color=F<0?"var(--err)":"var(--texto)";
-  $("fLeg").innerHTML='<div><span>Resultado</span><span>'+f0(a.R)+'</span></div>'+(a.PP>.5?'<div><span>+ Limpieza por pagar (aún no sale)</span><span>'+f0(a.PP)+'</span></div>':'')+'<div><span>− Capital de la hipoteca</span><span>'+f0(a.C)+'</span></div><div class="t"><span>= Caja del período</span><span class="'+(F<0?"neg":"pos")+'">'+f0(F)+'</span></div>';
+  $("fLeg").innerHTML='<div><span>Resultado</span><span>'+f0(a.R)+'</span></div>'+(a.PP>.5?'<div><span>+ Por pagar (aún no sale)</span><span>'+f0(a.PP)+'</span></div>':'')+'<div><span>− Capital de la hipoteca</span><span>'+f0(a.C)+'</span></div><div class="t"><span>= Queda después de la deuda</span><span class="'+(F<0?"neg":"pos")+'">'+f0(F)+'</span></div>';
   $("fC").textContent=per==="mes"&&D[cur].parcial?"El mes en curso aún está incompleto: se compara al cerrar.":"";
 
   indicadores(ms);
@@ -476,7 +490,7 @@ function tipMet(el){var m=el.getAttribute("data-m"),M=MET[mSel],x=M.val([m]),d=D
   if(mSel==="ing"&&x!=null){var ac=agg(cl.filter(function(k){return months(rango()[0],rango()[1]).indexOf(k)>=0;})),pe=ac.n?(ac.G+ac.C)/ac.n:null;if(pe!=null)h+='<div class="l f"><span>Equilibrio</span><b>'+f0(pe)+'</b></div><div class="l"><span>Diferencia</span><b>'+f0(x-pe)+'</b></div>';}
   return h;}
 function tipNet(el){var m=el.getAttribute("data-m"),d=D[m];if(!d)return "";var v=d.ing-d.gas,mg=d.ing>0?v/d.ing*100:null;
-  return '<div class="t">'+capM(m)+' '+m.slice(0,4)+(d.parcial?' · en curso':'')+'</div><div class="l"><span>Entró</span><b>'+f0(d.ing)+'</b></div><div class="l"><span>Salió</span><b>'+f0(d.gas)+'</b></div><div class="l f"><span>Resultado</span><b>'+f0(v)+'</b></div>'+(mg!=null?'<div class="l"><span>Margen</span><b>'+pc(mg,0)+'</b></div>':'');}
+  return '<div class="t">'+capM(m)+' '+m.slice(0,4)+(d.parcial?' · en curso':'')+'</div><div class="l"><span>Ingresos</span><b>'+f0(d.ing)+'</b></div><div class="l"><span>Gastos</span><b>'+f0(d.gas)+'</b></div><div class="l f"><span>Resultado</span><b>'+f0(v)+'</b></div>'+(mg!=null?'<div class="l"><span>Margen</span><b>'+pc(mg,0)+'</b></div>':'');}
 function grafNeto(cm){
   var host=$("chNet"),n=cm.length;LAST.net=function(){grafNeto(cm);};
   if(!n){host.innerHTML="";return;}
@@ -487,11 +501,11 @@ function grafNeto(cm){
   var av=CBG.avgAll(cm.filter(function(m){return !D[m].parcial;}).map(res)),avOn=av!=null&&CBG.promOn();
   var svg=CBG.bars({items:items,W:z.W,H:z.H,wide:z.wide,sel:sk,lines:avOn?[{v:av}]:[],axf:CBG.fk,label:"Resultado neto por mes"});
   var d=D[sk],v=res(sk),mg=d.ing>0?v/d.ing*100:null;
-  var hdr=CBG.hd({lbl:capM(sk)+" "+sk.slice(0,4)+(d.parcial?" (en curso)":""),big:f0(v),chip:mg!=null?{t:"Margen "+pc(mg,0),c:v<0?"b":"g"}:null,sub:"Entró "+f0(d.ing)+" · Salió "+f0(d.gas)});
+  var hdr=CBG.hd({lbl:capM(sk)+" "+sk.slice(0,4)+(d.parcial?" (en curso)":""),big:f0(v),chip:mg!=null?{t:"Margen "+pc(mg,0),c:v<0?"b":"g"}:null,sub:"Ingresos "+f0(d.ing)+" · Gastos "+f0(d.gas)});
   var parts=[kd("var(--acento)","Ganancia")];if(items.some(function(q){return q.val<0;}))parts.push(kd("var(--err)","Pérdida"));if(items.some(function(q){return q.partial;}))parts.push('<span><i class="cbg-k h"></i>Mes en curso</span>');
   var mxA=Math.max.apply(null,cm.map(function(m){return Math.abs(res(m));}).concat([1]));
   var rows=cm.slice().reverse().map(function(m){var dm=D[m],vv=res(m),mm=dm.ing>0?vv/dm.ing*100:null;
-    return {k:m,lbl:capM(m).slice(0,3)+" "+m.slice(2,4),tag:dm.parcial?"en curso":"",amt:f0(vv),sub:"Entró "+f0(dm.ing)+" · Salió "+f0(dm.gas),w:Math.abs(vv)/mxA*100,on:m===sk,c:vv<0?"var(--err)":null,chip:mm!=null?{t:"Margen "+pc(mm,0),c:vv<0?"b":"g"}:null};});
+    return {k:m,lbl:capM(m).slice(0,3)+" "+m.slice(2,4),tag:dm.parcial?"en curso":"",amt:f0(vv),sub:"Ingresos "+f0(dm.ing)+" · Gastos "+f0(dm.gas),w:Math.abs(vv)/mxA*100,on:m===sk,c:vv<0?"var(--err)":null,chip:mm!=null?{t:"Margen "+pc(mm,0),c:vv<0?"b":"g"}:null};});
   host.innerHTML='<div class="cbg-top"><span class="rmk">'+(per==="mes"?"Últimos 6 meses":etqF().charAt(0).toUpperCase()+etqF().slice(1))+'</span>'+CBG.seg(LST.net)+'</div>'+hdr+
     (LST.net?CBG.list(rows):svg+keysRow(parts,av!=null?CBG.promBtn("Promedio "+f0(av)):"")+'<p class="cbg-hint">Toca una barra para ver su mes · «Lista» muestra todo</p>');
 }
@@ -504,20 +518,20 @@ function cascada(a,etq){
   it.push({n:"Resultado operativo",l:["Resultado","operativo"],S:"R.op.",v:a.Ro,t:"S",c:"var(--texto-2)"});
   it.push({n:"Gastos financieros",l:["Financieros"],S:"Fin.",v:-a.Gfin,t:"D",c:"var(--gasto)"});
   it.push({n:"Resultado",l:["Resultado"],S:"Res.",v:a.R,t:"S",c:a.R<0?"var(--err)":"var(--acento)"});
-  if(a.PP>.5)it.push({n:"Limpieza por pagar",l:["Limpieza","por pagar"],S:"Limp.",v:a.PP,t:"D",c:"var(--acento)"});
+  if(a.PP>.5)it.push({n:"Por pagar (aún no sale)",l:["Por pagar"],S:"Pagar",v:a.PP,t:"D",c:"var(--acento)"});
   it.push({n:"Capital de la hipoteca",l:["Capital","hipoteca"],S:"Cap.",v:-a.C,t:"D",c:"var(--gasto)"});
-  it.push({n:"Caja del período",l:["Caja"],S:"Caja",v:F,t:"S",c:F<0?"var(--err)":"var(--acento)"});
+  it.push({n:"Queda después de la deuda",l:["Queda"],S:"Queda",v:F,t:"S",c:F<0?"var(--err)":"var(--acento)"});
   var lv=0;it.forEach(function(x){var a0,b0;if(x.t==="D"){a0=lv;lv=lv+x.v;b0=lv;}else{a0=0;b0=x.v;lv=x.v;}x.a=a0;x.b=b0;});
   CBG.css();CBG.watch(host,function(){LAST.cas&&LAST.cas();});chartEvents(host,"cas","g.m:not(.off)",function(el){var x=it[+el.getAttribute("data-m")];if(!x)return "";
-    return '<div class="t">'+x.n+'</div><div class="l"><span>'+(x.t==="D"?(x.v<0?"Sale":"Entra"):x.t==="T"?"Entró":"Subtotal")+'</span><b>'+f0(Math.abs(x.v))+'</b></div><div class="l f"><span>% del ingreso</span><b>'+pc(Math.abs(x.v)/I*100,0)+'</b></div>';});
+    return '<div class="t">'+x.n+'</div><div class="l"><span>'+(x.t==="D"?(x.v<0?"Sale":"Entra"):x.t==="T"?"Ingresos":"Subtotal")+'</span><b>'+f0(Math.abs(x.v))+'</b></div><div class="l f"><span>% del ingreso</span><b>'+pc(Math.abs(x.v)/I*100,0)+'</b></div>';});
   var keys=it.map(function(x,i){return String(i);}),sk=pickSel("cas",keys,null,true),z=sizes(host),nar=((z.W-40)/it.length)<52;
   var SH={"Resultado":"Result.","operativo":"oper.","Financieros":"Financ.","hipoteca":"hipot.","Mantenim.":"Mant.","fijo+var.":"fijo+var.","Logística":"Logíst."};
   var items=it.map(function(x,i){var sg=x.t==="D"?(x.v<0?"−":"+"):"",full=sg+f0(Math.abs(x.v)),sh=sg+CBG.fk(Math.abs(x.v)).replace("−","");
     return {k:String(i),ax:nar?x.l.map(function(t){return SH[t]||t;}):x.l,axS:x.S,lo:Math.min(x.a,x.b),hi:Math.max(x.a,x.b),val:x.v,end:x.b,c:x.c,txt:full,txtS:sh,aria:x.n+": "+full+", "+pc(Math.abs(x.v)/I*100,0)+" del ingreso"};});
-  var svg=CBG.bars({items:items,W:z.W,H:z.wide?Math.round(Math.max(240,Math.min(360,z.W*.34))):210,wide:z.wide,sel:sk,conn:true,noAxis:true,noDim:true,ticks:[0],label:"Cascada de ingresos a flujo de caja"});
+  var svg=CBG.bars({items:items,W:z.W,H:z.wide?Math.round(Math.max(240,Math.min(360,z.W*.34))):210,wide:z.wide,sel:sk,conn:true,noAxis:true,noDim:true,ticks:[0],label:"Cascada de ingresos a lo que queda después de la deuda"});
   var x=it[+sk],sgn=x.t==="D"?(x.v<0?"−":"+"):"";
-  var hdr=CBG.hd({lbl:x.n,big:sgn+f0(Math.abs(x.v)),chip:{t:pc(Math.abs(x.v)/I*100,0)+" del ingreso",c:x.t==="S"&&x.v<0?"b":(x.n==="Caja del período"?"g":"")},sub:x.t==="T"?"Todo lo que entró en el período":x.n==="Caja del período"?"Lo que queda en la caja del período":x.t==="S"?"Subtotal":(x.v<0?"Sale":"Entra a la caja (aún no sale)")});
-  var cien=it.filter(function(q){return (q.t==="D"&&Math.abs(q.v)>=.5)||q.n==="Caja del período";}).map(function(q){var i=it.indexOf(q),sg=q.t==="D"&&q.v>0?"+":"";
+  var hdr=CBG.hd({lbl:x.n,big:sgn+f0(Math.abs(x.v)),chip:{t:pc(Math.abs(x.v)/I*100,0)+" del ingreso",c:x.t==="S"&&x.v<0?"b":(x.n==="Queda después de la deuda"?"g":"")},sub:x.t==="T"?"Todo lo que entró en el período":x.n==="Queda después de la deuda"?"Lo que deja el negocio tras pagar la deuda":x.t==="S"?"Subtotal":(x.v<0?"Sale":"Entra a la caja (aún no sale)")});
+  var cien=it.filter(function(q){return (q.t==="D"&&Math.abs(q.v)>=.5)||q.n==="Queda después de la deuda";}).map(function(q){var i=it.indexOf(q),sg=q.t==="D"&&q.v>0?"+":"";
     return {k:String(i),lbl:q.n,amt:sg+f0(Math.abs(q.v)),sub:pc(Math.abs(q.v)/I*100,0),w:Math.min(100,Math.abs(q.v)/I*100),on:String(i)===sk,c:q.c};});
   var all=it.map(function(q,i){var sg=q.t==="D"?(q.v<0?"−":"+"):"";return {k:String(i),lbl:q.n,tag:q.t==="S"?"subtotal":"",amt:sg+f0(Math.abs(q.v)),sub:pc(Math.abs(q.v)/I*100,0)+" del ingreso",w:Math.min(100,Math.abs(q.v)/I*100),on:String(i)===sk,c:q.c};});
   host.innerHTML='<div class="cbg-top"><span></span>'+CBG.seg(LST.cas)+'</div>'+hdr+
@@ -541,7 +555,7 @@ function payback(){
   $("pbT").textContent="Has recuperado "+pc(p)+" de tus "+f0(cap);
   $("pbF").style.width=Math.min(p,100)+"%";
   var falta=Math.max(cap-rec,0),est=avg>0?falta/avg/12:null;
-  $("pbN").innerHTML="Flujo de caja acumulado: <b>"+f0(rec)+"</b>. "+(est!=null?("Al ritmo actual (≈"+f0(avg)+" al mes) faltan unos <b>"+est.toFixed(1).replace(".",",")+" años</b>."):"Con el flujo actual aún no se puede estimar.")+" Aparte, la plusvalía estimada es <b>"+f0(I.valor-I.precio)+"</b> (no entra en este cálculo).";
+  $("pbN").innerHTML="Lo que queda después de la deuda, acumulado: <b>"+f0(rec)+"</b>. "+(est!=null?("Al ritmo actual (≈"+f0(avg)+" al mes) faltan unos <b>"+est.toFixed(1).replace(".",",")+" años</b>."):"Con el flujo actual aún no se puede estimar.")+" Aparte, la plusvalía estimada es <b>"+f0(I.valor-I.precio)+"</b> (no entra en este cálculo).";
 }
 function set(p){per=p;chips();render();}
 document.addEventListener("click",function(e){var mt=e.target.closest("[data-mt]");if(mt){mSel=mt.dataset.mt;render();return;}var b=e.target.closest("[data-p]");if(b){set(b.dataset.p);closeSh();return;}
@@ -566,7 +580,7 @@ function cargarInv(){
 }
 function setPill(st,txt,meta,full){var p=$("syncPill");if(!p)return;p.className="sync "+st;$("syncTxt").textContent=txt;$("syncMeta").textContent=meta||"";p.title=full||"";}
 function ago(t){if(!t)return"sin datos";var m=Math.round((Date.now()-t)/60000);return m<2?"ahora":m<60?"hace "+m+" min":m<1440?"hace "+Math.round(m/60)+" h":"hace "+Math.round(m/1440)+" d";}
-var PIDS=["pChips","mnav","rng","hero","grid"];
+var PIDS=["pChips","mnav","rng","base","hero","esc","grid"];
 function mostrar(fin){
   SI=ld("cb_res_ing_v1");SG=ld("cb_res_gas_v1");INV=ld("cb_res_inv_v1");build();cmpInit();
   if(Object.keys(D).length){$("vacio").hidden=true;PIDS.forEach(function(i){$(i).style.display="";});setPill(SI.t&&SG.t?"ok":"off",SI.t&&SG.t?"Datos listos":"Datos incompletos",SI.t&&SG.t?(ago(Math.min(SI.t,SG.t))==="ahora"?"justo ahora":ago(Math.min(SI.t,SG.t))):"","Ingresos "+ago(SI.t)+" · Gastos "+ago(SG.t));if(cur<FIRST||!D[cur])cur=CM;chips();render();return true;}

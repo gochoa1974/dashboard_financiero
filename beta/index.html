@@ -11,9 +11,11 @@
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<script src="../escalera_cb_v1_2026-11-26_1525.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- Nueva navegación v1.1 (26 nov 2026): «Una sola historia del dinero» (Paquete A). Hoy: «Generado»→«Ingresos», «Gasto registrado»→«Gastos», tarjeta «Tu año hasta hoy» con la escalera del dinero (escalera_cb_v1, las mismas cachés de Ingresos y Gastos) y línea «Base». Ninguna cifra cambia. Vuelta atrás: poner v1.0 y quitar escalera_cb_v1. -->
 <!-- Nueva navegación v1.0 (26 nov 2026): pasa a ser la entrada de la app (la raíz abre /beta/). Se quitan las etiquetas «Beta»; «Volver a la app actual» pasa a «Ir al inicio anterior» (/?viejo=1); se suman Dashboard (Más › Datos) y el bloqueo con huella/Face ID (Más › Cuenta), que estaban en el inicio de siempre (R18). Vuelta atrás: poner index.html (v2) en la raíz y beta v0.1b.
      Beta v0.1b (25 nov 2026, 20:48): oculta el encabezado propio de Resultados y Hotelería (ahora usan la barra unificada, como Ingresos y Gastos). Solo eso. Vuelta atrás: poner la Beta v0.1. -->
 <!-- Beta v0.1 (25 nov 2026, 18:30): navegación nueva (Hoy · Dinero · Reservas · Hotelería · Más) y botón «+ Registrar».
@@ -396,21 +398,22 @@ function numHero(v){var p=Math.abs(v).toFixed(2).split('.');return (v<0?'−':''
 function pintarHoy(){
   var main=$('main'),per=CB.perfil||{},hoy=hoyISO(),hm=hoy.slice(0,7),y=+hm.slice(0,4),c=leerCaches(),st=stampInfo(c.mae);
   var verIng=puede('ingresos'),verGas=puede('gastos');
-  var h='<div class="hoy"><h2>Hola, '+esc(per.nombre||'')+'</h2><p class="sub">'+cap(MES[+hm.slice(5)-1])+' '+y+' · en curso '+(st?'<span class="pill'+(st.viejo?' warn':'')+'" style="margin-left:6px"><i></i>'+(st.viejo?'Datos del ':'Al día · ')+st.txt+'</span>':'')+'</p>';
+  var h='<div class="hoy"><h2>Hola, '+esc(per.nombre||'')+'</h2><p class="sub">'+cap(MES[+hm.slice(5)-1])+' '+y+' · en curso '+(st?'<span class="pill'+(st.viejo?' warn':'')+'" style="margin-left:6px"><i></i>'+(st.viejo?'Datos del ':'Al día · ')+st.txt+'</span>':'')+'</p><p class="cbe-base"><b>Base:</b> igual que Ingresos y Gastos.</p>';
   var sinCifras=(verIng&&!c.ing)||(verGas&&!c.gas);
   var L='',R='';
   if(verIng){
     if(c.ing){
       var m=c.ing.m[hm],pm=c.ing.m[(y-1)+'-'+hm.slice(5)];
       if(m){
-        L+='<div class="hero"><small>Generado en '+MES[+hm.slice(5)-1]+' · neto</small><div class="n">'+numHero(m[0])+'</div><p>'+(m[1]>0.004?'Ya durmió. Faltan por dormir '+money(m[1])+'.':'Todo lo reservado este mes ya se durmió')+'</p>'+(pm?'<div class="ln"></div><div class="cmp">'+MC[+hm.slice(5)-1]+' '+(y-1)+' cerró en '+money(pm[0])+'</div>':'')+'</div>';
-      }else L+='<div class="hero"><small>Generado en '+MES[+hm.slice(5)-1]+' · neto</small><div class="n" style="font-size:30px">Sin datos</div><p>Aún no hay reservas en este mes.</p></div>';
+        L+='<div class="hero"><small>Ingresos de '+MES[+hm.slice(5)-1]+' · netos</small><div class="n">'+numHero(m[0])+'</div><p>'+(m[1]>0.004?'Ya durmió. Faltan por dormir '+money(m[1])+'.':'Todo lo reservado este mes ya se durmió')+'</p>'+(pm?'<div class="ln"></div><div class="cmp">'+MC[+hm.slice(5)-1]+' '+(y-1)+' cerró en '+money(pm[0])+'</div>':'')+'</div>';
+      }else L+='<div class="hero"><small>Ingresos de '+MES[+hm.slice(5)-1]+' · netos</small><div class="n" style="font-size:30px">Sin datos</div><p>Aún no hay reservas en este mes.</p></div>';
       /* tarjetas */
       var acum=0,n=0;Object.keys(c.ing.m).forEach(function(k){if(k.slice(0,4)==String(y)&&k<=hm){acum+=c.ing.m[k][0];n++;}});
       var g=c.gas&&c.gas.m[hm];
       L+='<div class="g2">'+
-        (verGas?'<div class="st"><small>Gasto registrado · '+MC[+hm.slice(5)-1]+'</small><b>'+(g&&g.g>0?money(g.g):'Sin datos')+'</b><em>'+(g&&g.g>0?(g.p>0.004?'Por pagar '+money(g.p):'Nada por pagar'):'Aún no hay gastos este mes')+'</em></div>':'')+
-        '<div class="st"><small>Generado en '+y+' · ya durmió</small><b>'+(n?money(acum):'Sin datos')+'</b><em>'+(n?'De enero a '+MES[+hm.slice(5)-1]:'')+'</em></div></div>';
+        (verGas?'<div class="st"><small>Gastos · '+MC[+hm.slice(5)-1]+'</small><b>'+(g&&g.g>0?money(g.g):'Sin datos')+'</b><em>'+(g&&g.g>0?(g.p>0.004?'Por pagar '+money(g.p):'Nada por pagar'):'Aún no hay gastos este mes')+'</em></div>':'')+
+        '<div class="st"><small>Ingresos de '+y+' · ya durmió</small><b>'+(n?money(acum):'Sin datos')+'</b><em>'+(n?'De enero a '+MES[+hm.slice(5)-1]:'')+'</em></div></div>';
+      if(verGas)L+='<div id="hEsc"></div>';
     }else{
       L+='<div class="empty"><b style="color:var(--ink)">Aún no hay cifras en este dispositivo</b><br>Para verlas aquí hay que abrir Ingresos y Gastos una vez.<div><button type="button" class="btn" id="hCargar">Cargar cifras</button></div></div>';
     }
@@ -435,6 +438,9 @@ function pintarHoy(){
   h+='<div class="hoycols"><div>'+L+'</div><div>'+R+'</div></div>';
   h+='<p class="note">«Hoy» solo lee las cifras que ya guardaron Ingresos y Gastos en este dispositivo'+(c.ing&&c.ing.t?' (guardadas '+new Date(c.ing.t).getDate()+' '+MC[new Date(c.ing.t).getMonth()]+' '+pad(new Date(c.ing.t).getHours())+':'+pad(new Date(c.ing.t).getMinutes())+')':'')+'. '+(c.ing?'<button type="button" class="btn sec2" id="hAct" style="min-height:44px;margin-left:6px">Actualizar cifras</button>':'')+'</p></div>';
   main.innerHTML=h;
+  /* v1.1 · escalera: Ene…mes en curso (mismas cachés que Resultados) */
+  try{var he=$('hEsc');if(he&&window.CBE){var ms=[];for(var q=1;q<=+hm.slice(5);q++)ms.push(y+'-'+pad(q));
+    CBE.mount(he,{ms:ms,title:'Tu '+y+' hasta hoy',dec:2,go:function(id){var d={ing:['ingresos','dinero/ingresos'],gas:['gastos','dinero/gastos'],cap:['gastos','dinero/gastos'],pp:['gastos','dinero/gastos'],res:['dashboard','dinero/resultado'],queda:['dashboard','dinero/resultado']}[id];if(d&&puede(d[0]))location.hash='#'+d[1];}});}}catch(e){}
   var b=$('hCargar'),a=$('hAct');if(b)b.onclick=cargarCifras;if(a)a.onclick=cargarCifras;
   main.querySelectorAll('[data-post]').forEach(function(x){x.addEventListener('click',function(){pendiente=x.getAttribute('data-post');});});
   if(cargando){var bb=$('hCargar')||$('hAct');if(bb){bb.disabled=true;bb.textContent='Cargando…';}}
