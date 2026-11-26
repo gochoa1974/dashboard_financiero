@@ -14,6 +14,7 @@
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../graficos_cb_v1_2026-11-25_1930.js"></script>
 <script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
+<!-- v19.8 (25 nov 2026 19:59): (1) el comparativo bajo el gráfico y el chip del número grande dicen desde cuándo comparan y por qué (el año anterior no tiene datos antes); se muestra el total del período junto al comparable. (2) El aviso «Desactualizado» ya no depende de la marca guardada en cada aparato: la versión del proceso viene dentro del maestro (Sincronizar v16); si el maestro no la trae todavía, se usa la marca local como antes. Nada se elimina. -->
 <!-- v19.7 (25 nov 2026 19:45): «¿De dónde viene?» y «Cómo se llega al total» cuentan la misma historia en neto y solo con lo ya dormido (Airbnb bruto − comisión = Airbnb neto + Directas + Extras = Total generado); lo por dormir va aparte; los totales de las pestañas Airbnb/Directas/Extras se amarran al Resumen. Nada se elimina. -->
 <!-- v19.6 (25 nov 2026 19:50): «Evolución» y «Comparación» con el diseño nuevo de gráficos (graficos_cb_v1 + comparar_cb_v2.2): valores nunca girados, encabezado con el mes elegido y su variación, tarjeta al pasar el cursor, lista del mes, línea de promedio apagable. Nada se elimina. -->
 <!-- v19.5b (25 nov 2026 18:45): usa comparar_cb_v2.1 (los estilos de «Comparación» se cargan siempre; en pantalla ancha el gráfico se dibuja a su ancho real y la tabla queda junto a «Lo que se ve»). Nada se elimina. -->
@@ -525,8 +526,18 @@ function perCmp(){
   if(per==="todo"||cs>e)return {none:1};
   var cur=calcRange(cs,e).totD,prev=calcRange(addYear(cs,-1),addYear(e,-1)).totD;
   if(prev<0.005)return {none:1};
-  return {cs:cs,e:e,cur:cur,prev:prev,dp:Math.round((cur-prev)/prev*100)};
+  return {cs:cs,e:e,cur:cur,prev:prev,dp:Math.round((cur-prev)/prev*100),rs:r[0],trunc:cs>r[0]};
 }
+/* v19.8: texto de los meses que no se comparan porque el año anterior no tiene datos */
+function cmpExcl(c){
+  var a=c.rs.slice(0,7),b=shiftMonth(c.cs.slice(0,7),-1),ya=+a.slice(0,4),yb=+b.slice(0,4);
+  function cap(x){return x.charAt(0).toUpperCase()+x.slice(1);}
+  if(a===b)return cap(MESES[+a.slice(5)-1])+" no se compara: en "+MESES[+a.slice(5)-1]+" de "+(ya-1)+" no hay datos.";
+  if(ya===yb)return cap(MC[+a.slice(5)-1])+"–"+MC[+b.slice(5)-1]+" no se compara: no hay datos de "+MC[+a.slice(5)-1]+"–"+MC[+b.slice(5)-1]+" "+(ya-1)+".";
+  return cap(MC[+a.slice(5)-1])+" "+ya+" – "+MC[+b.slice(5)-1]+" "+yb+" no se compara: sin datos del año anterior.";
+}
+/* rango corto con año(s): «1 feb – 24 nov 2026» o «1 nov 2025 – 31 oct 2026» */
+function rngY(a,b){var ya=a.slice(0,4),yb=b.slice(0,4);return dShort(a)+(ya!==yb?" "+ya:"")+" – "+dShort(b)+" "+yb;}
 function pIco(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';}
 function pChips(){
   var enQ=P_QUICK.some(function(q){return q[0]===per;});
@@ -661,10 +672,19 @@ function evoHTML(mk){
     var d2=sb>0?Math.round((sa-sb)/sb*100):null;
     c2='<div><small>'+rngTxt.charAt(0).toUpperCase()+rngTxt.slice(1)+' '+y+(enCurso?' (meses cerrados)':'')+'</small><b>'+money(sa)+'</b><em'+(d2!==null?(d2>=0?' class="up"':' class="dn"'):'')+'>'+(d2!==null?(d2>=0?'▲ ':'▼ ')+Math.abs(d2)+'% vs ':'')+money(sb)+' en '+rngTxt+' '+(y-1)+'</em></div>';
   } else c2='<div><small>Acumulado '+y+'</small><b>'+money(A.reduce(function(a,x){return a+x.d;},0))+'</b><em>Sin año anterior para comparar</em></div>';
-  var cpp=perCmp(),tile;
+  var cpp=perCmp(),tile,cmpNote='',cmpTwo=false;
   if(per!=="mes"){
     var cs0=perRange();
-    if(cpp&&cpp.dp!=null)tile='<div><small>'+dShort(cpp.cs)+' – '+dShort(cpp.e)+' '+cpp.e.slice(0,4)+' · ya dormido</small><b>'+money(cpp.cur)+'</b><em class="'+(cpp.dp>=0?'up':'dn')+'">'+(cpp.dp>=0?'▲ ':'▼ ')+Math.abs(cpp.dp)+'% vs '+money(cpp.prev)+' en las mismas fechas de '+(+cpp.e.slice(0,4)-1)+'</em></div>';
+    if(cpp&&cpp.dp!=null){
+      var cpY=cpp.e.slice(0,4),cpP=+cpY-1,mismo=cpp.cs.slice(0,4)===cpY,cpDe=mismo?'de '+cpP:'del año anterior',
+          cpTxt=(cpp.dp>=0?'▲ ':'▼ ')+Math.abs(cpp.dp)+'% vs '+money(cpp.prev)+' en las mismas fechas '+cpDe;
+      if(cpp.trunc){
+        /* v19.8: el período empieza antes de lo que se puede comparar → se muestran las dos cifras y se dice por qué */
+        tile='<div><small>Total '+(per==="anio"?cpY:P_LBL[per])+' · ya dormido</small><b>'+money(calcRange(cs0[0],cs0[1]).totD)+'</b><em>'+rngY(cs0[0],cpp.e)+'</em></div>'+
+          '<div><small>Comparable con '+(mismo?cpP:'el año anterior')+' · '+(mismo?dShort(cpp.cs)+' – '+dShort(cpp.e):rngY(cpp.cs,cpp.e))+'</small><b>'+money(cpp.cur)+'</b><em class="'+(cpp.dp>=0?'up':'dn')+'">'+cpTxt+'</em></div>';
+        cmpNote='<p class="cbg-hint">'+cmpExcl(cpp)+'</p>';cmpTwo=true;
+      } else tile='<div><small>'+rngY(cpp.cs,cpp.e)+' · ya dormido</small><b>'+money(cpp.cur)+'</b><em class="'+(cpp.dp>=0?'up':'dn')+'">'+cpTxt+'</em></div>';
+    }
     else tile='<div><small>'+P_LBL[per]+'</small><b>'+money(calcRange(cs0[0],cs0[1]).totD)+'</b><em>Sin año anterior completo para comparar</em></div>';
   }
   var subT=cmp?'Por mes · '+(y-1)+' contra '+y:(per==="todo"?'Todos los meses · '+mLabel(seq[0])+' – '+mLabel(seq[n-1]):(per==="mes"||per==="anio"||per==="pasado"?'Por mes · '+y:(P_LBL[per]||'Período')+' · por mes'));
@@ -680,7 +700,7 @@ function evoHTML(mk){
     });
   }
   return '<div class="panel evo"><div class="panel-h"><b>Evolución del neto</b><span>'+cmpBtn+'</span></div><div class="cbg-sr"><div class="rmk">'+subT+'</div>'+CBG.seg(EVLIST)+'</div>'+hdr+
-    (EVLIST?CBG.list(rowsL):svg+keys)+hint+'<div class="evc one">'+(per==="mes"?c2:tile)+'</div></div>';
+    (EVLIST?CBG.list(rowsL):svg+keys)+hint+'<div class="evc'+(cmpTwo&&per!=="mes"?'':' one')+'">'+(per==="mes"?c2:tile)+'</div>'+(per==="mes"?'':cmpNote)+'</div>';
 }
 function evPick(k){OPENM={};curMonth=k;per="mes";ssSet(PERK,"mes");pChips();if(M)renderR();}
 function evGo(el){var g=el.closest&&el.closest("g.m");if(!g||g.classList.contains("off"))return;evPick(g.getAttribute("data-m"));}
@@ -728,7 +748,7 @@ function renderR0(){
   $("rT2").textContent=o.nD+" ya dormidas"+(o.nP?" · "+o.nP+" por dormir":"");
   $("kN").textContent=o.nD;
   var cp=perCmp(),rc=$("rCmp");
-  if(cp&&cp.dp!=null){rc.hidden=false;rc.className="hero-c "+(cp.dp>=0?"up":"dn");rc.textContent=(cp.dp>=0?"▲ ":"▼ ")+Math.abs(cp.dp)+"% vs mismo período del año anterior";}
+  if(cp&&cp.dp!=null){rc.hidden=false;rc.className="hero-c "+(cp.dp>=0?"up":"dn");rc.textContent=(cp.dp>=0?"▲ ":"▼ ")+Math.abs(cp.dp)+"% vs mismo período del año anterior"+(cp.trunc?" · comparable desde el "+dShort(cp.cs)+(cp.cs.slice(0,4)!==cp.e.slice(0,4)?" "+cp.cs.slice(0,4):"")+" (antes no hay datos)":"");}
   else if(cp&&cp.none){rc.hidden=false;rc.className="hero-c";rc.textContent=(per==="todo"?"Acumulado: no se compara con otro año":"Sin año anterior completo para comparar");}
   else rc.hidden=true;
   var nd=o.nD>0?o.netoD/o.nD:0;
@@ -933,7 +953,11 @@ function revisar(){
   var mod=cached&&typeof cached.mod==="number"&&!copiaVieja(cached.data)?cached.mod:0;
   return CB.llamar("maestro",{modificado:mod}).then(function(r){
     var admin=CB.perfil&&CB.perfil.esAdmin;
-    var verOk=lsGet(K_VER)===ING_VER;
+    /* v19.8: la versión del proceso viaja DENTRO del maestro (Sincronizar v16). Solo si el maestro aún no la trae (publicado antes de este cambio)
+       se usa la marca guardada en el aparato. Así un celular nuevo o con datos borrados no pide sincronizar por nada. */
+    var vm=String((r.data&&r.data.proceso_version)||(M&&M.proceso_version)||"");
+    var verOk=vm?vm===ING_VER:lsGet(K_VER)===ING_VER;
+    var soloVer=!r.desactualizado&&admin&&!verOk;
     var stale=r.desactualizado||(admin&&!verOk);
     if(stale&&admin){
       var g=parseInt(ssGet(K_GUARD)||"0",10);
@@ -941,7 +965,7 @@ function revisar(){
         ssSet(K_GUARD,String(Date.now()));
         setState("busy","Actualizando…","hay archivos nuevos");
         showNote("Hay archivos nuevos en Drive. Actualizando tus ingresos…","info");
-        setTimeout(function(){location.href="../sincronizar/?auto=1&volver=ingresos";},900);
+        setTimeout(function(){location.href="../sincronizar/?auto=1&volver=ingresos"+(soloVer?"&ver=1":"");},900);
         return;
       }
     } else if(!stale){ssDel(K_GUARD);}
