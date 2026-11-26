@@ -8,12 +8,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ingresos adicionales · Cima Blanca</title>
-<meta name="app-version" content="adicionales v26 · botón No-show también en la reserva elegida (sirve para reservas anteriores al 1 oct) · v25 · el Simulador usa las mismas reservas que las fichas y deja fijo el no-show · v24 · la línea No-show trae «Reabrir reserva» en vez de lápiz y papelera · v23 · fichas: Reservas, Con servicios adicionales, Total, Promedio por reserva · v22 · No-show automático con Deshacer y candado · v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
+<meta name="app-version" content="adicionales v31 · Evolución del cobro con el componente común de gráficos (CBG v1.2) · v26 · botón No-show también en la reserva elegida (sirve para reservas anteriores al 1 oct) · v25 · el Simulador usa las mismas reservas que las fichas y deja fijo el no-show · v24 · la línea No-show trae «Reabrir reserva» en vez de lápiz y papelera · v23 · fichas: Reservas, Con servicios adicionales, Total, Promedio por reserva · v22 · No-show automático con Deshacer y candado · v21 · botón No-show igual en todas las pantallas · v20: ámbar con glow suave · v19 · cada servicio pide su propia forma de pago (no se hereda) · v18: forma de pago obligatoria · v17: cierre de estadías, Noches en vez de Desde/Hasta, lista compacta, estado en el desplegable, Resolución sin detalle">
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <link rel="apple-touch-icon" href="../Cima-Blanca-logo.png">
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<script src="../graficos_cb_v1.2_2026-11-26_1319.js"></script>
+<!-- v31 (26 nov 2026): Resumen › «Evolución del cobro» con el componente común de gráficos (graficos_cb_v1.2): una barra por mes (el año anterior sale de las barras y pasa al encabezado, al chip ▲▼ y a la tarjeta), valores sin girar, promedio apagable, Gráfico | Lista, tarjeta al pasar el cursor, teclado. Meses futuros no se dibujan; meses anteriores al primer dato = «Sin datos», nunca 0. Sin cambios de datos. -->
 <!-- v30 (25 nov 2026): abre directo la edición de un cobro desde el lápiz de Ingresos › Extras (?ed=codigo|item|monto). Sin cambios de datos. -->
 <!-- v29.1 (24 nov 2026): una reserva de Airbnb que el CSV marca «Cancelada por el huésped» ya no aparece en «Pendientes por cerrar» ni ofrece No-show (se trata igual que las canceladas de Cancelaciones). -->
 <!-- v28 (17 oct 2026): gráfico de evolución compara año anterior vs actual, igual que Ingresos. -->
@@ -2567,22 +2569,62 @@ function renderResumen() {
   const meds = Object.keys(gm).filter(k => Math.abs(gm[k]) > 0.004).sort((a, b) => gm[b] - gm[a]);
   const hPay = '<div class="rs-card"><h3>Cómo se cobró</h3><p class="rs-sub">Forma de pago de lo cobrado en ' + esc(mesLbl(mk).toLowerCase()) + '</p>' +
     (meds.length ? meds.map(k => '<div class="rs-lg"><span class="n"><em>' + esc(medioN(k)) + '</em></span><b>' + money(gm[k]) + (tot ? '<small>' + Math.round(100 * gm[k] / tot) + '%</small>' : '') + '</b></div>').join('') : '<div class="rs-empty" style="padding:8px 0">Nada cobrado este mes.</div>') + '</div>';
-  // Evolución del año
-  const vals = []; for (let m = 1; m <= 12; m++) { const k = anio + '-' + String(m).padStart(2, '0'); vals.push({ k: k, v: k > hoyM ? 0 : sumL(delMes(k).filter(l => !esSinPago(l))), fut: k > hoyM }); }
-  const prev = []; for (let m = 1; m <= 12; m++) { const k = (anio - 1) + '-' + String(m).padStart(2, '0'); prev.push(sumL(delMes(k).filter(l => !esSinPago(l)))); }
-  const mx = Math.max.apply(null, vals.map(x => x.v).concat(prev, [1]));
-  const alt = v => Math.max(3, Math.round(86 * v / mx));
-  const hEvo = '<div class="rs-card"><h3>Evolución del cobro</h3><p class="rs-sub">Por mes de check-in · ' + (anio - 1) + ' contra ' + anio + ' · toca un mes para verlo</p>' +
-    '<div class="rs-lgd"><span><i class="p"></i>' + (anio - 1) + '</span><span><i class="c"></i>' + anio + '</span></div><div class="rs-ev">' +
-    vals.map((x, i) => '<button type="button" data-m="' + x.k + '" class="' + (x.k === mk ? 'on' : '') + '"' + (x.fut ? ' disabled style="opacity:.35;cursor:default"' : '') + ' aria-label="' + esc(mesLbl(x.k)) + ': ' + money(x.v) + ' · ' + (anio - 1) + ': ' + money(prev[i]) + '"' + (x.k === mk ? ' aria-current="true"' : '') + '><span class="bb"><i class="b p" style="height:' + alt(prev[i]) + 'px"></i><i class="b c" style="height:' + (x.fut ? 3 : alt(x.v)) + 'px"></i></span><u>' + MESES_I[i] + '</u></button>').join('') + '</div></div>';
+  // Evolución del año (v31 · componente común CBG v1.2)
+  const MCAP = i => MESES[i].replace(/^./, c => c.toUpperCase());
+  const vals = []; for (let m = 1; m <= 12; m++) { const k = anio + '-' + String(m).padStart(2, '0'); vals.push({ k: k, i: m - 1, fut: k > hoyM, sd: k < minM, v: (k > hoyM || k < minM) ? null : sumL(delMes(k).filter(l => !esSinPago(l))) }); }
+  const prev = []; for (let m = 1; m <= 12; m++) { const k = (anio - 1) + '-' + String(m).padStart(2, '0'), l0 = delMes(k); prev.push({ v: sumL(l0.filter(l => !esSinPago(l))), has: l0.length > 0 }); }
+  const hEvo = '<div class="rs-card rs-evx"><h3>Evolución del cobro</h3><div id="rsEvoH"></div></div>';
   box.innerHTML = '<div class="rs-grid"><div class="rs-c rs-c1"><div style="order:1">' + hHero + '</div><div style="order:3">' + hSrv + '</div><div style="order:4">' + hPay + '</div></div><div class="rs-c rs-c2"><div style="order:2">' + hRes + '</div><div style="order:5">' + hEvo + '</div></div></div>';
+  const pintarEvo = () => {
+    const host = $('rsEvoH'); if (!host) return;
+    try { CBG.css(); CBG.watch(host, pintarEvo); } catch (e) {}
+    const f0 = v => '$' + fnum(v, 0), fk = CBG.fk;
+    const wide = CBG.isWide(), W = CBG.width(host), H = wide ? Math.round(Math.max(200, Math.min(300, W * 0.3))) : 180;
+    const ix = +mk.slice(5, 7) - 1, cur = vals[ix], pv = prev[ix], enC = mk === hoyM;
+    const items = vals.map(x => ({ k: x.k, ax: MCAP(x.i), ax1: MESES_I[x.i], val: x.v, nd: !x.fut && x.sd, off: x.fut, c: 'var(--acento)', partial: x.k === hoyM && !x.sd,
+      txt: x.v == null ? null : f0(x.v), txtS: x.v == null ? null : fk(x.v),
+      aria: MESES_L[x.i] + ' ' + anio + ': ' + (x.fut ? 'aún no llega' : (x.sd ? 'sin datos' : money(x.v))) }));
+    const av = CBG.avg(vals.filter(x => x.v != null && x.k < hoyM).map(x => x.v)), avOn = av != null && CBG.promOn();
+    const svg = CBG.bars({ items: items, W: W, H: H, wide: wide, sel: mk, lines: avOn ? [{ v: av }] : [], axf: fk, label: 'Cobro mensual de adicionales ' + anio });
+    const dpv = (pv.has && pv.v > 0 && cur.v != null) ? Math.round((cur.v - pv.v) / pv.v * 100) : null;
+    const hdr = CBG.hd({ lbl: MESES_L[ix] + ' ' + anio + (enC ? ' (en curso)' : ''), big: cur.v == null ? 'Sin datos' : money(cur.v),
+      chip: (!enC && dpv != null && dpv !== 0) ? { t: (dpv > 0 ? '▲ ' : '▼ ') + Math.abs(dpv) + '% vs ' + MCAP(ix) + ' ' + (anio - 1), c: dpv > 0 ? 'g' : 'b' } : null,
+      sub: pv.has ? MCAP(ix) + ' ' + (anio - 1) + (enC ? ' cerró en ' : ': ') + money(pv.v) : 'Sin dato de ' + (anio - 1) });
+    const mxL = Math.max.apply(null, vals.map(x => x.v || 0).concat([1]));
+    const rows = vals.filter(x => x.v != null).reverse().map(x => { const p = prev[x.i], d = (x.k !== hoyM && p.has && p.v > 0) ? Math.round((x.v - p.v) / p.v * 100) : null;
+      return { k: x.k, lbl: MCAP(x.i) + ' ' + x.k.slice(2, 4), tag: x.k === hoyM ? 'en curso' : '', amt: money(x.v), w: x.v / mxL * 100, on: x.k === mk,
+        chip: (d != null && d !== 0) ? { t: (d > 0 ? '▲ ' : '▼ ') + Math.abs(d) + '% vs ' + MCAP(x.i) + ' ' + (anio - 1), c: d > 0 ? 'g' : 'b' } : null }; });
+    const keys = '<div class="cbg-keys"><span><i class="cbg-k" style="background:var(--acento)"></i>' + anio + '</span>' + (items.some(q => q.partial) ? '<span><i class="cbg-k h"></i>Mes en curso</span>' : '') + (av != null ? CBG.promBtn('Promedio ' + f0(av)) : '') + '</div>';
+    host.innerHTML = '<div class="cbg-top"><span class="rmk">Por mes de check-in · ' + anio + '</span>' + CBG.seg(EVLISTA) + '</div>' + hdr +
+      (EVLISTA ? CBG.list(rows) : svg + keys + '<p class="cbg-hint">Toca un mes para verlo · «Lista» muestra todos</p>');
+  };
+  pintarEvo();
 }
 $('rsPrev').onclick = () => { resMes = mesMover(resMes || HOY.slice(0, 7), -1); renderResumen(); };
 $('rsNext').onclick = () => { resMes = mesMover(resMes || HOY.slice(0, 7), 1); renderResumen(); };
+let EVLISTA = false;
 $('rsBody').addEventListener('click', e => {
-  const m = e.target.closest('.rs-ev button[data-m]'); if (m && !m.disabled) { resMes = m.dataset.m; renderResumen(); return; }
+  const sg = e.target.closest('.rs-evx [data-cbg]');
+  if (sg) { const a = sg.dataset.cbg; try { CBG.tipHide(); } catch (x) {} if (a === 'graf' || a === 'lista') EVLISTA = (a === 'lista'); else if (a === 'prom') CBG.promSet(!CBG.promOn()); renderResumen(); return; }
+  const m = e.target.closest('.rs-evx g.m, .rs-evx .cbg-row'); if (m && !m.classList.contains('off') && !m.disabled && m.dataset.m) { resMes = m.dataset.m; try { CBG.tipHide(); } catch (x) {} renderResumen(); return; }
   if (e.target.closest('[data-rs="cie"]')) { irTab('reg', true); const c = $('cieCard'); if (c && !c.hidden) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); else window.scrollTo({ top: 0 }); }
 });
+$('rsBody').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const g = e.target.closest && e.target.closest('.rs-evx g.m'); if (!g || g.classList.contains('off')) return;
+  e.preventDefault(); const k = g.dataset.m; resMes = k; renderResumen();
+  const n = $('rsBody').querySelector('.rs-evx g.m[data-m="' + k + '"]'); if (n) try { n.focus(); } catch (x) {}
+});
+try {
+  CBG.tip($('rsBody'), '.rs-evx g.m:not(.off)', el => {
+    const k = el.getAttribute('data-m'), hoyM = HOY.slice(0, 7), md = mesesConDatos(); if (!md.length || k < md[0] || k > hoyM) return '';
+    const sm0 = m => { const ls = DATA.lineas.filter(l => l.checkin && l.checkin.slice(0, 7) === m); return { v: sumL(ls.filter(l => !esSinPago(l))), has: ls.length > 0 }; };
+    const a = sm0(k), kp = (+k.slice(0, 4) - 1) + k.slice(4), b = sm0(kp), i = +k.slice(5, 7) - 1, mc = MESES[i].replace(/^./, c => c.toUpperCase());
+    let h = '<div class="t">' + esc(mesLbl(k)) + (k === hoyM ? ' · en curso' : '') + '</div><div class="l"><span>Cobrado</span><b>' + money(a.v) + '</b></div>';
+    if (b.has && b.v > 0) { h += '<div class="l f"><span>' + mc + ' ' + kp.slice(0, 4) + '</span><b>' + money(b.v) + '</b></div>'; if (k !== hoyM) { const d = Math.round((a.v - b.v) / b.v * 100); if (d !== 0) h += '<div class="l"><span>Diferencia</span><span class="cbg-chip ' + (d > 0 ? 'g' : 'b') + '">' + (d > 0 ? '▲ ' : '▼ ') + Math.abs(d) + '%</span></div>'; } }
+    return h;
+  });
+} catch (e) {}
 $('rsNuevo').onclick = () => { irTab('reg', true); $('resCard').scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => { try { $('rBuscar').focus({ preventScroll: true }); } catch (e) {} }, 350); };
 
 /* v29: nombres y capacidades de los 3 anuncios salen del catálogo (al abrir, con la copia guardada, y cuando llega una versión nueva) */
