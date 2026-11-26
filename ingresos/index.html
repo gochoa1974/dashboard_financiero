@@ -14,6 +14,7 @@
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../graficos_cb_v1_2026-11-25_1930.js"></script>
 <script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
+<!-- v19.7 (25 nov 2026 19:45): «¿De dónde viene?» y «Cómo se llega al total» cuentan la misma historia en neto y solo con lo ya dormido (Airbnb bruto − comisión = Airbnb neto + Directas + Extras = Total generado); lo por dormir va aparte; los totales de las pestañas Airbnb/Directas/Extras se amarran al Resumen. Nada se elimina. -->
 <!-- v19.6 (25 nov 2026 19:50): «Evolución» y «Comparación» con el diseño nuevo de gráficos (graficos_cb_v1 + comparar_cb_v2.2): valores nunca girados, encabezado con el mes elegido y su variación, tarjeta al pasar el cursor, lista del mes, línea de promedio apagable. Nada se elimina. -->
 <!-- v19.5b (25 nov 2026 18:45): usa comparar_cb_v2.1 (los estilos de «Comparación» se cargan siempre; en pantalla ancha el gráfico se dibuja a su ancho real y la tabla queda junto a «Lo que se ve»). Nada se elimina. -->
 <!-- v19.5 (25 nov 2026): pantalla ancha (desde 1100 px): franja superior con el número grande, gráfico de evolución más ancho y alto (se dibuja al ancho de su panel, hasta 1700 px), paneles en columnas, ancho hasta 1680 px. Celular e iPad sin cambios. -->
@@ -140,6 +141,17 @@ input{font-family:inherit;color:inherit}
 .cas.tot{font-size:15px;font-weight:800}
 .cas.tot b{font-size:17px}
 .cas .neg{color:var(--bad)}
+.nota{font-size:12px;color:var(--mut);font-weight:600;margin:-2px 0 8px;line-height:1.35}
+.lg b small,.cas span small{display:block;font-size:11.5px;color:var(--mut);font-weight:600;margin-top:1px;line-height:1.25}
+.lg b{line-height:1.2}
+.lg i.h{width:14px;height:10px;border-radius:3px;background:repeating-linear-gradient(135deg,var(--mut) 0 3px,rgba(128,140,150,.3) 3px 6px)}
+.cas.key{background:rgba(var(--c),.10);margin:2px -10px;padding:10px 10px;border-top:0;border-radius:12px}
+.cas.key+.cas{border-top:0}
+.cas.key span{font-weight:800;display:flex;align-items:center;gap:8px}
+.cas.key i{width:10px;height:10px;border-radius:50%;background:rgb(var(--c));flex:0 0 auto}
+.cas.sub{font-weight:600;color:var(--mut);font-size:13px;padding:6px 0 0;border-top:0}
+.cas.sub b{font-weight:700}
+.fn{font-size:12px;color:var(--mut);font-weight:600;border-top:1px dashed var(--line);margin:8px 0 0;padding-top:8px;line-height:1.4}
 .cas small{display:block;font-size:11.5px;color:var(--mut);font-weight:600;margin-top:1px}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:var(--shadow)}
@@ -565,6 +577,11 @@ function verificar(){
 }
 
 /* ---------- pintado ---------- */
+/* porcentajes enteros que siempre suman 100 (método del mayor resto) */
+function pct100(v){var t=0,i;v.forEach(function(x){t+=Math.max(x,0);});if(t<=0)return v.map(function(){return 0;});
+  var raw=v.map(function(x){return Math.max(x,0)/t*100;}),fl=raw.map(Math.floor),rest=100-fl.reduce(function(a,b){return a+b;},0),ord=raw.map(function(x,k){return [x-Math.floor(x),k];}).sort(function(a,b){return b[0]-a[0];});
+  for(i=0;i<rest&&i<ord.length;i++)fl[ord[i][1]]++;return fl;}
+function tieNota(D,P,solo){return '<p class="mtn">'+(P>0.004?'De este total, ya durmió '+money(D)+' y falta por dormir '+money(P)+'. En el Resumen cuenta solo lo ya dormido.':'Todo ya durmió'+(solo?'':'; coincide con el Resumen')+'.')+'</p>';}
 function bar(segs,total){
   var h='<div class="rbar" role="img" aria-label="Distribución del ingreso">';var first=true;
   segs.forEach(function(s){
@@ -717,26 +734,31 @@ function renderR0(){
   var nd=o.nD>0?o.netoD/o.nD:0;
   $("kA").textContent=o.nD>0?money(nd):"—";
 
-  /* Resumen */
-  var tot=o.totD+o.totP;var segs=[
-    {c:"var(--air)",v:o.air.bD},{c:"var(--air)",v:o.air.bP,h:1},
-    {c:"var(--dir)",v:o.dir.bD},{c:"var(--dir)",v:o.dir.bP,h:1},
-    {c:"var(--ext)",v:o.ext.cD},{c:"var(--ext)",v:o.ext.cP,h:1}];
-  var res=evoHTML(pm?mk:(per==="pasado"?((+HOY.slice(0,4)-1)+"-12"):HOY.slice(0,7)))+'<div class="panel"><div class="panel-h"><b>¿De dónde viene?</b><span>'+money(tot)+'</span></div>';
-  if(tot>0.004){
-    res+=bar(segs,tot);
-    res+='<div class="rmk"><u></u>Ya durmió'+(o.totP>0?'<u class="h"></u>Por dormir':'')+'</div>';
-    [["air","Airbnb",o.air.bD+o.air.bP],["dir","Directas",o.dir.bD+o.dir.bP],["ext","Extras cobrados",o.ext.cD+o.ext.cP]].forEach(function(l){
-      res+='<div class="lg" style="--c:var(--'+l[0]+')"><i></i><b>'+l[1]+'</b><em>'+(l[2]>0?Math.round(l[2]/tot*100)+'%':'')+'</em><strong>'+money(l[2])+'</strong></div>';
+  /* Resumen (v19.7): las dos tarjetas cuentan UNA historia, siempre en neto y solo con lo que ya durmió (igual que el número grande).
+     Airbnb bruto − comisión = Airbnb neto; + Directas (sin comisión); + Extras cobrados = Total generado. Lo «por dormir» va aparte, en una línea. */
+  var tD=o.totD,tP=o.totP,aB=o.air.gD,aN=o.air.bD,aCm=aB-aN,dN=o.dir.bD,eN=o.ext.cD;
+  var segs=[{c:"var(--air)",v:aN},{c:"var(--dir)",v:dN},{c:"var(--ext)",v:eN}];
+  var res=evoHTML(pm?mk:(per==="pasado"?((+HOY.slice(0,4)-1)+"-12"):HOY.slice(0,7)))+'<div class="panel"><div class="panel-h"><b>¿De dónde viene?</b><span>'+money(tD)+'</span></div>';
+  if(tD>0.004||tP>0.004){
+    res+='<p class="nota">Todo en neto: ya descontada la comisión de Airbnb. Solo lo que ya durmió.</p>';
+    var pc=pct100([aN,dN,eN]);
+    if(tD>0.004)res+=bar(segs,tD);else res+='<p class="nota">Todavía no se duerme ninguna noche de este período.</p>';
+    [["air","Airbnb","neto, después de comisión",aN,pc[0]],["dir","Directas","sin comisión",dN,pc[1]],["ext","Extras cobrados","",eN,pc[2]]].forEach(function(l){
+      res+='<div class="lg" style="--c:var(--'+l[0]+')"><i></i><b>'+l[1]+(l[2]?'<small>'+l[2]+'</small>':'')+'</b><em>'+(tD>0.004&&l[3]>0?l[4]+'%':'')+'</em><strong>'+money(l[3])+'</strong></div>';
     });
+    if(tP>0.004)res+='<div class="lg lgp"><i class="h"></i><b>Por dormir<small>aún no cuenta; suma cuando pasen las noches</small></b><em></em><strong>'+money(tP)+'</strong></div>';
   } else res+='<div class="empty" style="margin-top:6px">No hay ingresos en '+Pm+'.</div>';
   res+='</div>';
-  res+='<div class="panel"><div class="panel-h"><b>Del bruto al neto</b><span></span></div>'+
-    '<div class="cas"><span>Hospedaje bruto<small>Airbnb + directas, noches dormidas</small></span><b>'+money(o.brutoD)+'</b></div>'+
-    '<div class="cas"><span>Comisión de Airbnb</span><b class="neg">− '+money(o.comD)+'</b></div>'+
-    '<div class="cas"><span>Hospedaje neto</span><b>'+money(o.netoD)+'</b></div>'+
-    '<div class="cas"><span>Extras cobrados</span><b>+ '+money(o.ext.cD)+'</b></div>'+
-    '<div class="cas tot"><span>Total generado</span><b>'+money(o.totD)+'</b></div></div>';
+  var hayA=aB>0.004||aN>0.004;
+  res+='<div class="panel"><div class="panel-h"><b>Cómo se llega al total</b><span></span></div>'+
+    (hayA?'<div class="cas"><span>Airbnb bruto</span><b>'+money(aB)+'</b></div>'+
+    '<div class="cas"><span>Comisión de Airbnb</span><b class="neg">− '+money(Math.abs(aCm))+'</b></div>'+
+    '<div class="cas key" style="--c:var(--air)"><span><i></i>Airbnb neto</span><b>'+money(aN)+'</b></div>':'')+
+    '<div class="cas"><span>'+(hayA?'+ ':'')+'Directas<small>sin comisión</small></span><b>'+money(dN)+'</b></div>'+
+    '<div class="cas"><span>'+'+ Extras cobrados</span><b>'+money(eN)+'</b></div>'+
+    '<div class="cas tot"><span>Total generado (neto)</span><b>'+money(tD)+'</b></div>'+
+    (tP>0.004?'<div class="cas sub"><span>Por dormir · aún no cuenta</span><b>'+money(tP)+'</b></div>':'')+
+    '<p class="fn">Hospedaje (Airbnb + directas): bruto '+money(o.brutoD)+' · neto '+money(o.netoD)+'</p></div>';
   if(o.ext.sin>0.004)res+='<div class="panel"><div class="panel-h"><b>Sin cobrar</b><span>'+money(o.ext.sin)+'</span></div><div class="rmk" style="margin:0">No-show de limpieza: ahorro que no entra a caja ni suma al total.</div></div>';
   $("p-res").innerHTML=res;
 
@@ -745,9 +767,8 @@ function renderR0(){
   if(acc.length>1){$("p-air").innerHTML=accList("air",acc,pr);$("p-dir").innerHTML=accList("dir",acc,pr);$("p-ext").innerHTML=accList("ext",acc,pr);}
   else{
     var tAir=0,tDir=0;o.air.rows.forEach(function(e){tAir+=e.share;});o.dir.rows.forEach(function(e){tDir+=e.share;});
-    var tNota='<p class="mtn">Incluye lo ya dormido y lo que falta por dormir. El total generado del período está en el Resumen.</p>';
-    $("p-air").innerHTML=resList(o.air.rows,"air")+(o.air.rows.length?'<div class="mtot"><span>Total Airbnb · '+mLabel(acc[0])+'</span><b>'+money(tAir)+'</b></div>'+tNota:"");
-    $("p-dir").innerHTML=resList(o.dir.rows,"dir")+(o.dir.rows.length?'<div class="mtot"><span>Total Directas · '+mLabel(acc[0])+'</span><b>'+money(tDir)+'</b></div>'+tNota:"");}
+    $("p-air").innerHTML=resList(o.air.rows,"air")+(o.air.rows.length?'<div class="mtot"><span>Total Airbnb · '+mLabel(acc[0])+'</span><b>'+money(tAir)+'</b></div>'+tieNota(o.air.bD,o.air.bP):"");
+    $("p-dir").innerHTML=resList(o.dir.rows,"dir")+(o.dir.rows.length?'<div class="mtot"><span>Total Directas · '+mLabel(acc[0])+'</span><b>'+money(tDir)+'</b></div>'+tieNota(o.dir.bD,o.dir.bP):"");}
   var ex="";
   if(o.ext.rows.length){
     ex+='<div class="group">Cobrados<span>'+money(o.ext.cD+o.ext.cP)+'</span></div>';
@@ -758,7 +779,7 @@ function renderR0(){
     ex+=extGroups(o.ext.rowsSin,true);
   }
   if(!ex)ex='<div class="empty">Sin extras en '+Pm+'.</div>';
-  if(o.ext.rows.length&&acc.length<=1)ex+='<div class="mtot"><span>Total Extras cobrados · '+mLabel(acc[0])+'</span><b>'+money(o.ext.cD+o.ext.cP)+'</b></div>'+(o.ext.rowsSin.length?'<p class="mtn">No incluye los extras sin cobrar.</p>':"");
+  if(o.ext.rows.length&&acc.length<=1)ex+='<div class="mtot"><span>Total Extras cobrados · '+mLabel(acc[0])+'</span><b>'+money(o.ext.cD+o.ext.cP)+'</b></div>'+tieNota(o.ext.cD,o.ext.cP)+(o.ext.rowsSin.length?'<p class="mtn">No incluye los extras sin cobrar.</p>':"");
   ex+='<div class="rmk" style="margin-top:10px">Los extras se cuentan en el mes de entrada de su reserva.</div>';
   if(acc.length<=1)$("p-ext").innerHTML=ex;
   $("tabs").querySelector('[data-t="air"]').textContent="Airbnb · "+o.air.rows.length;
@@ -790,7 +811,7 @@ function accList(key,months,pr){
     h+='<div class="mo'+(op?" open":"")+'" data-m="'+id+'"><button type="button" class="mh" aria-expanded="'+op+'" data-mo="'+id+'"><span class="pm" aria-hidden="true">'+(op?"−":"+")+'</span><span class="mt"><b>'+mLabel(d.m)+(d.m===hm?" · en curso":"")+'</b><span>'+(d.n?d.sum:"Sin movimientos")+'</span></span><span class="ma">'+money(d.tot)+'</span></button><div class="mb"'+(op?"":" hidden")+'>'+body+'</div></div>';});
   ysub();
   var lbl=key==="air"?"Airbnb":key==="dir"?"Directas":"Extras cobrados";
-  h+='<div class="mtot"><span>Total '+lbl+(pr[0].slice(0,4)===pr[1].slice(0,4)?" "+pr[0].slice(0,4):"")+'</span><b>'+money(grand)+'</b></div><p class="mtn">Incluye lo ya dormido y lo que falta por dormir. El total generado del período está en el Resumen.</p>';
+  h+='<div class="mtot"><span>Total '+lbl+(pr[0].slice(0,4)===pr[1].slice(0,4)?" "+pr[0].slice(0,4):"")+'</span><b>'+money(grand)+'</b></div>'+(function(){var oo=calcRange(pr[0],pr[1]);return key==="ext"?tieNota(oo.ext.cD,oo.ext.cP):tieNota(oo[key].bD,oo[key].bP);})();
   return h;}
 function resList(rows,key){
   if(!rows.length)return '<div class="empty">Sin reservas de este origen en el período.</div>';
