@@ -14,6 +14,7 @@
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../graficos_cb_v1_2026-11-25_1930.js"></script>
 <script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
+<!-- v19.9 (25 nov 2026 20:30): barra de período unificada con Gastos, Resultados y Hotelería (hoja compartida barra_cb_v1): filtros y mes en una sola barra, mes con su línea de apoyo («Mes en curso · al 25 de noviembre»), mismos márgenes (16/24/32). Solo estilo y orden; ningún filtro ni cuenta cambia. Nada se elimina. -->
 <!-- v19.8 (25 nov 2026 19:59): (1) el comparativo bajo el gráfico y el chip del número grande dicen desde cuándo comparan y por qué (el año anterior no tiene datos antes); se muestra el total del período junto al comparable. (2) El aviso «Desactualizado» ya no depende de la marca guardada en cada aparato: la versión del proceso viene dentro del maestro (Sincronizar v16); si el maestro no la trae todavía, se usa la marca local como antes. Nada se elimina. -->
 <!-- v19.7 (25 nov 2026 19:45): «¿De dónde viene?» y «Cómo se llega al total» cuentan la misma historia en neto y solo con lo ya dormido (Airbnb bruto − comisión = Airbnb neto + Directas + Extras = Total generado); lo por dormir va aparte; los totales de las pestañas Airbnb/Directas/Extras se amarran al Resumen. Nada se elimina. -->
 <!-- v19.6 (25 nov 2026 19:50): «Evolución» y «Comparación» con el diseño nuevo de gráficos (graficos_cb_v1 + comparar_cb_v2.2): valores nunca girados, encabezado con el mes elegido y su variación, tarjeta al pasar el cursor, lista del mes, línea de promedio apagable. Nada se elimina. -->
@@ -222,9 +223,10 @@ details.ver li.ok b{color:var(--ok)}
 details.ver li.bad b{color:var(--bad)}
 .foot{margin-top:14px;text-align:center;font-size:12px;color:var(--mut);font-weight:600}
 @media (min-width:700px){
-  .app{max-width:720px;padding-left:24px;padding-right:24px}
+  .app{max-width:1000px;padding-left:24px;padding-right:24px}
   .hero-big{font-size:58px}
 }
+@media (min-width:760px){.app{padding-top:calc(22px + env(safe-area-inset-top,0px))}}
 @media (min-width:1000px){
   .app{max-width:1240px}
   .dash{display:grid;grid-template-columns:minmax(380px,440px) minmax(0,1fr);gap:24px;align-items:start}
@@ -317,6 +319,7 @@ details.ver li.bad b{color:var(--bad)}
   .evo .evc{grid-template-columns:repeat(2,minmax(0,1fr))}.evo .evc.one{grid-template-columns:1fr}
 }
 </style>
+<link rel="stylesheet" href="../barra_cb_v1_2026-11-25_2030.css">
 </head>
 <body>
 <div class="app">
@@ -343,14 +346,16 @@ details.ver li.bad b{color:var(--bad)}
     </div>
 
     <section id="secR">
-      <div class="pchips" id="pChips" role="group" aria-label="Período"></div>
+      <div class="cbb">
+        <div class="pchips" id="pChips" role="group" aria-label="Período"></div>
+        <div class="month" id="mNav">
+          <button type="button" class="nav" id="mPrev" aria-label="Mes anterior">◀</button>
+          <div class="mid-m"><b id="mLbl"></b><span class="msub" id="mSub"></span><div class="mchips"><button type="button" class="hoy" id="mHoy" hidden>Ir a este mes</button></div></div>
+          <button type="button" class="nav" id="mNext" aria-label="Mes siguiente">▶</button>
+        </div>
+      </div>
       <div class="prange" id="pRng" hidden></div>
       <div id="cmpHost" hidden></div>
-      <div class="month" id="mNav">
-        <button type="button" class="nav" id="mPrev" aria-label="Mes anterior">◀</button>
-        <div class="mid-m"><b id="mLbl"></b><button type="button" class="hoy" id="mHoy" hidden>Ir a este mes</button></div>
-        <button type="button" class="nav" id="mNext" aria-label="Mes siguiente">▶</button>
-      </div>
       <div class="dash">
         <div class="left">
           <div class="hero" aria-label="Generado en el mes">
@@ -735,6 +740,7 @@ function renderR0(){
   if(!pm){var ra=pr[0],rb=pr[1];
     $("pRng").textContent=dShort(ra)+" "+ra.slice(0,4)+" al "+dShort(rb)+" "+rb.slice(0,4);}
   $("mLbl").textContent=mLabel(mk);
+  $("mSub").textContent=mk===HOY.slice(0,7)?"Mes en curso · al "+(+HOY.slice(8))+" de "+MESES[+mk.slice(5)-1]:(mk<HOY.slice(0,7)?"Mes cerrado":"Mes por venir");
   $("mPrev").disabled=mk<=rg[0];$("mNext").disabled=mk>=rg[1];
   $("mHoy").hidden=(mk===HOY.slice(0,7));
   var totAll=o.totD+o.totP;

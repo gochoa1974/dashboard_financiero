@@ -19,6 +19,7 @@
 <!-- v20.4 (25 nov 2026): gráficos con valor sobre cada barra (vertical en celular cuando no cabe en horizontal); Comparar pasa a comparar_cb_v2_2026-11-25_1710.js. Nada se elimina. -->
 <script src="../graficos_cb_v1_2026-11-25_1930.js"></script>
 <script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
+<!-- v20.8 (25 nov 2026 20:30): barra de período unificada con Ingresos, Resultados y Hotelería (hoja compartida barra_cb_v1): se quita el título grande (el nombre de la sección pasa al subtítulo del encabezado: «Panel de gastos» / «Gastos · Recurrentes»…), filtros primero y mes debajo con su línea de apoyo; «Ir a este mes» y el sello «Mes cerrado» se conservan; botones de 44 px; laptop: una sola línea; márgenes 16/24/32. Solo estilo y orden; ninguna cuenta ni filtro cambia. Nada se elimina. -->
 <!-- v20.7 (25 nov 2026 19:50): «Evolución» y «Comparación» con el diseño nuevo de gráficos (graficos_cb_v1 + comparar_cb_v2.2): valores nunca girados, encabezado con el mes elegido y su variación, tarjeta al pasar el cursor, lista del mes, línea de promedio apagable. Nada se elimina. -->
 <!-- v20.6b (25 nov 2026 18:45): usa comparar_cb_v2.1 (los estilos de «Comparación» se cargan siempre; en pantalla ancha el gráfico se dibuja a su ancho real y la tabla queda junto a «Lo que se ve»). Nada se elimina. -->
 <!-- v20.2 (24 nov 2026 20:45): «Sin cobro este mes» solo para recurrentes que se pueden suspender (software); esenciales solo con excepción y motivo. Interruptor «Se puede suspender» en editar/nuevo recurrente. -->
@@ -246,7 +247,7 @@ input,select{font-family:inherit;color:inherit}
 @media(min-width:760px){.pchips{display:flex;align-items:center;flex-wrap:wrap}.sgm{grid-template-columns:repeat(4,auto)}.sgm button{padding:0 18px}.acts{display:flex}.act{padding:0 16px}}
 .prange{font-size:12.5px;color:var(--mut);font-weight:700;margin:2px 0 8px}
 body[data-tab]:not([data-tab="reg"]) .pbar{display:none}
-body.per-on .mgrp,body.per-on .vchips,body.per-on #closeBox,body.per-on #limBox{display:none!important}
+body.per-on .month,body.per-on #closeBox,body.per-on #limBox{display:none!important}
 body.per-on .fab{display:none!important}
 .hero-c{font-size:13px;font-weight:700;margin-top:6px;color:#fff;opacity:.92}
 .hero-c.up{color:#fbbf86}.hero-c.dn{color:#6ee7b7}
@@ -590,7 +591,7 @@ body:not([data-tab="reg"]) .dash{display:none}
  body[data-tab="reg"] .app{display:grid;grid-template-columns:minmax(380px,450px) minmax(0,1fr);column-gap:24px;align-items:start}
  body[data-tab="reg"] .app>*{grid-column:2}
  body[data-tab="reg"] .top{display:contents}
- body[data-tab="reg"] .top>.head,body[data-tab="reg"] .top>.stalebar,body[data-tab="reg"] .top>.month{grid-column:1/-1;margin-left:24px;margin-right:24px}
+ body[data-tab="reg"] .top>.head,body[data-tab="reg"] .top>.stalebar,body[data-tab="reg"] .top>.cbb{grid-column:1/-1;margin-left:24px;margin-right:24px}
  body[data-tab="reg"] .top>.head{margin-top:calc(22px + env(safe-area-inset-top,0px))}
  body[data-tab="reg"] .top>.dash{grid-column:1;grid-row:4/span 12;position:sticky;top:12px;margin-left:24px;display:block}
  body[data-tab="reg"] .hero{display:block;padding:26px 28px}
@@ -645,7 +646,7 @@ body:not([data-tab="reg"]) #cmpHost{display:none!important}
  body[data-tab="reg"] .app{display:block}
  body[data-tab="reg"] .app>*{grid-column:auto}
  body[data-tab="reg"] .top{display:block}
- body[data-tab="reg"] .top>.head,body[data-tab="reg"] .top>.stalebar,body[data-tab="reg"] .top>.month{margin-left:0;margin-right:0}
+ body[data-tab="reg"] .top>.head,body[data-tab="reg"] .top>.stalebar,body[data-tab="reg"] .top>.cbb{margin-left:0;margin-right:0}
  body[data-tab="reg"] .top>.head{margin-top:0}
  body[data-tab="reg"] .top>.dash{position:static;margin:0 0 4px;display:block}
  body[data-tab="reg"] .hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);column-gap:48px;align-items:center;padding:26px 34px}
@@ -679,21 +680,34 @@ body:not([data-tab="reg"]) #cmpHost{display:none!important}
  body[data-tab="reg"] #regBox .pcol>.evo{grid-column:1/span 2;grid-row:span 2}
  body[data-tab="reg"] #regBox .pcol>.rcx{grid-column:3}
 }
+/* v20.8 · márgenes laterales de laptop = 32 px (igual que Ingresos, Resultados y Hotelería); celular 16 y iPad 24 no cambian */
+@media (min-width:1100px){
+ .top{padding-left:32px;padding-right:32px}
+ .banner,.clsbar,.gapbox{margin-left:32px;margin-right:32px}
+ .pane{padding-left:32px;padding-right:32px}
+ .sticky,body[data-tab="reg"] .sticky{padding-left:32px;padding-right:32px}
+ #cmpHost{margin:10px 0 0}
+}
 </style>
+<link rel="stylesheet" href="../barra_cb_v1_2026-11-25_2030.css">
 </head>
 <body data-tab="reg">
 <div class="app">
   <div class="top">
     <div class="head">
-      <div class="who"><a class="backbtn" href="../dashboard/" aria-label="Volver al dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><img src="../Cima-Blanca-logo.png" alt="Cima Blanca" style="width:40px;height:40px;border-radius:50%;object-fit:cover;display:block"><div><b>Cima Blanca</b><span>Panel de gastos</span></div></div>
+      <div class="who"><a class="backbtn" href="../dashboard/" aria-label="Volver al dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><img class="logo" src="../Cima-Blanca-logo.png" alt="Cima Blanca"><div class="ttl"><b>Cima Blanca</b><span id="hSub">Panel de gastos</span></div></div>
       <button type="button" class="sync off" id="syncPill"><i></i><span id="syncTxt">Sin conectar</span></button>
     </div>
     <div class="stalebar" id="staleBar"><i></i><span id="staleTxt"></span></div>
-    <div class="month">
-      <div class="vt"><h2 id="vTitle">Resumen de gastos</h2><small id="vSub">Qué salió y por qué</small><div class="vchips"><button type="button" class="hoy" id="mHoy" style="display:none">Ir a este mes</button><span class="seal" id="mSeal" style="display:none"></span></div></div>
-      <div class="mgrp"><button type="button" class="nav" id="mPrev" aria-label="Mes anterior">◀</button><b id="mLbl"><span class="mfull"></span><span class="mshort"></span></b><button type="button" class="nav" id="mNext" aria-label="Mes siguiente">▶</button></div>
+    <div class="vt" hidden><h2 id="vTitle">Resumen de gastos</h2><small id="vSub">Qué salió y por qué</small></div>
+    <div class="cbb">
+      <div class="pbar" id="pBar"><div class="pchips" id="pChips" role="group" aria-label="Período"></div><div class="prange" id="pRng" hidden></div></div>
+      <div class="month">
+        <button type="button" class="nav" id="mPrev" aria-label="Mes anterior">◀</button>
+        <div class="mid-m"><b id="mLbl"><span class="mfull"></span><span class="mshort"></span></b><span class="msub" id="mSub"></span><div class="mchips"><button type="button" class="hoy" id="mHoy" style="display:none">Ir a este mes</button><span class="seal" id="mSeal" style="display:none"></span></div></div>
+        <button type="button" class="nav" id="mNext" aria-label="Mes siguiente">▶</button>
+      </div>
     </div>
-    <div class="pbar" id="pBar"><div class="pchips" id="pChips" role="group" aria-label="Período"></div><div class="prange" id="pRng" hidden></div></div>
     <div id="cmpHost" hidden></div>
     <div class="dash">
     <section class="hero" aria-label="Resumen del mes">
@@ -1743,7 +1757,7 @@ function confirmAllConf(){
  persist();UI={};renderAll();toast(plu(P.conf.length,'gasto confirmado','gastos confirmados'),true);
 }
 const VT={reg:['Resumen de gastos','Qué salió y por qué'],rec:['Gastos recurrentes','Lo que se repite cada mes'],ev:['Gastos variables','Dependen de estadías o imprevistos'],pen:['Pendientes','Lo que falta resolver este mes']};
-function setVTitle(){const t=VT[document.body.dataset.tab||'reg']||VT.reg;const a=$('vTitle'),b=$('vSub');if(a)a.textContent=t[0];if(b)b.textContent=t[1];}
+function setVTitle(){const tb=document.body.dataset.tab||'reg',t=VT[tb]||VT.reg;const a=$('vTitle'),b=$('vSub');if(a)a.textContent=t[0];if(b)b.textContent=t[1];const h=$('hSub');if(h)h.textContent=tb==='reg'||!VT[tb]?'Panel de gastos':'Gastos · '+(x=>x.charAt(0).toUpperCase()+x.slice(1))(t[0].replace(/^Gastos /,''));}
 function gotoTab(t){const b=document.querySelector('.tabs [data-t='+t+']');if(b)b.click();}
 
 let APROX=false;
@@ -2094,6 +2108,7 @@ function cmpInit(){const ks=Object.keys(RESM).sort(),cm=todayISO().slice(0,7);if
 function renderAll(){pubRes();cmpInit();if(window.CBC){CBC.render();document.body.classList.toggle('cmpOn',CBC.active());}return renderAll0();}
 function renderAll0(){
  $('mLbl').querySelector('.mfull').textContent=mLabel(MES);$('mLbl').querySelector('.mshort').textContent=mShort(MES).replace(/ (\d\d)$/,function(m,y){return ' 20'+y;});setVTitle();
+ {const hm=todayISO().slice(0,7),ms=$('mSub');if(ms)ms.textContent=MES===hm?'Mes en curso · al '+(+todayISO().slice(8))+' de '+['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][+MES.slice(5)-1]:(MES>hm?'Mes por venir':'');}
  $('mHoy').style.display=MES===todayISO().slice(0,7)?'none':'';
  applyPer();renderRec();renderEv();renderReg();renderPen();renderTotals();renderClose();renderGaps();renderLimAlert();
 }
@@ -2282,7 +2297,7 @@ function saveLastSync(ms){
 function paintSyncMeta(){
  const m=$('syncTxt').querySelector('.meta');
  if(!m)return;
- m.textContent=lastSyncAt?'Actualizado '+relTime(lastSyncAt):'';
+ m.textContent=lastSyncAt?relTime(lastSyncAt):'';
 }
 function startLSTicker(){
  clearInterval(lsTimer);

@@ -14,6 +14,7 @@
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../graficos_cb_v1_2026-11-25_1930.js"></script>
 <script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
+<!-- v4.9d (25 nov 2026 20:48): barra de período unificada con Ingresos, Gastos y Resultados (hoja compartida barra_cb_v1): encabezado «Panel de hotelería» con el mismo estado (Al día / Desactualizado / Sin verificar), filtros y mes en una sola barra, la franja «Base» debajo. Se quita el título grande. Solo estilo y orden: no cambia ninguna cuenta ni filtro. Vuelta atrás: poner v4.9c. -->
 <!-- v4.9c (25 nov 2026 19:50): «Comparación» usa comparar_cb_v2.2 con el diseño nuevo (valores nunca girados, mes elegido en el encabezado, tarjeta al pasar el cursor, línea de promedio). Los gráficos propios de esta pantalla no cambian en esta fase. Nada se elimina. -->
 <!-- v4.9b (25 nov 2026 18:45): usa comparar_cb_v2.1 (los estilos de «Comparación» se cargan siempre; en pantalla ancha el gráfico se dibuja a su ancho real y la tabla queda junto a «Lo que se ve»). Nada se elimina. -->
 <script src="../glosario_cb_v1_7_2026-10-20_1305.js"></script>
@@ -205,18 +206,29 @@ body.cmpOn .bstrip{display:none!important}
   .grid>.card:nth-child(1){grid-column:span 7}
   .grid>#tres{grid-column:span 5}
 }
+/* v7f/v4.9d · barra unificada (hoja compartida barra_cb_v1): mismos márgenes y mismo alto de encabezado que Ingresos y Gastos */
+.wrap{padding-top:calc(14px + env(safe-area-inset-top,0px))}
+@media(min-width:700px){.wrap{padding-left:24px;padding-right:24px}}
+@media(min-width:760px){.wrap{padding-top:calc(22px + env(safe-area-inset-top,0px))}}
+@media(min-width:1100px){.wrap{padding-left:32px;padding-right:32px}}
+.rng[hidden]{display:none!important}
+.cbb+.rng{margin-top:-4px}
 </style>
+<link rel="stylesheet" href="../barra_cb_v1_2026-11-25_2030.css">
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><a class="back" href="../dashboard/" aria-label="Volver al dashboard">‹</a><div><b>Cima Blanca</b><small>KPIs · Hotelería</small></div></div>
-  <h1>KPIs · Hotelería</h1>
-  <p class="sub" id="fresh">Cuántas noches vendes, a qué precio y cuánto rinde cada noche disponible</p>
+  <div class="head">
+    <div class="who"><a class="backbtn" href="../dashboard/" aria-label="Volver al dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><img class="logo" src="../Cima-Blanca-logo.png" alt="Cima Blanca"><div class="ttl"><b>Cima Blanca</b><span>Panel de hotelería</span></div></div>
+    <button type="button" class="sync off" id="syncPill" aria-live="polite"><i></i><span><span id="syncTxt">Sin datos</span><span class="meta" id="syncMeta"></span></span></button>
+  </div>
   <div id="vacio" class="card" hidden><h3>Faltan datos</h3><p style="margin:6px 0 10px">Este panel lee las reservas que ya calcula Ingresos. Abre Ingresos una vez en este aparato y vuelve aquí.</p><p id="diag" class="note" style="margin:0 0 10px;font-weight:700"></p><a class="pchip" href="../ingresos/">Abrir Ingresos</a></div>
 
-  <div class="pchips" id="pChips"></div>
+  <div class="cbb" id="cbb">
+    <div class="pchips" id="pChips"></div>
+    <div class="month mnav" id="mnav"><button class="nav" id="mPrev" aria-label="Mes anterior">◀</button><div class="mid-m"><b id="mLbl"></b><span class="msub" id="mSub"></span></div><button class="nav" id="mNext" aria-label="Mes siguiente">▶</button></div>
+  </div>
   <div class="bstrip" id="bstrip"><span id="bstripT"></span><button type="button" id="bstripB">Cambiar</button></div>
-  <div class="mnav" id="mnav"><button id="mPrev" aria-label="Mes anterior">◀</button><b id="mLbl"></b><button id="mNext" aria-label="Mes siguiente">▶</button></div>
   <div class="aviso" id="aviso" role="status" hidden></div>
   <p class="rng" id="rng"></p>
   <div id="cmpHost" hidden></div>
@@ -433,7 +445,8 @@ function render(){
   $("mnav").style.display=per==="mes"?"flex":"none";
   $("mLbl").textContent=ml(cur);
   $("mNext").disabled=cur>=CM;$("mPrev").disabled=cur<=FIRST;$("mNext").style.opacity=$("mNext").disabled?.35:1;$("mPrev").style.opacity=$("mPrev").disabled?.35:1;
-  if(WIN[per])$("rng").innerHTML=GLO.inline("rangos_moviles",rngTxt(r));else $("rng").textContent=rngTxt(r);
+  if(per==="mes"){$("mSub").textContent=D[cur].parcial?"Mes en curso · hasta ayer, "+(+addD(HOY,-1).slice(8))+" "+MN[+cur.slice(5)-1].slice(0,3):"Mes cerrado";$("rng").textContent="";$("rng").hidden=true;}
+  else{$("mSub").textContent="";$("rng").hidden=false;if(WIN[per])$("rng").innerHTML=GLO.inline("rangos_moviles",rngTxt(r));else $("rng").textContent=rngTxt(r);}
   var win=WIN[per]?winOf():null,a=win?aggW(win.a,win.b):agg(ms),etq=etqF();
   $("hL").innerHTML=GLO.inline("ocupacion","Ocupación")+" · "+etq;
   $("hN").className="n";$("hN").innerHTML=a.occ==null?'<span style="font-size:.5em">Sin datos</span>':num(a.occ,1)+'<sup style="margin-left:2px">%</sup>';
@@ -558,7 +571,13 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape"){closeSh();c
 
 /* ===== verificación con Drive (misma consulta que usa Ingresos) ===== */
 var VER={sfx:"",busy:false,forz:false};
-function stamp(){$("fresh").textContent=genTxt()+(VER.busy?" · verificando…":VER.sfx);}
+function setPill(st,txt,meta,full){var p=$("syncPill");if(!p)return;p.className="sync "+st;$("syncTxt").textContent=txt;$("syncMeta").textContent=meta||"";p.title=full||"";}
+function genShort(){return (!GEN||!isFinite(Date.parse(GEN)))?"":genTxt().replace(/^Datos del /,"");}
+function stamp(){var m=genShort();
+  if(VER.busy)setPill("busy","Revisando datos…",m,genTxt()+" · verificando…");
+  else if(/hay archivos/.test(VER.sfx))setPill("stale","Desactualizado",m,genTxt()+VER.sfx);
+  else if(/al día/.test(VER.sfx))setPill("ok","Al día",m,genTxt()+VER.sfx);
+  else setPill("off","Sin verificar",m,genTxt()+VER.sfx);}
 function avisoR(){var av=$("aviso");
   if(!INC||!RES.length){av.hidden=true;return;}
   av.hidden=false;

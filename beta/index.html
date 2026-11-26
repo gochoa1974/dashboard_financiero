@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- Beta v0.1b (25 nov 2026, 20:48): oculta el encabezado propio de Resultados y Hotelería (ahora usan la barra unificada, como Ingresos y Gastos). Solo eso. Vuelta atrás: poner la Beta v0.1. -->
 <!-- Beta v0.1 (25 nov 2026, 18:30): navegación nueva (Hoy · Dinero · Reservas · Hotelería · Más) y botón «+ Registrar».
      Es una carpeta aparte: no cambia ningún archivo de producción ni se enlaza desde el menú actual.
      Hoy solo LEE las cifras que ya guardan Ingresos y Gastos en este dispositivo; no escribe nada.
@@ -221,7 +222,7 @@ var MAS=[
 ];
 var P2R=[['/ingresos/','dinero/ingresos'],['/gastos/','dinero/gastos'],['/resultados/','dinero/resultado'],['/adicionales/','reservas/extras'],['/directas/','reservas/directas'],['/cancelaciones/','reservas/cancelaciones'],['/hoteleria/','hoteleria/indicadores'],['/anuncios/','hoteleria/anuncios'],['/sincronizar/','mas/sincronizar'],['/parametros/','mas/configuracion'],['/glosario/','mas/glosario'],['/actividad/','mas/actividad']];
 /* CSS que se aplica dentro de cada módulo embebido para quitar su encabezado (atrás, logo y título): ya los da esta navegación */
-var HIDE={ingresos:'.head .who{display:none!important}.head{justify-content:flex-end!important}',gastos:'.head .who{display:none!important}.head{justify-content:flex-end!important}',resultados:'.top{display:none!important}',hoteleria:'.top{display:none!important}',anuncios:'.top{display:none!important}',glosario:'.top{display:none!important}',actividad:'.top{display:none!important}',adicionales:'header.apphead{display:none!important}',directas:'header.apphead{display:none!important}',cancelaciones:'header.apphead{display:none!important}',parametros:'header.apphead{display:none!important}',sincronizar:'header.apphead{display:none!important}'};
+var HIDE={ingresos:'.head .who{display:none!important}.head{justify-content:flex-end!important}',gastos:'.head .who{display:none!important}.head{justify-content:flex-end!important}',resultados:'.head .who{display:none!important}.head{justify-content:flex-end!important}',hoteleria:'.head .who{display:none!important}.head{justify-content:flex-end!important}',anuncios:'.top{display:none!important}',glosario:'.top{display:none!important}',actividad:'.top{display:none!important}',adicionales:'header.apphead{display:none!important}',directas:'header.apphead{display:none!important}',cancelaciones:'header.apphead{display:none!important}',parametros:'header.apphead{display:none!important}',sincronizar:'header.apphead{display:none!important}'};
 
 function puede(m){return !!(window.CB&&CB.puede&&CB.puede(m));}
 function secOK(s){if(s.k==='hoy'||s.k==='mas')return true;return s.segs.some(function(g){return puede(g[3]);});}

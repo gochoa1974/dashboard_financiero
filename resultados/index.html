@@ -14,6 +14,7 @@
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../graficos_cb_v1_2026-11-25_1930.js"></script>
 <script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
+<!-- v7f (25 nov 2026 20:48): barra de período unificada con Ingresos, Gastos y Hotelería (hoja compartida barra_cb_v1): encabezado «Panel de resultados» con el mismo estado, filtros y mes en una sola barra, mes con su línea «Mes en curso · al…» debajo. Se quita el título grande. Solo estilo y orden: no cambia ninguna cuenta ni filtro. Vuelta atrás: poner v7e. -->
 <!-- v7e (25 nov 2026 19:50): «Comparación» usa comparar_cb_v2.2 con el diseño nuevo (valores nunca girados, mes elegido en el encabezado, tarjeta al pasar el cursor, línea de promedio). Los gráficos propios de esta pantalla no cambian en esta fase. Nada se elimina. -->
 <!-- v7d (25 nov 2026 18:45): usa comparar_cb_v2.1 (los estilos de «Comparación» se cargan siempre; en pantalla ancha el gráfico se dibuja a su ancho real y la tabla queda junto a «Lo que se ve»). Nada se elimina. -->
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -147,17 +148,28 @@ body.cmpOn .hero,body.cmpOn .grid,body.cmpOn .mnav,body.cmpOn .rng{display:none!
   .grid>.card:nth-child(7){grid-column:span 5}
   .grid>.card:nth-child(7) .kp{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+/* v7f/v4.9d · barra unificada (hoja compartida barra_cb_v1): mismos márgenes y mismo alto de encabezado que Ingresos y Gastos */
+.wrap{padding-top:calc(14px + env(safe-area-inset-top,0px))}
+@media(min-width:700px){.wrap{padding-left:24px;padding-right:24px}}
+@media(min-width:760px){.wrap{padding-top:calc(22px + env(safe-area-inset-top,0px))}}
+@media(min-width:1100px){.wrap{padding-left:32px;padding-right:32px}}
+.rng[hidden]{display:none!important}
+.cbb+.rng{margin-top:-4px}
 </style>
+<link rel="stylesheet" href="../barra_cb_v1_2026-11-25_2030.css">
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><a class="back" href="../dashboard/" aria-label="Volver al dashboard">‹</a><div><b>Cima Blanca</b><small>Resultados financieros</small></div></div>
-  <h1>Resultados financieros</h1>
-  <p class="sub" id="fresh">Lo que entró, lo que salió y lo que quedó</p>
+  <div class="head">
+    <div class="who"><a class="backbtn" href="../dashboard/" aria-label="Volver al dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><img class="logo" src="../Cima-Blanca-logo.png" alt="Cima Blanca"><div class="ttl"><b>Cima Blanca</b><span>Panel de resultados</span></div></div>
+    <button type="button" class="sync off" id="syncPill" aria-live="polite"><i></i><span><span id="syncTxt">Sin datos</span><span class="meta" id="syncMeta"></span></span></button>
+  </div>
   <div id="vacio" class="card" hidden><h3>Faltan datos</h3><p style="margin:6px 0 10px">Este panel lee lo que ya calculan Ingresos y Gastos. Abre cada uno una vez en este aparato y vuelve aquí.</p><p id="diag" class="note" style="margin:0 0 10px;font-weight:700"></p><a class="pchip" href="../ingresos/">Abrir Ingresos</a> <a class="pchip" href="../gastos/">Abrir Gastos</a></div>
 
-  <div class="pchips" id="pChips"></div>
-  <div class="mnav" id="mnav"><button id="mPrev" aria-label="Mes anterior">◀</button><b id="mLbl"></b><button id="mNext" aria-label="Mes siguiente">▶</button></div>
+  <div class="cbb" id="cbb">
+    <div class="pchips" id="pChips"></div>
+    <div class="month mnav" id="mnav"><button class="nav" id="mPrev" aria-label="Mes anterior">◀</button><div class="mid-m"><b id="mLbl"></b><span class="msub" id="mSub"></span></div><button class="nav" id="mNext" aria-label="Mes siguiente">▶</button></div>
+  </div>
   <p class="rng" id="rng"></p>
   <div id="cmpHost" hidden></div>
 
@@ -354,7 +366,8 @@ function render(){
   $("mnav").style.display=per==="mes"?"flex":"none";
   $("mLbl").textContent=ml(cur);
   $("mNext").disabled=cur>=CM;$("mPrev").disabled=cur<=FIRST;$("mNext").style.opacity=$("mNext").disabled?.35:1;$("mPrev").style.opacity=$("mPrev").disabled?.35:1;
-  $("rng").textContent=per==="mes"?(D[cur].parcial?"Mes en curso · al "+HOY.slice(8)+" de "+MN[+cur.slice(5)-1]:"Mes cerrado"):(ml(r[0])+" al "+ml(r[1])+(per==="anio"||per==="todo"?" · hasta hoy":""));
+  var rt=per==="mes"?(D[cur].parcial?"Mes en curso · al "+HOY.slice(8)+" de "+MN[+cur.slice(5)-1]:"Mes cerrado"):(ml(r[0])+" al "+ml(r[1])+(per==="anio"||per==="todo"?" · hasta hoy":""));
+  $("mSub").textContent=per==="mes"?rt:"";$("rng").textContent=per==="mes"?"":rt;$("rng").hidden=per==="mes";
   var a=agg(ms),I=a.I,G=a.G,R=a.R,mg=I>0?R/I*100:0;
   var etq=etqF();
   $("hL").textContent="Resultado · "+etq;
@@ -504,12 +517,13 @@ function cargarInv(){
   fetch(PARAM_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({clave:k,accion:"listar"})})
    .then(function(r){return r.json();}).then(function(j){if(j&&j.ok&&j.parametros&&j.parametros.precio_compra){aplicarInv(j);build();cmpInit();if(Object.keys(D).length){if(cur<FIRST)cur=CM;chips();render();}}}).catch(function(){});
 }
+function setPill(st,txt,meta,full){var p=$("syncPill");if(!p)return;p.className="sync "+st;$("syncTxt").textContent=txt;$("syncMeta").textContent=meta||"";p.title=full||"";}
 function ago(t){if(!t)return"sin datos";var m=Math.round((Date.now()-t)/60000);return m<2?"ahora":m<60?"hace "+m+" min":m<1440?"hace "+Math.round(m/60)+" h":"hace "+Math.round(m/1440)+" d";}
 var PIDS=["pChips","mnav","rng","hero","grid"];
 function mostrar(fin){
   SI=ld("cb_res_ing_v1");SG=ld("cb_res_gas_v1");INV=ld("cb_res_inv_v1");build();cmpInit();
-  if(Object.keys(D).length){$("vacio").hidden=true;PIDS.forEach(function(i){$(i).style.display="";});$("fresh").textContent="Ingresos "+ago(SI.t)+" · Gastos "+ago(SG.t);if(cur<FIRST||!D[cur])cur=CM;chips();render();return true;}
-  if(fin){$("vacio").hidden=false;PIDS.forEach(function(i){$(i).style.display="none";});$("diag").textContent="Ingresos: "+(SI&&SI.m?"listo":"no respondió")+" · Gastos: "+(SG&&SG.m?"listo":"no respondió")+". Revisa que estén subidas las versiones nuevas.";}
+  if(Object.keys(D).length){$("vacio").hidden=true;PIDS.forEach(function(i){$(i).style.display="";});setPill(SI.t&&SG.t?"ok":"off",SI.t&&SG.t?"Datos listos":"Datos incompletos",SI.t&&SG.t?(ago(Math.min(SI.t,SG.t))==="ahora"?"justo ahora":ago(Math.min(SI.t,SG.t))):"","Ingresos "+ago(SI.t)+" · Gastos "+ago(SG.t));if(cur<FIRST||!D[cur])cur=CM;chips();render();return true;}
+  if(fin){setPill("off","Sin datos","");$("vacio").hidden=false;PIDS.forEach(function(i){$(i).style.display="none";});$("diag").textContent="Ingresos: "+(SI&&SI.m?"listo":"no respondió")+" · Gastos: "+(SG&&SG.m?"listo":"no respondió")+". Revisa que estén subidas las versiones nuevas.";}
   return false;
 }
 function cargarFuentes(){
