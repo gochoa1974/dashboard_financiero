@@ -2,6 +2,16 @@
 <html lang="es">
 <head>
 <meta name="cb-modulo" content="inicio">
+<script>
+/* v3 (26 nov 2026): la entrada abre la «Nueva navegación» (/beta/). El inicio de siempre sigue en /?viejo=1 y queda recordado en esta pestaña. Dentro de un marco no redirige. */
+(function(){try{
+ if(window.top!==window.self)return;
+ if(/[?&]viejo=1(&|$)/.test(location.search||'')){try{sessionStorage.setItem('cb_viejo','1');}catch(e){}return;}
+ var v=null;try{v=sessionStorage.getItem('cb_viejo');}catch(e){}
+ if(v==='1')return;
+ location.replace('beta/'+(location.hash||''));
+}catch(e){}})();
+</script>
 <script src="auth.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -138,7 +148,7 @@ body{
       </a>
     </div>
     <div class="who" id="who"><span id="whoTxt"></span> · <button type="button" id="cclave">Cambiar mi clave</button> · <button type="button" id="salir">Salir</button><br><button type="button" id="bio" hidden></button><div id="bioMsg" role="status"></div></div>
-    <div class="foot">Panel privado del propietario</div>
+    <div class="foot"><a href="beta/" style="display:inline-flex;align-items:center;min-height:44px;color:var(--accent-t);font-weight:800;text-decoration:none;margin-bottom:6px">Ir a la Nueva navegación</a><br>Panel privado del propietario</div>
   </div>
 </div>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>

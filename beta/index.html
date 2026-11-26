@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Cima Blanca · Beta</title>
+<title>Cima Blanca</title>
 <link rel="icon" type="image/png" href="../Cima-Blanca-logo.png">
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
@@ -14,7 +14,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- Beta v0.1b (25 nov 2026, 20:48): oculta el encabezado propio de Resultados y Hotelería (ahora usan la barra unificada, como Ingresos y Gastos). Solo eso. Vuelta atrás: poner la Beta v0.1. -->
+<!-- Nueva navegación v1.0 (26 nov 2026): pasa a ser la entrada de la app (la raíz abre /beta/). Se quitan las etiquetas «Beta»; «Volver a la app actual» pasa a «Ir al inicio anterior» (/?viejo=1); se suman Dashboard (Más › Datos) y el bloqueo con huella/Face ID (Más › Cuenta), que estaban en el inicio de siempre (R18). Vuelta atrás: poner index.html (v2) en la raíz y beta v0.1b.
+     Beta v0.1b (25 nov 2026, 20:48): oculta el encabezado propio de Resultados y Hotelería (ahora usan la barra unificada, como Ingresos y Gastos). Solo eso. Vuelta atrás: poner la Beta v0.1. -->
 <!-- Beta v0.1 (25 nov 2026, 18:30): navegación nueva (Hoy · Dinero · Reservas · Hotelería · Más) y botón «+ Registrar».
      Es una carpeta aparte: no cambia ningún archivo de producción ni se enlaza desde el menú actual.
      Hoy solo LEE las cifras que ya guardan Ingresos y Gastos en este dispositivo; no escribe nada.
@@ -147,12 +148,12 @@ a.row,button.row{width:100%;background:none;border-left:0;border-right:0;border-
     <div class="brand"><img src="../Cima-Blanca-logo.png" alt=""><div><b>Cima Blanca</b><small>Punta Blanca · Santa Elena</small></div></div>
     <button type="button" class="reg" data-reg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Registrar</button>
     <nav id="sideNav" aria-label="Secciones"></nav>
-    <div class="foot"><span id="who"></span><span class="beta" style="align-self:flex-start">Versión beta</span><a href="../">Volver a la app actual</a></div>
+    <div class="foot"><span id="who"></span><a href="../?viejo=1">Ir al inicio anterior</a></div>
   </aside>
   <div class="stage">
     <header class="bar">
       <img class="lg" src="../Cima-Blanca-logo.png" alt="">
-      <h1><span id="barT">Hoy</span><span class="beta">Beta</span></h1>
+      <h1><span id="barT">Hoy</span></h1>
       <span class="sp"></span>
       <button type="button" class="reg" data-reg aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Registrar</button>
     </header>
@@ -216,13 +217,13 @@ var SECS=[
  {k:'mas',t:'Más',ic:'more'}
 ];
 var MAS=[
- {g:'Datos',i:[['sincronizar','Sincronizar con Drive','Actualizar los datos de Airbnb y los registros','../sincronizar/','sincronizar','sync']]},
+ {g:'Datos',i:[['sincronizar','Sincronizar con Drive','Actualizar los datos de Airbnb y los registros','../sincronizar/','sincronizar','sync'],['dashboard','Dashboard','Gastos e ingresos (la vista de siempre)','../dashboard/','dashboard','chart']]},
  {g:'Ajustes',i:[['configuracion','Configuración','Limpieza, comisiones y reglas de cálculo','../parametros/','parametros','gear'],['glosario','Glosario','Qué significa cada indicador','../glosario/','dashboard','book']]},
  {g:'Cuenta',i:[['actividad','Actividad','Quién hizo qué','../actividad/','actividad','user'],['accesos','Accesos','Personas, roles y claves','../actividad/?ver=accesos','accesos','key']]}
 ];
-var P2R=[['/ingresos/','dinero/ingresos'],['/gastos/','dinero/gastos'],['/resultados/','dinero/resultado'],['/adicionales/','reservas/extras'],['/directas/','reservas/directas'],['/cancelaciones/','reservas/cancelaciones'],['/hoteleria/','hoteleria/indicadores'],['/anuncios/','hoteleria/anuncios'],['/sincronizar/','mas/sincronizar'],['/parametros/','mas/configuracion'],['/glosario/','mas/glosario'],['/actividad/','mas/actividad']];
+var P2R=[['/ingresos/','dinero/ingresos'],['/gastos/','dinero/gastos'],['/resultados/','dinero/resultado'],['/adicionales/','reservas/extras'],['/directas/','reservas/directas'],['/cancelaciones/','reservas/cancelaciones'],['/hoteleria/','hoteleria/indicadores'],['/anuncios/','hoteleria/anuncios'],['/sincronizar/','mas/sincronizar'],['/dashboard/','mas/dashboard'],['/parametros/','mas/configuracion'],['/glosario/','mas/glosario'],['/actividad/','mas/actividad']];
 /* CSS que se aplica dentro de cada módulo embebido para quitar su encabezado (atrás, logo y título): ya los da esta navegación */
-var HIDE={ingresos:'.head .who{display:none!important}.head{justify-content:flex-end!important}',gastos:'.head .who{display:none!important}.head{justify-content:flex-end!important}',resultados:'.head .who{display:none!important}.head{justify-content:flex-end!important}',hoteleria:'.head .who{display:none!important}.head{justify-content:flex-end!important}',anuncios:'.top{display:none!important}',glosario:'.top{display:none!important}',actividad:'.top{display:none!important}',adicionales:'header.apphead{display:none!important}',directas:'header.apphead{display:none!important}',cancelaciones:'header.apphead{display:none!important}',parametros:'header.apphead{display:none!important}',sincronizar:'header.apphead{display:none!important}'};
+var HIDE={ingresos:'.head .who{display:none!important}.head{justify-content:flex-end!important}',gastos:'.head .who{display:none!important}.head{justify-content:flex-end!important}',resultados:'.head .who{display:none!important}.head{justify-content:flex-end!important}',hoteleria:'.head .who{display:none!important}.head{justify-content:flex-end!important}',anuncios:'.top{display:none!important}',glosario:'.top{display:none!important}',actividad:'.top{display:none!important}',adicionales:'header.apphead{display:none!important}',directas:'header.apphead{display:none!important}',cancelaciones:'header.apphead{display:none!important}',parametros:'header.apphead{display:none!important}',sincronizar:'header.apphead{display:none!important}',dashboard:'.back{display:none!important}'};
 
 function puede(m){return !!(window.CB&&CB.puede&&CB.puede(m));}
 function secOK(s){if(s.k==='hoy'||s.k==='mas')return true;return s.segs.some(function(g){return puede(g[3]);});}
@@ -263,8 +264,8 @@ function go(){
   var S=SECS.filter(function(s){return s.k===cur.sec;})[0];
   var main=$('main');
   markNav();
-  $('barT').textContent=S.t;$('stT').innerHTML=esc(S.t)+'<span class="beta">Beta</span>';
-  document.title=S.t+' · Cima Blanca Beta';
+  $('barT').textContent=S.t;$('stT').innerHTML=esc(S.t);
+  document.title=S.t+' · Cima Blanca';
   $('segM').innerHTML='';$('segD').innerHTML='';$('subM').innerHTML='';
   if(cur.sec==='hoy'){
     main.className='main';setFrameOff();main.innerHTML='';pintarHoy();$('stageHd').style.visibility='visible';return;
@@ -310,7 +311,7 @@ function alCargar(){
 }
 function rehacerChrome(){
   var S=SECS.filter(function(s){return s.k===cur.sec;})[0];if(!S)return;
-  markNav();$('barT').textContent=S.t;$('stT').innerHTML=esc(S.t)+'<span class="beta">Beta</span>';
+  markNav();$('barT').textContent=S.t;$('stT').innerHTML=esc(S.t);
   if(S.segs){var h=segHTML(S);$('segM').innerHTML=h;$('segD').innerHTML=h;$('subM').innerHTML='';}
   else if(cur.sec==='mas'){var tit='';MAS.forEach(function(g){g.i.forEach(function(x){if(x[0]===cur.item)tit=x[1];});});$('segM').innerHTML='';$('segD').innerHTML='';$('subM').innerHTML='<div class="subhd"><a href="#mas">'+ic('back',20,2.2)+'Más</a><b>'+esc(tit)+'</b></div>';}
 }
@@ -331,15 +332,30 @@ function masHTML(){
     it.forEach(function(x){h+='<a class="row" href="#mas/'+x[0]+'"><div class="ti">'+ic(x[5],20)+'</div><div><b>'+x[1]+'</b><small>'+x[2]+'</small></div><span class="ch">'+ic('chev',18)+'</span></a>';});
     if(extra){
       if(puede('dashboard'))h+='<a class="row" href="https://gochoa1974.github.io/Cima-Blanca/admin.html" target="_blank" rel="noopener"><div class="ti">'+ic('ext',20)+'</div><div><b>Panel de Anfitrión</b><small>Generar enlace para el huésped</small></div><span class="ch">'+ic('ext',16)+'</span></a>';
+      h+='<button type="button" class="row" id="mBio" style="display:none"><div class="ti">'+ic('lock',20)+'</div><div><b id="mBioT">Huella</b><small id="mBioM">Entrar sin escribir la clave en este dispositivo</small></div></button>';
       h+='<button type="button" class="row" id="mClave"><div class="ti">'+ic('lock',20)+'</div><div><b>Cambiar mi clave</b><small>Solo la sabes tú</small></div></button>';
       h+='<button type="button" class="row" id="mSalir"><div class="ti">'+ic('out',20)+'</div><div><b>Salir</b><small>'+esc(((CB.perfil||{}).nombre||'')+' · '+((CB.perfil||{}).rolEtiqueta||''))+'</small></div></button>';
     }
     h+='</div>';
   });
-  h+='<div class="grp">Versión beta</div><div class="list"><a class="row" href="../"><div class="ti">'+ic('back',20,2.2)+'</div><div><b>Volver a la app actual</b><small>La versión de siempre sigue intacta</small></div></a></div></div>';
-  setTimeout(function(){var a=$('mClave'),b=$('mSalir');if(a)a.onclick=function(){CB.cambiarClave&&CB.cambiarClave();};if(b)b.onclick=function(){CB.salir&&CB.salir();};},0);
+  h+='<div class="grp">Inicio anterior</div><div class="list"><a class="row" href="../?viejo=1"><div class="ti">'+ic('back',20,2.2)+'</div><div><b>Ir al inicio anterior</b><small>La pantalla de siempre, por si la necesitas</small></div></a></div></div>';
+  setTimeout(function(){bioFila();var a=$('mClave'),b=$('mSalir');if(a)a.onclick=function(){CB.cambiarClave&&CB.cambiarClave();};if(b)b.onclick=function(){CB.salir&&CB.salir();};},0);
   return h;
 }
+
+/* ---------- bloqueo con huella / Face ID (venía del inicio de siempre) ---------- */
+function bioFila(){
+  var L=window.CB&&CB.lock,b=$('mBio');if(!L||!L.soportado||!b)return;
+  L.disponible().then(function(ok){
+    if(!ok||!$('mBio'))return;
+    function txt(){$('mBioT').textContent=(L.activo()?'Quitar ':'Activar ')+L.bio;}
+    txt();b.style.display='';
+    b.onclick=function(){var m=$('mBioM');
+      if(L.activo()){L.desactivar();txt();m.textContent=L.bio+' desactivado en este dispositivo.';return;}
+      L.activar().then(function(){txt();m.textContent=L.bio+' activado.';}).catch(function(){m.textContent='No se pudo activar.';});};
+  });
+}
+function bioOfrecer(){var L=window.CB&&CB.lock;if(!L||!L.soportado)return;L.disponible().then(function(ok){if(ok&&!L.activo()){try{L.ofrecer();}catch(e){}}});}
 
 /* ---------- HOY (solo lee lo que ya guardaron Ingresos y Gastos en este dispositivo) ---------- */
 var cargando=false;
@@ -417,7 +433,7 @@ function pintarHoy(){
   }
   if(!verIng&&!verGas){R+='<div class="empty">Usa el menú de abajo para ir a tus secciones.</div>';}
   h+='<div class="hoycols"><div>'+L+'</div><div>'+R+'</div></div>';
-  h+='<p class="note">Beta: «Hoy» solo lee las cifras que ya guardaron Ingresos y Gastos en este dispositivo'+(c.ing&&c.ing.t?' (guardadas '+new Date(c.ing.t).getDate()+' '+MC[new Date(c.ing.t).getMonth()]+' '+pad(new Date(c.ing.t).getHours())+':'+pad(new Date(c.ing.t).getMinutes())+')':'')+'. '+(c.ing?'<button type="button" class="btn sec2" id="hAct" style="min-height:44px;margin-left:6px">Actualizar cifras</button>':'')+'</p></div>';
+  h+='<p class="note">«Hoy» solo lee las cifras que ya guardaron Ingresos y Gastos en este dispositivo'+(c.ing&&c.ing.t?' (guardadas '+new Date(c.ing.t).getDate()+' '+MC[new Date(c.ing.t).getMonth()]+' '+pad(new Date(c.ing.t).getHours())+':'+pad(new Date(c.ing.t).getMinutes())+')':'')+'. '+(c.ing?'<button type="button" class="btn sec2" id="hAct" style="min-height:44px;margin-left:6px">Actualizar cifras</button>':'')+'</p></div>';
   main.innerHTML=h;
   var b=$('hCargar'),a=$('hAct');if(b)b.onclick=cargarCifras;if(a)a.onclick=cargarCifras;
   main.querySelectorAll('[data-post]').forEach(function(x){x.addEventListener('click',function(){pendiente=x.getAttribute('data-post');});});
@@ -459,10 +475,12 @@ document.querySelectorAll('[data-reg]').forEach(function(b){b.addEventListener('
 /* ---------- arranque ---------- */
 function iniciar(){
   var per=CB.perfil;if(!per)return;
+  try{sessionStorage.removeItem('cb_viejo');}catch(e){}
   $('who').textContent=per.nombre+' · '+per.rolEtiqueta;
   buildNav();
   if(!regOpts().length)document.querySelectorAll('[data-reg]').forEach(function(b){b.hidden=true;});
   $('shell').hidden=false;
+  bioOfrecer();
   window.addEventListener('hashchange',go);
   if(!location.hash)history.replaceState(null,'','#hoy');
   go();
