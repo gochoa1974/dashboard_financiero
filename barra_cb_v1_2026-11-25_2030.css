@@ -1,0 +1,49 @@
+/* Barra unificada de módulo · v1 (25 nov 2026 20:30)
+   Un solo encabezado, un solo selector de mes y una sola barra de filtros para Ingresos, Gastos, Resultados y Hotelería.
+   Se carga DESPUÉS del estilo de cada módulo, así que manda en lo que define aquí. Solo estilo: no cambia ninguna cuenta ni filtro. */
+
+/* 1 · Encabezado: atrás · logo · «Panel de …» · estado */
+.head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:12px}
+.head .who{display:flex;align-items:center;gap:10px;min-width:0}
+.head .backbtn{width:44px;height:44px;border-radius:14px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);display:grid;place-items:center;text-decoration:none;box-shadow:0 2px 6px -3px rgba(10,34,51,.28);flex:0 0 auto}
+.head .logo{width:40px;height:40px;border-radius:50%;object-fit:cover;display:block;flex:0 0 auto}
+.head .ttl{min-width:0}
+.head .ttl b{display:block;font-size:15px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.head .ttl span{display:block;font-size:12px;color:var(--texto-2);font-weight:600;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.head .sync{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:8px 12px;border-radius:99px;border:0;min-height:40px;max-width:58%;text-align:left;line-height:1.2;color:var(--texto-2);background:color-mix(in srgb,var(--texto-2) 14%,transparent);cursor:pointer;font-family:inherit}
+.head .sync i{width:8px;height:8px;border-radius:50%;background:currentColor;flex:0 0 auto}
+.head .sync .meta{display:block;font-weight:600;font-size:10.5px;opacity:.85;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.head .sync.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.head .sync.busy{color:var(--turquesa);background:color-mix(in srgb,var(--turquesa) 14%,transparent)}
+.head .sync.busy i,.head .sync.pend i{animation:cbbPulse 1s infinite}
+.head .sync.stale,.head .sync.pend{color:var(--pendiente);background:color-mix(in srgb,var(--pendiente) 15%,transparent)}
+.head .sync.err{color:var(--error);background:color-mix(in srgb,var(--error) 14%,transparent)}
+.head .sync.off{color:var(--texto-2);background:color-mix(in srgb,var(--texto-2) 14%,transparent)}
+@keyframes cbbPulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.head .sync i{animation:none!important}}
+@media (min-width:760px){.head{padding-bottom:16px}}
+
+/* 2 · Barra de período: filtros + mes, siempre en este orden */
+.cbb{display:grid;gap:8px;margin:0 0 12px}
+.cbb>.pchips{padding:0}
+.cbb>.pbar{padding:0;margin:0}
+.cbb>.pbar>.pchips{padding:0}
+
+/* 3 · Selector de mes: ◀ Noviembre 2026 ▶ (botones de 44 px, una línea de apoyo dentro de la misma pieza) */
+.month{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0}
+.month .nav{width:44px;height:44px;border-radius:14px;border:1px solid var(--linea);background:var(--tarjeta);color:var(--texto);font-size:13px;box-shadow:0 2px 6px -3px rgba(10,34,51,.28);flex:0 0 auto;cursor:pointer;padding:0;display:grid;place-items:center}
+.month .nav:disabled{opacity:.35;cursor:default}
+.month .nav:active:not(:disabled){transform:scale(.94)}
+.month .mid-m{flex:1 1 auto;min-width:0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1px}
+.month .mid-m b{display:block;font-size:18px;font-weight:800;letter-spacing:-.01em;line-height:1.2;text-transform:capitalize;white-space:nowrap}
+.month #mLbl .mfull{display:inline}.month #mLbl .mshort{display:none}
+.month .msub{display:block;font-size:12px;color:var(--texto-2);font-weight:600;line-height:1.3}
+.month .msub:empty{display:none}
+.month .mchips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.month .mchips>*{margin-top:4px}
+@media (min-width:1000px){
+  .cbb{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px}
+  .cbb>.pchips,.cbb>.pbar{flex:1 1 auto;min-width:0}
+  .cbb>.month{flex:0 0 auto;margin-left:auto;gap:14px}
+  .cbb>.month .mid-m{min-width:210px}
+}
