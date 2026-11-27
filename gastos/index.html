@@ -20,6 +20,7 @@
 <script src="../graficos_cb_v1.2_2026-11-26_1319.js"></script>
 <script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
 <script src="../escalera_cb_v1.1_2026-11-26_1612.js"></script>
+<!-- v20.12 (27 nov 2026 11:41): «Detalle por mes» agrupa las limpiezas de estadía de cada mes en una sola tarjeta («N check-outs · $total», con «ver») igual que en Variables. NINGUNA cifra cambia. Vuelta atrás: poner la versión anterior de gastos/index.html (v20.11). -->
 <!-- v20.11 (26 nov 2026): «Cobro por cancelación» (Paquete B): la escalera (escalera_cb v1.1) dice «Noches + cobro por cancelación + extras» en la fila Ingresos. NINGUNA cifra cambia. Vuelta atrás: poner la versión anterior. -->
 <!-- v20.10 (26 nov 2026): «Una sola historia del dinero» (Paquete A). «Gasto del período»→«Gastos», «Total egreso»/«Total Egreso del mes»→«Gastos + capital», «Capital hipoteca»→«Capital de la hipoteca». Escalera del dinero (escalera_cb_v1) bajo la cabecera, línea «Base» y columna «Gastos» en «Detalle por mes» (pantalla ancha). NINGUNA cifra cambia. Arregla además el desalineo de 11 px entre los títulos/total y las filas de «Detalle por mes» (las filas tenían gap:0). Vuelta atrás: poner v20.9 y quitar escalera_cb_v1. -->
 <!-- v20.9 (26 nov 2026): vista ejecutiva del período (2026, 2025, rangos, Acumulado). Cabecera = puente (Gasto + Capital − Por pagar = Salió del banco), aviso de pendientes en una línea, gráfico mensual apilado (recurrentes / variables / por pagar) con encabezado del mes elegido, «¿En qué se va el dinero?», las dos tarjetas de siempre y «Detalle por mes» como tabla con total. Arregla el bloque azul gigante y el orden invertido de la pantalla ancha. La vista Mes no cambia. Carga graficos_cb_v1.2. -->
@@ -739,6 +740,9 @@ body:not([data-tab="reg"]) #cmpHost{display:none!important}
 .xtt b{display:block;font-size:15px;font-weight:800}.xtt small{display:block;font-size:11.5px;font-weight:700;color:var(--warn);white-space:nowrap}
 .xdc{white-space:nowrap}.xar{color:var(--mut);font-size:20px;text-align:right;line-height:1}
 .xtab .mo .mb{border-top:1px solid var(--line);padding:8px 0}
+.xtab .mo .mb .xlim{margin-bottom:9px}
+.xtab .mo .mb .xlim .item.lg{width:100%}.xtab .mo .mb .xlim .lgl{margin-bottom:0}
+.xtab .mo .mb .xlim .item.lg .mid b,.xtab .mo .mb .xlim .item.lg .mid span{white-space:normal;overflow:visible;text-overflow:clip}
 .xtf{padding:12px 4px;margin-top:2px;border-top:2px solid var(--ink);background:color-mix(in srgb,var(--ink) 4%,transparent);border-radius:0 0 12px 12px}
 .xtf .xtt small{display:none}
 /* v20.10 · escalera: solo en Resumen y fuera de «Comparar» */
@@ -1520,18 +1524,18 @@ function regCard(e){
  return '<button type="button" class="item '+t+(e.cuenta==='No'?' cap':'')+'" data-id="'+esc(e.id)+'"><div class="tile">'+iconX(e.concepto,e.familia)+'</div><div class="mid"><b>'+esc(e.concepto)+'</b><span><i class="dot '+t+'"></i>'+(rec?'Recurrente':'Variable')+' · '+fdia(e.fecha)+'</span>'+((det||ex)?'<small>'+esc(det+ex)+'</small>':'')+'</div><div class="right"><span class="amt">'+f2(e.monto)+'</span><span class="chip '+chip[0]+'">'+esc(chip[1])+'</span></div></button>';
 }
 let LOPEN={};
-function limGroup(rows){
- const open=!!LOPEN[MES],tot=SUMA(rows),pp=rows.filter(isPorPagar).length,n=rows.length;
+function limGroup(rows,key){
+ const k=key||MES,open=!!LOPEN[k],tot=SUMA(rows),pp=rows.filter(isPorPagar).length,n=rows.length;
  const chip=pp?['warn',pp+' por pagar']:['ok','Confirmado'];
  const sPor=SUMA(rows.filter(isPorPagar)),sPag=tot-sPor,pPag=tot>0.004?Math.round(sPag/tot*100):100;
  const rightH=pp?'<div class="right lgs"><span class="lg1">'+f2(sPag)+' pagado</span><span class="lg2">'+f2(sPor)+' por pagar</span></div>':'<div class="right"><span class="amt">'+f2(tot)+'</span><span class="chip ok">Confirmado</span></div>';
  const mbar=pp?'<span class="lgm" aria-hidden="true"><i style="width:'+pPag+'%"></i></span>':'';
- let h='<button type="button" class="item ev lg" data-lg="1" aria-expanded="'+open+'"><div class="tile">'+iconX(LIMP,'1. Fijos operativos')+'</div><div class="mid"><b>Limpieza de estadía</b><span><i class="dot ev"></i>'+n+(n===1?' check-out':' check-outs')+' · '+(open?'ocultar':'ver')+'</span>'+mbar+'</div>'+rightH+'</button>';
+ let h='<button type="button" class="item ev lg" data-lg="'+(key||1)+'" aria-expanded="'+open+'"><div class="tile">'+iconX(LIMP,'1. Fijos operativos')+'</div><div class="mid"><b>Limpieza de estadía</b><span><i class="dot ev"></i>'+n+(n===1?' check-out':' check-outs')+' · '+(open?'ocultar':'ver')+'</span>'+mbar+'</div>'+rightH+'</button>';
  if(open)h+='<div class="lgl">'+rows.slice().sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(e=>{
   const d=String(e.detalle||'').replace(/^Check-out\s*·\s*/,''),por=isPorPagar(e),pt=d.split(' · '),cod=pt.length>1?pt[0]:'',nom=pt.length>1?pt.slice(1).join(' · '):d;
   return '<button type="button" class="lrow" data-id="'+esc(e.id)+'"><span class="lt2"><b>'+esc(nom)+'</b><small>'+esc(fdia(e.fecha))+(cod?' · '+esc(cod):'')+(e.medio==='Efectivo'?' · efectivo':'')+(/Ajustada/.test(e.detalle||'')?' · ajustada':'')+'</small></span><span class="lr"><span class="la2">'+f2(e.monto)+'</span><span class="lp'+(por?'':' ok')+'">'+(por?((e.fecha||'')>todayISO()?'Pago adelantado':'Por pagar'):'Pagada')+'</span></span></button>';
  }).join('')+'</div>';
- else h+='<div style="height:9px"></div>';
+ else if(!key)h+='<div style="height:9px"></div>';
  return h;
 }
 function limSection(lim){
@@ -1634,7 +1638,7 @@ function pShAbre(){
 }
 function pShCierra(){$('pBg').classList.remove('on');$('pSh').classList.remove('on');$('pSh').setAttribute('aria-hidden','true');const b=$('masB');if(b)b.setAttribute('aria-expanded','false');if(pFoco&&pFoco.focus)try{pFoco.focus();}catch(e){}}
 function applyPer(){document.body.classList.toggle('per-on',perOn());pChips();}
-function setPer(p){OPENG={};PSEL=null;GAPOPEN=false;PER=p;try{sessionStorage.setItem(PERK,p);}catch(e){}if(SH)closeSheet();renderAll();}
+function setPer(p){OPENG={};Object.keys(LOPEN).forEach(k=>{if(k.indexOf('d:')===0)delete LOPEN[k];});PSEL=null;GAPOPEN=false;PER=p;try{sessionStorage.setItem(PERK,p);}catch(e){}if(SH)closeSheet();renderAll();}
 function perPanels(DS){
  const w=perWin(DS),rows=selRows(DS,w),dev=rows.filter(e=>e.cuenta!=='No'),tr=SUMA(dev.filter(isRecRow)),td=SUMA(dev),tv=td-tr,lim=SUMA(dev.filter(isLimp));
  const p1=pcts([tr,tv]);let h='';
@@ -1838,6 +1842,11 @@ function catCard(DS){
  if(rest.length)h+='<div class="xc"><div class="xct"><span>Otros ('+rest.length+')</span><b>'+f2(rv)+'</b></div><div class="xcs"><small>'+pc[top.length]+' % del gasto</small></div></div>';
  return h+'</section>';
 }
+/* v20.12 · movimientos de un mes: las limpiezas van juntas en una tarjeta, en el lugar de la más reciente */
+function moCards(a,m){
+ const lim=a.filter(isLimp);let done=false;
+ return a.map(e=>{if(!isLimp(e))return regCard(e);if(done)return '';done=true;return '<div class="xlim">'+limGroup(lim,'d:'+m)+'</div>';}).join('');
+}
 /* Detalle por mes: tabla con total; tocar un mes abre sus movimientos (mismas tarjetas de siempre) */
 function perAcc(DS){
  const w=perWin(DS),rows=selRows(DS,w).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')),by={};
@@ -1849,7 +1858,7 @@ function perAcc(DS){
   const a=by[m],nc=a.filter(e=>e.cuenta!=='No'),rec=SUMA(nc.filter(isRecRow)),vr=SUMA(nc)-rec,cap=SUMA(a.filter(e=>e.cuenta==='No')),t=SUMA(a),pp=SUMA(a.filter(isPorPagar)),op=!!OPENG[m];
   tR+=rec;tV+=vr;tC+=cap;tT+=t;tP+=pp;
   const pm=xgm(DS,(+m.slice(0,4)-1)+m.slice(4)),dp=(m<cm&&pm.has&&pm.t>0)?Math.round((rec+vr-pm.t)/pm.t*100):null,mn=+m.slice(5);
-  body+='<div class="mo'+(op?' open':'')+'"><button type="button" class="mh" data-mo="'+m+'" aria-expanded="'+op+'" aria-label="'+esc(xCap(mLabel(m)))+': '+f2(t)+'. '+(op?'Ocultar':'Ver')+' movimientos"><span class="xmn"><b>'+MC3(mn)+' '+m.slice(0,4)+'</b>'+(m===cm?'<em class="xtag">en curso</em>':'')+'</span><span class="xn xc3">'+f2(rec)+'</span><span class="xn xc3">'+f2(vr)+'</span><span class="xn xc3">'+f2(rec+vr)+'</span><span class="xn xc3">'+(cap>0.004?f2(cap):'—')+'</span><span class="xn xtt"><b>'+f2(t)+'</b>'+(pp>0.004?'<small>'+f2(pp)+' por pagar</small>':'')+'</span><span class="xdc">'+((dp!=null&&dp!==0)?'<span class="cbg-chip '+(dp>0?'w':'g')+'">'+(dp>0?'▲ ':'▼ ')+Math.abs(dp)+'%</span>':'')+'</span><span class="xar" aria-hidden="true">'+(op?'⌄':'›')+'</span></button>'+(op?'<div class="mb">'+a.map(regCard).join('')+'</div>':'')+'</div>';
+  body+='<div class="mo'+(op?' open':'')+'"><button type="button" class="mh" data-mo="'+m+'" aria-expanded="'+op+'" aria-label="'+esc(xCap(mLabel(m)))+': '+f2(t)+'. '+(op?'Ocultar':'Ver')+' movimientos"><span class="xmn"><b>'+MC3(mn)+' '+m.slice(0,4)+'</b>'+(m===cm?'<em class="xtag">en curso</em>':'')+'</span><span class="xn xc3">'+f2(rec)+'</span><span class="xn xc3">'+f2(vr)+'</span><span class="xn xc3">'+f2(rec+vr)+'</span><span class="xn xc3">'+(cap>0.004?f2(cap):'—')+'</span><span class="xn xtt"><b>'+f2(t)+'</b>'+(pp>0.004?'<small>'+f2(pp)+' por pagar</small>':'')+'</span><span class="xdc">'+((dp!=null&&dp!==0)?'<span class="cbg-chip '+(dp>0?'w':'g')+'">'+(dp>0?'▲ ':'▼ ')+Math.abs(dp)+'%</span>':'')+'</span><span class="xar" aria-hidden="true">'+(op?'⌄':'›')+'</span></button>'+(op?'<div class="mb">'+moCards(a,m)+'</div>':'')+'</div>';
  });
  return '<section class="xcard xtab"><div class="cbg-t1"><h3>Detalle por mes</h3><span class="xs2">Toca un mes para ver sus movimientos</span></div>'+
   '<div class="xth" aria-hidden="true"><span>Mes</span><span class="xn xc3">Recurrentes</span><span class="xn xc3">Variables</span><span class="xn xc3">Gastos</span><span class="xn xc3">Capital de la hipoteca</span><span class="xn">Gastos + capital</span><span class="xdc">vs año anterior</span><span></span></div>'+
@@ -2656,9 +2665,9 @@ $('evBox').addEventListener('click',e=>{
  if(e.target.closest('#limRe')){autoLimpiezas(true);return;}
  const it=e.target.closest('.item[data-id],.lrow[data-id]');if(it)openReg(it.dataset.id);});
 $('regBox').addEventListener('click',e=>{
- const mh=e.target.closest('.mh[data-mo]');if(mh){OPENG[mh.dataset.mo]=!OPENG[mh.dataset.mo];renderReg();return;}
+ const mh=e.target.closest('.mh[data-mo]');if(mh){OPENG[mh.dataset.mo]=!OPENG[mh.dataset.mo];delete LOPEN['d:'+mh.dataset.mo];renderReg();return;}
  if(e.target.closest('[data-go]')){gotoTab(e.target.closest('[data-go]').dataset.go);window.scrollTo({top:0,behavior:'smooth'});return;}
- if(e.target.closest('[data-lg]')){LOPEN[MES]=!LOPEN[MES];renderEv();return;}
+ const lg=e.target.closest('[data-lg^="d:"]');if(lg){const k=lg.dataset.lg;LOPEN[k]=!LOPEN[k];renderReg();const n=$('regBox').querySelector('[data-lg="'+k+'"]');if(n)n.focus({preventScroll:true});return;}
  const lr=e.target.closest('.lrow[data-id]');if(lr){openReg(lr.dataset.id);return;}
  const sg=e.target.closest('#regSeg button');
  if(sg){REGF=sg.dataset.f;renderReg();return;}
