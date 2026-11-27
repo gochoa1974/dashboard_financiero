@@ -14,7 +14,8 @@
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../graficos_cb_v1.2_2026-11-26_1319.js"></script>
 <script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
-<script src="../escalera_cb_v1_2026-11-26_1525.js"></script>
+<script src="../escalera_cb_v1.1_2026-11-26_1612.js"></script>
+<!-- v7j (26 nov 2026): «Cobro por cancelación» (Paquete B): la escalera (escalera_cb v1.1) dice «Noches + cobro por cancelación + extras» en la fila Ingresos. NINGUNA cifra cambia; el texto «Ingresos = noches dormidas + extras cobrados» pasa a «Ingresos = noches dormidas + cobro por cancelación + extras cobrados». En un mes, María mueve $78,04 de mayo a abril (Resultados lo lee de Ingresos). Vuelta atrás: poner la versión anterior. -->
 <!-- v7i (26 nov 2026): «Una sola historia del dinero» (Paquete A). Nombres únicos: «Entró»→«Ingresos», «Salió (gasto)»→«Gastos», «Caja del período» y «Flujo de caja»→«Queda después de la deuda». Escalera del dinero (escalera_cb_v1) bajo la cabecera, línea «Base», puente «Gastos + Capital = Gastos + capital» bajo Mes a mes, fechas «1 ene – 26 nov 2026». NINGUNA cifra cambia. Vuelta atrás: poner v7h y quitar escalera_cb_v1. -->
 <!-- v7h (26 nov 2026): carga graficos_cb_v1.2 (arregla el eje en mayúsculas «$3K»: la clase del eje ya no choca con «.gt» de la página). Nada más cambia.
      v7g (25 nov 2026 22:43): Fase 2 de gráficos. «Resultado neto por mes», «De los ingresos a la caja» y «Evolución mensual» usan graficos_cb_v1.1: valores nunca girados, mes (o paso) elegido en el encabezado con su variación/margen/% del ingreso, Gráfico | Lista, línea de promedio (o Equilibrio), tarjeta al pasar el cursor, «Cada $100 que entran». El margen sale de debajo de las barras. Cifras sin cambios. Vuelta atrás: poner v7f y quitar graficos_cb_v1.1. -->
@@ -403,7 +404,7 @@ function render(){
   rows+='<tr class="tot"><td>Total</td><td>'+f0(at.I)+'</td><td>'+f0(at.G)+'</td><td class="'+(at.R<0?"neg":"pos")+'">'+f0(at.R)+'</td><td>'+mgn(at.I,at.R)+'</td></tr>';
   $("tb").innerHTML=rows;
   $("tT").textContent=per==="mes"?"Últimos 6 meses":"Mes a mes";
-  $("tN").textContent="Ingresos = noches dormidas + extras cobrados. Gastos = todo gasto del mes, sin el capital de la hipoteca. Resultado = Ingresos − Gastos.";
+  $("tN").textContent="Ingresos = noches dormidas + cobro por cancelación + extras cobrados. Gastos = todo gasto del mes, sin el capital de la hipoteca. Resultado = Ingresos − Gastos.";
   $("tB").innerHTML="<b>"+(per==="mes"?"Últimos 6 meses":"Total de la tabla")+":</b> Gastos "+f0(at.G)+" + Capital "+f0(at.C)+" = <b>Gastos + capital "+f0(at.G+at.C)+"</b> · igual que en Gastos.";
 
   /* estado de resultados */

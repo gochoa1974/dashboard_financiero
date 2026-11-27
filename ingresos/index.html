@@ -14,7 +14,9 @@
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
 <script src="../graficos_cb_v1_2026-11-25_1930.js"></script>
 <script src="../comparar_cb_v2.2_2026-11-25_1950.js"></script>
-<script src="../escalera_cb_v1_2026-11-26_1525.js"></script>
+<script src="../escalera_cb_v1.1_2026-11-26_1612.js"></script>
+<script src="../cancel_cb_v1_2026-11-26_1600.js"></script>
+<!-- v19.11 (26 nov 2026): «Una sola historia del dinero» (Paquete B) · «Cobro por cancelación». Lee Cancelaciones (cancel_cb_v1): en las reservas canceladas con cobro por política (tipos 1 y 2) solo cuentan como noches las que el huésped durmió; lo que Airbnb pagó por las noches libres pasa a «Cobro por cancelación» en el mes de llegada. El TOTAL de Ingresos no cambia; cambian noches, ocupación, neto por noche y el reparto entre meses (María: abril +$78,04, mayo −$78,04). Sin datos de Cancelaciones todo sigue como en v19.10 y la pantalla lo avisa. Vuelta atrás: poner v19.10 y quitar cancel_cb_v1. -->
 <!-- v19.10 (26 nov 2026): «Una sola historia del dinero» (Paquete A). «Generado»→«Ingresos» (netos), «Extras cobrados»→«Extras», «Total generado (neto)»→«= Ingresos». Escalera del dinero (escalera_cb_v1) bajo el número grande, línea «Base», fechas «1 ene – 26 nov 2026». NINGUNA cifra cambia. Vuelta atrás: poner v19.9 y quitar escalera_cb_v1. -->
 <!-- v19.9 (25 nov 2026 20:30): barra de período unificada con Gastos, Resultados y Hotelería (hoja compartida barra_cb_v1): filtros y mes en una sola barra, mes con su línea de apoyo («Mes en curso · al 25 de noviembre»), mismos márgenes (16/24/32). Solo estilo y orden; ningún filtro ni cuenta cambia. Nada se elimina. -->
 <!-- v19.8 (25 nov 2026 19:59): (1) el comparativo bajo el gráfico y el chip del número grande dicen desde cuándo comparan y por qué (el año anterior no tiene datos antes); se muestra el total del período junto al comparable. (2) El aviso «Desactualizado» ya no depende de la marca guardada en cada aparato: la versión del proceso viene dentro del maestro (Sincronizar v16); si el maestro no la trae todavía, se usa la marca local como antes. Nada se elimina. -->
@@ -154,6 +156,9 @@ input{font-family:inherit;color:inherit}
 .cas.key span{font-weight:800;display:flex;align-items:center;gap:8px}
 .cas.key i{width:10px;height:10px;border-radius:50%;background:rgb(var(--c));flex:0 0 auto}
 .cas.sub{font-weight:600;color:var(--mut);font-size:13px;padding:6px 0 0;border-top:0}
+.cas.hn{font-weight:700}
+.cas.hn b{font-weight:800}
+.cbk-n{font-style:normal}
 .cas.sub b{font-weight:700}
 .fn{font-size:12px;color:var(--mut);font-weight:600;border-top:1px dashed var(--line);margin:8px 0 0;padding-top:8px;line-height:1.4}
 .cas small{display:block;font-size:11.5px;color:var(--mut);font-weight:600;margin-top:1px}
@@ -199,6 +204,7 @@ button.item:active{transform:scale(.985)}
 .mid{flex:1;min-width:0}
 .mid b{display:block;font-size:15px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mid span{display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mid span.cx{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3}
 .right{text-align:right;flex:0 0 auto}
 .amt{display:block;font-size:16px;font-weight:800;letter-spacing:-.02em}
 .chip{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;margin-top:4px}
@@ -478,20 +484,30 @@ function indexRes(){
   var by={};(M.reservas||[]).forEach(function(r){by[r.codigo_confirmacion]=r;});return by;
 }
 function calcMonth(mk){return calcRange(mk+"-01",mk+"-31");}
+/* v19.11 · Cobro por cancelación: CK dice, por reserva cancelada con cobro (tipos 1 y 2), cuántas noches durmió el huésped (nc) y cuántas quedaron libres (nl) */
+var CK=null;
+function ckGet(){if(!CK||CK.src!==M){try{CK=window.CBK?CBK.mapa((M&&M.reservas)||[]):{ok:false,by:{},n:0,malos:[]};}catch(e){CK={ok:false,by:{},n:0,malos:[]};}CK.src=M;}return CK;}
 function calcRange(s0,e0){
-  var o={air:{nD:0,nP:0,bD:0,bP:0,gD:0,gP:0,rows:[]},dir:{nD:0,nP:0,bD:0,bP:0,gD:0,gP:0,rows:[]},
-    ext:{cD:0,cP:0,sin:0,rows:[],rowsSin:[]}};
+  var o={air:{nD:0,nP:0,bD:0,bP:0,gD:0,gP:0,cD:0,cP:0,rows:[]},dir:{nD:0,nP:0,bD:0,bP:0,gD:0,gP:0,cD:0,cP:0,rows:[]},
+    ext:{cD:0,cP:0,sin:0,rows:[],rowsSin:[]}},ck=ckGet().by;
   (M.reservas||[]).forEach(function(r){
     var ns=+r.noches||0;if(!ns)return;
     var isDir=r.origen==="Reserva directa";var a=isDir?o.dir:o.air;
     var neto=+r.monto||0,bru=(+r.ingresos_brutos||neto);
-    var inM=0,inMD=0,nD=0,nP=0;
-    for(var i=0;i<ns;i++){
+    var cx=ck[r.codigo_confirmacion],nc=cx?cx.nc:ns;   /* noches que sí se durmieron */
+    var inM=0,nD=0,nP=0;
+    for(var i=0;i<nc;i++){
       var d=addDays(r.fecha_inicio,i);if(d<s0||d>e0)continue;
       inM++;
       if(d<HOY){a.nD++;a.bD+=neto/ns;a.gD+=bru/ns;nD++;}else{a.nP++;a.bP+=neto/ns;a.gP+=bru/ns;nP++;}
     }
-    if(inM)a.rows.push({r:r,inM:inM,ns:ns,share:neto*inM/ns,nD:nD,nP:nP});
+    /* lo pagado por las noches libres: Cobro por cancelación, en el mes de llegada (mismo corte que las noches: antes de hoy = ya cuenta) */
+    var cob=0;
+    if(cx&&r.fecha_inicio>=s0&&r.fecha_inicio<=e0){
+      cob=neto*cx.nl/ns;var cg=bru*cx.nl/ns;
+      if(r.fecha_inicio<HOY){a.bD+=cob;a.gD+=cg;a.cD+=cob;}else{a.bP+=cob;a.gP+=cg;a.cP+=cob;}
+    }
+    if(inM||cob)a.rows.push({r:r,inM:inM,ns:ns,share:neto*inM/ns+cob,nD:nD,nP:nP,cob:cob,nc:nc,cx:!!cx});
   });
   var by=indexRes();
   (M.ingresos_adicionales||[]).forEach(function(x){
@@ -504,6 +520,8 @@ function calcRange(s0,e0){
   o.netoD=neD;o.netoP=neP;o.brutoD=o.air.gD+o.dir.gD;o.brutoP=o.air.gP+o.dir.gP;
   o.comD=o.air.gD-o.air.bD;o.comP=o.air.gP-o.air.bP;
   o.totD=neD+o.ext.cD;o.totP=neP+o.ext.cP;o.nD=o.air.nD+o.dir.nD;o.nP=o.air.nP+o.dir.nP;
+  o.cobD=o.air.cD+o.dir.cD;o.cobP=o.air.cP+o.dir.cP;o.cobN=0;
+  o.air.rows.concat(o.dir.rows).forEach(function(e){if(e.cob>0.004)o.cobN++;});
   o.reservas=o.air.rows.length+o.dir.rows.length;
   return o;
 }
@@ -727,7 +745,7 @@ var CMET={
  ext:{label:"Extras",fmt:"$",val:function(ms){return csum(ms,function(o){return o.ext.cD;});}},
  noc:{label:"Noches dormidas",fmt:"n",val:function(ms){return csum(ms,function(o){return o.nD;});}},
  occ:{label:"Ocupación",fmt:"%",val:function(ms){var d=ms.reduce(function(s,m){return s+dim(m);},0);return d?csum(ms,function(o){return o.nD;})/d*100:null;}},
- nn:{label:"Neto por noche",fmt:"$2",val:function(ms){var n=csum(ms,function(o){return o.nD;});return n?csum(ms,function(o){return o.netoD;})/n:null;}}
+ nn:{label:"Neto por noche",fmt:"$2",val:function(ms){var n=csum(ms,function(o){return o.nD;});return n?csum(ms,function(o){return o.netoD-o.cobD;})/n:null;}}
 };
 function cmpInit(){if(!M||!(M.reservas||[]).length)return;var rg=monthRange();
   CBC.init({key:"ing",host:"cmpHost",first:rg[0],cur:HOY.slice(0,7),has:function(m){return m>=rg[0]&&m<=HOY.slice(0,7);},metrics:CMET,
@@ -761,7 +779,7 @@ function renderR0(){
   if(cp&&cp.dp!=null){rc.hidden=false;rc.className="hero-c "+(cp.dp>=0?"up":"dn");rc.textContent=(cp.dp>=0?"▲ ":"▼ ")+Math.abs(cp.dp)+"% vs mismo período del año anterior"+(cp.trunc?" · comparable desde el "+dShort(cp.cs)+(cp.cs.slice(0,4)!==cp.e.slice(0,4)?" "+cp.cs.slice(0,4):"")+" (antes no hay datos)":"");}
   else if(cp&&cp.none){rc.hidden=false;rc.className="hero-c";rc.textContent=(per==="todo"?"Acumulado: no se compara con otro año":"Sin año anterior completo para comparar");}
   else rc.hidden=true;
-  var nd=o.nD>0?o.netoD/o.nD:0;
+  var nd=o.nD>0?(o.netoD-o.cobD)/o.nD:0;
   $("kA").textContent=o.nD>0?money(nd):"—";
 
   /* Resumen (v19.7): las dos tarjetas cuentan UNA historia, siempre en neto y solo con lo que ya durmió (igual que el número grande).
@@ -779,16 +797,19 @@ function renderR0(){
     if(tP>0.004)res+='<div class="lg lgp"><i class="h"></i><b>Por dormir<small>aún no cuenta; suma cuando pasen las noches</small></b><em></em><strong>'+money(tP)+'</strong></div>';
   } else res+='<div class="empty" style="margin-top:6px">No hay ingresos en '+Pm+'.</div>';
   res+='</div>';
-  var hayA=aB>0.004||aN>0.004;
+  var hayA=aB>0.004||aN>0.004,cobT=o.cobD;
   res+='<div class="panel"><div class="panel-h"><b>Cómo se llega al total</b><span></span></div>'+
     (hayA?'<div class="cas"><span>Airbnb bruto</span><b>'+money(aB)+'</b></div>'+
     '<div class="cas"><span>Comisión de Airbnb</span><b class="neg">− '+money(Math.abs(aCm))+'</b></div>'+
     '<div class="cas key" style="--c:var(--air)"><span><i></i>Airbnb neto</span><b>'+money(aN)+'</b></div>':'')+
     '<div class="cas"><span>'+(hayA?'+ ':'')+'Directas<small>sin comisión</small></span><b>'+money(dN)+'</b></div>'+
+    (cobT>0.004?'<div class="cas hn"><span>= Hospedaje neto<small>Noches dormidas '+money(o.netoD-o.cobD)+' + Cobro por cancelación '+money(cobT)+' <em class="cbk-n">('+o.cobN+(o.cobN===1?' reserva':' reservas')+')</em></small></span><b>'+money(o.netoD)+'</b></div>':'')+
     '<div class="cas"><span>'+'+ Extras</span><b>'+money(eN)+'</b></div>'+
     '<div class="cas tot"><span>= Ingresos<small>netos de comisión</small></span><b>'+money(tD)+'</b></div>'+
     (tP>0.004?'<div class="cas sub"><span>Por dormir · aún no cuenta</span><b>'+money(tP)+'</b></div>':'')+
-    '<p class="fn">Hospedaje (Airbnb + directas): bruto '+money(o.brutoD)+' · neto '+money(o.netoD)+'</p></div>';
+    '<p class="fn">Hospedaje (Airbnb + directas): bruto '+money(o.brutoD)+' · neto '+money(o.netoD)+'</p>'+
+    (cobT>0.004?'<p class="fn">Cobro por cancelación: lo que Airbnb pagó por las noches que quedaron libres cuando el huésped canceló. Es ingreso tuyo, pero no es una noche vendida: no entra a las noches, la ocupación ni el neto por noche. Se cuenta en el mes de llegada.</p>':'')+
+    (ckGet().ok?'':'<p class="fn">'+esc(window.CBK?CBK.sinDatos:"Sin datos de Cancelaciones.")+'</p>')+(ckGet().malos&&ckGet().malos.length?'<p class="fn">'+(function(X){return 'Cancelaciones tiene '+X.malos.length+(X.malos.length===1?' caso':' casos')+' que no coincide'+(X.malos.length===1?'':'n')+' con su reserva (noches distintas): no se ajust'+(X.malos.length===1?'ó':'aron')+' ('+X.malos.map(esc).join(', ')+').';})(ckGet())+'</p>':'')+'</div>';
   if(o.ext.sin>0.004)res+='<div class="panel"><div class="panel-h"><b>Sin cobrar</b><span>'+money(o.ext.sin)+'</span></div><div class="rmk" style="margin:0">No-show de limpieza: ahorro que no entra a caja ni suma al total.</div></div>';
   $("p-res").innerHTML=res;
 
@@ -851,8 +872,9 @@ function resList(rows,key){
   var h="";
   rows.forEach(function(e){
     var r=e.r,split=e.inM<e.ns;
+    var sub=e.cx?('canceló · '+(e.nc>0?'durmió '+e.nc+' de '+e.ns+(e.ns===1?' noche':' noches')+(e.inM<e.nc?' ('+e.inM+' en el mes)':''):'no durmió')+(e.cob>0.004?' · cobro por cancelación '+money(e.cob):'')):(split?e.inM+' de '+e.ns+' noches en el mes':e.ns+(e.ns===1?' noche':' noches'));
     var chip=r.origen==="Reserva directa"?'<span class="chip ok">Cobrada</span>':(r.estado==="Liquidado"?'<span class="chip ok">Liquidado</span>':'<span class="chip warn">Por liquidar</span>');
-    h+='<div class="item" style="--c:var(--'+key+')"><div class="tile">'+esc(inits(r.huesped))+'</div><div class="mid"><b>'+esc(r.huesped)+'</b><span>'+dShort(r.fecha_inicio)+' → '+dShort(r.fecha_finalizacion)+' · '+(split?e.inM+' de '+e.ns+' noches en el mes':e.ns+(e.ns===1?' noche':' noches'))+'</span></div><div class="right"><span class="amt">'+money(e.share)+'</span>'+chip+'</div></div>';
+    h+='<div class="item" style="--c:var(--'+key+')"><div class="tile">'+esc(inits(r.huesped))+'</div><div class="mid"><b>'+esc(r.huesped)+'</b><span'+(e.cx?' class="cx"':'')+'>'+dShort(r.fecha_inicio)+' → '+dShort(r.fecha_finalizacion)+' · '+sub+'</span></div><div class="right"><span class="amt">'+money(e.share)+'</span>'+chip+'</div></div>';
   });
   return h;
 }
@@ -997,7 +1019,8 @@ function falloRevisar(e){
   if(M){setState("off","Sin conexión",fmtStamp(M.generado));showNote("No pude revisar los datos ("+(e.message||e)+"). Muestro los últimos guardados.");}
   else{$("gate").hidden=false;$("main").hidden=true;$("gateTxt").textContent=(e.message||"Revisa tu conexión")+". Vuelve a intentar.";setState("off","Sin datos","");}
 }
-function cargar(){var sin=!M;if(sin)CB.loader(true,"Cargando tus ingresos…");revisar().then(function(){if(sin)CB.loader(false);}).catch(function(e){if(sin)CB.loader(false);falloRevisar(e);});}
+function cancRef(){try{if(window.CBK)CBK.refrescar(function(ch){if(ch&&M){CK=null;CM_MEMO={};renderAll();}});}catch(e){}}
+function cargar(){var sin=!M;if(sin)CB.loader(true,"Cargando tus ingresos…");revisar().then(function(){if(sin)CB.loader(false);cancRef();}).catch(function(e){if(sin)CB.loader(false);falloRevisar(e);});}
 $("gateBtn").addEventListener("click",function(){setState("busy","Revisando datos…","");cargar();});
 $("syncPill").addEventListener("click",function(){ssDel(K_GUARD);cargar();});
 
