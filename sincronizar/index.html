@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#0a2233">
 <link rel="stylesheet" href="../estilos_cb_v1_2026-10-15_2125.css">
 <script src="../tema_cb_v1_2026-10-15_2125.js"></script>
+<!-- v17 (27 nov 2026 12:20, Ecuador): arregla el aviso «Desactualizado» que no se quitaba. El modo automático solo miraba los CSV de Airbnb; ahora mira las mismas fuentes que el servidor (CSV de Pagados y Pendientes y las hojas de Directas y Adicionales), así que guardar un extra o una reserva directa vuelve a generar el resumen. Textos del modo automático ajustados. La lectura, validación y publicación no cambian; ING_VER sigue en 11. Vuelta atrás: v16. -->
 <!-- v16 (25 nov 2026 19:59): el maestro ahora lleva dentro la versión del proceso (proceso_version); así Ingresos sabe si el resumen está al día sin depender de la marca guardada en cada aparato. Con «&ver=1» (lo manda Ingresos cuando la versión no coincide) el modo automático no se salta el proceso aunque no haya CSV nuevos. La marca local se sigue guardando (compatibilidad). Nada se elimina. -->
 <!-- v15 (24 nov 2026): aplica al maestro los nombres de huésped corregidos en Cancelaciones (por código de confirmación): huesped = nombre corregido, huesped_airbnb = nombre original del CSV, nombre_corregido = true; avisa si un código no existe o si Airbnb cambió el nombre; el Excel agrega «Huésped (Airbnb)». -->
 <!-- v14 (24 nov 2026): lee la columna «Estado de la reservación» del CSV de Airbnb (campos estado_airbnb y cancelada_airbnb en el maestro, columna «Estado Airbnb» en el Excel) y deja una copia de las reservas en este dispositivo para el aviso de cancelaciones por confirmar. No cambia ningún importe ni el estado Liquidado/Por liquidar. -->
@@ -98,7 +99,7 @@
   <header class="apphead">
     <a class="backbtn" href="../parametros/" aria-label="Volver a Configuración"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     <img class="logo" src="../Cima-Blanca-logo.png" alt="Cima Blanca">
-    <div class="ttl"><b>Cima Blanca</b><span>Sincronizar con Drive · v15.1</span></div>
+    <div class="ttl"><b>Cima Blanca</b><span>Sincronizar con Drive · v17</span></div>
   </header>
   <p class="note" style="margin:0 0 16px">Lee Airbnb, reservas directas e ingresos adicionales desde Google Drive y actualiza sola el archivo consolidado en PROCESADO.</p>
 
@@ -892,34 +893,44 @@
   }
   function volverAlDashboard(estado) {
     var adonde = VOLVER === "ingresos" ? "al panel de ingresos" : "al dashboard";
-    autoNota(estado === "ok" ? "Listo: datos de Airbnb actualizados. Volviendo " + adonde + "…" : "Los datos de Airbnb ya estaban al día. Volviendo " + adonde + "…", "ok");
+    autoNota(estado === "ok" ? "Listo: tus datos quedaron actualizados. Volviendo " + adonde + "…" : "Tus datos ya estaban al día. Volviendo " + adonde + "…", "ok");
     var destino = VOLVER === "ingresos" ? "../ingresos/" : "../dashboard/";
     setTimeout(function () { location.href = destino + "?sync=" + estado; }, 1300);
   }
-  // B: antes de sincronizar, compara SOLO fechas en Drive: ¿hay algún CSV guardado después de la última vez que se escribió el resumen (MAESTRO) en PROCESADO?
+  // B: antes de sincronizar, compara SOLO fechas en Drive: ¿alguna fuente se guardó después de la última vez que se escribió el resumen (MAESTRO) en PROCESADO?
+  // v17: las fuentes son LAS MISMAS que mira el servidor (ACCESO, función maestro_) para marcar «Desactualizado»: CSV de Pagados y Pendientes
+  // y las hojas (no CSV) con «directas» o «adicionales» en el nombre, en Reservas y en la carpeta de Adicionales. Si cambia allí, cambia aquí.
   // No depende de lo guardado en el navegador: si borras los datos de navegación, igual sabe si hay algo nuevo.
+  function esHojaFuente(nombre) { return /directas|adicionales/i.test(nombre) && !/\.csv$/i.test(nombre); }
   function autoRevisar() {
-    autoNota("Revisando si hay archivos nuevos de Airbnb…");
-    log("Modo automático: comparando CSV con el último resumen…");
-    var mx = "";
-    var maestro = null;
+    autoNota("Revisando si hay cambios en Drive…");
+    log("Modo automático: comparando CSV, reservas directas e ingresos adicionales con el último resumen…");
+    var mx = "", mxNombre = "", csvMx = "";
+    var maestro = null, ingresosId = null, reservasId = null;
     return findRootFolder(ROOT_FOLDER_NAME)
       .then(function (root) { return findChildFolder(root.id, INGRESOS_FOLDER_NAME); })
-      .then(function (ing) { return findChildFolder(ing.id, RESERVAS_FOLDER_NAME); })
-      .then(function (res) { return Promise.all([findChildFolder(res.id, RAW_FOLDER_NAME), findChildFolder(res.id, PROCESADO_FOLDER_NAME)]); })
+      .then(function (ing) { ingresosId = ing.id; return findChildFolder(ing.id, RESERVAS_FOLDER_NAME); })
+      .then(function (res) { reservasId = res.id; return Promise.all([findChildFolder(res.id, RAW_FOLDER_NAME), findChildFolder(res.id, PROCESADO_FOLDER_NAME)]); })
       .then(function (fo) {
-        return Promise.all([findChildFolder(fo[0].id, "Pagados"), findChildFolder(fo[0].id, "Pendientes"), findFileByExactName(fo[1].id, OUTPUT_JSON_NAME)]);
+        return Promise.all([findChildFolder(fo[0].id, "Pagados"), findChildFolder(fo[0].id, "Pendientes"), findFileByExactName(fo[1].id, OUTPUT_JSON_NAME), tryFindChildFolder(ingresosId, SERVICIOS_ADICIONALES_FOLDER_HINT)]);
       })
-      .then(function (r) { maestro = r[2]; return Promise.all([listFilesInFolder(r[0].id), listFilesInFolder(r[1].id)]); })
+      .then(function (r) {
+        maestro = r[2];
+        // sin carpeta de Adicionales se mira Ingresos, igual que al leer la fuente (leerAdicionales)
+        return Promise.all([listFilesInFolder(r[0].id), listFilesInFolder(r[1].id), listFilesInFolder(reservasId), listFilesInFolder(r[3] ? r[3].id : ingresosId)]);
+      })
       .then(function (ls) {
-        ls[0].concat(ls[1]).forEach(function (f) { if (/\.csv$/i.test(f.name) && (f.modifiedTime || "") > mx) mx = f.modifiedTime; });
+        function mira(f) { if ((f.modifiedTime || "") > mx) { mx = f.modifiedTime; mxNombre = f.name; } }
+        ls[0].concat(ls[1]).forEach(function (f) { if (/\.csv$/i.test(f.name)) { mira(f); if ((f.modifiedTime || "") > csvMx) csvMx = f.modifiedTime; } });
+        ls[2].concat(ls[3]).forEach(function (f) { if (esHojaFuente(f.name)) mira(f); });
         var verOk = false; try { verOk = localStorage.getItem("cimablanca_ing_ver") === ING_VER; } catch (e) {}
-        if (!FORZAR && verOk && maestro && maestro.modifiedTime && mx && mx <= maestro.modifiedTime) {
-          log("Sin CSV nuevos: el resumen (" + maestro.modifiedTime + ") es posterior al CSV más nuevo (" + mx + ").");
-          try { localStorage.setItem(SYNC_KEY, JSON.stringify({ t: maestro.modifiedTime, csvMax: mx })); } catch (e) {}
+        if (!FORZAR && verOk && maestro && maestro.modifiedTime && csvMx && mx <= maestro.modifiedTime) {
+          log("Sin cambios: el resumen (" + maestro.modifiedTime + ") es posterior al archivo más nuevo, " + mxNombre + " (" + mx + ").");
+          try { localStorage.setItem(SYNC_KEY, JSON.stringify({ t: maestro.modifiedTime, csvMax: csvMx })); } catch (e) {}
           volverAlDashboard("al_dia"); return;
         }
-        autoNota("Hay archivos nuevos. Actualizando datos de Airbnb…");
+        if (maestro && mx > maestro.modifiedTime) log("Cambió después del último resumen: " + mxNombre + " (" + mx + ").");
+        autoNota("Hay cambios nuevos. Actualizando tus datos…");
         return runSync().then(function (ok) { if (ok) volverAlDashboard("ok"); else autoNota("No se pudo terminar. Revisa el aviso rojo o toca «Leer Drive y procesar».", "err"); });
       })
       .catch(function (err) { showError(err.message || String(err)); autoNota("No se pudo revisar. Toca «Leer Drive y procesar» para intentarlo a mano.", "err"); });
